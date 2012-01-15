@@ -1,0 +1,29 @@
+#Options
+cpu
+nodebug
+blas
+#time integration
+rk4
+#time step size
+0.001
+#number of time steps
+1000
+#output factor
+100
+#spatial method
+dg  
+#order
+4
+#flux
+lax-friederichs 
+#mesh file
+my_line_4.msh
+lin
+#problem
+multifluid
+#number of fields
+4
+#initial condition
+simplew
+#boundary condition
+farfield
