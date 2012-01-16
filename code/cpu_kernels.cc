@@ -243,21 +243,29 @@ void cpu_evaluate_sf_mhd(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f,
 scalar cpu_flux1_multifluid(scalar rho, scalar u){return rho*u;}                  
 scalar cpu_flux2_multifluid(scalar rho, scalar u, scalar p){return rho*u*u+p;} 
 scalar cpu_flux3_multifluid(scalar EtplusP, scalar u) {return EtplusP*u;}
+scalar cpu_flux4_multifluid(scalar rho, scalar u, scalar gamma) {return rho*u*gamma;}
 
-void cpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac, scalar gamma){
+void cpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
 
   for(int e = 0; e < N_E; e++){
     for(int g = 0; g < N_G; g++){
       scalar rho = Ug[(e*N_F+0)*N_G+g];   
       scalar u   = Ug[(e*N_F+1)*N_G+g]/rho;  // (rho u / rho) = u
       scalar Et  = Ug[(e*N_F+2)*N_G+g];
+      scalar gamma=Ug[(e*N_F+3)*N_G+g]/rho;
       scalar p = (gamma-1)*(Et - 0.5*rho*u*u);
       scalar EtplusP = Et + p;
 
+      s[(e*N_F+0)*N_G+g] = 0;
+      s[(e*N_F+1)*N_G+g] = 0;
+      s[(e*N_F+2)*N_G+g] = 0;
+      s[(e*N_F+3)*N_G+g] = 0;
+
       // Flux derive par rapport a x
-      f[((e*N_F+0)*N_G+g)*D+0] = cpu_flux1_multifluid(rho,u);        //rho*u; 
-      f[((e*N_F+1)*N_G+g)*D+0] = cpu_flux2_multifluid(rho,u,p);      //rho*u*u+P; 
-      f[((e*N_F+2)*N_G+g)*D+0] = cpu_flux3_multifluid(EtplusP,u);    //EtplusP*u;
+      f[((e*N_F+0)*N_G+g)*D+0] = cpu_flux1_multifluid(rho,u);       
+      f[((e*N_F+1)*N_G+g)*D+0] = cpu_flux2_multifluid(rho,u,p);      
+      f[((e*N_F+2)*N_G+g)*D+0] = cpu_flux3_multifluid(EtplusP,u);   
+      f[((e*N_F+3)*N_G+g)*D+0] = cpu_flux4_multifluid(rho,u,gamma); 
     }
   }
 }
@@ -426,7 +434,7 @@ void cpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scala
   }
 }
 
-void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scalar gamma){
+void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, scalar* q, scalar* UgF){
   
   for(int t = 0; t < M_T; t++){
       scalar rhoL= UgF[(t*N_F+0)*2+0];
@@ -435,16 +443,19 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, scalar* q, scalar* UgF
       scalar uR  = UgF[(t*N_F+1)*2+1]/rhoR;
       scalar EtL = UgF[(t*N_F+2)*2+0];
       scalar EtR = UgF[(t*N_F+2)*2+1];
-      scalar pL = (gamma-1)*(EtL - 0.5*rhoL*uL*uL);
-      scalar pR = (gamma-1)*(EtR - 0.5*rhoR*uR*uR);
+      scalar gammaL = UgF[(t*N_F+3)*2+0]/rhoL;
+      scalar gammaR = UgF[(t*N_F+3)*2+1]/rhoR;
+      //printf("%f and %f\n",gammaL, gammaR);
+      scalar pL = (gammaL-1)*(EtL - 0.5*rhoL*uL*uL);
+      scalar pR = (gammaR-1)*(EtR - 0.5*rhoR*uR*uR);
       scalar EtPL = EtL+pL;
       scalar EtPR = EtR+pR;
 
       // Evaluate the right and left eigenvalues
       int sizevap = 4;
       scalar* vap = new scalar[2*sizevap];
-      scalar aL = sqrt((gamma*pL)/rhoL);
-      scalar aR = sqrt((gamma*pR)/rhoR);
+      scalar aL = sqrt((gammaL*pL)/rhoL);
+      scalar aR = sqrt((gammaR*pR)/rhoR);
 
       vap[0*sizevap+0] = fabs(uL);
       vap[0*sizevap+1] = fabs(uL) + aL;
@@ -484,6 +495,12 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, scalar* q, scalar* UgF
       		 -maxvap*(EtR-EtL));
       q[(t*N_F+2)*2+0] = qL; 
       q[(t*N_F+2)*2+1] = -qL;
+
+      //fourth: fx = rho*u*gamma; 
+      qL = -0.5*(cpu_flux4_multifluid(rhoL,uL,gammaL) + cpu_flux4_multifluid(rhoR,uR,gammaR)
+      		 -maxvap*(rhoR*gammaR-rhoL*gammaL));
+      q[(t*N_F+3)*2+0] = qL; 
+      q[(t*N_F+3)*2+1] = -qL;
   }
 }
 
@@ -680,8 +697,8 @@ void Lcpu_evaluate_sf_mhd(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f
 }
 
 extern "C" 
-void Lcpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac, scalar gamma){
-  cpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, s, f, Ug, dUg, invJac, gamma);
+void Lcpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
+  cpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, s, f, Ug, dUg, invJac);
 }
 
 extern "C" 
@@ -695,8 +712,8 @@ void Lcpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scal
 }
 
 extern "C" 
-void Lcpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scalar gamma){
-  cpu_evaluate_q_multifluid(M_G, M_T, N_F, q, UgF, gamma);
+void Lcpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, scalar* q, scalar* UgF){
+  cpu_evaluate_q_multifluid(M_G, M_T, N_F, q, UgF);
 }
 
 extern "C" 

@@ -102,8 +102,10 @@ int main (int argc, char **argv)
   // Setup the initial condition type
   bool simplew = false;
   bool sodtube = false;
+  bool gammamf = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
+  else if (inputs.getInitialCondition()=="gammamf") gammamf = true;
   else{ printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // setup the boundary condition type
@@ -254,20 +256,20 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
   
-  scalar gamma0 = 1.4;
   fullMatrix<scalar> U(N_s, N_E*N_F);
   fullMatrix<scalar> Us(N_s, N_E*N_F);
   fullMatrix<scalar> Ustar(N_s, N_E*N_F);
   if(multifluid){
-    if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, XYZNodes, gamma0, U);
-    else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, XYZNodes, gamma0, U);
+    if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+    else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+    else if(gammamf) init_dg_gammamf_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
   }
 
   if (order0) average_cell_p0(N_s, N_E, N_F, U);
   
   // print the initial condition to the file
   printf("Initial condition written to output file.\n");
-  if(multifluid)print_dg_multifluid(N_s, N_E, N_F, U, m, msh_lin, 0, 0, 0,-1, gamma0);
+  if(multifluid)print_dg_multifluid(N_s, N_E, N_F, U, m, msh_lin, 0, 0, 0,-1);
 
   
   //////////////////////////////////////////////////////////////////////////   
@@ -517,10 +519,10 @@ int main (int argc, char **argv)
 
   // evaluate_sf: requires Uinteg, (dUintegR), H0, G0, s,f 
   if (cpu){
-    if(multifluid) Lcpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, h_s, h_f, h_Uinteg, h_dUinteg, h_invJac, gamma0);
+    if(multifluid) Lcpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, h_s, h_f, h_Uinteg, h_dUinteg, h_invJac);
   }
   else if(!cpu){
-    if(multifluid) Lgpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, d_s, d_f, d_Uinteg, d_dUinteg, d_invJac, gamma0);
+    if(multifluid) Lgpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, d_s, d_f, d_Uinteg, d_dUinteg, d_invJac);
     CUDA_SAFE_CALL(cudaThreadSynchronize());
   }
     
@@ -539,10 +541,10 @@ int main (int argc, char **argv)
 
   // evaluate_q: requires UintegF, normals, q, H0, G0
   if (cpu){
-    if(multifluid) Lcpu_evaluate_q_multifluid(M_G, M_T, N_F, h_q, h_UintegF, gamma0);
+    if(multifluid) Lcpu_evaluate_q_multifluid(M_G, M_T, N_F, h_q, h_UintegF);
   }
   else if (!cpu){
-    if(multifluid) Lgpu_evaluate_q_multifluid(M_G, M_T, N_F, d_q, d_UintegF, gamma0);
+    if(multifluid) Lgpu_evaluate_q_multifluid(M_G, M_T, N_F, d_q, d_UintegF);
     CUDA_SAFE_CALL(cudaThreadSynchronize());
   }
   
@@ -768,19 +770,19 @@ int main (int argc, char **argv)
      
       // evaluate_sf: requires Uinteg, (dUintegR), H0, G0, s,f 
       if (cpu){
-	if(multifluid) Lcpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, h_s, h_f, h_Uinteg, h_dUinteg, h_invJac, gamma0);
+	if(multifluid) Lcpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, h_s, h_f, h_Uinteg, h_dUinteg, h_invJac);
       }
       else if(!cpu){
-	if(multifluid) Lgpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, d_s, d_f, d_Uinteg, d_dUinteg, d_invJac, gamma0);
+	if(multifluid) Lgpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, d_s, d_f, d_Uinteg, d_dUinteg, d_invJac);
   	CUDA_SAFE_CALL(cudaThreadSynchronize());
       }
 
       // evaluate_q: requires UintegF, normals, q, H0, G0
       if (cpu){
-	if(multifluid) Lcpu_evaluate_q_multifluid(M_G, M_T, N_F, h_q, h_UintegF, gamma0);
+	if(multifluid) Lcpu_evaluate_q_multifluid(M_G, M_T, N_F, h_q, h_UintegF);
       }
       else if (!cpu){
-	if(multifluid) Lgpu_evaluate_q_multifluid(M_G, M_T, N_F, d_q, d_UintegF, gamma0);
+	if(multifluid) Lgpu_evaluate_q_multifluid(M_G, M_T, N_F, d_q, d_UintegF);
   	CUDA_SAFE_CALL(cudaThreadSynchronize());
       }
 
@@ -866,7 +868,7 @@ int main (int argc, char **argv)
       }
       
       printf("Solution written to output file at step %i and time %f.\n",n,n*Dt);
-      if(multifluid)print_dg_multifluid(N_s, N_E, N_F, h_U, m, msh_lin, count, n*Dt, 1,-1, gamma0);
+      if(multifluid)print_dg_multifluid(N_s, N_E, N_F, h_U, m, msh_lin, count, n*Dt, 1,-1);
       count++;
     }
     
