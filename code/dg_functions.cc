@@ -44,9 +44,7 @@ void dg_inverse_mass_matrix(const int order, const int elem_type, const std::str
 
   const polynomialBasis *basis  = polynomialBases::find (elem_type);  // for the element
   fullMatrix<double> points, weight;
-  if     (getElemType == "tri") gaussIntegration::getTriangle(order*2+1, points, weight); //order*2+1 because you are integrating phi*phi
-  else if(getElemType == "qua") gaussIntegration::getQuad(order*2+1, points, weight);
-  else if(getElemType == "lin") gaussIntegration::getLine(order*2+1, points, weight);
+  if(getElemType == "lin") gaussIntegration::getLine(order*2+1, points, weight);
 
   // Number of integration points           (g index)
   int N_G = points.size1();    

@@ -68,11 +68,11 @@ __global__ void gpu_mapToFace_multifluid(int M_s, int M_T, int N_F, int N_s, int
     
   // Start boundary
   if (t==0){
-    UF[(t*N_F+fc)*2+1]       = U[(t*N_F+fc)*N_s+0];         
+    UF[(0*N_F+fc)*2+1]       = U[(0*N_F+fc)*N_s+0];         
     if      (boundaryMap == 0){      //farfield
-      UF[(t*N_F+fc)*2+0]        = UF[(t*N_F+fc)*2+1];}
+      UF[(0*N_F+fc)*2+0]        = UF[(0*N_F+fc)*2+1];}
     else if (boundaryMap == M_T-1){  //periodic
-      UF[(t*N_F+fc)*2+0]        = UF[((M_T-1)*N_F+fc)*2+0];}
+      UF[(0*N_F+fc)*2+0]        = UF[((M_T-1)*N_F+fc)*2+0];}
   }
   // End boundary
   else if (t==M_T-1){
@@ -84,8 +84,8 @@ __global__ void gpu_mapToFace_multifluid(int M_s, int M_T, int N_F, int N_s, int
   }
   // All other boundaries
   else{
-    UF[(t*N_F+fc)*2+0] = U[t-1];
-    UF[(t*N_F+fc)*2+1] = U[t];
+    UF[(t*N_F+fc)*2+0] = U[((t-1)*N_F+fc)*N_s+1];
+    UF[(t*N_F+fc)*2+1] = U[(t*N_F+fc)*N_s+0];
   }
 }
 

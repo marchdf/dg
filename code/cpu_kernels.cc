@@ -88,8 +88,8 @@ void cpu_mapToFace_multifluid(int M_s, int M_T, int N_F, int N_s, int boundaryMa
   // All other boundaries
   for(int t = 1; t < M_T-1; t++){ 
     for(int fc = 0; fc < N_F; fc++){    
-	UF[(t*N_F+fc)*2+0] = U[t-1];
-	UF[(t*N_F+fc)*2+1] = U[t];
+      UF[(t*N_F+fc)*2+0] = U[((t-1)*N_F+fc)*N_s+1];
+      UF[(t*N_F+fc)*2+1] = U[(t*N_F+fc)*N_s+0];
     }
   }
 }

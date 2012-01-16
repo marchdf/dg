@@ -101,7 +101,9 @@ int main (int argc, char **argv)
 
   // Setup the initial condition type
   bool simplew = false;
+  bool sodtube = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
+  else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
   else{ printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // setup the boundary condition type
@@ -131,8 +133,6 @@ int main (int argc, char **argv)
   // Get the nodes, elements, interfaces, normals
   const fullMatrix<double> &nodes = m.getNodes();
   const std::vector<simpleElement> &elements = m.getElements(msh_lin);
-  printf("%i\n", elements.size());
-
 
   ////////////////////////////////////////////////////////////////////////////   
   //
@@ -141,7 +141,6 @@ int main (int argc, char **argv)
   ////////////////////////////////////////////////////////////////////////////   
 
   const polynomialBasis *basis  = polynomialBases::find (msh_lin);  // for the element
-  const std::vector<std::vector<int> > &closures = basis->closures;
   fullMatrix<double> points, weight;
   gaussIntegration::getLine(order*2+1, points, weight);
 
@@ -185,13 +184,13 @@ int main (int argc, char **argv)
   fullMatrix<double> phiD (N_G,N_s); 
   fullMatrix<scalar> dphi(N_G*D,N_s);
   basis->f (points, phiD);
-  for(int g = 0; g<N_G; g++){
+  for(int g = 0; g < N_G; g++){
     for(int i = 0; i < N_s; i++){
       phi(g,i) = (scalar)phiD(g,i);
     }	  
   }    
   double grads[N_s][3];  
-  for(int g = 0; g<N_G; g++){
+  for(int g = 0; g < N_G; g++){
     basis->df(points(g,0),points(g,1),points(g,2),grads);
     for(int alpha = 0; alpha < D; alpha ++){
       for(int i = 0; i < N_s; i++){
@@ -238,7 +237,6 @@ int main (int argc, char **argv)
     }
   }
   XYZG.gemm (phi, XYZNodes);
-  
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -246,9 +244,9 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
 
-  int h_boundaryMap;
-  if (periodic) h_boundaryMap = M_T-1;
-  if (farfield) h_boundaryMap = 0; 
+  int boundaryMap;
+  if (periodic) boundaryMap = M_T-1;
+  if (farfield) boundaryMap = 0; 
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -261,7 +259,8 @@ int main (int argc, char **argv)
   fullMatrix<scalar> Us(N_s, N_E*N_F);
   fullMatrix<scalar> Ustar(N_s, N_E*N_F);
   if(multifluid){
-    if     (simplew) init_dg_simplew_mhd(N_s, N_E, N_F, D, XYZNodes, gamma0, U);
+    if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, XYZNodes, gamma0, U);
+    else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, XYZNodes, gamma0, U);
   }
 
   if (order0) average_cell_p0(N_s, N_E, N_F, U);
@@ -292,7 +291,6 @@ int main (int argc, char **argv)
   
   scalar* h_Minv = new scalar[N_s*N_s*N_E];
   dg_inverse_mass_matrix(order, msh_lin, inputs.getElemType(), N_s, N_E, D, XYZNodes, h_Minv);
-
   
   //==========================================================================
   //
@@ -449,26 +447,24 @@ int main (int argc, char **argv)
   // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
   printf("=========== First DU evaluation ==============\n");
   if (cpu){
-    if(multifluid) Lcpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, h_boundaryMap, h_U, h_UF);
+    if(multifluid) Lcpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, h_U, h_UF);
   }
   else if(!cpu){
-    if(multifluid) Lgpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, h_boundaryMap, d_U, d_UF);
+    if(multifluid) Lgpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, d_U, d_UF);
     CUDA_SAFE_CALL(cudaThreadSynchronize());
   }
  
   if (debug){
     printf("Check mapping of U onto UF\n");
-    scalar* h_UF       = new scalar[2*N_F*M_s*M_T];
-    CUDA_SAFE_CALL(cudaMemcpy(h_UF, d_UF, 2*N_F*M_s*M_T*sizeof(scalar), cudaMemcpyDeviceToHost));
-    printf("===== test UF eta =====\n");
-    for(int j = 0; j < M_s; j++){
-      for(int t = 0; t < M_T; t++){                          
-  	printf("%i: %4.3f %4.3f | ", t, h_UF[((t*N_F+0)*2+0)*M_s+j] , h_UF[((t*N_F+0)*2+1)*M_s+j]);
-      }
-      printf("\n"); 
+    if(!cpu){
+      CUDA_SAFE_CALL(cudaMemcpy(h_U, d_U, N_F*N_s*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
+      CUDA_SAFE_CALL(cudaMemcpy(h_UF, d_UF, M_T*N_F*2*sizeof(scalar), cudaMemcpyDeviceToHost));
     }
-    printf("=== end test UF eta ==\n");
-    delete[] h_UF;
+    for(int e = 0; e < N_E; e++){
+      int fc = 2;
+      printf("%f ?= %f    and    ", h_U[(e*N_F+fc)*N_s+0], h_UF[(e*N_F+fc)*2+1]);
+      printf("%f ?= %f\n", h_U[(e*N_F+fc)*N_s+1], h_UF[((e+1)*N_F+fc)*2+0]);
+    }
   }
 
   // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes
@@ -495,33 +491,33 @@ int main (int argc, char **argv)
     CUDA_SAFE_CALL(cudaThreadSynchronize());
   }
   
-  if (debug){
-    printf("Check collocation of U\n");
-    scalar* h_Ug       = new scalar[N_F*N_G*N_E];
-    CUDA_SAFE_CALL(cudaMemcpy(h_Ug, d_Uinteg, N_F*N_G*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
-    printf("===== test Uinteg  =====\n");
-    for(int g = 0; g < N_G; g++){
-      for(int e = 0; e < N_E; e++){
-  	for(int fc = 0; fc < N_F; fc++){
-  	  printf("%f ",h_Ug[(e*N_F+fc)*N_G+g]);
-  	}
-      }
-      printf("\n");
-    }
-    printf("=== end test Uinteg ==\n");
-    delete [] h_Ug;
-    scalar* h_UgF       = new scalar[2*N_F*M_G*M_T];
-    CUDA_SAFE_CALL(cudaMemcpy(h_UgF, d_UintegF, 2*N_F*M_G*M_T*sizeof(scalar), cudaMemcpyDeviceToHost));
-    printf("===== test UintegF GPU eta =====\n");
-    for(int g = 0; g < M_G; g++){
-      for(int t = 0; t < M_T; t++){
-  	printf("%4.3f %4.3f | ", h_UgF[((t*N_F+0)*2+0)*M_G+g] , h_UgF[((t*N_F+0)*2+1)*M_G+g]);
-      }
-      printf("\n");
-    }
-    printf("=== end test UintegF GPU eta ==\n");
-    delete [] h_UgF;
-  }
+  // if (debug){
+  //   printf("Check collocation of U\n");
+  //   scalar* h_Ug       = new scalar[N_F*N_G*N_E];
+  //   CUDA_SAFE_CALL(cudaMemcpy(h_Ug, d_Uinteg, N_F*N_G*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
+  //   printf("===== test Uinteg  =====\n");
+  //   for(int g = 0; g < N_G; g++){
+  //     for(int e = 0; e < N_E; e++){
+  // 	for(int fc = 0; fc < N_F; fc++){
+  // 	  printf("%f ",h_Ug[(e*N_F+fc)*N_G+g]);
+  // 	}
+  //     }
+  //     printf("\n");
+  //   }
+  //   printf("=== end test Uinteg ==\n");
+  //   delete [] h_Ug;
+  //   scalar* h_UgF       = new scalar[2*N_F*M_G*M_T];
+  //   CUDA_SAFE_CALL(cudaMemcpy(h_UgF, d_UintegF, 2*N_F*M_G*M_T*sizeof(scalar), cudaMemcpyDeviceToHost));
+  //   printf("===== test UintegF GPU eta =====\n");
+  //   for(int g = 0; g < M_G; g++){
+  //     for(int t = 0; t < M_T; t++){
+  // 	printf("%4.3f %4.3f | ", h_UgF[((t*N_F+0)*2+0)*M_G+g] , h_UgF[((t*N_F+0)*2+1)*M_G+g]);
+  //     }
+  //     printf("\n");
+  //   }
+  //   printf("=== end test UintegF GPU eta ==\n");
+  //   delete [] h_UgF;
+  // }
 
   // evaluate_sf: requires Uinteg, (dUintegR), H0, G0, s,f 
   if (cpu){
@@ -532,20 +528,20 @@ int main (int argc, char **argv)
     CUDA_SAFE_CALL(cudaThreadSynchronize());
   }
     
-  if (debug){
-    scalar* h_f       = new scalar[D*N_F*N_G*N_E];
-    CUDA_SAFE_CALL(cudaMemcpy(h_f, d_f, D*N_F*N_G*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
-    printf("===== test f GPU eta =====\n");
-    for(int e = 0; e < N_E; e++){
-      for(int g = 0; g < N_G; g++){
-  	printf("element %i, eta: f_x=%f f_y=%f\n", e, h_f[((e*N_F+0)*N_G+g)*D+0], h_f[((e*N_F+0)*N_G+g)*D+1]);
-  	printf("element %i,  ux: f_x=%f f_y=%f\n", e, h_f[((e*N_F+1)*N_G+g)*D+0], h_f[((e*N_F+1)*N_G+g)*D+1]);
-  	printf("element %i,  uy: f_x=%f f_y=%f\n", e, h_f[((e*N_F+2)*N_G+g)*D+0], h_f[((e*N_F+2)*N_G+g)*D+1]);
-      }
-    }
-    printf("=== end test f GPU eta ==\n");
-    delete [] h_f;
-  }
+  // if (debug){
+  //   scalar* h_f       = new scalar[D*N_F*N_G*N_E];
+  //   CUDA_SAFE_CALL(cudaMemcpy(h_f, d_f, D*N_F*N_G*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
+  //   printf("===== test f GPU eta =====\n");
+  //   for(int e = 0; e < N_E; e++){
+  //     for(int g = 0; g < N_G; g++){
+  // 	printf("element %i, eta: f_x=%f f_y=%f\n", e, h_f[((e*N_F+0)*N_G+g)*D+0], h_f[((e*N_F+0)*N_G+g)*D+1]);
+  // 	printf("element %i,  ux: f_x=%f f_y=%f\n", e, h_f[((e*N_F+1)*N_G+g)*D+0], h_f[((e*N_F+1)*N_G+g)*D+1]);
+  // 	printf("element %i,  uy: f_x=%f f_y=%f\n", e, h_f[((e*N_F+2)*N_G+g)*D+0], h_f[((e*N_F+2)*N_G+g)*D+1]);
+  //     }
+  //   }
+  //   printf("=== end test f GPU eta ==\n");
+  //   delete [] h_f;
+  // }
 
   // evaluate_q: requires UintegF, normals, q, H0, G0
   if (cpu){
@@ -565,38 +561,38 @@ int main (int argc, char **argv)
     CUDA_SAFE_CALL(cudaThreadSynchronize());
   }
 
-  if (debug){
-    scalar* h_sJ       = new scalar[N_F*N_G*N_E];
-    scalar* h_fJ       = new scalar[D*N_F*N_G*N_E];
-    CUDA_SAFE_CALL(cudaMemcpy(h_sJ, d_sJ, N_F*N_G*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
-    CUDA_SAFE_CALL(cudaMemcpy(h_fJ, d_fJ, D*N_F*N_G*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
-    // test sJ
-    printf("test sJ GPU\n");
-    for (int e = 0; e < N_E; e++){
-      for (int g = 0; g < N_G; g++){
-  	for (int fc = 0; fc < N_F; fc++){
-  	  printf("%7.4f", h_sJ[(e*N_F+fc)*N_G+g]);
-  	}
-      }
-      printf("\n");
-    }
-    printf("end test sJ GPU\n");
-    // test fJ
-    printf("test fJ GPU\n");
-    for (int e = 0; e < N_E; e++){
-      for (int g = 0; g < N_G; g++){
-  	for (int fc = 0; fc < N_F; fc++){
-  	  for (int a = 0; a < D; a++){
-  	    printf("%7.4f", h_fJ[((e*N_F+fc)*N_G+g)*D+a]);
-  	  }
-  	}
-      }
-      printf("\n");
-    }
-    printf("end test fJ GPU\n");
-    delete [] h_sJ;
-    delete [] h_fJ;
-  }
+  // if (debug){
+  //   scalar* h_sJ       = new scalar[N_F*N_G*N_E];
+  //   scalar* h_fJ       = new scalar[D*N_F*N_G*N_E];
+  //   CUDA_SAFE_CALL(cudaMemcpy(h_sJ, d_sJ, N_F*N_G*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
+  //   CUDA_SAFE_CALL(cudaMemcpy(h_fJ, d_fJ, D*N_F*N_G*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
+  //   // test sJ
+  //   printf("test sJ GPU\n");
+  //   for (int e = 0; e < N_E; e++){
+  //     for (int g = 0; g < N_G; g++){
+  // 	for (int fc = 0; fc < N_F; fc++){
+  // 	  printf("%7.4f", h_sJ[(e*N_F+fc)*N_G+g]);
+  // 	}
+  //     }
+  //     printf("\n");
+  //   }
+  //   printf("end test sJ GPU\n");
+  //   // test fJ
+  //   printf("test fJ GPU\n");
+  //   for (int e = 0; e < N_E; e++){
+  //     for (int g = 0; g < N_G; g++){
+  // 	for (int fc = 0; fc < N_F; fc++){
+  // 	  for (int a = 0; a < D; a++){
+  // 	    printf("%7.4f", h_fJ[((e*N_F+fc)*N_G+g)*D+a]);
+  // 	  }
+  // 	}
+  //     }
+  //     printf("\n");
+  //   }
+  //   printf("end test fJ GPU\n");
+  //   delete [] h_sJ;
+  //   delete [] h_fJ;
+  // }
 
   // matrix-matrix for sf
   if (cpu){
@@ -624,42 +620,42 @@ int main (int argc, char **argv)
     CUDA_SAFE_CALL(cudaThreadSynchronize());
   }
 
-  if (debug){
-    scalar* h_S       = new scalar[N_F*N_s*N_E];
-    scalar* h_F       = new scalar[N_F*N_s*N_E];
-    scalar* h_Q       = new scalar[N_F*N_s*N_E];
-    CUDA_SAFE_CALL(cudaMemcpy(h_S, d_S, N_F*N_s*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
-    CUDA_SAFE_CALL(cudaMemcpy(h_F, d_F, N_F*N_s*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
-    CUDA_SAFE_CALL(cudaMemcpy(h_Q, d_Q, N_F*N_s*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
-    // Test S, F, Q
-    printf("============ test GPU SFQ ===============\n");
-    for(int i = 0; i < N_s; i++){
-      for(int e = 0; e < N_E; e++){
-  	printf("%7.4f %7.4f %7.4f", h_S[(e*N_F+0)*N_s+i], h_F[(e*N_F+0)*N_s+i], h_Q[(e*N_F+0)*N_s+i]);
-      }
-      printf("\n");
-    }
-    printf("============ end test GPU SFQ ===========\n");
-    printf("============ test GPU SFQx ==============\n");
-    for(int i = 0; i < N_s; i++){
-      for(int e = 0; e < N_E; e++){
-  	printf("%7.4f %7.4f %7.4f", h_S[(e*N_F+1)*N_s+i], h_F[(e*N_F+1)*N_s+i], h_Q[(e*N_F+1)*N_s+i]);
-      }
-      printf("\n");
-    }
-    printf("============ end test GPU SFQx ===========\n");
-    printf("============ test GPU SFQy ==============\n");
-    for(int i = 0; i < N_s; i++){
-      for(int e = 0; e < N_E; e++){
-  	printf("%7.4f %7.4f %7.4f", h_S[(e*N_F+2)*N_s+i], h_F[(e*N_F+2)*N_s+i], h_Q[(e*N_F+2)*N_s+i]);
-      }
-      printf("\n");
-    }
-    printf("============ end test GPU SFQy ===========\n");
-    delete[] h_S;
-    delete[] h_F;
-    delete[] h_Q;
-  }
+  // if (debug){
+  //   scalar* h_S       = new scalar[N_F*N_s*N_E];
+  //   scalar* h_F       = new scalar[N_F*N_s*N_E];
+  //   scalar* h_Q       = new scalar[N_F*N_s*N_E];
+  //   CUDA_SAFE_CALL(cudaMemcpy(h_S, d_S, N_F*N_s*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
+  //   CUDA_SAFE_CALL(cudaMemcpy(h_F, d_F, N_F*N_s*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
+  //   CUDA_SAFE_CALL(cudaMemcpy(h_Q, d_Q, N_F*N_s*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
+  //   // Test S, F, Q
+  //   printf("============ test GPU SFQ ===============\n");
+  //   for(int i = 0; i < N_s; i++){
+  //     for(int e = 0; e < N_E; e++){
+  // 	printf("%7.4f %7.4f %7.4f", h_S[(e*N_F+0)*N_s+i], h_F[(e*N_F+0)*N_s+i], h_Q[(e*N_F+0)*N_s+i]);
+  //     }
+  //     printf("\n");
+  //   }
+  //   printf("============ end test GPU SFQ ===========\n");
+  //   printf("============ test GPU SFQx ==============\n");
+  //   for(int i = 0; i < N_s; i++){
+  //     for(int e = 0; e < N_E; e++){
+  // 	printf("%7.4f %7.4f %7.4f", h_S[(e*N_F+1)*N_s+i], h_F[(e*N_F+1)*N_s+i], h_Q[(e*N_F+1)*N_s+i]);
+  //     }
+  //     printf("\n");
+  //   }
+  //   printf("============ end test GPU SFQx ===========\n");
+  //   printf("============ test GPU SFQy ==============\n");
+  //   for(int i = 0; i < N_s; i++){
+  //     for(int e = 0; e < N_E; e++){
+  // 	printf("%7.4f %7.4f %7.4f", h_S[(e*N_F+2)*N_s+i], h_F[(e*N_F+2)*N_s+i], h_Q[(e*N_F+2)*N_s+i]);
+  //     }
+  //     printf("\n");
+  //   }
+  //   printf("============ end test GPU SFQy ===========\n");
+  //   delete[] h_S;
+  //   delete[] h_F;
+  //   delete[] h_Q;
+  // }
 
   // solve: requires Q, F, S, Dt, Minv, DU
   if (cpu){
@@ -670,36 +666,36 @@ int main (int argc, char **argv)
     CUDA_SAFE_CALL(cudaThreadSynchronize());
   }
 
-  if (debug){
-    scalar* h_DU       = new scalar[N_F*N_s*N_E];
-    CUDA_SAFE_CALL(cudaMemcpy(h_DU, d_DU, N_F*N_s*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
-    // Test DU
-    printf("============ test GPU DU ===============\n");
-    for(int i = 0; i < N_s; i++){
-      for(int e = 0; e < N_E; e++){
-  	printf("%7.4f ", h_DU[(e*N_F+0)*N_s+i]);
-      }
-      printf("\n");
-    }
-    printf("============ end test GPU DU ===========\n");
-    printf("============ test GPU DU x ===============\n");
-    for(int i = 0; i < N_s; i++){
-      for(int e = 0; e < N_E; e++){
-  	printf("%7.4f ", h_DU[(e*N_F+1)*N_s+i]);
-      }
-      printf("\n");
-    }
-    printf("============ end test GPU DU x ===========\n");    
-    printf("============ test GPU DU y ===============\n");
-    for(int i = 0; i < N_s; i++){
-      for(int e = 0; e < N_E; e++){
-  	printf("%7.4f ", h_DU[(e*N_F+2)*N_s+i]);
-      }
-      printf("\n");
-    }
-    printf("============ end test GPU DU y ===========\n");
-    delete[] h_DU;
-  }
+  // if (debug){
+  //   scalar* h_DU       = new scalar[N_F*N_s*N_E];
+  //   CUDA_SAFE_CALL(cudaMemcpy(h_DU, d_DU, N_F*N_s*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
+  //   // Test DU
+  //   printf("============ test GPU DU ===============\n");
+  //   for(int i = 0; i < N_s; i++){
+  //     for(int e = 0; e < N_E; e++){
+  // 	printf("%7.4f ", h_DU[(e*N_F+0)*N_s+i]);
+  //     }
+  //     printf("\n");
+  //   }
+  //   printf("============ end test GPU DU ===========\n");
+  //   printf("============ test GPU DU x ===============\n");
+  //   for(int i = 0; i < N_s; i++){
+  //     for(int e = 0; e < N_E; e++){
+  // 	printf("%7.4f ", h_DU[(e*N_F+1)*N_s+i]);
+  //     }
+  //     printf("\n");
+  //   }
+  //   printf("============ end test GPU DU x ===========\n");    
+  //   printf("============ test GPU DU y ===============\n");
+  //   for(int i = 0; i < N_s; i++){
+  //     for(int e = 0; e < N_E; e++){
+  // 	printf("%7.4f ", h_DU[(e*N_F+2)*N_s+i]);
+  //     }
+  //     printf("\n");
+  //   }
+  //   printf("============ end test GPU DU y ===========\n");
+  //   delete[] h_DU;
+  // }
 
   
   // if 0-order average the solution in the cells
@@ -755,10 +751,10 @@ int main (int argc, char **argv)
 
       // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
       if (cpu){
-	if(multifluid) Lcpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, h_boundaryMap, h_Ustar, h_UF);
+	if(multifluid) Lcpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, h_Ustar, h_UF);
       }
       else if(!cpu){
-      	if(multifluid) Lgpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, h_boundaryMap, d_Ustar, d_UF);
+      	if(multifluid) Lgpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, d_Ustar, d_UF);
    	CUDA_SAFE_CALL(cudaThreadSynchronize());
       }
 

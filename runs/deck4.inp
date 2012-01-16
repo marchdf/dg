@@ -1,7 +1,7 @@
 #Options
-cpu
+gpu
 nodebug
-blas
+noblas
 #time integration
 rk4
 #time step size

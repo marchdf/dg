@@ -18,7 +18,7 @@ void init_dg_shallow(const int N_s, const int N_E, const int N_F, const int D, c
 }
 
 
-void init_dg_simplew_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
+void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
 
   if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 8.\n",N_F);
   
@@ -80,6 +80,46 @@ void init_dg_simplew_mhd(const int N_s, const int N_E, const int N_F, const int 
   }
 }
 
+void init_dg_sodtube_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
+
+  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
+  
+  // Initial conditions
+  // U = (  rho, rho ux, rho uy, rho uz,   Bx, By, Bz,    E,   ee)
+  //   = (    1,      0,      0,      0,   0,  0,  0, 1.78,  0.5)  for (x<0)
+  //   = (0.125,      0,      0,      0,   0,  0,  0, 0.88, 0.05)  for (x>=0)
+  // gamma = 1.4
+
+  // Left state
+  scalar rhoL = 1;
+  scalar uL   = 0;
+  scalar pL   = 1.0;
+  scalar EtL  = 1.0/(gamma-1.0)*pL + 0.5*rhoL*uL*uL;
+
+  // Right state
+  scalar rhoR = 0.125;
+  scalar uR   = 0;
+  scalar pR   = 0.1;
+  scalar EtR  = 1.0/(gamma-1.0)*pR + 0.5*rhoR*uR*uR;
+  
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+      scalar x = XYZNodes(i,e*D+0);
+      if (x<0){
+	U(i,e*N_F+0) = rhoL;
+	U(i,e*N_F+1) = rhoL*uL;
+	U(i,e*N_F+2) = EtL ;
+	U(i,e*N_F+3) = 0 ;
+      }
+      else if (x>=0){
+	U(i,e*N_F+0) = rhoR;
+	U(i,e*N_F+1) = rhoR*uR;
+	U(i,e*N_F+2) = EtR ;
+	U(i,e*N_F+3) = 0;
+      }
+    }
+  }
+}
 
 
 void init_dg_euler1D_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
