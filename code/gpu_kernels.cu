@@ -233,6 +233,11 @@ __global__ void gpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, sca
   int e = blockIdx.x;
   int g = threadIdx.x;
 
+  s[(e*N_F+0)*N_G+g] = 0;
+  s[(e*N_F+1)*N_G+g] = 0;
+  s[(e*N_F+2)*N_G+g] = 0;
+  s[(e*N_F+3)*N_G+g] = 0;
+
   scalar rho = Ug[(e*N_F+0)*N_G+g];   
   scalar u   = Ug[(e*N_F+1)*N_G+g]/rho;  // (rho u / rho) = u
   scalar Et  = Ug[(e*N_F+2)*N_G+g];
@@ -243,6 +248,7 @@ __global__ void gpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, sca
   f[((e*N_F+0)*N_G+g)*D+0] = gpu_flux1_multifluid(rho,u);        //rho*u; 
   f[((e*N_F+1)*N_G+g)*D+0] = gpu_flux2_multifluid(rho,u,p);      //rho*u*u+P; 
   f[((e*N_F+2)*N_G+g)*D+0] = gpu_flux3_multifluid(EtplusP,u);    //EtplusP*u;
+  f[((e*N_F+3)*N_G+g)*D+0] = 0;
 }
 
 
