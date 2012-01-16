@@ -95,7 +95,7 @@ void init_dg_sodtube_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar rhoL = 1;
   scalar uL   = 0;
   scalar pL   = 1.0;
-  scalar gammaL= 1.4;
+  scalar gammaL= 1.6;
   scalar EtL  = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
 
     
@@ -103,7 +103,7 @@ void init_dg_sodtube_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar rhoR = 0.125;
   scalar uR   = 0;
   scalar pR   = 0.1;
-  scalar gammaR= 1.4;
+  scalar gammaR= 1.2;
   scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
   
   for(int e = 0; e < N_E; e++){
@@ -129,25 +129,19 @@ void init_dg_gammamf_multifluid(const int N_s, const int N_E, const int N_F, con
 
   if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
   
-  // Initial conditions
-  // U = (  rho, rho ux, rho uy, rho uz,   Bx, By, Bz,    E,   ee)
-  //   = (    1,      0,      0,      0,   0,  0,  0, 1.78,  0.5)  for (x<0)
-  //   = (0.125,      0,      0,      0,   0,  0,  0, 0.88, 0.05)  for (x>=0)
-  // gamma = 1.4
-
   // Left state
-  scalar rhoL = 1;
-  scalar uL   = 0;
-  scalar gammaL= 1.4;
-  scalar EtL  = 0.1;
-  scalar pL   = (gammaL-1)*(EtL - rhoL*uL*uL);
+  scalar rhoL = 1.0;
+  scalar uL   = 1.0;
+  scalar gammaL= 1.6;
+  scalar pL   = 1.0;
+  scalar EtL  = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
     
   // Right state
-  scalar rhoR = 1;
-  scalar uR   = 0;
+  scalar rhoR = 1.0;
+  scalar uR   = 1.0;
   scalar gammaR= 1.4;
-  scalar EtR  = 0.1;
-  scalar pR   = (gammaR-1)*(EtR - rhoR*uR*uR);
+  scalar pR   = 1.0;
+  scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
   
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
@@ -156,7 +150,7 @@ void init_dg_gammamf_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = rhoL;
 	U(i,e*N_F+1) = rhoL*uL;
 	U(i,e*N_F+2) = EtL ;
-	U(i,e*N_F+3) = rhoL*gammaL ;
+	U(i,e*N_F+3) = rhoL*gammaL;
       }
       else if (x>=0){
 	U(i,e*N_F+0) = rhoR;

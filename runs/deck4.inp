@@ -1,5 +1,5 @@
 #Options
-gpu
+cpu
 nodebug
 noblas
 #time integration
@@ -24,6 +24,6 @@ multifluid
 #number of fields
 4
 #initial condition
-simplew
+gammamf
 #boundary condition
-farfield
+periodic
