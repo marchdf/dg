@@ -102,10 +102,12 @@ int main (int argc, char **argv)
   // Setup the initial condition type
   bool simplew = false;
   bool sodtube = false;
-  bool gammamf = false;
+  bool contact = false;
+  bool matfrnt = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
-  else if (inputs.getInitialCondition()=="gammamf") gammamf = true;
+  else if (inputs.getInitialCondition()=="contact") contact = true;
+  else if (inputs.getInitialCondition()=="matfrnt") matfrnt = true;
   else{ printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // setup the boundary condition type
@@ -262,7 +264,8 @@ int main (int argc, char **argv)
   if(multifluid){
     if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
     else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-    else if(gammamf) init_dg_gammamf_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+    else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+    else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
   }
 
   if (order0) average_cell_p0(N_s, N_E, N_F, U);
