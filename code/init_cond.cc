@@ -174,7 +174,7 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar EtL   = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
     
   // Right state
-  scalar rhoR   = 0.125;
+  scalar rhoR   = 1.0;
   scalar uR     = 1.0;
   scalar gammaR = 1.6;
   scalar pR     = 1.0;
