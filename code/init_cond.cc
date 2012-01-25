@@ -18,7 +18,7 @@ void init_dg_shallow(const int N_s, const int N_E, const int N_F, const int D, c
 }
 
 
-void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, const int D, const int model, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 8.\n",N_F);
   
@@ -39,7 +39,8 @@ void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = (scalar)rho;
 	U(i,e*N_F+1) = (scalar)rho*u;
 	U(i,e*N_F+2) = (scalar)rho*a*a/(gamma*(gamma-1)) + 0.5*rho*u*rho*u/rho;
-	U(i,e*N_F+3) = (scalar)rho*gamma;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rho*gamma;
+	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma-1);
       }
       else if ((x>-1.5)&&(x<-0.5)){
 	u = -1.0/gamma*(1-tanh((x+1)/(0.25-(x+1)*(x+1))));
@@ -48,7 +49,8 @@ void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = (scalar)rho;
 	U(i,e*N_F+1) = (scalar)rho*u;
 	U(i,e*N_F+2) = (scalar)rho*a*a/(gamma*(gamma-1)) + 0.5*rho*u*rho*u/rho;
-	U(i,e*N_F+3) = (scalar)rho*gamma;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rho*gamma;
+	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma-1);
       }
       else if ((x>=-0.5)&&(x<=0.5)){
 	u = 0;
@@ -57,7 +59,8 @@ void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = (scalar)rho;
 	U(i,e*N_F+1) = (scalar)rho*u;
 	U(i,e*N_F+2) = (scalar)1.0/(gamma-1);
-	U(i,e*N_F+3) = (scalar)rho*gamma;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rho*gamma;
+	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma-1);
       }
       else if ((x>0.5)&&(x<1.5)){
 	u = 1.0/gamma*(1+tanh((x-1)/(0.25-(x-1)*(x-1))));;
@@ -66,7 +69,8 @@ void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = (scalar)rho;
 	U(i,e*N_F+1) = (scalar)rho*u;
 	U(i,e*N_F+2) = (scalar)rho*a*a/(gamma*(gamma-1)) + 0.5*rho*u*rho*u/rho;
-	U(i,e*N_F+3) = (scalar)rho*gamma;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rho*gamma;
+	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma-1);
       }
       else if (x>=1.5){
 	u = 2.0/gamma;
@@ -75,13 +79,14 @@ void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = (scalar)rho;
 	U(i,e*N_F+1) = (scalar)rho*u;
 	U(i,e*N_F+2) = (scalar)rho*a*a/(gamma*(gamma-1)) + 0.5*rho*u*rho*u/rho;
-	U(i,e*N_F+3) = (scalar)rho*gamma;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rho*gamma;
+	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma-1);
       }
     }
   }
 }
 
-void init_dg_sodtube_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_sodtube_multifluid(const int N_s, const int N_E, const int N_F, const int D, const int model, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
   
@@ -113,19 +118,21 @@ void init_dg_sodtube_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = rhoL;
 	U(i,e*N_F+1) = rhoL*uL;
 	U(i,e*N_F+2) = EtL ;
-	U(i,e*N_F+3) = rhoL*gammaL ;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rhoL*gammaL;
+	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaL-1);
       }
       else if (x>=0){
 	U(i,e*N_F+0) = rhoR;
 	U(i,e*N_F+1) = rhoR*uR;
 	U(i,e*N_F+2) = EtR ;
-	U(i,e*N_F+3) = rhoR*gammaR;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rhoR*gammaR;
+	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaR-1);
       }
     }
   }
 }
 
-void init_dg_contact_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_contact_multifluid(const int N_s, const int N_E, const int N_F, const int D, const int model, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
   
@@ -150,19 +157,22 @@ void init_dg_contact_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = rhoL;
 	U(i,e*N_F+1) = rhoL*uL;
 	U(i,e*N_F+2) = EtL ;
-	U(i,e*N_F+3) = rhoL*gammaL;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rhoL*gammaL;
+	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaL-1);
       }
       else if (x>=0){
 	U(i,e*N_F+0) = rhoR;
 	U(i,e*N_F+1) = rhoR*uR;
 	U(i,e*N_F+2) = EtR ;
-	U(i,e*N_F+3) = rhoR*gammaR;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rhoR*gammaR;
+	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaR-1);
       }
     }
   }
 }
 
-void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+
+void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const int N_F, const int D, const int model, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
   
@@ -187,17 +197,47 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = rhoL;
 	U(i,e*N_F+1) = rhoL*uL;
 	U(i,e*N_F+2) = EtL ;
-	U(i,e*N_F+3) = rhoL*gammaL;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rhoL*gammaL;
+	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaL-1);
+
       }
       else if (x>=1E-6){
 	U(i,e*N_F+0) = rhoR;
 	U(i,e*N_F+1) = rhoR*uR;
 	U(i,e*N_F+2) = EtR ;
-	U(i,e*N_F+3) = rhoR*gammaR;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rhoR*gammaR;
+	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaR-1);
+
       }
     }
   }
 }
+
+void init_dg_sinegam_multifluid(const int N_s, const int N_E, const int N_F, const int D, const int model, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+
+  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
+
+  scalar rho     = 1.0;
+  scalar u       = 1.0;
+  scalar gamma0  = 1.4;
+  scalar sinegam = 0.0;  // sine perturbation on gamma
+  scalar A       = 0.25; // amplitude of the perturbation
+  scalar p       = 1.0;
+  scalar Et      = 1.0/(gamma0+sinegam-1.0)*p + 0.5*rho*u*u;
+  
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+      scalar x = XYZNodes(i,e*D+0);
+      sinegam = A*sin(M_PI*x);
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*u;
+      U(i,e*N_F+2) = 1.0/(gamma0+sinegam-1.0)*p + 0.5*rho*u*u;
+      if      (model==0) U(i,e*N_F+3) = (scalar)rho*(gamma0+sinegam);
+      else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma0+sinegam-1);
+    }
+  }
+}
+
 
 void init_dg_euler1D_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
 

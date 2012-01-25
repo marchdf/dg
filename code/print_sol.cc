@@ -134,7 +134,7 @@ void print_dg_mhd(const int N_s, const int N_E, const int N_F, scalar* U, const 
 //===========================================
 // Output multifluid solutions
 //===========================================
-void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const fullMatrix<scalar> &U, const simpleMesh m, const int msh_lin, const int step, const double time, const int append, const int all){
+void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int model, const fullMatrix<scalar> &U, const simpleMesh m, const int msh_lin, const int step, const double time, const int append, const int all){
 
  
   fullMatrix<scalar> Rho;
@@ -155,7 +155,9 @@ void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const full
       if((all==-1)||(all==0)) Rho(i,e) = U(i,e*N_F+0);
       if((all==-1)||(all==1)) Ux (i,e) = U(i,e*N_F+1)/Rho(i,e);
       if((all==-1)||(all==2)) Et (i,e) = U(i,e*N_F+2);
-      if((all==-1)||(all==3)) G  (i,e) = U(i,e*N_F+3)/Rho(i,e);
+      if((all==-1)||(all==3)){
+	if      (model==0) G  (i,e) = U(i,e*N_F+3)/Rho(i,e);
+	else if (model==1) G  (i,e) = 1+1.0/U(i,e*N_F+3);}
       if((all==-1)||(all==4)) P  (i,e) = (G(i,e)-1)*(Et(i,e) - 0.5*Rho(i,e)*Ux(i,e)*Ux(i,e));
     }
   }
@@ -167,7 +169,7 @@ void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const full
   if((all==-1)||(all==4)) m.writeSolution( P,  msh_lin,  "p.pos",   "P", step, time, append);
 }
 
-void print_dg_multifluid(const int N_s, const int N_E, const int N_F, scalar* U, const simpleMesh m, const int msh_lin, const int step, const double time, const int append, const int all){
+void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int model, scalar* U, const simpleMesh m, const int msh_lin, const int step, const double time, const int append, const int all){
 
   fullMatrix<scalar> Rho;
   fullMatrix<scalar> Ux ;
@@ -187,7 +189,9 @@ void print_dg_multifluid(const int N_s, const int N_E, const int N_F, scalar* U,
       if((all==-1)||(all==0)) Rho(i,e) = U[(e*N_F+0)*N_s+i];
       if((all==-1)||(all==1)) Ux (i,e) = U[(e*N_F+1)*N_s+i]/Rho(i,e);
       if((all==-1)||(all==2)) Et (i,e) = U[(e*N_F+2)*N_s+i];
-      if((all==-1)||(all==3)) G  (i,e) = U[(e*N_F+3)*N_s+i]/Rho(i,e);
+      if((all==-1)||(all==3)){
+	if      (model==0) G  (i,e) = U[(e*N_F+3)*N_s+i]/Rho(i,e);
+	else if (model==1) G  (i,e) = 1+1.0/U[(e*N_F+3)*N_s+i];}
       if((all==-1)||(all==4)) P  (i,e) = (G(i,e)-1)*(Et(i,e) - 0.5*Rho(i,e)*Ux(i,e)*Ux(i,e));
     }
   }

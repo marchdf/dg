@@ -228,29 +228,38 @@ __device__ scalar gpu_flux1_multifluid(scalar rho, scalar u){return rho*u;}
 __device__ scalar gpu_flux2_multifluid(scalar rho, scalar u, scalar p){return rho*u*u+p;} 
 __device__ scalar gpu_flux3_multifluid(scalar EtplusP, scalar u) {return EtplusP*u;}
 __device__ scalar gpu_flux4_multifluid(scalar rho, scalar u, scalar gamma) {return rho*u*gamma;}
- 
-__global__ void gpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
+__device__ scalar gpu_flux5_multifluid(scalar u, scalar gamma) {return u/(gamma-1);}
+
+__global__ void gpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, int model, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
 
   int e = blockIdx.x;
   int g = threadIdx.x;
 
-  s[(e*N_F+0)*N_G+g] = 0;
-  s[(e*N_F+1)*N_G+g] = 0;
-  s[(e*N_F+2)*N_G+g] = 0;
-  s[(e*N_F+3)*N_G+g] = 0;
-
   scalar rho = Ug[(e*N_F+0)*N_G+g];   
   scalar u   = Ug[(e*N_F+1)*N_G+g]/rho;  // (rho u / rho) = u
   scalar Et  = Ug[(e*N_F+2)*N_G+g];
-  scalar gamma = Ug[(e*N_F+3)*N_G+g]/rho;
+  scalar gamma=0;
+  if      (model==0) gamma=Ug[(e*N_F+3)*N_G+g]/rho;
+  else if (model==1) gamma=1+1.0/Ug[(e*N_F+3)*N_G+g];
   scalar p = (gamma-1)*(Et - 0.5*rho*u*u);
   scalar EtplusP = Et + p;
+  scalar dudx = 0;
+  for(int alpha = 0; alpha < D; alpha++){
+    dudx += dUg[((e*N_F+1)*N_G+g)*D+alpha]*invJac[((e*N_G+g)*D+0)*D+alpha];
+  }
 
+  s[(e*N_F+0)*N_G+g] = 0;
+  s[(e*N_F+1)*N_G+g] = 0;
+  s[(e*N_F+2)*N_G+g] = 0;
+  if      (model==0) s[(e*N_F+3)*N_G+g] = 0;
+  else if (model==1) s[(e*N_F+3)*N_G+g] = Ug[(e*N_F+3)*N_G+g] * dudx;
+  
   // Flux derive par rapport a x
   f[((e*N_F+0)*N_G+g)*D+0] = gpu_flux1_multifluid(rho,u);        //rho*u; 
   f[((e*N_F+1)*N_G+g)*D+0] = gpu_flux2_multifluid(rho,u,p);      //rho*u*u+P; 
   f[((e*N_F+2)*N_G+g)*D+0] = gpu_flux3_multifluid(EtplusP,u);    //EtplusP*u;
-  f[((e*N_F+3)*N_G+g)*D+0] = gpu_flux4_multifluid(rho,u,gamma); 
+  if      (model==0) f[((e*N_F+3)*N_G+g)*D+0] = gpu_flux4_multifluid(rho,u,gamma);
+  else if (model==1) f[((e*N_F+3)*N_G+g)*D+0] = gpu_flux5_multifluid(u,gamma);
 }
 
 
@@ -415,7 +424,7 @@ __global__ void gpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar*
 }
 
 
-__global__ void gpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, scalar* q, scalar* UgF){
+__global__ void gpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int model, scalar* q, scalar* UgF){
 
   int t = blockIdx.x;
 
@@ -425,8 +434,13 @@ __global__ void gpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, scalar* q, 
   scalar uR  = UgF[(t*N_F+1)*2+1]/rhoR;
   scalar EtL = UgF[(t*N_F+2)*2+0];
   scalar EtR = UgF[(t*N_F+2)*2+1];
-  scalar gammaL = UgF[(t*N_F+3)*2+0]/rhoL;
-  scalar gammaR = UgF[(t*N_F+3)*2+1]/rhoR;
+  scalar gammaL = 0; scalar gammaR = 0;
+  if (model==0){
+    gammaL = UgF[(t*N_F+3)*2+0]/rhoL;
+    gammaR = UgF[(t*N_F+3)*2+1]/rhoR;}
+  else if (model==1){
+    gammaL = 1+1.0/UgF[(t*N_F+3)*2+0];
+    gammaR = 1+1.0/UgF[(t*N_F+3)*2+1];}
   scalar pL = (gammaL-1)*(EtL - 0.5*rhoL*uL*uL);
   scalar pR = (gammaR-1)*(EtR - 0.5*rhoR*uR*uR);
   scalar EtPL = EtL+pL;
@@ -475,12 +489,15 @@ __global__ void gpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, scalar* q, 
   q[(t*N_F+2)*2+0] = qL; 
   q[(t*N_F+2)*2+1] = -qL;
 
-  //fourth: fx = rho*u*gamma; 
-  qL = -0.5*(gpu_flux4_multifluid(rhoL,uL,gammaL) + gpu_flux4_multifluid(rhoR,uR,gammaR)
-	     -maxvap*(rhoR*gammaR-rhoL*gammaL));
+  //fourth:
+  if (model==0){      //fx = rho*u*gamma; 
+    qL = -0.5*(gpu_flux4_multifluid(rhoL,uL,gammaL) + gpu_flux4_multifluid(rhoR,uR,gammaR)
+	       -maxvap*(rhoR*gammaR-rhoL*gammaL));}
+  else if (model==1){ //fx = u/(gamma-1); 
+    qL = -0.5*(gpu_flux5_multifluid(uL,gammaL) + gpu_flux5_multifluid(uR,gammaR)
+	       -maxvap*(1.0/(gammaR-1)-1.0/(gammaL-1)));}
   q[(t*N_F+3)*2+0] = qL; 
   q[(t*N_F+3)*2+1] = -qL;
-  
 }
 
 
@@ -700,11 +717,11 @@ void Lgpu_evaluate_sf_mhd(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f
 }
 
 extern "C" 
-void Lgpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
+void Lgpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, int model, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
 
   dim3 dimBlock(N_G,1,1);
   dim3 dimGrid(N_E,1);
-  gpu_evaluate_sf_multifluid<<<dimGrid,dimBlock>>>(D, N_G, N_E, N_F, s, f, Ug, dUg, invJac);
+  gpu_evaluate_sf_multifluid<<<dimGrid,dimBlock>>>(D, N_G, N_E, N_F, model, s, f, Ug, dUg, invJac);
 }
 
 extern "C" 
@@ -724,11 +741,11 @@ void Lgpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scal
 }
 
 extern "C" 
-void Lgpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, scalar* q, scalar* UgF){
+void Lgpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int model, scalar* q, scalar* UgF){
 
   dim3 dimBlock(1,1,1);
   dim3 dimGrid(M_T,1);
-  gpu_evaluate_q_multifluid<<<dimGrid,dimBlock,2*4*sizeof(scalar)>>>(M_G, M_T, N_F, q, UgF);
+  gpu_evaluate_q_multifluid<<<dimGrid,dimBlock,2*4*sizeof(scalar)>>>(M_G, M_T, N_F, model, q, UgF);
 }
 
 extern "C" 

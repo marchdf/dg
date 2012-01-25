@@ -63,6 +63,10 @@ void deck::readDeck(const char *fileName)
     printf("Invalid file format\n");
   getline(input,_problem);
   getline(input,line);
+  if (line!="#model")
+    printf("Invalid file format\n");
+  getline(input,_model);
+  getline(input,line);
   if (line!="#number of fields")
     printf("Invalid file format\n");
   input>>_nf;  

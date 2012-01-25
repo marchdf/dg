@@ -18,6 +18,7 @@ class deck {
   std::string _meshfile;
   std::string _elemType;
   std::string _problem;
+  std::string _model;
   int _nf;
   std::string _ic;
   std::string _bc;
@@ -36,6 +37,7 @@ class deck {
   inline std::string getMeshfile() { return _meshfile;}
   inline std::string getElemType() { return _elemType;}
   inline std::string getProblem() { return _problem;}
+  inline std::string getModel() { return _model;}
   inline int getNumFields() {return _nf;}
   inline std::string getInitialCondition() { return _ic;}
   inline std::string getBoundaryCondition() { return _bc;}
