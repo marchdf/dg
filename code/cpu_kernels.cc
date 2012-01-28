@@ -260,14 +260,14 @@ void cpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, int model, sca
       scalar EtplusP = Et + p;
       scalar dudx = 0;
       for(int alpha = 0; alpha < D; alpha++){
-	dudx += dUg[((e*N_F+1)*N_G+g)*D+alpha]*invJac[((e*N_G+g)*D+0)*D+alpha];
+	dudx += (dUg[((e*N_F+1)*N_G+g)*D+alpha]-u*dUg[((e*N_F+0)*N_G+g)*D+alpha])/rho*invJac[((e*N_G+g)*D+0)*D+alpha];
       }
 
       s[(e*N_F+0)*N_G+g] = 0;
       s[(e*N_F+1)*N_G+g] = 0;
       s[(e*N_F+2)*N_G+g] = 0;
       if      (model==0) s[(e*N_F+3)*N_G+g] = 0;
-      else if (model==1) s[(e*N_F+3)*N_G+g] = Ug[(e*N_F+3)*N_G+g] * dudx;
+      else if (model==1) s[(e*N_F+3)*N_G+g] = 0;//dudx/(gamma-1);
 
       // Flux derive par rapport a x
       f[((e*N_F+0)*N_G+g)*D+0] = cpu_flux1_multifluid(rho,u);       

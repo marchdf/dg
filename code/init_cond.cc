@@ -221,7 +221,7 @@ void init_dg_sinegam_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar u       = 1.0;
   scalar gamma0  = 1.4;
   scalar sinegam = 0.0;  // sine perturbation on gamma
-  scalar A       = 0.25; // amplitude of the perturbation
+  scalar A       = 0.10; // amplitude of the perturbation
   scalar p       = 1.0;
   scalar Et      = 1.0/(gamma0+sinegam-1.0)*p + 0.5*rho*u*u;
   

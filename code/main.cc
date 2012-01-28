@@ -869,6 +869,12 @@ int main (int argc, char **argv)
 
     T = T + Dt;
 
+
+
+    // Check for NaN
+    //if(cpu)         Lcpu_isnan(N_s, N_E, N_F, h_U);
+    //else if (!cpu)  Lgpu_isnan(N_s, N_E, N_F, d_U);    
+    
     //
     // Get the solution on the CPU so that we can 
     // output it to a file 
