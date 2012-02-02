@@ -148,11 +148,20 @@ void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int 
   if((all==-1)||(all==2)) Et.resize(N_s, N_E);
   if((all==-1)||(all==3))  G.resize(N_s, N_E);
   if((all==-1)||(all==4))  P.resize(N_s, N_E);
-  
+
   // separate the fields
+  scalar rho = 0;
   for (int e = 0; e < N_E; e++){
     for (int i = 0; i < N_s; i++){
-      if((all==-1)||(all==0)) Rho(i,e) = U(i,e*N_F+0);
+
+      // Check for NaN error
+      rho = U(i,e*N_F+0);
+      if(rho != rho){
+	printf("NaN error. Code crashed... bummer.\n");
+	exit(1);
+      }
+
+      if((all==-1)||(all==0)) Rho(i,e) = rho;
       if((all==-1)||(all==1)) Ux (i,e) = U(i,e*N_F+1)/Rho(i,e);
       if((all==-1)||(all==2)) Et (i,e) = U(i,e*N_F+2);
       if((all==-1)||(all==3)){
@@ -184,9 +193,18 @@ void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int 
   if((all==-1)||(all==4))  P.resize(N_s, N_E);
     
   // separate the fields
+  scalar rho = 0;
   for (int e = 0; e < N_E; e++){
     for (int i = 0; i < N_s; i++){
-      if((all==-1)||(all==0)) Rho(i,e) = U[(e*N_F+0)*N_s+i];
+
+      // Check for NaN error
+      rho = U[(e*N_F+0)*N_s+i];
+      if(rho != rho){
+	printf("NaN error. Code crashed... bummer.\n");
+	exit(1);
+      }
+
+      if((all==-1)||(all==0)) Rho(i,e) = rho;
       if((all==-1)||(all==1)) Ux (i,e) = U[(e*N_F+1)*N_s+i]/Rho(i,e);
       if((all==-1)||(all==2)) Et (i,e) = U[(e*N_F+2)*N_s+i];
       if((all==-1)||(all==3)){

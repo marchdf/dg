@@ -21,6 +21,7 @@ void dg_jacobians_elements(const int N_G, const int N_E, const int D, fullMatrix
     J(e,0)    =  fabs(det);
     invJ(e,0) =  fabs(1.0/det);
     for(int g = 0; g < N_G; g++){
+      //printf("Jac of e:%i and g:%i = %f\n",e,g,Jac(e,g));
       invJac(e,g) =  1.0/Jac(e,g);
     }
   }

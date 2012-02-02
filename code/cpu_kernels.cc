@@ -71,6 +71,14 @@ void cpu_mapToFace_mhd(int M_s, int M_T, int N_F, int* map, scalar* U, scalar* U
 
 void cpu_mapToFace_multifluid(int M_s, int M_T, int N_F, int N_s, int boundaryMap, scalar* U, scalar* UF){
 
+  // All other boundaries
+  for(int t = 1; t < M_T-1; t++){ 
+    for(int fc = 0; fc < N_F; fc++){    
+      UF[(t*N_F+fc)*2+0] = U[((t-1)*N_F+fc)*N_s+1];
+      UF[(t*N_F+fc)*2+1] = U[(t*N_F+fc)*N_s+0];
+    }
+  }
+
   // Start and end boundaries
   for(int fc = 0; fc < N_F; fc++){
     UF[(0*N_F+fc)*2+1]       = U[(0*N_F+fc)*N_s+0];     
@@ -85,13 +93,6 @@ void cpu_mapToFace_multifluid(int M_s, int M_T, int N_F, int N_s, int boundaryMa
     }
   }
 
-  // All other boundaries
-  for(int t = 1; t < M_T-1; t++){ 
-    for(int fc = 0; fc < N_F; fc++){    
-      UF[(t*N_F+fc)*2+0] = U[((t-1)*N_F+fc)*N_s+1];
-      UF[(t*N_F+fc)*2+1] = U[(t*N_F+fc)*N_s+0];
-    }
-  }
 }
 
 
@@ -258,23 +259,28 @@ void cpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, int model, sca
       else if (model==1) gamma=1+1.0/Ug[(e*N_F+3)*N_G+g];
       scalar p = (gamma-1)*(Et - 0.5*rho*u*u);
       scalar EtplusP = Et + p;
-      scalar dudx = 0;
-      for(int alpha = 0; alpha < D; alpha++){
-	dudx += (dUg[((e*N_F+1)*N_G+g)*D+alpha]-u*dUg[((e*N_F+0)*N_G+g)*D+alpha])/rho*invJac[((e*N_G+g)*D+0)*D+alpha];
-      }
+      scalar lambda = 1;
+      scalar dudx = (dUg[(e*N_F+1)*N_G+g]-u*dUg[(e*N_F+0)*N_G+g])/rho*invJac[e*N_G+g];
+      scalar dgamma1dx = dUg[(e*N_F+3)*N_G+g]*invJac[e*N_G+g];
+      //dudx += dUg[((e*N_F+1)*N_G+g)*D+alpha];//*invJac[((e*N_G+g)*D+0)*D+alpha];
+      //scalar dudx = dUg[e*N_G+g]*invJac[e*N_G+g];
 
+
+      if ((e==100)&&(g==2)) printf("dudx=%12.11f  dudxi=%12.11f  invJac=%f\n", dudx, dUg[(e*N_F+1)*N_G+g], invJac[e*N_G+g]);
+      //if ((e==100)&&(g==2)) printf("dudx=%12.11f  dudxi=%12.11f  invJac=%f\n", dudx, dUg[e*N_G+g], invJac[e*N_G+g]);
+	    
       s[(e*N_F+0)*N_G+g] = 0;
       s[(e*N_F+1)*N_G+g] = 0;
       s[(e*N_F+2)*N_G+g] = 0;
       if      (model==0) s[(e*N_F+3)*N_G+g] = 0;
-      else if (model==1) s[(e*N_F+3)*N_G+g] = 0;//dudx/(gamma-1);
+      else if (model==1) s[(e*N_F+3)*N_G+g] = lambda*dudx/(gamma-1) - (1-lambda)*dgamma1dx*u;
 
       // Flux derive par rapport a x
       f[((e*N_F+0)*N_G+g)*D+0] = cpu_flux1_multifluid(rho,u);       
       f[((e*N_F+1)*N_G+g)*D+0] = cpu_flux2_multifluid(rho,u,p);      
       f[((e*N_F+2)*N_G+g)*D+0] = cpu_flux3_multifluid(EtplusP,u);   
       if      (model==0) f[((e*N_F+3)*N_G+g)*D+0] = cpu_flux4_multifluid(rho,u,gamma);
-      else if (model==1) f[((e*N_F+3)*N_G+g)*D+0] = cpu_flux5_multifluid(u,gamma);
+      else if (model==1) f[((e*N_F+3)*N_G+g)*D+0] = lambda*cpu_flux5_multifluid(u,gamma);
     }
   }
 }
@@ -457,8 +463,8 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int model, scalar* q, 
 	gammaL = UgF[(t*N_F+3)*2+0]/rhoL;
 	gammaR = UgF[(t*N_F+3)*2+1]/rhoR;}
       else if (model==1){
-	gammaL = 1+1.0/UgF[(t*N_F+3)*2+0];
-	gammaR = 1+1.0/UgF[(t*N_F+3)*2+1];}
+	gammaL = 1.0+1.0/UgF[(t*N_F+3)*2+0];
+	gammaR = 1.0+1.0/UgF[(t*N_F+3)*2+1];}
       //printf("%f and %f\n",gammaL, gammaR);
       scalar pL = (gammaL-1)*(EtL - 0.5*rhoL*uL*uL);
       scalar pR = (gammaR-1)*(EtR - 0.5*rhoR*uR*uR);
@@ -511,11 +517,12 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int model, scalar* q, 
       q[(t*N_F+2)*2+1] = -qL;
 
       //fourth: 
-      if (model==0){      //fx = rho*u*gamma; 
+      if      (model==0){ //fx = rho*u*gamma; 
 	qL = -0.5*(cpu_flux4_multifluid(rhoL,uL,gammaL) + cpu_flux4_multifluid(rhoR,uR,gammaR)
 		   -maxvap*(rhoR*gammaR-rhoL*gammaL));}
-      else if (model==1){ //fx = u/(gamma-1); 
-      	qL = -0.5*(cpu_flux5_multifluid(uL,gammaL) + cpu_flux5_multifluid(uR,gammaR)
+      else if (model==1){ //fx = u/(gamma-1);
+	scalar lambda = 1;
+      	qL = -lambda*0.5*(cpu_flux5_multifluid(uL,gammaL) + cpu_flux5_multifluid(uR,gammaR)
 		   -maxvap*(1.0/(gammaR-1)-1.0/(gammaL-1)));}
       q[(t*N_F+3)*2+0] = qL; 
       q[(t*N_F+3)*2+1] = -qL;    
@@ -649,8 +656,6 @@ void cpu_zeroVector(int N_s, int N_E, int N_F, scalar* Q){
     }
   }
 }
-
-
 
 
 //===============================================================

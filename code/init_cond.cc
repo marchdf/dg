@@ -228,12 +228,38 @@ void init_dg_sinegam_multifluid(const int N_s, const int N_E, const int N_F, con
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
-      sinegam = A*sin(M_PI*x);
+      if ((x<-1)||(x>1)) sinegam = 0;
+      else               sinegam = A*sin(M_PI*x);
       U(i,e*N_F+0) = rho;
       U(i,e*N_F+1) = rho*u;
       U(i,e*N_F+2) = 1.0/(gamma0+sinegam-1.0)*p + 0.5*rho*u*u;
       if      (model==0) U(i,e*N_F+3) = (scalar)rho*(gamma0+sinegam);
       else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma0+sinegam-1);
+    }
+  }
+}
+             
+void init_dg_expogam_multifluid(const int N_s, const int N_E, const int N_F, const int D, const int model, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+
+  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
+
+  scalar rho     = 1.0;
+  scalar u       = 1.0;
+  scalar gamma0  = 1.4;
+  scalar expogam = 0.0;  // exp perturbation on gamma
+  scalar A       = 0.10; // amplitude of the perturbation
+  scalar p       = 1.0;
+  scalar Et      = 1.0/(gamma0+expogam-1.0)*p + 0.5*rho*u*u;
+  
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+      scalar x = XYZNodes(i,e*D+0);
+      expogam = 0.0*exp(-x*x/(0.2*0.2));
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*u;
+      U(i,e*N_F+2) = 1.0/(gamma0+expogam-1.0)*p + 0.5*rho*u*u;
+      if      (model==0) U(i,e*N_F+3) = (scalar)rho*(gamma0+expogam);
+      else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma0+expogam-1);
     }
   }
 }

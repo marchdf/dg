@@ -111,11 +111,13 @@ int main (int argc, char **argv)
   bool contact = false;
   bool matfrnt = false;
   bool sinegam = false;
+  bool expogam = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
   else if (inputs.getInitialCondition()=="contact") contact = true;
   else if (inputs.getInitialCondition()=="matfrnt") matfrnt = true;
   else if (inputs.getInitialCondition()=="sinegam") sinegam = true;
+  else if (inputs.getInitialCondition()=="expogam") expogam = true;
   else{ printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // setup the boundary condition type
@@ -213,6 +215,16 @@ int main (int argc, char **argv)
     }    
   }
 
+  // scalar sum = 0.0;
+  // for(int g = 0; g < N_G; g++){
+  //   sum = 0.0;
+  //   for(int i = 0; i < N_s; i++){
+  //     sum+=dphi(g,i);  //see paper for indexing p.6
+  //   }
+  //   printf("g:%i -> sum dphi=%12.11f\n", g, sum); 
+  // }
+  
+
   //////////////////////////////////////////////////////////////////////////   
   //
   // Multiply des fonctions de formes et derivees avec les poids
@@ -277,6 +289,7 @@ int main (int argc, char **argv)
     else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
     else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
     else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
+    else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
   }
 
   if (order0) average_cell_p0(N_s, N_E, N_F, U);
@@ -339,7 +352,7 @@ int main (int argc, char **argv)
   scalar* h_J       = new scalar[N_E];              makeZero(h_J,N_E);                                 // not same as J!!
   scalar* h_invJac  = new scalar[N_G*D*N_E*D];      makeZero(h_invJac,N_G*D*N_E*D);                    // not same as invJac!!
   scalar* h_Us      = new scalar[N_s*N_E*N_F];	    makeZero(h_Us,N_s*N_E*N_F);	 
-  scalar* h_Ustar   = new scalar[N_s*N_E*N_F];	    makeZero(h_Ustar,N_s*N_E*N_F);	 
+  scalar* h_Ustar   = new scalar[N_s*N_E*N_F];	    makeZero(h_Ustar,N_s*N_E*N_F);
   scalar* h_DU      = new scalar[N_s*N_E*N_F];	    makeZero(h_DU,N_s*N_E*N_F);	 
   scalar* h_U       = new scalar[N_s*N_E*N_F];	    makeZero(h_U,N_s*N_E*N_F);	 
   scalar* h_UF      = new scalar[2*N_F*M_s*M_T];    makeZero(h_UF,2*N_F*M_s*M_T); 
@@ -355,6 +368,8 @@ int main (int argc, char **argv)
   scalar* h_q       = new scalar[M_G*M_T*N_F*2];    makeZero(h_q,M_G*M_T*N_F*2); 
   scalar* h_Q       = new scalar[N_s*N_E*N_F];      makeZero(h_Q,N_s*N_E*N_F);   
 
+  scalar* h_Vtmp    = new scalar[N_s*N_E];          makeZero(h_Vtmp, N_s*N_E);
+  scalar* h_dVinteg = new scalar[N_G*N_E];          makeZero(h_dVinteg, N_G*N_E);
   
   // copy from the fullMatrix to the pointer format (column major)
   copyMatrixToPointer(phi,h_phi);
@@ -483,11 +498,19 @@ int main (int argc, char **argv)
     }
   }
 
+  // Get the velocity field (to later find the derivative)
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+      h_Vtmp[e*N_s+i] = h_U[(e*N_F+1)*N_s+i]/h_U[(e*N_F+0)*N_s+i]; // u = (rho u)/rho
+    }
+  }
+  
   // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes
   if (cpu){
     if (blas == 1){
       blasGemm("N","N", N_G  , N_E*N_F, N_s, 1, h_phi,  N_G  , h_U, N_s, 0.0, h_Uinteg , N_G);
-      blasGemm("N","N", N_G*D, N_E*N_F, N_s, 1, h_dphi, N_G*D, h_U, N_s, 0.0, h_dUinteg, N_G*D);}
+      blasGemm("N","N", N_G*D, N_E*N_F, N_s, 1, h_dphi, N_G*D, h_U, N_s, 0.0, h_dUinteg, N_G*D);
+      blasGemm("N","N", N_G, N_E, N_s, 1, h_dphi, N_G, h_Vtmp, N_s, 0.0, h_dVinteg, N_G);}
     else Lcpu_collocationU(D, N_G, N_s, N_E, N_F, h_Uinteg, h_dUinteg, h_phi, h_dphi, h_U);
   }
   else if(!cpu){
@@ -534,6 +557,7 @@ int main (int argc, char **argv)
   // evaluate_sf: requires Uinteg, (dUintegR), H0, G0, s,f 
   if (cpu){
     if(multifluid) Lcpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, h_s, h_f, h_Uinteg, h_dUinteg, h_invJac);
+    //if(multifluid) Lcpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, h_s, h_f, h_Uinteg, h_dVinteg, h_invJac);
   }
   else if(!cpu){
     if(multifluid) Lgpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, d_s, d_f, d_Uinteg, d_dUinteg, d_invJac);
@@ -758,11 +782,19 @@ int main (int argc, char **argv)
    	CUDA_SAFE_CALL(cudaThreadSynchronize());
       }
 
+      // Get the velocity field (to later find the derivative)
+      for(int e = 0; e < N_E; e++){
+	for(int i = 0; i < N_s; i++){
+	  h_Vtmp[e*N_s+i] = h_Ustar[(e*N_F+1)*N_s+i]/h_Ustar[(e*N_F+0)*N_s+i]; // u = (rho u)/rho
+	}
+      }
+
       // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes
       if (cpu){
   	if (blas==1) {
   	  blasGemm("N","N", N_G  , N_E*N_F, N_s, 1, h_phi,  N_G  , h_Ustar, N_s, 0.0, h_Uinteg , N_G);
-  	  blasGemm("N","N", N_G*D, N_E*N_F, N_s, 1, h_dphi, N_G*D, h_Ustar, N_s, 0.0, h_dUinteg, N_G*D);}
+  	  blasGemm("N","N", N_G*D, N_E*N_F, N_s, 1, h_dphi, N_G*D, h_Ustar, N_s, 0.0, h_dUinteg, N_G*D);
+	  blasGemm("N","N", N_G, N_E, N_s, 1, h_dphi, N_G, h_Vtmp, N_s, 0.0, h_dVinteg, N_G);}
   	else Lcpu_collocationU(D, N_G, N_s, N_E, N_F, h_Uinteg, h_dUinteg, h_phi, h_dphi, h_Ustar);
       }
       else if(!cpu){
@@ -785,6 +817,7 @@ int main (int argc, char **argv)
       // evaluate_sf: requires Uinteg, (dUintegR), H0, G0, s,f 
       if (cpu){
 	if(multifluid) Lcpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, h_s, h_f, h_Uinteg, h_dUinteg, h_invJac);
+	//if(multifluid) Lcpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, h_s, h_f, h_Uinteg, h_dVinteg, h_invJac);
       }
       else if(!cpu){
 	if(multifluid) Lgpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, d_s, d_f, d_Uinteg, d_dUinteg, d_invJac);
@@ -870,11 +903,6 @@ int main (int argc, char **argv)
     T = T + Dt;
 
 
-
-    // Check for NaN
-    //if(cpu)         Lcpu_isnan(N_s, N_E, N_F, h_U);
-    //else if (!cpu)  Lgpu_isnan(N_s, N_E, N_F, d_U);    
-    
     //
     // Get the solution on the CPU so that we can 
     // output it to a file 
@@ -959,6 +987,9 @@ int main (int argc, char **argv)
   delete[] h_q;
   delete[] h_Q;
 
+  delete[] h_Vtmp;
+  delete[] h_dVinteg;
+  
   delete[] beta;
   delete[] gamma;
 
