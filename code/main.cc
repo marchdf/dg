@@ -91,7 +91,14 @@ int main (int argc, char **argv)
   bool debug = inputs.getDebug();
   bool blas = inputs.getBlas(); if (blas==1) printf("Using BLAS\n");
   int order = inputs.getOrder();
-  bool order0 = false; if (order==0) {order0 = true; order = 1;}    
+  bool order0 = false; if (order==0) {order0 = true; order = 1;}
+
+  // Get the flux
+  int  flux;
+  if      (inputs.getFlux()=="llf") flux = 0;
+  else if (inputs.getFlux()=="ncf") flux = 1;
+  else{ printf("Invalid flux setup. Correct the deck.\n");}
+  
   std::string fileName = inputs.getMeshfile();
   
   // Setup the problem type
@@ -579,7 +586,7 @@ int main (int argc, char **argv)
 
   // evaluate_q: requires UintegF, normals, q, H0, G0
   if (cpu){
-    if(multifluid) Lcpu_evaluate_q_multifluid(M_G, M_T, N_F, model, h_q, h_UintegF);
+    if(multifluid) Lcpu_evaluate_q_multifluid(M_G, M_T, N_F, flux, model, h_q, h_UintegF);
   }
   else if (!cpu){
     if(multifluid) Lgpu_evaluate_q_multifluid(M_G, M_T, N_F, model, d_q, d_UintegF);
@@ -826,7 +833,7 @@ int main (int argc, char **argv)
 
       // evaluate_q: requires UintegF, normals, q, H0, G0
       if (cpu){
-	if(multifluid) Lcpu_evaluate_q_multifluid(M_G, M_T, N_F, model, h_q, h_UintegF);
+	if(multifluid) Lcpu_evaluate_q_multifluid(M_G, M_T, N_F, flux, model, h_q, h_UintegF);
       }
       else if (!cpu){
 	if(multifluid) Lgpu_evaluate_q_multifluid(M_G, M_T, N_F, model, d_q, d_UintegF);

@@ -18,7 +18,7 @@ extern "C" void Lcpu_evaluate_sf_mhd(int D, int N_G, int N_E, int N_F, scalar* s
 extern "C" void Lcpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, int model, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac);
 extern "C" void Lcpu_evaluate_q_shallow(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scalar H0, scalar G0, scalar* normals);
 extern "C" void Lcpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scalar gamma, scalar* normals);
-extern "C" void Lcpu_evaluate_q_multifluid(int M_G, int M_T, int model, int N_F, scalar* q, scalar* UgF);
+extern "C" void Lcpu_evaluate_q_multifluid(int M_G, int M_T, int flux, int model, int N_F, scalar* q, scalar* UgF);
 extern "C" void Lcpu_redistribute_sf(int D, int N_G, int N_E, int N_F, scalar* sJ, scalar* fJ, scalar* s, scalar* f, scalar* J, scalar* invJac);
 extern "C" void Lcpu_gemm_sf(int D, int N_G, int N_s, int N_E, int N_F, scalar* S, scalar* F, scalar* sJ, scalar* fJ, scalar* phi_w, scalar* dphi_w);
 extern "C" void Lcpu_redistribute_q(int M_G, int M_T, int N_F, scalar* qJ, scalar* q);
