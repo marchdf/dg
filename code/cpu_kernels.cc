@@ -531,10 +531,9 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, s
 	qL = -0.5*(cpu_flux4_multifluid(rhoL,uL,gammaL) + cpu_flux4_multifluid(rhoR,uR,gammaR)
 		   -maxvap*(rhoR*gammaR-rhoL*gammaL));}
       else if (model==1){ //fx = u/(gamma-1);
-      	qL = -0.5*(cpu_flux5_multifluid(uL,gammaL) + cpu_flux5_multifluid(uR,gammaR)
-			  -maxvap*(1.0/(gammaR-1)-1.0/(gammaL-1)));}
-      q[(t*N_F+3)*2+0] = 0;//qL; 
-      q[(t*N_F+3)*2+1] = 0;//-qL;
+      	qL = -0.5*maxvap*(alphaL-alphaR);}
+      q[(t*N_F+3)*2+0] = qL + 0.5*0.5*(uL+uR)*(alphaL-alphaR); 
+      q[(t*N_F+3)*2+1] = -qL+ 0.5*0.5*(uL+uR)*(alphaL-alphaR);
     }
 
     // Non-conservative flux
