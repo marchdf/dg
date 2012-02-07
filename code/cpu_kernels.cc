@@ -266,21 +266,21 @@ void cpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, int model, sca
       //dudx += dUg[((e*N_F+1)*N_G+g)*D+alpha];//*invJac[((e*N_G+g)*D+0)*D+alpha];
       //scalar dudx = dUg[e*N_G+g]*invJac[e*N_G+g];
 
-      if ((e==50)&&(g==1)) printf("dudx=%12.11f  dalphadx=%12.11f dudxi=%12.11f  invJac=%f\n", dudx, dalphadx, dUg[(e*N_F+1)*N_G+g], invJac[e*N_G+g]);
+      //if ((e==50)&&(g==1)) printf("dudx=%12.11f  dalphadx=%12.11f dudxi=%12.11f  invJac=%f\n", dudx, dalphadx, dUg[(e*N_F+1)*N_G+g], invJac[e*N_G+g]);
       //if ((e==100)&&(g==2)) printf("dudx=%12.11f  dudxi=%12.11f  invJac=%f\n", dudx, dUg[e*N_G+g], invJac[e*N_G+g]);
 	    
       s[(e*N_F+0)*N_G+g] = 0;
       s[(e*N_F+1)*N_G+g] = 0;
       s[(e*N_F+2)*N_G+g] = 0;
       if      (model==0) s[(e*N_F+3)*N_G+g] = 0;
-      else if (model==1) s[(e*N_F+3)*N_G+g] = 0;//dudx/(gamma-1);
+      else if (model==1) s[(e*N_F+3)*N_G+g] = -u*dalphadx;//dudx/(gamma-1);
 
       // Flux derive par rapport a x
       f[((e*N_F+0)*N_G+g)*D+0] = cpu_flux1_multifluid(rho,u);       
       f[((e*N_F+1)*N_G+g)*D+0] = cpu_flux2_multifluid(rho,u,p);      
       f[((e*N_F+2)*N_G+g)*D+0] = cpu_flux3_multifluid(EtplusP,u);   
       if      (model==0) f[((e*N_F+3)*N_G+g)*D+0] = 0;//cpu_flux4_multifluid(rho,u,gamma);
-      else if (model==1) f[((e*N_F+3)*N_G+g)*D+0] = -u*dalphadx;//cpu_flux5_multifluid(u,gamma);
+      else if (model==1) f[((e*N_F+3)*N_G+g)*D+0] = 0;//-u*dalphadx;//cpu_flux5_multifluid(u,gamma);
     }
   }
 }
@@ -498,8 +498,8 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, s
     }
     // scalar SL = std::min(vap[0*sizevap+0],vap[1*sizevap+0]);
     // scalar SR = std::max(vap[0*sizevap+3],vap[1*sizevap+3]);
-    scalar SL = std::min(uL-aL,uR-aR);
-    scalar SR = std::max(uL+aR,uR+aR);
+    scalar SL = std::min(fabs(uL)-aL,fabs(uR)-aR);
+    scalar SR = std::max(fabs(uL)+aR,fabs(uR)+aR);
     delete[] vap;
     
     //
@@ -549,7 +549,7 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, s
 	pnc3 = cpu_flux3_multifluid(EtPL,uL);
 	pnc4 = -0.5*vnc4;
       }
-      else if ((SL < 0)&&(SR>0)){
+      else if ((SL < 0)&&(SR > 0)){
 	pnc1 = cpu_fhll_multifluid(rhoL, SL, cpu_flux1_multifluid(rhoL,uL),   rhoR, SR, cpu_flux1_multifluid(rhoR,uR));
 	pnc2 = cpu_fhll_multifluid(  uL, SL, cpu_flux2_multifluid(rhoL,uL,pL),  uR, SR, cpu_flux2_multifluid(rhoR,uR,pR));
 	pnc3 = cpu_fhll_multifluid( EtL, SL, cpu_flux3_multifluid(EtPL,uL),    EtR, SR, cpu_flux3_multifluid(EtPR,uR));
@@ -583,8 +583,8 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, s
 		   -maxvap*(rhoR*gammaR-rhoL*gammaL));}
       else if (model==1){ //fx = u/(gamma-1);
       	qL = -pnc4;}
-      q[(t*N_F+3)*2+0] = qL + 0.5*vnc4; 
-      q[(t*N_F+3)*2+1] = -qL+ 0.5*vnc4;
+      q[(t*N_F+3)*2+0] = qL - 0.5*vnc4; 
+      q[(t*N_F+3)*2+1] = -qL- 0.5*vnc4;
     }
   }
 }
