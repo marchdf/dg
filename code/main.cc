@@ -97,6 +97,7 @@ int main (int argc, char **argv)
   int  flux;
   if      (inputs.getFlux()=="llf") flux = 0;
   else if (inputs.getFlux()=="ncf") flux = 1;
+  else if (inputs.getFlux()=="roe") flux = 2;
   else{ printf("Invalid flux setup. Correct the deck.\n");}
   
   std::string fileName = inputs.getMeshfile();

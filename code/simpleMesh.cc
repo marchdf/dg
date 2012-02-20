@@ -164,7 +164,7 @@ void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, co
   std::ofstream output;
   if (append == 1)  output.open(filename,std::ios_base::app);
   else output.open(filename);
-  output.precision(16);
+  output.precision(20);
   output << "$MeshFormat\n2.1 0 8\n$EndMeshFormat\n";
   output << "$ElementNodeData\n";
   output << "1\n\"" << name << "\"\n";
