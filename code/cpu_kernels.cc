@@ -592,68 +592,98 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, s
 
     // Non-conservative Roe flux
     else if (flux == 2){
-      scalar rhoRoe = sqrt(rhoL)+sqrt(rhoR);
-      scalar uRoe = (sqrt(rhoL)*uL+sqrt(rhoR)*uR)/rhoRoe;
+      scalar rhoRoe = sqrt(rhoL*rhoR);
+      scalar uRoe = (sqrt(rhoL)*uL+sqrt(rhoR)*uR)/(sqrt(rhoL)+sqrt(rhoR));
       scalar HL = (EtL + pL)/rhoL;
       scalar HR = (EtR + pR)/rhoR;
-      scalar HRoe = (sqrt(rhoL)*HL+sqrt(rhoR)*HR)/rhoRoe;
-      scalar alphaRoe = (sqrt(rhoL)*alphaL+sqrt(rhoR)*alphaR)/rhoRoe;//0.5*(alphaL + alphaR); // or rho weighted?
-      scalar gammaRoe = 1+1.0/alphaRoe; //(sqrt(rhoL)*gammaL+sqrt(rhoR)*gammaR)/rhoRoe; //1+1.0/alphaRoe; // or 0.5*(gammaL+gammaL);
+      scalar HRoe = (sqrt(rhoL)*HL+sqrt(rhoR)*HR)/(sqrt(rhoL)+sqrt(rhoR));
+      scalar alphaRoe = (sqrt(rhoL)*alphaL+sqrt(rhoR)*alphaR)/(sqrt(rhoL)+sqrt(rhoR));
+      scalar gammaRoe = 1+1.0/alphaRoe;
+      scalar iL = pL*alphaL;
+      scalar iR = pR*alphaR;
+      scalar iRoe = (sqrt(rhoL)*iL+sqrt(rhoR)*iR)/(sqrt(rhoL)+sqrt(rhoR));
       scalar aRoe = sqrt((gammaRoe-1)*(HRoe-0.5*uRoe*uRoe));
+      scalar DpRoe= (gammaRoe-1)*(gammaRoe-1)*(alphaRoe*(iR-iL) - iRoe*(alphaR-alphaL));
+      scalar pRoe = (gammaRoe-1)*iRoe;
 
-      scalar* vapRoe = new scalar[3];
+      scalar* vapRoe = new scalar[4];
       vapRoe[0] = uRoe-aRoe;
       vapRoe[1] = uRoe;
       vapRoe[2] = uRoe+aRoe;
+      vapRoe[3] = uRoe;
 
-      scalar* vep = new scalar[3*3];
-      vep[0*3+0] = 1;
-      vep[0*3+1] = uRoe-aRoe;
-      vep[0*3+2] = HRoe-uRoe*aRoe;
-      vep[1*3+0] = 1;
-      vep[1*3+1] = uRoe;
-      vep[1*3+2] = 0.5*uRoe*uRoe;
-      vep[2*3+0] = 1;
-      vep[2*3+1] = uRoe+aRoe;
-      vep[2*3+2] = HRoe+uRoe*aRoe;
+      scalar* vep = new scalar[4*4];
+      vep[0*4+0] = 1;
+      vep[0*4+1] = uRoe-aRoe;
+      vep[0*4+2] = HRoe-uRoe*aRoe;
+      vep[0*4+3] = 0;
 
-      scalar* aiRoe= new scalar[3];
-      aiRoe[1]= (gammaRoe-1)/(aRoe*aRoe)*((rhoR-rhoL)*(HRoe-uRoe*uRoe)+uRoe*(rhoR*uR-rhoL*uL)-(EtR-EtL));
-      aiRoe[0]=1/(2*aRoe)*((rhoR-rhoL)*(uRoe+aRoe)-(rhoR*uR-rhoL*uL)-aRoe*aiRoe[1]);
-      aiRoe[2]=(rhoR-rhoL)-(aiRoe[0]+aiRoe[1]);
+      vep[1*4+0] = 1;
+      vep[1*4+1] = uRoe;
+      vep[1*4+2] = 0.5*uRoe*uRoe;
+      vep[1*4+3] = 0;
+
+      vep[2*4+0] = 1;
+      vep[2*4+1] = uRoe+aRoe;
+      vep[2*4+2] = HRoe+uRoe*aRoe;
+      vep[2*4+3] = 0;
+      
+      vep[3*4+0] = 0;
+      vep[3*4+1] = 0;
+      vep[3*4+2] = pRoe;
+      vep[3*4+3] = 1;
+      
+      scalar* aiRoe= new scalar[4];
+      aiRoe[1] = (rhoR-rhoL) - DpRoe/(aRoe*aRoe);
+      aiRoe[2] = (DpRoe + rhoRoe*aRoe*(uR-uL))/(2*aRoe*aRoe);
+      aiRoe[0] = (DpRoe - rhoRoe*aRoe*(uR-uL))/(2*aRoe*aRoe);
+      aiRoe[3] = alphaR-alphaL;
+      // aiRoe[1]= (gammaRoe-1)/(aRoe*aRoe)*((rhoR-rhoL)*(HRoe-uRoe*uRoe)+uRoe*(rhoR*uR-rhoL*uL)-(EtR-EtL));
+      // aiRoe[0]=1/(2*aRoe)*((rhoR-rhoL)*(uRoe+aRoe)-(rhoR*uR-rhoL*uL)-aRoe*aiRoe[1]);
+      // aiRoe[2]=(rhoR-rhoL)-(aiRoe[0]+aiRoe[1]);
 
       //first: fx = rho*u; 
-      scalar qL = -0.5*(cpu_flux1_multifluid(rhoL,uL) + cpu_flux1_multifluid(rhoR,uR));
-      for(int k=0;k<3;k++){
-	qL += 0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*3+0];
-      }
-      q[(t*N_F+0)*2+0] = qL;
-      q[(t*N_F+0)*2+1] = -qL;
-      
+      scalar qL = 0;
+      if      (uRoe>0)  qL = cpu_flux1_multifluid(rhoL,uL) + aiRoe[0]*vapRoe[0]*vep[0*4+0];
+      else if (uRoe<=0) qL = cpu_flux1_multifluid(rhoR,uR) - aiRoe[2]*vapRoe[2]*vep[2*4+0];
+      q[(t*N_F+0)*2+0] = -qL;
+      q[(t*N_F+0)*2+1] = qL;
+
       //second: fx = rho*u*u+Bx*Bx+Pbar; 
-      qL = -0.5*(cpu_flux2_multifluid(rhoL,uL,pL)  + cpu_flux2_multifluid(rhoR,uR,pR));
-      for(int k=0;k<3;k++){
-	qL += 0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*3+1];
-      }
-      q[(t*N_F+1)*2+0] = qL;
-      q[(t*N_F+1)*2+1] = -qL;
+      if      (uRoe>0)  qL = cpu_flux2_multifluid(rhoL,uL,pL) + aiRoe[0]*vapRoe[0]*vep[0*4+1];
+      else if (uRoe<=0) qL = cpu_flux2_multifluid(rhoR,uR,pR) - aiRoe[2]*vapRoe[2]*vep[2*4+1];
+      q[(t*N_F+1)*2+0] = -qL;
+      q[(t*N_F+1)*2+1] = qL;
 
       //third: fx = EtplusP*u; 
-      qL = -0.5*(cpu_flux3_multifluid(EtPL,uL) + cpu_flux3_multifluid(EtPR,uR));
-      for(int k=0;k<3;k++){
-	qL += 0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*3+2];
-      }
-      q[(t*N_F+2)*2+0] = qL; 
-      q[(t*N_F+2)*2+1] = -qL;
+      if      (uRoe>0)  qL = cpu_flux3_multifluid(EtPL,uL) + aiRoe[0]*vapRoe[0]*vep[0*4+2];
+      else if (uRoe<=0) qL = cpu_flux3_multifluid(EtPR,uR) - aiRoe[2]*vapRoe[2]*vep[2*4+2];
+      q[(t*N_F+2)*2+0] = -qL; 
+      q[(t*N_F+2)*2+1] = qL;
 
       //fourth: 
+      scalar alphastar = 0;
+      scalar ustar = 0;
+      scalar gstar = 0;
       if      (model==0){ //fx = rho*u*gamma; 
 	qL = -0.5*(cpu_flux4_multifluid(rhoL,uL,gammaL) + cpu_flux4_multifluid(rhoR,uR,gammaR)
 		   -maxvap*(rhoR*gammaR-rhoL*gammaL));}
       else if (model==1){ 
-	qL = 0;}
-      q[(t*N_F+3)*2+0] = -uRoe*(alphaR-alphaL);
-      q[(t*N_F+3)*2+1] = -uRoe*(alphaR-alphaL);
+	if      (uRoe>0){
+	  qL =  aiRoe[0]*vapRoe[0]*vep[0*4+3];
+	  alphastar = alphaL + aiRoe[0]*vep[0*4+3];
+	  ustar  = uL + aiRoe[0]*vep[0*4+1];
+	  gstar = -0.5*(alphaR-alphaL)*(uR+uL);
+	}
+	else if (uRoe<=0){
+	  qL = -aiRoe[2]*vapRoe[2]*vep[2*4+3];
+	  alphastar = alphaR - aiRoe[2]*vep[2*4+3];
+	  ustar  = uR + aiRoe[2]*vep[2*4+1];
+	  gstar = 0.5*(alphaR-alphastar)*(uR+ustar);
+	}
+      }
+      q[(t*N_F+3)*2+0] = 0;//qL + 0.5*gstar;
+      q[(t*N_F+3)*2+1] = 0;//-qL  + 0.5*gstar;
      
       
       delete[] vapRoe;

@@ -151,8 +151,8 @@ void init_dg_contact_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar EtR    = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
   
   for(int e = 0; e < N_E; e++){
+    scalar x = XYZNodes(0,e*D+0);
     for(int i = 0; i < N_s; i++){
-      scalar x = XYZNodes(i,e*D+0);
       if (x<0){
 	U(i,e*N_F+0) = rhoL;
 	U(i,e*N_F+1) = rhoL*uL;
