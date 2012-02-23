@@ -104,13 +104,16 @@ int main (int argc, char **argv)
   
   // Setup the problem type
   bool multifluid = false;
+  bool passive = false;
   if (inputs.getProblem() == "multifluid")   multifluid = true;
+  if (inputs.getProblem() == "passive")      passive = true;
   else{ printf("Invalid problem setup. Correct the deck.\n");}
 
   // Setup the model
   int model = 0;
   if      (inputs.getModel() == "gammamod")   model = 0;
   else if (inputs.getModel() == "invgamma")   model = 1;
+  else if (passive) model = 0;
   else{ printf("Invalid model setup. Correct the deck.\n");}
     
   // Setup the initial condition type
@@ -120,12 +123,14 @@ int main (int argc, char **argv)
   bool matfrnt = false;
   bool sinegam = false;
   bool expogam = false;
+  bool sinephi = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
   else if (inputs.getInitialCondition()=="contact") contact = true;
   else if (inputs.getInitialCondition()=="matfrnt") matfrnt = true;
   else if (inputs.getInitialCondition()=="sinegam") sinegam = true;
   else if (inputs.getInitialCondition()=="expogam") expogam = true;
+  else if (inputs.getInitialCondition()=="sinephi") sinephi = true;
   else{ printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // setup the boundary condition type
@@ -291,6 +296,7 @@ int main (int argc, char **argv)
   fullMatrix<scalar> U(N_s, N_E*N_F);
   fullMatrix<scalar> Us(N_s, N_E*N_F);
   fullMatrix<scalar> Ustar(N_s, N_E*N_F);
+  scalar gamma0 = 0;
   if(multifluid){
     if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
     else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
@@ -299,12 +305,16 @@ int main (int argc, char **argv)
     else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
     else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
   }
+  else if (passive){
+    if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, U);
+  }
 
   if (order0) average_cell_p0(N_s, N_E, N_F, U);
   
   // print the initial condition to the file
   printf("Initial condition written to output file.\n");
   if(multifluid)print_dg_multifluid(N_s, N_E, N_F, model, U, m, msh_lin, 0, 0, 0,-1);
+  if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, U, m, msh_lin, 0, 0, 0,-1);
 
   
   //////////////////////////////////////////////////////////////////////////   
@@ -486,7 +496,8 @@ int main (int argc, char **argv)
   // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
   printf("=========== First DU evaluation ==============\n");
   if (cpu){
-    if(multifluid) Lcpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, h_U, h_UF);
+    if(multifluid)   Lcpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, h_U, h_UF);
+    else if(passive) Lcpu_mapToFace_passive(M_s, M_T, N_F, N_s, boundaryMap, h_U, h_UF);
   }
   else if(!cpu){
     if(multifluid) Lgpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, d_U, d_UF);
@@ -565,6 +576,7 @@ int main (int argc, char **argv)
   // evaluate_sf: requires Uinteg, (dUintegR), H0, G0, s,f 
   if (cpu){
     if(multifluid) Lcpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, h_s, h_f, h_Uinteg, h_dUinteg, h_invJac);
+    if(passive)    Lcpu_evaluate_sf_passive(D, N_G, N_E, N_F, gamma0, h_s, h_f, h_Uinteg, h_dUinteg, h_invJac);
     //if(multifluid) Lcpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, h_s, h_f, h_Uinteg, h_dVinteg, h_invJac);
   }
   else if(!cpu){
@@ -588,6 +600,7 @@ int main (int argc, char **argv)
   // evaluate_q: requires UintegF, normals, q, H0, G0
   if (cpu){
     if(multifluid) Lcpu_evaluate_q_multifluid(M_G, M_T, N_F, flux, model, h_q, h_UintegF);
+    if(passive)    Lcpu_evaluate_q_passive(M_G, M_T, N_F, flux, gamma0, h_q, h_UintegF);
   }
   else if (!cpu){
     if(multifluid) Lgpu_evaluate_q_multifluid(M_G, M_T, N_F, model, d_q, d_UintegF);
@@ -783,7 +796,8 @@ int main (int argc, char **argv)
 
       // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
       if (cpu){
-	if(multifluid) Lcpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, h_Ustar, h_UF);
+	if(multifluid)   Lcpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, h_Ustar, h_UF);
+	else if(passive) Lcpu_mapToFace_passive(M_s, M_T, N_F, N_s, boundaryMap, h_Ustar, h_UF);
       }
       else if(!cpu){
       	if(multifluid) Lgpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, d_Ustar, d_UF);
@@ -825,6 +839,7 @@ int main (int argc, char **argv)
       // evaluate_sf: requires Uinteg, (dUintegR), H0, G0, s,f 
       if (cpu){
 	if(multifluid) Lcpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, h_s, h_f, h_Uinteg, h_dUinteg, h_invJac);
+	if(passive)    Lcpu_evaluate_sf_passive(D, N_G, N_E, N_F, gamma0, h_s, h_f, h_Uinteg, h_dUinteg, h_invJac);
 	//if(multifluid) Lcpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, h_s, h_f, h_Uinteg, h_dVinteg, h_invJac);
       }
       else if(!cpu){
@@ -835,6 +850,7 @@ int main (int argc, char **argv)
       // evaluate_q: requires UintegF, normals, q, H0, G0
       if (cpu){
 	if(multifluid) Lcpu_evaluate_q_multifluid(M_G, M_T, N_F, flux, model, h_q, h_UintegF);
+	if(passive)    Lcpu_evaluate_q_passive(M_G, M_T, N_F, flux, gamma0, h_q, h_UintegF);
       }
       else if (!cpu){
 	if(multifluid) Lgpu_evaluate_q_multifluid(M_G, M_T, N_F, model, d_q, d_UintegF);
@@ -925,6 +941,7 @@ int main (int argc, char **argv)
       
       printf("Solution written to output file at step %i and time %f.\n",n,n*Dt);
       if(multifluid)print_dg_multifluid(N_s, N_E, N_F, model, h_U, m, msh_lin, count, n*Dt, 1,-1);
+      if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, h_U, m, msh_lin, count, n*Dt, 1,-1);
       count++;
     }
     

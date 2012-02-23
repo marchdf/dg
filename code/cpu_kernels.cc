@@ -94,7 +94,31 @@ void cpu_mapToFace_multifluid(int M_s, int M_T, int N_F, int N_s, int boundaryMa
       UF[((M_T-1)*N_F+fc)*2+1]  = UF[(0*N_F+fc)*2+1];
     }
   }
+}
 
+void cpu_mapToFace_passive(int M_s, int M_T, int N_F, int N_s, int boundaryMap, scalar* U, scalar* UF){
+
+  // All other boundaries
+  for(int t = 1; t < M_T-1; t++){ 
+    for(int fc = 0; fc < N_F; fc++){    
+      UF[(t*N_F+fc)*2+0] = U[((t-1)*N_F+fc)*N_s+1];
+      UF[(t*N_F+fc)*2+1] = U[(t*N_F+fc)*N_s+0];
+    }
+  }
+
+  // Start and end boundaries
+  for(int fc = 0; fc < N_F; fc++){
+    UF[(0*N_F+fc)*2+1]       = U[(0*N_F+fc)*N_s+0];     
+    UF[((M_T-1)*N_F+fc)*2+0] = U[((M_T-2)*N_F+fc)*N_s+1];
+    if      (boundaryMap == 0){      //farfield
+      UF[(0*N_F+fc)*2+0]        = UF[(0*N_F+fc)*2+1];
+      UF[((M_T-1)*N_F+fc)*2+1]  = UF[((M_T-1)*N_F+fc)*2+0];
+    }
+    else if (boundaryMap == M_T-1){  //periodic
+      UF[(0*N_F+fc)*2+0]        = UF[((M_T-1)*N_F+fc)*2+0];
+      UF[((M_T-1)*N_F+fc)*2+1]  = UF[(0*N_F+fc)*2+1];
+    }
+  }
 }
 
 
@@ -285,6 +309,39 @@ void cpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, int model, sca
   }
 }
 
+scalar cpu_flux1_passive(scalar rho, scalar u){return rho*u;}                  
+scalar cpu_flux2_passive(scalar rho, scalar u, scalar p){return rho*u*u+p;} 
+scalar cpu_flux3_passive(scalar EtplusP, scalar u) {return EtplusP*u;}
+scalar cpu_flux4_passive(scalar rho, scalar u, scalar phi) {return rho*u*phi;}
+
+void cpu_evaluate_sf_passive(int D, int N_G, int N_E, int N_F, scalar gamma, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
+
+  for(int e = 0; e < N_E; e++){
+    for(int g = 0; g < N_G; g++){
+      scalar rho   = Ug[(e*N_F+0)*N_G+g];   
+      scalar u     = Ug[(e*N_F+1)*N_G+g]/rho;  // (rho u / rho) = u
+      scalar Et    = Ug[(e*N_F+2)*N_G+g];
+      scalar phic  = Ug[(e*N_F+3)*N_G+g]/rho;
+      scalar phinc = Ug[(e*N_F+4)*N_G+g];
+      scalar p     = (gamma-1)*(Et - 0.5*rho*u*u);
+      scalar EtplusP = Et + p;
+      scalar dphincdx = dUg[(e*N_F+4)*N_G+g]*invJac[e*N_G+g];
+
+      s[(e*N_F+0)*N_G+g] = 0;
+      s[(e*N_F+1)*N_G+g] = 0;
+      s[(e*N_F+2)*N_G+g] = 0;
+      s[(e*N_F+3)*N_G+g] = 0;
+      s[(e*N_F+4)*N_G+g] = -u*dphincdx;
+
+      // Flux derive par rapport a x
+      f[((e*N_F+0)*N_G+g)*D+0] = cpu_flux1_passive(rho,u);       
+      f[((e*N_F+1)*N_G+g)*D+0] = cpu_flux2_passive(rho,u,p);      
+      f[((e*N_F+2)*N_G+g)*D+0] = cpu_flux3_passive(EtplusP,u);   
+      f[((e*N_F+3)*N_G+g)*D+0] = cpu_flux4_passive(rho,u,phic);   
+      f[((e*N_F+4)*N_G+g)*D+0] = 0;
+    }
+  }
+}
 
 void cpu_evaluate_q_shallow(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scalar H0, scalar G0, scalar* normals){
 
@@ -693,6 +750,153 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, s
   }
 }
 
+scalar cpu_fhll_passive(scalar UL, scalar SL, scalar FL, scalar UR, scalar SR, scalar FR){
+  return (SR*FL-SL*FR+SL*SR*(UR-UL))/(SR-SL);
+}
+void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, scalar gamma, scalar* q, scalar* UgF){
+  
+  for(int t = 0; t < M_T; t++){
+    scalar rhoL   = UgF[(t*N_F+0)*2+0];
+    scalar rhoR   = UgF[(t*N_F+0)*2+1];
+    scalar uL     = UgF[(t*N_F+1)*2+0]/rhoL;
+    scalar uR     = UgF[(t*N_F+1)*2+1]/rhoR;
+    scalar EtL    = UgF[(t*N_F+2)*2+0];
+    scalar EtR    = UgF[(t*N_F+2)*2+1];
+    scalar phicL  = UgF[(t*N_F+3)*2+0]/rhoL;
+    scalar phicR  = UgF[(t*N_F+3)*2+1]/rhoR;
+    scalar phincL = UgF[(t*N_F+4)*2+0];
+    scalar phincR = UgF[(t*N_F+4)*2+1];
+    scalar pL     = (gamma-1)*(EtL - 0.5*rhoL*uL*uL);
+    scalar pR     = (gamma-1)*(EtR - 0.5*rhoR*uR*uR);
+    scalar EtPL   = EtL+pL;
+    scalar EtPR   = EtR+pR;
+
+    // Evaluate the right and left eigenvalues
+    int sizevap = 4;
+    scalar* vap = new scalar[2*sizevap];
+    scalar aL = sqrt((gamma*pL)/rhoL);
+    scalar aR = sqrt((gamma*pR)/rhoR);
+
+    vap[0*sizevap+0] = fabs(uL) - aL;
+    vap[0*sizevap+1] = fabs(uL);
+    vap[0*sizevap+2] = fabs(uL);
+    vap[0*sizevap+3] = fabs(uL) + aL;
+
+    vap[1*sizevap+0] = fabs(uR) - aR;
+    vap[1*sizevap+1] = fabs(uR);
+    vap[1*sizevap+2] = fabs(uR);
+    vap[1*sizevap+3] = fabs(uR) + aR;
+
+    scalar maxvap = 0;
+    for (int k = 0; k < 2*sizevap; k++){
+      if (maxvap<vap[k]) maxvap = vap[k];
+    }
+    // scalar SL = std::min(vap[0*sizevap+0],vap[1*sizevap+0]);
+    // scalar SR = std::max(vap[0*sizevap+3],vap[1*sizevap+3]);
+    scalar SL = std::min(fabs(uL)-aL,fabs(uR)-aR);
+    scalar SR = std::max(fabs(uL)+aR,fabs(uR)+aR);
+    delete[] vap;
+    
+    //
+    // Evaluate the fluxes on the right and left
+    //
+
+    // Local Lax-Freidrichs flux
+    if (flux == 0){
+      //first: fx = rho*u; 
+      scalar qL = -0.5*(cpu_flux1_passive(rhoL,uL) + cpu_flux1_passive(rhoR,uR)
+      			-maxvap*(rhoR-rhoL));
+      q[(t*N_F+0)*2+0] = qL;
+      q[(t*N_F+0)*2+1] = -qL;
+      
+      //second: fx = rho*u*u+Bx*Bx+Pbar; 
+      qL = -0.5*(cpu_flux2_passive(rhoL,uL,pL)  + cpu_flux2_passive(rhoR,uR,pR)
+      		 -maxvap*(rhoR*uR-rhoL*uL));
+      q[(t*N_F+1)*2+0] = qL;
+      q[(t*N_F+1)*2+1] = -qL;
+
+      //third: fx = EtplusP*u; 
+      qL = -0.5*(cpu_flux3_passive(EtPL,uL) + cpu_flux3_passive(EtPR,uR)
+      		 -maxvap*(EtR-EtL));
+      q[(t*N_F+2)*2+0] = qL; 
+      q[(t*N_F+2)*2+1] = -qL;
+
+      //fourth: fx = rho*u*phi;
+      qL = -0.5*(cpu_flux4_passive(rhoL,uL,phicL) + cpu_flux4_passive(rhoR,uR,phicR)
+      		 -maxvap*(phicR-phicL));
+      q[(t*N_F+3)*2+0] = qL; 
+      q[(t*N_F+3)*2+1] = -qL;
+
+      //fifth:
+      qL = -0.5*maxvap*(phincL-phincR);
+      q[(t*N_F+4)*2+0] = qL + 0.5*0.5*(uL+uR)*(phincL-phincR); 
+      q[(t*N_F+4)*2+1] = -qL+ 0.5*0.5*(uL+uR)*(phincL-phincR);
+      //strictly equiv:
+      //q[(t*N_F+3)*2+0] = 0.5*(alphaL-alphaR)*(0.5*(uL+uR)-maxvap); 
+      //q[(t*N_F+3)*2+1] = 0.5*(alphaL-alphaR)*(0.5*(uL+uR)+maxvap);
+    }
+
+    // Non-conservative flux
+    else if (flux == 1){
+      scalar pnc1=0, pnc2=0, pnc3=0, pnc4=0, pnc5=0;
+      scalar vnc5 = -0.5*(uL+uR)*(phincL-phincR);
+
+      // define the flux
+      if (SL > 0){
+	pnc1 = cpu_flux1_passive(rhoL,uL);
+	pnc2 = cpu_flux2_passive(rhoL,uL,pL);
+	pnc3 = cpu_flux3_passive(EtPL,uL);
+	pnc4 = cpu_flux4_passive(rhoL,uL,phicL);
+	pnc5 = -0.5*vnc5;
+      }
+      else if ((SL < 0)&&(SR > 0)){
+	pnc1 = cpu_fhll_passive( rhoL, SL, cpu_flux1_passive(rhoL,uL),        rhoR, SR, cpu_flux1_passive(rhoR,uR));
+	pnc2 = cpu_fhll_passive(   uL, SL, cpu_flux2_passive(rhoL,uL,pL),       uR, SR, cpu_flux2_passive(rhoR,uR,pR));
+	pnc3 = cpu_fhll_passive(  EtL, SL, cpu_flux3_passive(EtPL,uL),         EtR, SR, cpu_flux3_passive(EtPR,uR));
+	pnc4 = cpu_fhll_passive(phicL, SL, cpu_flux4_passive(rhoL,uL,phicL), phicR, SR, cpu_flux4_passive(rhoR,uR,phicR));
+	pnc5 = cpu_fhll_passive(phincL, SL, 0, phincR, SR, 0) - 0.5*(SR+SL)/(SR-SL)*vnc5;
+      }
+      else if (SR < 0){
+	pnc1 = cpu_flux1_passive(rhoR,uR);
+	pnc2 = cpu_flux2_passive(rhoR,uR,pR);
+	pnc3 = cpu_flux3_passive(EtPR,uR);
+	pnc4 = cpu_flux4_passive(rhoR,uR,phicR);
+	pnc5 = 0.5*vnc5;
+      }
+
+      // first
+      scalar qL = -pnc1;
+      q[(t*N_F+0)*2+0] = qL;
+      q[(t*N_F+0)*2+1] = -qL;
+      
+      //second: fx = rho*u*u+Bx*Bx+Pbar; 
+      qL = -pnc2;
+      q[(t*N_F+1)*2+0] = qL;
+      q[(t*N_F+1)*2+1] = -qL;
+
+      //third: fx = EtplusP*u; 
+      qL = -pnc3;
+      q[(t*N_F+2)*2+0] = qL; 
+      q[(t*N_F+2)*2+1] = -qL;
+
+      //fourth: fx = rho*u*phic
+      qL = -pnc4;
+      q[(t*N_F+3)*2+0] = qL;
+      q[(t*N_F+3)*2+1] = -qL;
+      
+      //fifth: 
+      	qL = -pnc5;
+      q[(t*N_F+4)*2+0] = qL - 0.5*vnc5; 
+      q[(t*N_F+4)*2+1] = -qL- 0.5*vnc5;
+    }
+
+    // Non-conservative Roe flux
+    else if (flux == 2){
+      printf("Roe flux not implemented\n");
+    }
+  }
+}
+
 
 void cpu_redistribute_sf(int D, int N_G, int N_E, int N_F, scalar* sJ, scalar* fJ, scalar* s, scalar* f, scalar* J, scalar* invJac){
 
@@ -853,6 +1057,11 @@ void Lcpu_mapToFace_multifluid(int M_s, int M_T, int N_F, int N_s, int boundaryM
   cpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, U, UF);
 }
 
+extern "C" 
+void Lcpu_mapToFace_passive(int M_s, int M_T, int N_F, int N_s, int boundaryMap, scalar* U, scalar* UF){
+  cpu_mapToFace_passive(M_s, M_T, N_F, N_s, boundaryMap, U, UF);
+}
+
 extern "C"
 void Lcpu_boundary(int M_s, int N_F, int M_B, int* boundaryMap, scalar* UF){
   cpu_boundary(M_s, N_F, M_B, boundaryMap, UF);
@@ -889,6 +1098,11 @@ void Lcpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, int model, sc
 }
 
 extern "C" 
+void Lcpu_evaluate_sf_passive(int D, int N_G, int N_E, int N_F, scalar gamma, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
+  cpu_evaluate_sf_passive(D, N_G, N_E, N_F, gamma, s, f, Ug, dUg, invJac);
+}
+
+extern "C" 
 void Lcpu_evaluate_q_shallow(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scalar H0, scalar G0, scalar* normals){
   cpu_evaluate_q_shallow(M_G, M_T, N_F, q, UgF, H0, G0, normals);
 }
@@ -901,6 +1115,11 @@ void Lcpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scal
 extern "C" 
 void Lcpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, scalar* q, scalar* UgF){
   cpu_evaluate_q_multifluid(M_G, M_T, N_F, flux, model, q, UgF);
+}
+
+extern "C" 
+void Lcpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, scalar gamma, scalar* q, scalar* UgF){
+  cpu_evaluate_q_passive(M_G, M_T, N_F, flux, gamma, q, UgF);
 }
 
 extern "C" 

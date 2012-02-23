@@ -217,6 +217,100 @@ void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int 
   if((all==-1)||(all==0)) m.writeSolution(Rho, msh_lin,"rho.pos", "Rho", step, time, append);
   if((all==-1)||(all==1)) m.writeSolution(Ux,  msh_lin, "ux.pos",  "Ux", step, time, append);
   if((all==-1)||(all==2)) m.writeSolution(Et,  msh_lin, "et.pos",  "Et", step, time, append);
-  if((all==-1)||(all==2)) m.writeSolution( G,  msh_lin,  "g.pos",   "G", step, time, append);
+  if((all==-1)||(all==3)) m.writeSolution( G,  msh_lin,  "g.pos",   "G", step, time, append);
   if((all==-1)||(all==4)) m.writeSolution( P,  msh_lin,  "p.pos",   "P", step, time, append);
+}
+
+//===========================================
+// Output passive solutions
+//===========================================
+void print_dg_passive(const int N_s, const int N_E, const int N_F, scalar gamma, const fullMatrix<scalar> &U, const simpleMesh m, const int msh_lin, const int step, const double time, const int append, const int all){
+
+ 
+  fullMatrix<scalar> Rho;
+  fullMatrix<scalar> Ux ;
+  fullMatrix<scalar> Et ;
+  fullMatrix<scalar> PhiC;
+  fullMatrix<scalar> PhiNC;
+  fullMatrix<scalar> P  ;
+
+  if((all==-1)||(all==0))  Rho.resize(N_s, N_E);
+  if((all==-1)||(all==1))   Ux.resize(N_s, N_E);
+  if((all==-1)||(all==2))   Et.resize(N_s, N_E);
+  if((all==-1)||(all==3)) PhiC.resize(N_s, N_E);
+  if((all==-1)||(all==4))PhiNC.resize(N_s, N_E);
+  if((all==-1)||(all==5))    P.resize(N_s, N_E);
+
+  // separate the fields
+  scalar rho = 0;
+  for (int e = 0; e < N_E; e++){
+    for (int i = 0; i < N_s; i++){
+
+      // Check for NaN error
+      rho = U(i,e*N_F+0);
+      if(rho != rho){
+	printf("NaN error. Code crashed... bummer.\n");
+	exit(1);
+      }
+
+      if((all==-1)||(all==0)) Rho(i,e) = rho;
+      if((all==-1)||(all==1)) Ux (i,e) = U(i,e*N_F+1)/Rho(i,e);
+      if((all==-1)||(all==2)) Et (i,e) = U(i,e*N_F+2);
+      if((all==-1)||(all==3)) PhiC(i,e)= U(i,e*N_F+3)/Rho(i,e);
+      if((all==-1)||(all==4))PhiNC(i,e)= U(i,e*N_F+4);
+      if((all==-1)||(all==5)) P  (i,e) = (gamma-1)*(Et(i,e) - 0.5*Rho(i,e)*Ux(i,e)*Ux(i,e));
+    }
+  }
+  // print to the output file
+  if((all==-1)||(all==0)) m.writeSolution(Rho  , msh_lin,   "rho.pos",  "Rho", step, time, append);
+  if((all==-1)||(all==1)) m.writeSolution(Ux   ,  msh_lin,   "ux.pos",   "Ux", step, time, append);
+  if((all==-1)||(all==2)) m.writeSolution(Et   ,  msh_lin,   "et.pos",   "Et", step, time, append);
+  if((all==-1)||(all==3)) m.writeSolution(PhiC ,  msh_lin, "phic.pos", "PhiC", step, time, append);
+  if((all==-1)||(all==4)) m.writeSolution(PhiNC,  msh_lin,"phinc.pos","PhiNC", step, time, append);
+  if((all==-1)||(all==5)) m.writeSolution( P   ,  msh_lin,    "p.pos",    "P", step, time, append);
+}
+
+void print_dg_passive(const int N_s, const int N_E, const int N_F, scalar gamma, scalar* U, const simpleMesh m, const int msh_lin, const int step, const double time, const int append, const int all){
+
+  fullMatrix<scalar> Rho;
+  fullMatrix<scalar> Ux ;
+  fullMatrix<scalar> Et ;
+  fullMatrix<scalar> PhiC  ;
+  fullMatrix<scalar> PhiNC  ;
+  fullMatrix<scalar> P  ;
+
+  if((all==-1)||(all==0))  Rho.resize(N_s, N_E);
+  if((all==-1)||(all==1))   Ux.resize(N_s, N_E);
+  if((all==-1)||(all==2))   Et.resize(N_s, N_E);
+  if((all==-1)||(all==3)) PhiC.resize(N_s, N_E);
+  if((all==-1)||(all==4))PhiNC.resize(N_s, N_E);
+  if((all==-1)||(all==5))    P.resize(N_s, N_E);
+    
+  // separate the fields
+  scalar rho = 0;
+  for (int e = 0; e < N_E; e++){
+    for (int i = 0; i < N_s; i++){
+
+      // Check for NaN error
+      rho = U[(e*N_F+0)*N_s+i];
+      if(rho != rho){
+	printf("NaN error. Code crashed... bummer.\n");
+	exit(1);
+      }
+
+      if((all==-1)||(all==0))    Rho(i,e) = rho;
+      if((all==-1)||(all==1))    Ux (i,e) = U[(e*N_F+1)*N_s+i]/Rho(i,e);
+      if((all==-1)||(all==2))    Et (i,e) = U[(e*N_F+2)*N_s+i];
+      if((all==-1)||(all==3))  PhiC (i,e) = U[(e*N_F+3)*N_s+i]/Rho(i,e);
+      if((all==-1)||(all==4)) PhiNC (i,e) = U[(e*N_F+4)*N_s+i];
+      if((all==-1)||(all==5))    P  (i,e) = (gamma-1)*(Et(i,e) - 0.5*Rho(i,e)*Ux(i,e)*Ux(i,e));
+    }
+  }
+  // print to the output file
+  if((all==-1)||(all==0)) m.writeSolution(  Rho,  msh_lin,  "rho.pos",  "Rho", step, time, append);
+  if((all==-1)||(all==1)) m.writeSolution(   Ux,  msh_lin,   "ux.pos",   "Ux", step, time, append);
+  if((all==-1)||(all==2)) m.writeSolution(   Et,  msh_lin,   "et.pos",   "Et", step, time, append);
+  if((all==-1)||(all==3)) m.writeSolution( PhiC,  msh_lin, "phic.pos", "PhiC", step, time, append);
+  if((all==-1)||(all==4)) m.writeSolution(PhiNC,  msh_lin,"phinc.pos","PhiNC", step, time, append);
+  if((all==-1)||(all==5)) m.writeSolution(    P,  msh_lin,    "p.pos",    "P", step, time, append);
 }

@@ -15,5 +15,7 @@ void print_dg_mhd(const int N_s, const int N_E, const int N_F, scalar* U, const 
 void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int model, const fullMatrix<scalar> &U, const simpleMesh m, const int msh_lin, const int step, const double time, const int append, const int all);
 void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int model, scalar* U, const simpleMesh m, const int msh_lin, const int step, const double time, const int append, const int all);
 
+void print_dg_passive(const int N_s, const int N_E, const int N_F, scalar gamma, const fullMatrix<scalar> &U, const simpleMesh m, const int msh_lin, const int step, const double time, const int append, const int all);
+void print_dg_passive(const int N_s, const int N_E, const int N_F, scalar gamma, scalar* U, const simpleMesh m, const int msh_lin, const int step, const double time, const int append, const int all);
 
 #endif
