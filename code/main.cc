@@ -131,7 +131,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="sinegam") sinegam = true;
   else if (inputs.getInitialCondition()=="expogam") expogam = true;
   else if (inputs.getInitialCondition()=="sinephi") sinephi = true;
-  else{ printf("Invalid initial condition setup. Correct the deck.\n");}
+  else{printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // setup the boundary condition type
   bool periodic = false;
