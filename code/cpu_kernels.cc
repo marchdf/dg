@@ -656,10 +656,10 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, s
       scalar HRoe = (sqrt(rhoL)*HL+sqrt(rhoR)*HR)/(sqrt(rhoL)+sqrt(rhoR));
       scalar alphaRoe = (sqrt(rhoL)*alphaL+sqrt(rhoR)*alphaR)/(sqrt(rhoL)+sqrt(rhoR));
       scalar gammaRoe = 1+1.0/alphaRoe;
+      scalar aRoe = sqrt((gammaRoe-1)*(HRoe-0.5*uRoe*uRoe));
       scalar iL = pL*alphaL;
       scalar iR = pR*alphaR;
       scalar iRoe = (sqrt(rhoL)*iL+sqrt(rhoR)*iR)/(sqrt(rhoL)+sqrt(rhoR));
-      scalar aRoe = sqrt((gammaRoe-1)*(HRoe-0.5*uRoe*uRoe));
       scalar DpRoe= (gammaRoe-1)*(gammaRoe-1)*(alphaRoe*(iR-iL) - iRoe*(alphaR-alphaL));
       scalar pRoe = (gammaRoe-1)*iRoe;
 
@@ -689,48 +689,47 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, s
       vep[3*4+1] = 0;
       vep[3*4+2] = pRoe;
       vep[3*4+3] = 1;
-      
+
       scalar* aiRoe= new scalar[4];
       aiRoe[1] = (rhoR-rhoL) - DpRoe/(aRoe*aRoe);
       aiRoe[2] = (DpRoe + rhoRoe*aRoe*(uR-uL))/(2*aRoe*aRoe);
       aiRoe[0] = (DpRoe - rhoRoe*aRoe*(uR-uL))/(2*aRoe*aRoe);
       aiRoe[3] = alphaR-alphaL;
-      // aiRoe[1]= (gammaRoe-1)/(aRoe*aRoe)*((rhoR-rhoL)*(HRoe-uRoe*uRoe)+uRoe*(rhoR*uR-rhoL*uL)-(EtR-EtL));
+      // aiRoe[1]= (gamma-1)/(aRoe*aRoe)*((rhoR-rhoL)*(HRoe-uRoe*uRoe)+uRoe*(rhoR*uR-rhoL*uL)-(EtR-EtL));
       // aiRoe[0]=1/(2*aRoe)*((rhoR-rhoL)*(uRoe+aRoe)-(rhoR*uR-rhoL*uL)-aRoe*aiRoe[1]);
       // aiRoe[2]=(rhoR-rhoL)-(aiRoe[0]+aiRoe[1]);
 
-      //first: fx = rho*u; 
+      //first: fx = rho*u;
+      // if      (uRoe>0)  qL = cpu_flux1_multifluid(rhoL,uL) + aiRoe[0]*vapRoe[0]*vep[0*3+0];
+      // else if (uRoe<=0) qL = cpu_flux1_multifluid(rhoR,uR) - aiRoe[2]*vapRoe[2]*vep[2*3+0];
       scalar qL = 0;
-      if      (uRoe>0)  qL = cpu_flux1_multifluid(rhoL,uL) + aiRoe[0]*vapRoe[0]*vep[0*4+0];
-      else if (uRoe<=0) qL = cpu_flux1_multifluid(rhoR,uR) - aiRoe[2]*vapRoe[2]*vep[2*4+0];
+      qL = 0.5*(cpu_flux1_multifluid(rhoL,uL) + cpu_flux1_multifluid(rhoR,uR));
+      for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*4+0];
       q[(t*N_F+0)*2+0] = -qL;
       q[(t*N_F+0)*2+1] = qL;
-
+      
       //second: fx = rho*u*u+Bx*Bx+Pbar; 
-      if      (uRoe>0)  qL = cpu_flux2_multifluid(rhoL,uL,pL) + aiRoe[0]*vapRoe[0]*vep[0*4+1];
-      else if (uRoe<=0) qL = cpu_flux2_multifluid(rhoR,uR,pR) - aiRoe[2]*vapRoe[2]*vep[2*4+1];
+      // if      (uRoe>0)  qL = cpu_flux2_passive(rhoL,uL,pL) + aiRoe[0]*vapRoe[0]*vep[0*3+1];
+      // else if (uRoe<=0) qL = cpu_flux2_passive(rhoR,uR,pR) - aiRoe[2]*vapRoe[2]*vep[2*3+1];
+      qL = 0.5*(cpu_flux2_multifluid(rhoL,uL,pL)  + cpu_flux2_multifluid(rhoR,uR,pR));
+      for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*4+1];
       q[(t*N_F+1)*2+0] = -qL;
       q[(t*N_F+1)*2+1] = qL;
 
       //third: fx = EtplusP*u; 
-      if      (uRoe>0)  qL = cpu_flux3_multifluid(EtPL,uL) + aiRoe[0]*vapRoe[0]*vep[0*4+2];
-      else if (uRoe<=0) qL = cpu_flux3_multifluid(EtPR,uR) - aiRoe[2]*vapRoe[2]*vep[2*4+2];
+      // if      (uRoe>0)  qL = cpu_flux3_multifluid(EtPL,uL) + aiRoe[0]*vapRoe[0]*vep[0*3+2];
+      // else if (uRoe<=0) qL = cpu_flux3_multifluid(EtPR,uR) - aiRoe[2]*vapRoe[2]*vep[2*3+2];
+      qL = 0.5*(cpu_flux3_multifluid(EtPL,uL) + cpu_flux3_multifluid(EtPR,uR));
+      for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*4+2];
       q[(t*N_F+2)*2+0] = -qL; 
       q[(t*N_F+2)*2+1] = qL;
 
-      //fourth: 
-      scalar alphastar = 0;
-      scalar ustar = 0;
-      scalar gstar = 0;
-      if      (model==0){ //fx = rho*u*gamma; 
-	qL = -0.5*(cpu_flux4_multifluid(rhoL,uL,gammaL) + cpu_flux4_multifluid(rhoR,uR,gammaR)
-		   -maxvap*(rhoR*gammaR-rhoL*gammaL));}
-      else if (model==1){ 
-      }
-      q[(t*N_F+3)*2+0] = 0;//qL + 0.5*gstar;
-      q[(t*N_F+3)*2+1] = 0;//-qL  + 0.5*gstar;
-     
-      
+      //fourth:
+      qL = 0;
+      for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*4+3];
+      q[(t*N_F+3)*2+0] = -qL - 0.5*uRoe*(alphaR-alphaL);
+      q[(t*N_F+3)*2+1] = qL  - 0.5*uRoe*(alphaR-alphaL);
+           
       delete[] vapRoe;
       delete[] vep;
       delete[] aiRoe;
@@ -920,24 +919,24 @@ void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, scalar gamma, s
       q[(t*N_F+0)*2+1] = qL;
       
       //second: fx = rho*u*u+Bx*Bx+Pbar; 
-      // if      (uRoe>0)  qL = cpu_flux2_multifluid(rhoL,uL,pL) + aiRoe[0]*vapRoe[0]*vep[0*3+1];
-      // else if (uRoe<=0) qL = cpu_flux2_multifluid(rhoR,uR,pR) - aiRoe[2]*vapRoe[2]*vep[2*3+1];
+      // if      (uRoe>0)  qL = cpu_flux2_passive(rhoL,uL,pL) + aiRoe[0]*vapRoe[0]*vep[0*3+1];
+      // else if (uRoe<=0) qL = cpu_flux2_passive(rhoR,uR,pR) - aiRoe[2]*vapRoe[2]*vep[2*3+1];
       qL = 0.5*(cpu_flux2_passive(rhoL,uL,pL)  + cpu_flux2_passive(rhoR,uR,pR));
       for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*3+1];
       q[(t*N_F+1)*2+0] = -qL;
       q[(t*N_F+1)*2+1] = qL;
 
       //third: fx = EtplusP*u; 
-      // if      (uRoe>0)  qL = cpu_flux3_multifluid(EtPL,uL) + aiRoe[0]*vapRoe[0]*vep[0*3+2];
-      // else if (uRoe<=0) qL = cpu_flux3_multifluid(EtPR,uR) - aiRoe[2]*vapRoe[2]*vep[2*3+2];
+      // if      (uRoe>0)  qL = cpu_flux3_passive(EtPL,uL) + aiRoe[0]*vapRoe[0]*vep[0*3+2];
+      // else if (uRoe<=0) qL = cpu_flux3_passive(EtPR,uR) - aiRoe[2]*vapRoe[2]*vep[2*3+2];
       qL = 0.5*(cpu_flux3_passive(EtPL,uL) + cpu_flux3_passive(EtPR,uR));
       for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*3+2];
       q[(t*N_F+2)*2+0] = -qL; 
       q[(t*N_F+2)*2+1] = qL;
 
       //fourth: fx = rho*u*phic
-      // if      (uRoe>0)  qL = cpu_flux4_multifluid(rhoL,uL,phicL) + aiRoe[0]*vapRoe[0]*vep[0*3+1];
-      // else if (uRoe<=0) qL = cpu_flux4_multifluid(rhoR,uR,phicR) - aiRoe[2]*vapRoe[2]*vep[2*3+1];
+      // if      (uRoe>0)  qL = cpu_flux4_passive(rhoL,uL,phicL) + aiRoe[0]*vapRoe[0]*vep[0*3+1];
+      // else if (uRoe<=0) qL = cpu_flux4_passive(rhoR,uR,phicR) - aiRoe[2]*vapRoe[2]*vep[2*3+1];
       qL = 0.5*(cpu_flux4_passive(rhoL,uL,phicL) + cpu_flux4_passive(rhoR,uR,phicR));
       for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*3+1];
       q[(t*N_F+3)*2+0] = -qL; 

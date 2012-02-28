@@ -141,7 +141,6 @@ int main (int argc, char **argv)
   else{ printf("Invalid boundary condition setup. Correct the deck.\n");}    
 
 
-  
   //==========================================================================
   //
   //   CPU calculations
@@ -944,10 +943,10 @@ int main (int argc, char **argv)
       if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, h_U, m, msh_lin, count, n*Dt, 1,-1);
       count++;
     }
-    
-    
+        
   } // end time integration
 
+    
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -982,6 +981,17 @@ int main (int argc, char **argv)
   }
   
 
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Output some stuff in a file to read by post-proc
+  //
+  //////////////////////////////////////////////////////////////////////////
+  std::string post = "post.dat"; 
+  FILE *f = fopen(post.c_str(),"w");
+  fprintf(f,"%12.5E\n", XYZNodes(1, 0*D+0)-XYZNodes(0, 0*D+0));
+
+
+  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Free stuff on the host

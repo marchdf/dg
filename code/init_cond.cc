@@ -271,10 +271,10 @@ void init_dg_sinephi_passive(const int N_s, const int N_E, const int N_F, const 
   scalar rho     = 1.0;
   scalar u       = 1.0;
   gamma          = 1.4;
-  scalar phi     = 1;
+  scalar phi     = 0.0;
   scalar sinephi = 0.0;  // sine perturbation on phi
   scalar sinerho = 0.0;  // sine perturbation on rho
-  scalar Aphi    = 0.10; // amplitude of the perturbation
+  scalar Aphi    = 1.0; // amplitude of the perturbation
   scalar Arho    = 0.10; // amplitude of the perturbation
   scalar p       = 1.0;
   scalar Et      = 1.0/(gamma-1.0)*p + 0.5*rho*u*u;
