@@ -303,7 +303,7 @@ void cpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, int model, sca
       f[((e*N_F+0)*N_G+g)*D+0] = cpu_flux1_multifluid(rho,u);       
       f[((e*N_F+1)*N_G+g)*D+0] = cpu_flux2_multifluid(rho,u,p);      
       f[((e*N_F+2)*N_G+g)*D+0] = cpu_flux3_multifluid(EtplusP,u);   
-      if      (model==0) f[((e*N_F+3)*N_G+g)*D+0] = 0;//cpu_flux4_multifluid(rho,u,gamma);
+      if      (model==0) f[((e*N_F+3)*N_G+g)*D+0] = cpu_flux4_multifluid(rho,u,gamma);
       else if (model==1) f[((e*N_F+3)*N_G+g)*D+0] = 0;
     }
   }
@@ -583,14 +583,16 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, s
       q[(t*N_F+2)*2+0] = qL; 
       q[(t*N_F+2)*2+1] = -qL;
 
-      //fourth: 
+      //fourth:
+      scalar ncterm = 0;
       if      (model==0){ //fx = rho*u*gamma; 
 	qL = -0.5*(cpu_flux4_multifluid(rhoL,uL,gammaL) + cpu_flux4_multifluid(rhoR,uR,gammaR)
 		   -maxvap*(rhoR*gammaR-rhoL*gammaL));}
       else if (model==1){ 
-	qL = -0.5*maxvap*(alphaL-alphaR);}
-      q[(t*N_F+3)*2+0] = qL + 0.5*0.5*(uL+uR)*(alphaL-alphaR); 
-      q[(t*N_F+3)*2+1] = -qL+ 0.5*0.5*(uL+uR)*(alphaL-alphaR);
+	qL = -0.5*(-maxvap*(alphaR-alphaL));
+	ncterm = -0.5*0.5*(uL+uR)*(alphaR-alphaL);}
+      q[(t*N_F+3)*2+0] = qL + ncterm; 
+      q[(t*N_F+3)*2+1] = -qL+ ncterm;
       //strictly equiv:
       //q[(t*N_F+3)*2+0] = 0.5*(alphaL-alphaR)*(0.5*(uL+uR)-maxvap); 
       //q[(t*N_F+3)*2+1] = 0.5*(alphaL-alphaR)*(0.5*(uL+uR)+maxvap);
@@ -638,13 +640,15 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, s
       q[(t*N_F+2)*2+1] = -qL;
 
       //fourth: 
+      scalar ncterm = 0;
       if      (model==0){ //fx = rho*u*gamma; 
 	qL = -0.5*(cpu_flux4_multifluid(rhoL,uL,gammaL) + cpu_flux4_multifluid(rhoR,uR,gammaR)
 		   -maxvap*(rhoR*gammaR-rhoL*gammaL));}
       else if (model==1){ //fx = u/(gamma-1);
-      	qL = -pnc4;}
-      q[(t*N_F+3)*2+0] = qL - 0.5*vnc4; 
-      q[(t*N_F+3)*2+1] = -qL- 0.5*vnc4;
+      	qL = -pnc4;
+	ncterm = -0.5*vnc4;}
+      q[(t*N_F+3)*2+0] = qL  + ncterm; 
+      q[(t*N_F+3)*2+1] = -qL + ncterm;
     }
 
     // Non-conservative Roe flux
@@ -725,10 +729,15 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, s
       q[(t*N_F+2)*2+1] = qL;
 
       //fourth:
-      qL = 0;
+      scalar ncterm = 0;
+      if      (model==0){ //fx = rho*u*gamma
+	qL = 0.5*(cpu_flux4_multifluid(rhoL,uL,gammaL) + cpu_flux4_multifluid(rhoR,uR,gammaR));}
+      else if (model==1){
+	qL = 0;
+	ncterm = -0.5*uRoe*(alphaR-alphaL);}
       for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*4+3];
-      q[(t*N_F+3)*2+0] = -qL - 0.5*uRoe*(alphaR-alphaL);
-      q[(t*N_F+3)*2+1] = qL  - 0.5*uRoe*(alphaR-alphaL);
+      q[(t*N_F+3)*2+0] = -qL + ncterm;
+      q[(t*N_F+3)*2+1] = qL  + ncterm;
            
       delete[] vapRoe;
       delete[] vep;
