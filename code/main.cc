@@ -1003,18 +1003,31 @@ int main (int argc, char **argv)
 	}
       }
     }
-    
+
+    // L2 NORM of downwind points: 
+    scalar* h_ErrDown = new scalar[N_F];  makeZero(h_ErrDown,N_F);
+    for(int e = 0; e < N_E; e++){
+      for(int fc = 0; fc < N_F; fc++){
+	h_ErrDown[fc] += h_Err[(e*N_F+fc)*N_s+1]*h_Err[(e*N_F+fc)*N_s+1];
+      }
+    }
+
     // Output some stuff in a file to read by post-proc
     std::string error = "error.dat"; 
     FILE *f = fopen(error.c_str(),"w");
-    fprintf(f,"%20.16E\t", XYZNodes(1,0*D+0)-XYZNodes(0,0*D+0));
+    fprintf(f,"%12.7f\t", XYZNodes(1,0*D+0)-XYZNodes(0,0*D+0));
     for(int fc = 0; fc < N_F; fc++){
       fprintf(f,"%20.16E\t", sqrt(h_intErr2[fc]));
     }
     fprintf(f,"\n");
-    fprintf(f,"%20.16E\t", XYZNodes(1,0*D+0)-XYZNodes(0,0*D+0));
+    fprintf(f,"%12.7f\t", XYZNodes(1,0*D+0)-XYZNodes(0,0*D+0));
     for(int fc = 0; fc < N_F; fc++){
       fprintf(f,"%20.16E\t", h_ErrInf[fc]);
+    }
+    fprintf(f,"\n");
+    fprintf(f,"%12.7f\t", XYZNodes(1,0*D+0)-XYZNodes(0,0*D+0));
+    for(int fc = 0; fc < N_F; fc++){
+      fprintf(f,"%20.16E\t", sqrt(h_ErrDown[fc]));
     }
     
     
@@ -1024,6 +1037,7 @@ int main (int argc, char **argv)
     delete[] h_Errg;
     delete[] h_intErr2;
     delete[] h_ErrInf;
+    delete[] h_ErrDown;
   }
 
 

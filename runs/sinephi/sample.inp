@@ -1,0 +1,31 @@
+#Options
+cpu
+nodebug
+blas
+#time integration
+rk4
+#time step size
+0.0001
+#number of time steps
+20000
+#output factor
+200
+#spatial method
+dg  
+#order
+ORDER
+#flux
+FLUX
+#mesh file
+../../../mshORDER/my_line_ORDER_dxDX.msh
+lin
+#problem
+passive
+#model
+passive
+#number of fields
+5
+#initial condition
+sinephi
+#boundary condition
+periodic
