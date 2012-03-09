@@ -221,6 +221,48 @@ void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int 
   if((all==-1)||(all==4)) m.writeSolution( P,  msh_lin,  "p.pos",   "P", step, time, append);
 }
 
+void print_dg_multifluid_err(const int N_s, const int N_E, const int N_F, const int model, scalar* U, const simpleMesh m, const int msh_lin, const int all){
+
+  fullMatrix<scalar> Rho;
+  fullMatrix<scalar> Ux ;
+  fullMatrix<scalar> Et ;
+  fullMatrix<scalar> G  ;
+  fullMatrix<scalar> P  ;
+
+  if((all==-1)||(all==0))Rho.resize(N_s, N_E);
+  if((all==-1)||(all==1)) Ux.resize(N_s, N_E);
+  if((all==-1)||(all==2)) Et.resize(N_s, N_E);
+  if((all==-1)||(all==3))  G.resize(N_s, N_E);
+  if((all==-1)||(all==4))  P.resize(N_s, N_E);
+    
+  // separate the fields
+  scalar rho = 0;
+  for (int e = 0; e < N_E; e++){
+    for (int i = 0; i < N_s; i++){
+
+      // Check for NaN error
+      rho = U[(e*N_F+0)*N_s+i];
+      if(rho != rho){
+	printf("NaN error. Code crashed... bummer.\n");
+	exit(1);
+      }
+
+      if((all==-1)||(all==0)) Rho(i,e) = rho;
+      if((all==-1)||(all==1)) Ux (i,e) = U[(e*N_F+1)*N_s+i];
+      if((all==-1)||(all==2)) Et (i,e) = U[(e*N_F+2)*N_s+i];
+      if((all==-1)||(all==3)) G  (i,e) = U[(e*N_F+3)*N_s+i];
+      if((all==-1)||(all==4)) P  (i,e) = (G(i,e)-1)*(Et(i,e) - 0.5*Rho(i,e)*Ux(i,e)*Ux(i,e));
+    }
+  }
+  // print to the output file
+  if((all==-1)||(all==0)) m.writeSolution(  Rho,  msh_lin,  "rho_err.pos",  "ErrRho", 0, 0, 0);
+  if((all==-1)||(all==1)) m.writeSolution(   Ux,  msh_lin,   "ux_err.pos",   "ErrUx", 0, 0, 0);
+  if((all==-1)||(all==2)) m.writeSolution(   Et,  msh_lin,   "et_err.pos",   "ErrEt", 0, 0, 0);
+  if((all==-1)||(all==3)) m.writeSolution(    G,  msh_lin,    "g_err.pos",    "ErrG", 0, 0, 0);
+  if((all==-1)||(all==5)) m.writeSolution(    P,  msh_lin,    "p_err.pos",    "ErrP", 0, 0, 0);
+}
+
+
 //===========================================
 // Output passive solutions
 //===========================================
@@ -344,9 +386,9 @@ void print_dg_passive_err(const int N_s, const int N_E, const int N_F, scalar ga
       }
 
       if((all==-1)||(all==0))    Rho(i,e) = rho;
-      if((all==-1)||(all==1))    Ux (i,e) = U[(e*N_F+1)*N_s+i]/Rho(i,e);
+      if((all==-1)||(all==1))    Ux (i,e) = U[(e*N_F+1)*N_s+i];
       if((all==-1)||(all==2))    Et (i,e) = U[(e*N_F+2)*N_s+i];
-      if((all==-1)||(all==3))  PhiC (i,e) = U[(e*N_F+3)*N_s+i]/Rho(i,e);
+      if((all==-1)||(all==3))  PhiC (i,e) = U[(e*N_F+3)*N_s+i];
       if((all==-1)||(all==4)) PhiNC (i,e) = U[(e*N_F+4)*N_s+i];
       if((all==-1)||(all==5))    P  (i,e) = (gamma-1)*(Et(i,e) - 0.5*Rho(i,e)*Ux(i,e)*Ux(i,e));
     }

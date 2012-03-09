@@ -8,7 +8,7 @@
 rm -rf $(find msh* -type d);    
 
 #loop on the spatial resolutions
-num=(21 51 101 201 401 801); # create an array
+num=(11 21 41 81 101); # create an array
 for ((i=0; i<${#num[@]}; i++)); do #C style loop with the array length
     echo 'Creating temporary file line_dx'$i'.geo with '${num[i]}' intervals';
     sed 's|NUM|'${num[i]}'|g' <sample_line.geo >'line_dx'$i'.geo';   

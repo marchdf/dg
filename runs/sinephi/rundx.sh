@@ -12,7 +12,7 @@ rm -rf $(find p* -type d);
 
 # Make the directories and input deck for 
 # p=0 to 4 and dx=0 to 4
-flux='ncf';
+flux='llf';
 for i in {0..4}; do
     for j in {0..4}; do
 	echo 'Creating directory p'$i'/dx'$j;

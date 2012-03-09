@@ -8,6 +8,7 @@
 #include <time.h>
 #include "fullMatrix.h"
 #include "polynomialBasis.h"
+#include "polynomialsJacobi.h"
 #include "quadratures/Gauss.h"
 #include "GmshDefines.h"
 #include "simpleMesh.h"
@@ -237,6 +238,24 @@ int main (int argc, char **argv)
   // }
   
 
+  fullMatrix<scalar> X(3,1);
+  X(0,0) = -1;
+  X(1,0) = 0;
+  X(2,0) = 1;
+  fullMatrix<scalar> P(3,1);
+  JacobiP(X, 1, 1, 4, P);
+  printf("%f %f %f\n", P(0,0),P(1,0),P(2,0));
+
+  fullMatrix<scalar> xgq(4+1,1);
+  fullMatrix<scalar> wgq(4+1,1);
+  JacobiGQ(1,1,4,xgq,wgq);
+  printf("%f %f %f %f %f\n", xgq(0,0),xgq(1,0),xgq(2,0),xgq(3,0),xgq(4,0));
+  printf("%f %f %f %f %f\n", wgq(0,0),wgq(1,0),wgq(2,0),wgq(3,0),wgq(4,0));
+
+  fullMatrix<scalar> xgl(4+1,1);
+  JacobiGL(1,1,4,xgl);
+  printf("%f %f %f %f %f\n", xgl(0,0),xgl(1,0),xgl(2,0),xgl(3,0),xgl(4,0));
+  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Multiply des fonctions de formes et derivees avec les poids
@@ -963,81 +982,50 @@ int main (int argc, char **argv)
     for(int e = 0; e < N_E; e++){
       for(int fc = 0; fc < N_F; fc++){
 	for(int i = 0; i < N_s; i++){
-	  h_Uinit[(e*N_F+fc)*N_s+i] = U(i,e*N_F+fc);}}}
+	  h_Uinit[(e*N_F+fc)*N_s+i] = Uinit(i,e*N_F+fc);}}}
 
-    // Make error vectors
-    scalar* h_Err = new scalar[N_s*N_E*N_F];
-    for(int e = 0; e < N_E; e++){
-      for(int i = 0; i < N_s; i++){
-	h_Err[(e*N_F+0)*N_s+i] = h_Uinit[(e*N_F+0)*N_s+i]-h_U[(e*N_F+0)*N_s+i];
-	h_Err[(e*N_F+1)*N_s+i] = h_Uinit[(e*N_F+1)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]-h_U[(e*N_F+1)*N_s+i]/h_U[(e*N_F+0)*N_s+i];
-	h_Err[(e*N_F+2)*N_s+i] = h_Uinit[(e*N_F+2)*N_s+i]-h_U[(e*N_F+2)*N_s+i];
-	h_Err[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]-h_U[(e*N_F+3)*N_s+i]/h_U[(e*N_F+0)*N_s+i];
-	h_Err[(e*N_F+4)*N_s+i] = h_Uinit[(e*N_F+4)*N_s+i]-h_U[(e*N_F+4)*N_s+i];	  
-      }
-    }
-    print_dg_passive_err(N_s, N_E, N_F, gamma0, h_Err, m, msh_lin, -1);
-	  
-    // Evaluate the error at the integration points
-    scalar* h_Errg= new scalar[N_G*N_E*N_F];
-    if (blas == 1) blasGemm("N","N", N_G, N_E*N_F, N_s, 1, h_phi,  N_G, h_Err, N_s, 0.0, h_Errg , N_G);
-    else Lcpu_collocationU(D, N_G, N_s, N_E, N_F, h_Errg, h_dUinteg, h_phi, h_dphi, h_Err);
-
-    // L2 NORM: Integrate over each element
-    scalar* h_intErr2 = new scalar[N_F];  makeZero(h_intErr2,N_F);
+    // Collocate the solution to the integration points
+    scalar* h_Uinitg = new scalar[N_G*N_E*N_F];  makeZero(h_Uinitg,N_G*N_E*N_F);
+    scalar* h_Ug = new scalar[N_G*N_E*N_F];      makeZero(h_Ug,N_G*N_E*N_F);
+    blasGemm("N","N", N_G, N_E*N_F, N_s, 1, h_phi,  N_G, h_Uinit, N_s, 0.0, h_Uinitg, N_G);
+    blasGemm("N","N", N_G, N_E*N_F, N_s, 1, h_phi,  N_G, h_U, N_s, 0.0, h_Ug, N_G);
+    
+    // Take the cell average of the solution
+    scalar* h_UinitAvg = new scalar[N_E*N_F];  makeZero(h_UinitAvg,N_E*N_F);
+    scalar* h_UAvg = new scalar[N_E*N_F];      makeZero(h_UAvg,N_E*N_F);
+    scalar dx = XYZNodes(1,0*D+0)-XYZNodes(0,0*D+0);
     for(int e = 0; e < N_E; e++){
       for(int fc = 0; fc < N_F; fc++){
-	for(int g = 0; g < N_s; g++){
-	  h_intErr2[fc] += h_Errg[(e*N_F+fc)*N_G+g]*h_Errg[(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
+	for(int g = 0; g < N_G; g++){
+	  h_UinitAvg[e*N_F+fc] = h_Uinitg[(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
+	  h_UAvg[e*N_F+fc]     = h_Ug[(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
 	}
       }
     }
 
-    // L-INF NORM: 
-    scalar* h_ErrInf = new scalar[N_F];  makeZero(h_ErrInf,N_F);
+    // Calculate the L2 norm of the error
+    scalar* h_Err2 = new scalar[N_F]; makeZero(h_Err2, N_F);
     for(int e = 0; e < N_E; e++){
       for(int fc = 0; fc < N_F; fc++){
-	for(int i = 0; i < N_s; i++){
-	  scalar err = fabs(h_Err[(e*N_F+fc)*N_s+i]);
-	  if(h_ErrInf[fc] < err) h_ErrInf[fc] = err;
-	}
-      }
-    }
-
-    // L2 NORM of downwind points: 
-    scalar* h_ErrDown = new scalar[N_F];  makeZero(h_ErrDown,N_F);
-    for(int e = 0; e < N_E; e++){
-      for(int fc = 0; fc < N_F; fc++){
-	h_ErrDown[fc] += h_Err[(e*N_F+fc)*N_s+1]*h_Err[(e*N_F+fc)*N_s+1];
+	h_Err2[fc] += (h_UinitAvg[e*N_F+fc] - h_UAvg[e*N_F+fc])*(h_UinitAvg[e*N_F+fc] - h_UAvg[e*N_F+fc]);
       }
     }
 
     // Output some stuff in a file to read by post-proc
     std::string error = "error.dat"; 
     FILE *f = fopen(error.c_str(),"w");
-    fprintf(f,"%12.7f\t", XYZNodes(1,0*D+0)-XYZNodes(0,0*D+0));
+    fprintf(f,"%12.7f\t", dx);
     for(int fc = 0; fc < N_F; fc++){
-      fprintf(f,"%20.16E\t", sqrt(h_intErr2[fc]));
+      fprintf(f,"%20.16E\t", sqrt(h_Err2[fc]/N_E));
     }
-    fprintf(f,"\n");
-    fprintf(f,"%12.7f\t", XYZNodes(1,0*D+0)-XYZNodes(0,0*D+0));
-    for(int fc = 0; fc < N_F; fc++){
-      fprintf(f,"%20.16E\t", h_ErrInf[fc]);
-    }
-    fprintf(f,"\n");
-    fprintf(f,"%12.7f\t", XYZNodes(1,0*D+0)-XYZNodes(0,0*D+0));
-    for(int fc = 0; fc < N_F; fc++){
-      fprintf(f,"%20.16E\t", sqrt(h_ErrDown[fc]));
-    }
-    
     
     // Free some stuff
     delete[] h_Uinit;
-    delete[] h_Err;
-    delete[] h_Errg;
-    delete[] h_intErr2;
-    delete[] h_ErrInf;
-    delete[] h_ErrDown;
+    delete[] h_Uinitg;
+    delete[] h_UinitAvg;
+    delete[] h_Ug;
+    delete[] h_UAvg;
+    delete[] h_Err2;
   }
 
 

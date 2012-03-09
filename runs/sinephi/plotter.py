@@ -22,9 +22,10 @@ for pd in pdir:
     for dxd in dxdir:
         dat    = loadtxt(pd+dxd+dxFile)
         print 'Loading', pd,dxd, 'data:', dat
-        dxs[pdcnt,dxdcnt] = dat[0,0]
-        errors[pdcnt,dxdcnt,0] = dat[0,4]#*sqrt(dat[0,0])
-        errors[pdcnt,dxdcnt,1] = dat[0,5]#*sqrt(dat[0,0])
+        dxs[pdcnt,dxdcnt] = dat[0]
+        N_E = 2.0/dat[0]
+        errors[pdcnt,dxdcnt,0] = dat[1]#*sqrt(N_E)
+        errors[pdcnt,dxdcnt,1] = dat[2]#*sqrt(N_E)
         dxdcnt = dxdcnt+1
     pdcnt = pdcnt+1
 
