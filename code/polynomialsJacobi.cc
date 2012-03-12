@@ -9,7 +9,8 @@ void JacobiP(const fullMatrix<scalar> x, const int alpha, const int beta, const 
   // Inspired by the book: Nodal DG... p446
   int Nx = x.size1();
   fullMatrix<scalar> PL(N+1, Nx);
-
+  P.resize(Nx,1);
+  
   // Initial values for p0 and p1
   scalar gamma0 = pow(2,alpha+beta+1)/(alpha+beta+1)*tgamma(alpha+1)*tgamma(beta+1)/tgamma(alpha+beta+1);
   for(int j=0;j<Nx;j++) PL(0,j) = 1.0/sqrt(gamma0);
@@ -46,6 +47,9 @@ void JacobiGQ(const int alpha, const int beta, const int N, fullMatrix<scalar> &
   //         and weights, w, associated with the Jacobi
   //         polynomial, of type (alpha,beta) > -1 ( <> -0.5).
 
+  x.resize(N+1,3);
+  w.resize(N+1,1);
+  
   if (N==0){
     x(0,0) = (scalar)(alpha-beta)/(alpha+beta+2);
     w(0,0) = 2;
@@ -86,6 +90,8 @@ void JacobiGL(const int alpha, const int beta, const int N, fullMatrix<scalar> &
   //          points, x, associated with the Jacobi polynomial,
   //          of type (alpha,beta) > -1 ( <> -0.5).
 
+  x.resize(N+1,3);
+    
   if (N==1){
     x(0,0) =-1.0;
     x(1,0) = 1.0;

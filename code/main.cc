@@ -64,6 +64,8 @@ void makeZero(scalar* A, int size){
 }
 void average_cell_p0(const int N_s, const int N_E, const int N_F, fullMatrix<scalar> &U);
 
+void vandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D);
+
 int main (int argc, char **argv)
 {
 
@@ -228,34 +230,37 @@ int main (int argc, char **argv)
     }    
   }
 
-  // scalar sum = 0.0;
-  // for(int g = 0; g < N_G; g++){
-  //   sum = 0.0;
-  //   for(int i = 0; i < N_s; i++){
-  //     sum+=dphi(g,i);  //see paper for indexing p.6
-  //   }
-  //   printf("g:%i -> sum dphi=%12.11f\n", g, sum); 
-  // }
+
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Modal basis functions and change of basis
+  //
+  //////////////////////////////////////////////////////////////////////////
+
+  // Get the Legendre-Gauss-Lobatto points
+  fullMatrix<scalar> pointsGL;
+  JacobiGL(0,0,order,pointsGL);
+  int N_GL = pointsGL.size1();
   
-
-  fullMatrix<scalar> X(3,1);
-  X(0,0) = -1;
-  X(1,0) = 0;
-  X(2,0) = 1;
-  fullMatrix<scalar> P(3,1);
-  JacobiP(X, 1, 1, 4, P);
-  printf("%f %f %f\n", P(0,0),P(1,0),P(2,0));
-
-  fullMatrix<scalar> xgq(4+1,1);
-  fullMatrix<scalar> wgq(4+1,1);
-  JacobiGQ(1,1,4,xgq,wgq);
-  printf("%f %f %f %f %f\n", xgq(0,0),xgq(1,0),xgq(2,0),xgq(3,0),xgq(4,0));
-  printf("%f %f %f %f %f\n", wgq(0,0),wgq(1,0),wgq(2,0),wgq(3,0),wgq(4,0));
-
-  fullMatrix<scalar> xgl(4+1,1);
-  JacobiGL(1,1,4,xgl);
-  printf("%f %f %f %f %f\n", xgl(0,0),xgl(1,0),xgl(2,0),xgl(3,0),xgl(4,0));
+  // Evaluate the Lagrange polynomials at the GL points (needed for collocation)
+  fullMatrix<scalar> phiGL (N_GL,N_s); 
+  fullMatrix<double> phiDGL(N_GL,N_s); 
+  basis->f (pointsGL, phiDGL);
+  for(int gl = 0; gl < N_GL; gl++){
+    for(int i = 0; i < N_s; i++){
+      phiGL(gl,i) = (scalar)phiDGL(gl,i);
+    }	  
+  }   
   
+  // Vandermonde matrix to go from modal to nodal representation
+  // u_nodal = V1D    u_modal
+  // u_modal = V1Dinv u_nodal
+  fullMatrix<scalar> V1D;
+  fullMatrix<scalar> V1Dinv;
+  vandermonde1d(order, pointsGL, V1D);
+  V1D.invert(V1Dinv);
+
+
   //////////////////////////////////////////////////////////////////////////   
   //
   // Multiply des fonctions de formes et derivees avec les poids
@@ -382,9 +387,12 @@ int main (int argc, char **argv)
   //  note: it's got to be column major sorted
   //
   scalar* h_phi     = new scalar[N_G*N_s];          makeZero(h_phi,N_G*N_s);
+  scalar* h_phiGL   = new scalar[N_GL*N_s];         makeZero(h_phiGL,N_GL*N_s);
   scalar* h_phi_w   = new scalar[N_G*N_s];          makeZero(h_phi_w,N_G*N_s);          
   scalar* h_dphi    = new scalar[D*N_G*N_s];	    makeZero(h_dphi,D*N_G*N_s);	 
-  scalar* h_dphi_w  = new scalar[D*N_G*N_s];	    makeZero(h_dphi_w,D*N_G*N_s);	 
+  scalar* h_dphi_w  = new scalar[D*N_G*N_s];	    makeZero(h_dphi_w,D*N_G*N_s);
+  scalar* h_V1D     = new scalar[N_GL*N_s];         makeZero(h_V1D,N_GL*N_s);
+  scalar* h_V1Dinv  = new scalar[N_GL*N_s];         makeZero(h_V1Dinv,N_s*N_GL);
   scalar* h_J       = new scalar[N_E];              makeZero(h_J,N_E);                                 // not same as J!!
   scalar* h_invJac  = new scalar[N_G*D*N_E*D];      makeZero(h_invJac,N_G*D*N_E*D);                    // not same as invJac!!
   scalar* h_Us      = new scalar[N_s*N_E*N_F];	    makeZero(h_Us,N_s*N_E*N_F);	 
@@ -409,6 +417,9 @@ int main (int argc, char **argv)
   
   // copy from the fullMatrix to the pointer format (column major)
   copyMatrixToPointer(phi,h_phi);
+  copyMatrixToPointer(phiGL,h_phiGL);
+  copyMatrixToPointer(V1D,h_V1D);
+  copyMatrixToPointer(V1Dinv,h_V1Dinv);
   copyMatrixToPointer(phi_w,h_phi_w);
   copyMatrixToPointer(dphi,h_dphi);
   copyMatrixToPointer(dphi_w,h_dphi_w);
@@ -431,6 +442,10 @@ int main (int argc, char **argv)
       }
     }
   }
+
+  // Calculate the complete nodal to modal transform = V1Dinv*phiGL
+  scalar* h_Nod2Mod = new scalar[N_s*N_s]; makeZero(h_Nod2Mod,N_s*N_s);
+  blasGemm("N","N", N_s, N_s, N_G, 1, h_V1Dinv, N_s, h_phiGL, N_GL, 0.0, h_Nod2Mod, N_s);
 
   //
   // Initialize and allocate some stuff on the device
@@ -986,28 +1001,47 @@ int main (int argc, char **argv)
 
     // Collocate the solution to the integration points
     scalar* h_Uinitg = new scalar[N_G*N_E*N_F];  makeZero(h_Uinitg,N_G*N_E*N_F);
-    scalar* h_Ug = new scalar[N_G*N_E*N_F];      makeZero(h_Ug,N_G*N_E*N_F);
-    blasGemm("N","N", N_G, N_E*N_F, N_s, 1, h_phi,  N_G, h_Uinit, N_s, 0.0, h_Uinitg, N_G);
-    blasGemm("N","N", N_G, N_E*N_F, N_s, 1, h_phi,  N_G, h_U, N_s, 0.0, h_Ug, N_G);
-    
+    scalar* h_Ug     = new scalar[N_G*N_E*N_F];  makeZero(h_Ug    ,N_G*N_E*N_F);
+    blasGemm("N","N", N_G, N_E*N_F, N_s, 1, h_phi, N_G, h_Uinit, N_s, 0.0, h_Uinitg, N_G);
+    blasGemm("N","N", N_G, N_E*N_F, N_s, 1, h_phi, N_G, h_U    , N_s, 0.0, h_Ug    , N_G);
+
+
     // Take the cell average of the solution
     scalar* h_UinitAvg = new scalar[N_E*N_F];  makeZero(h_UinitAvg,N_E*N_F);
-    scalar* h_UAvg = new scalar[N_E*N_F];      makeZero(h_UAvg,N_E*N_F);
+    scalar* h_UAvg     = new scalar[N_E*N_F];  makeZero(h_UAvg    ,N_E*N_F);
     scalar dx = XYZNodes(1,0*D+0)-XYZNodes(0,0*D+0);
     for(int e = 0; e < N_E; e++){
       for(int fc = 0; fc < N_F; fc++){
 	for(int g = 0; g < N_G; g++){
-	  h_UinitAvg[e*N_F+fc] = h_Uinitg[(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
-	  h_UAvg[e*N_F+fc]     = h_Ug[(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
+	  h_UinitAvg[e*N_F+fc] += h_Uinitg[(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
+	  h_UAvg    [e*N_F+fc] += h_Ug    [(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
 	}
       }
     }
 
-    // Calculate the L2 norm of the error
-    scalar* h_Err2 = new scalar[N_F]; makeZero(h_Err2, N_F);
+    // Go directly from nodal to modal representation
+    scalar* h_UinitMod = new scalar[N_s*N_E*N_F];  makeZero(h_UinitMod,N_s*N_E*N_F);
+    scalar* h_UMod     = new scalar[N_s*N_E*N_F];  makeZero(h_UMod    ,N_s*N_E*N_F);
+    blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Nod2Mod,  N_s, h_Uinit, N_s, 0.0, h_UinitMod, N_s);
+    blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Nod2Mod,  N_s, h_U    , N_s, 0.0, h_UMod    , N_s);
+    
+    // Get the cell average from the modal representation
+    scalar* h_UinitModAvg = new scalar[N_E*N_F];  makeZero(h_UinitModAvg,N_E*N_F);
+    scalar* h_UModAvg     = new scalar[N_E*N_F];  makeZero(h_UModAvg    ,N_E*N_F);
     for(int e = 0; e < N_E; e++){
       for(int fc = 0; fc < N_F; fc++){
-	h_Err2[fc] += (h_UinitAvg[e*N_F+fc] - h_UAvg[e*N_F+fc])*(h_UinitAvg[e*N_F+fc] - h_UAvg[e*N_F+fc]);
+	h_UinitModAvg[e*N_F+fc] = h_UinitMod[(e*N_F+0)*N_s+0]*sqrt(2.0)*h_J[e]; // gamma_n = 2/(2n+1) see p45
+	h_UModAvg    [e*N_F+fc] = h_UMod    [(e*N_F+0)*N_s+0]*sqrt(2.0)*h_J[e]; // gamma_n = 2/(2n+1) see p45
+      }
+    }
+
+    // Calculate the L2 norm of the error
+    scalar* h_Err2    = new scalar[N_F]; makeZero(h_Err2   , N_F);
+    scalar* h_Err2Mod = new scalar[N_F]; makeZero(h_Err2Mod, N_F);
+    for(int e = 0; e < N_E; e++){
+      for(int fc = 0; fc < N_F; fc++){
+	h_Err2[fc]    += (h_UinitAvg[e*N_F+fc] - h_UAvg[e*N_F+fc])*(h_UinitAvg[e*N_F+fc] - h_UAvg[e*N_F+fc]);
+	h_Err2Mod[fc] += (h_UinitModAvg[e*N_F+fc]-h_UModAvg[e*N_F+fc])*(h_UinitModAvg[e*N_F+fc]-h_UModAvg[e*N_F+fc]);
       }
     }
 
@@ -1018,14 +1052,24 @@ int main (int argc, char **argv)
     for(int fc = 0; fc < N_F; fc++){
       fprintf(f,"%20.16E\t", sqrt(h_Err2[fc]/N_E));
     }
+    fprintf(f,"\n");
+    fprintf(f,"%12.7f\t", dx);
+    for(int fc = 0; fc < N_F; fc++){
+      fprintf(f,"%20.16E\t", sqrt(h_Err2Mod[fc]/N_E));
+    }
     
     // Free some stuff
     delete[] h_Uinit;
     delete[] h_Uinitg;
     delete[] h_UinitAvg;
+    delete[] h_UinitModAvg;
     delete[] h_Ug;
     delete[] h_UAvg;
+    delete[] h_UModAvg;
+    delete[] h_UinitMod;
+    delete[] h_UMod;
     delete[] h_Err2;
+    delete[] h_Err2Mod;
   }
 
 
@@ -1074,9 +1118,12 @@ int main (int argc, char **argv)
 
   delete[] h_Minv;
   delete[] h_phi;
+  delete[] h_phiGL;
   delete[] h_phi_w;
   delete[] h_dphi;
   delete[] h_dphi_w;
+  delete[] h_V1D;
+  delete[] h_V1Dinv;  
   delete[] h_J;
   delete[] h_invJac;
   delete[] h_U;
@@ -1136,3 +1183,15 @@ void average_cell_p0(const int N_s, const int N_E, const int N_F, fullMatrix<sca
   U=tmp; 
 }
 
+
+void vandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D){
+
+  // Purpose : Initialize the 1D Vandermonde Matrix, V_{ij} = phi_j(r_i);
+  
+  V1D.resize(r.size1(),order+1);
+  fullMatrix<scalar> P;
+  for(int j=0;j<order+1;j++){
+    JacobiP(r, 0, 0, j, P);
+    for(int i=0;i<P.size1();i++) V1D(i,j) = P(i,0);
+  }
+}
