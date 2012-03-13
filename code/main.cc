@@ -999,6 +999,16 @@ int main (int argc, char **argv)
 	for(int i = 0; i < N_s; i++){
 	  h_Uinit[(e*N_F+fc)*N_s+i] = Uinit(i,e*N_F+fc);}}}
 
+    // Change to primitive variables
+    for(int e = 0; e < N_E; e++){
+      for(int i = 0; i < N_s; i++){
+	h_Uinit[(e*N_F+1)*N_s+i] = h_Uinit[(e*N_F+1)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; // velocity
+	h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; // conservative phi
+	h_U    [(e*N_F+1)*N_s+i] = h_U    [(e*N_F+1)*N_s+i]/h_U    [(e*N_F+0)*N_s+i]; // velocity
+	h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i]; // conservative phi
+      }
+    }
+    
     // Collocate the solution to the integration points
     scalar* h_Uinitg = new scalar[N_G*N_E*N_F];  makeZero(h_Uinitg,N_G*N_E*N_F);
     scalar* h_Ug     = new scalar[N_G*N_E*N_F];  makeZero(h_Ug    ,N_G*N_E*N_F);
