@@ -63,9 +63,9 @@ for i in range(0,len(pdir)):
     ylabel('$E$',fontsize=22,fontweight='bold')
     setp(gca().get_ymajorticklabels(),fontsize=18,fontweight='bold');
     setp(gca().get_xmajorticklabels(),fontsize=18,fontweight='bold');    
+    setp(gca(),ylim=[1e-16,1e-1])
     savefig('p'+str(i)+'.png',format='png')
-# setp(gca(),xlim=[0,10000])
-# setp(gca(),ylim=[0,60])
+    savefig('p'+str(i)+'.eps',format='eps')
 
 
 # make a latex table

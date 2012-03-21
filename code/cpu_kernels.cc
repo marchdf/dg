@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <algorithm>
 
+
 // Kernel definitions
 void cpu_equal(int N_s, int N_E, int N_F, scalar* A, scalar* B){
   for(int e = 0; e < N_E; e++){
@@ -708,7 +709,7 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, s
       // else if (uRoe<=0) qL = cpu_flux1_multifluid(rhoR,uR) - aiRoe[2]*vapRoe[2]*vep[2*3+0];
       scalar qL = 0;
       qL = 0.5*(cpu_flux1_multifluid(rhoL,uL) + cpu_flux1_multifluid(rhoR,uR));
-      for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*4+0];
+      for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*4+0];
       q[(t*N_F+0)*2+0] = -qL;
       q[(t*N_F+0)*2+1] = qL;
       
@@ -716,7 +717,7 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, s
       // if      (uRoe>0)  qL = cpu_flux2_passive(rhoL,uL,pL) + aiRoe[0]*vapRoe[0]*vep[0*3+1];
       // else if (uRoe<=0) qL = cpu_flux2_passive(rhoR,uR,pR) - aiRoe[2]*vapRoe[2]*vep[2*3+1];
       qL = 0.5*(cpu_flux2_multifluid(rhoL,uL,pL)  + cpu_flux2_multifluid(rhoR,uR,pR));
-      for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*4+1];
+      for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*4+1];
       q[(t*N_F+1)*2+0] = -qL;
       q[(t*N_F+1)*2+1] = qL;
 
@@ -724,7 +725,7 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, s
       // if      (uRoe>0)  qL = cpu_flux3_multifluid(EtPL,uL) + aiRoe[0]*vapRoe[0]*vep[0*3+2];
       // else if (uRoe<=0) qL = cpu_flux3_multifluid(EtPR,uR) - aiRoe[2]*vapRoe[2]*vep[2*3+2];
       qL = 0.5*(cpu_flux3_multifluid(EtPL,uL) + cpu_flux3_multifluid(EtPR,uR));
-      for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*4+2];
+      for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*4+2];
       q[(t*N_F+2)*2+0] = -qL; 
       q[(t*N_F+2)*2+1] = qL;
 
@@ -735,7 +736,7 @@ void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, s
       else if (model==1){
 	qL = 0;
 	ncterm = -0.5*uRoe*(alphaR-alphaL);}
-      for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*4+3];
+      for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*4+3];
       q[(t*N_F+3)*2+0] = -qL + ncterm;
       q[(t*N_F+3)*2+1] = qL  + ncterm;
            
@@ -923,7 +924,7 @@ void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, scalar gamma, s
       // if      (uRoe>0)  qL = cpu_flux1_multifluid(rhoL,uL) + aiRoe[0]*vapRoe[0]*vep[0*3+0];
       // else if (uRoe<=0) qL = cpu_flux1_multifluid(rhoR,uR) - aiRoe[2]*vapRoe[2]*vep[2*3+0];
       qL = 0.5*(cpu_flux1_passive(rhoL,uL) + cpu_flux1_passive(rhoR,uR));
-      for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*3+0];
+      for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*3+0];
       q[(t*N_F+0)*2+0] = -qL;
       q[(t*N_F+0)*2+1] = qL;
       
@@ -931,7 +932,7 @@ void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, scalar gamma, s
       // if      (uRoe>0)  qL = cpu_flux2_passive(rhoL,uL,pL) + aiRoe[0]*vapRoe[0]*vep[0*3+1];
       // else if (uRoe<=0) qL = cpu_flux2_passive(rhoR,uR,pR) - aiRoe[2]*vapRoe[2]*vep[2*3+1];
       qL = 0.5*(cpu_flux2_passive(rhoL,uL,pL)  + cpu_flux2_passive(rhoR,uR,pR));
-      for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*3+1];
+      for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*3+1];
       q[(t*N_F+1)*2+0] = -qL;
       q[(t*N_F+1)*2+1] = qL;
 
@@ -939,7 +940,7 @@ void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, scalar gamma, s
       // if      (uRoe>0)  qL = cpu_flux3_passive(EtPL,uL) + aiRoe[0]*vapRoe[0]*vep[0*3+2];
       // else if (uRoe<=0) qL = cpu_flux3_passive(EtPR,uR) - aiRoe[2]*vapRoe[2]*vep[2*3+2];
       qL = 0.5*(cpu_flux3_passive(EtPL,uL) + cpu_flux3_passive(EtPR,uR));
-      for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*3+2];
+      for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*3+2];
       q[(t*N_F+2)*2+0] = -qL; 
       q[(t*N_F+2)*2+1] = qL;
 
@@ -947,26 +948,25 @@ void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, scalar gamma, s
       // if      (uRoe>0)  qL = cpu_flux4_passive(rhoL,uL,phicL) + aiRoe[0]*vapRoe[0]*vep[0*3+1];
       // else if (uRoe<=0) qL = cpu_flux4_passive(rhoR,uR,phicR) - aiRoe[2]*vapRoe[2]*vep[2*3+1];
       qL = 0.5*(cpu_flux4_passive(rhoL,uL,phicL) + cpu_flux4_passive(rhoR,uR,phicR));
-      for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*abs(vapRoe[k])*vep[k*3+1];
+      for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*3+0];
       q[(t*N_F+3)*2+0] = -qL; 
       q[(t*N_F+3)*2+1] = qL;
 
       //fifth:
       scalar ustar = 0;
-      if      (uRoe>0){
-	ustar = uL + aiRoe[0]*vep[0*3+1];
-	qL = + aiRoe[0]*vapRoe[0]*vep[0*3+1];
-      }
-      else if (uRoe<=0){
-	ustar = uR - aiRoe[2]*vep[2*3+1];
-	qL = - aiRoe[2]*vapRoe[2]*vep[2*3+1];
-      }
-      // q[(t*N_F+4)*2+0] = -qL - 0.5*0.5*(ustar+uL)*(phincR-phincL);
-      // q[(t*N_F+4)*2+1] = qL  - 0.5*0.5*(uR+ustar)*(phincR-phincL);
+      // if      (uRoe>0){
+      // 	ustar = uL + aiRoe[0]*vep[0*3+1];
+      // 	qL = + aiRoe[0]*vapRoe[0]*vep[0*3+1];
+      // }
+      // else if (uRoe<=0){
+      // 	ustar = uR - aiRoe[2]*vep[2*3+1];
+      // 	qL = - aiRoe[2]*vapRoe[2]*vep[2*3+1];
+      // }
+      qL = 0.0;
+      for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*3+0];
       q[(t*N_F+4)*2+0] = -qL - 0.5*uRoe*(phincR-phincL);
       q[(t*N_F+4)*2+1] = qL  - 0.5*uRoe*(phincR-phincL);
      
-      
       delete[] vapRoe;
       delete[] vep;
       delete[] aiRoe;
@@ -1102,6 +1102,25 @@ void cpu_zeroVector(int N_s, int N_E, int N_F, scalar* Q){
   }
 }
 
+void cpu_hsl(int N_s, int N_E, int N_F, scalar* U, scalar* UNew){
+
+  scalar* c = new scalar[3];
+
+  // treat boundary conditions
+  
+  for(int e = 1; e < N_E-1; e++){
+    for(int fc = 0; fc < N_F; fc++){
+      for(int m = N_s-1; m >= 0; m--){
+	c[0] = sqrt((2*m+1)*(2*m+3))*U[(e*N_F+fc)*N_s+m];
+	c[1] = U[((e+1)*N_F+fc)*N_s+m-1] - U[( e   *N_F+fc)*N_s+m-1];
+	c[2] = U[( e   *N_F+fc)*N_s+m-1] - U[((e-1)*N_F+fc)*N_s+m-1];
+	UNew[(e*N_F+fc)*N_s+m] = 1.0/sqrt((2*m+1)*(2*m+3))*minmod(c,3);
+      }
+    }
+  }
+}
+
+
 
 //===============================================================
 //
@@ -1227,4 +1246,9 @@ void Lcpu_solve(int N_s, int N_E, int N_F, scalar* DU, scalar* S, scalar* F, sca
 extern "C"
 void Lcpu_average_cell_p0(const int N_s, const int N_E, const int N_F, scalar* DU){
   cpu_average_cell_p0(N_s, N_E, N_F, DU);
+}
+
+extern "C"
+void Lcpu_hsl(int N_s, int N_E, int N_F, scalar* U, scalar* UNew){
+  cpu_hsl(N_s, N_E, N_F, U, UNew);
 }

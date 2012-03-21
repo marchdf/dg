@@ -1,12 +1,10 @@
-Merge "../msh1/my_line_1_dx0.msh";
-Merge "./p1/dx0/rho.pos";
-Merge "./p1/dx0/ux.pos";
-Merge "./p1/dx0/et.pos";
-Merge "./p1/dx0/p.pos";
-Merge "./p1/dx0/phic.pos";
-Merge "./p1/dx0/phinc.pos";
-Merge "./p1/dx0/errphic.pos";
-Merge "./p1/dx0/errphinc.pos";
+Merge "../msh1/my_line_1_dx3.msh";
+Merge "./p1/dx3/rho.pos";
+Merge "./p1/dx3/ux.pos";
+Merge "./p1/dx3/et.pos";
+Merge "./p1/dx3/p.pos";
+Merge "./p1/dx3/phic.pos";
+Merge "./p1/dx3/phinc.pos";
 
 General.Color.Background = White ;
 General.Color.Foreground = Black ;
@@ -30,14 +28,12 @@ Mesh.SurfaceEdges=0;
 Mesh.SurfaceFaces=0;
 Mesh.ColorCarousel = 0; //Mesh coloring (0=by element type, 1=by elementary entity, 2=by physical entity, 3=by partition)
 
-rho      = PostProcessing.NbViews-8;
+rho      = PostProcessing.NbViews-6;
 ux       = rho+1;   
 et       = rho+2;
 p        = rho+3;
 phic     = rho+4;
 phinc    = rho+5;
-errphic  = rho+6;
-errphinc = rho+7;
 
 
 
@@ -161,45 +157,6 @@ View[phinc].AxesFormatX = "%.1f";
 View[phinc].AxesTicsY = 10;
 View[phinc].SaturateValues = 1;
 
-// Errphic view
-View[errphic].Name = "ErrphiC";
-View[errphic].Axes = 2;
-View[errphic].Color.Axes = Black; 
-View[errphic].Type = 2;
-View[errphic].IntervalsType= 2 ; 
-View[errphic].RangeType = 1;
-//View[errphic].CustomMax = 1; 
-//View[errphic].CustomMin = 0; 
-View[errphic].LineWidth=2;
-View[errphic].AutoPosition = 0;
-View[errphic].PositionX = 85;
-View[errphic].PositionY = 200;
-View[errphic].Width = 400;
-View[errphic].Height = 260;
-View[errphic].AxesTicsX = 11;
-View[errphic].AxesFormatX = "%.1f";
-View[errphic].AxesTicsY = 10;
-View[errphic].SaturateValues = 1;
-
-// Errphic view
-View[errphinc].Name = "ErrphiNC";
-View[errphinc].Axes = 2;
-View[errphinc].Color.Axes = Black; 
-View[errphinc].Type = 2;
-View[errphinc].IntervalsType= 2 ; 
-View[errphinc].RangeType = 1;
-//View[errphinc].CustomMax = 1; 
-//View[errphinc].CustomMin = 0; 
-View[errphinc].LineWidth=2;
-View[errphinc].AutoPosition = 0;
-View[errphinc].PositionX = 85;
-View[errphinc].PositionY = 200;
-View[errphinc].Width = 400;
-View[errphinc].Height = 260;
-View[errphinc].AxesTicsX = 11;
-View[errphinc].AxesFormatX = "%.1f";
-View[errphinc].AxesTicsY = 10;
-View[errphinc].SaturateValues = 1;
 
 // t = 0 ;
 

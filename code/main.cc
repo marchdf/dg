@@ -20,7 +20,7 @@
 #include <deck.h>
 #include <init_cond.h>
 #include <print_sol.h>
-
+#include <limiter_fct.h>
 
 //
 // Function prototypes
@@ -108,8 +108,8 @@ int main (int argc, char **argv)
   // Setup the problem type
   bool multifluid = false;
   bool passive = false;
-  if (inputs.getProblem() == "multifluid")   multifluid = true;
-  if (inputs.getProblem() == "passive")      passive = true;
+  if      (inputs.getProblem() == "multifluid")   multifluid = true;
+  else if (inputs.getProblem() == "passive")      passive = true;
   else{ printf("Invalid problem setup. Correct the deck.\n");}
 
   // Setup the model
@@ -118,7 +118,13 @@ int main (int argc, char **argv)
   else if (inputs.getModel() == "invgamma")   model = 1;
   else if (passive) model = 0;
   else{ printf("Invalid model setup. Correct the deck.\n");}
-    
+
+  // Setup the limiting
+  int limiter = 0;
+  if      (inputs.getLimiter() == "hsl")   limiter = 1;
+  else if (inputs.getLimiter() == "hrl")   limiter = 2;
+  else{limiter = 0;}
+  
   // Setup the initial condition type
   bool simplew = false;
   bool sodtube = false;
@@ -243,14 +249,16 @@ int main (int argc, char **argv)
   int N_GL = pointsGL.size1();
   
   // Evaluate the Lagrange polynomials at the GL points (needed for collocation)
-  fullMatrix<scalar> phiGL (N_GL,N_s); 
-  fullMatrix<double> phiDGL(N_GL,N_s); 
+  fullMatrix<scalar> phiGL   (N_GL,N_s);
+  fullMatrix<scalar> phiGLinv(N_s,N_GL); 
+  fullMatrix<double> phiDGL  (N_GL,N_s); 
   basis->f (pointsGL, phiDGL);
   for(int gl = 0; gl < N_GL; gl++){
     for(int i = 0; i < N_s; i++){
       phiGL(gl,i) = (scalar)phiDGL(gl,i);
     }	  
   }   
+  phiGL.invert(phiGLinv);
   
   // Vandermonde matrix to go from modal to nodal representation
   // u_nodal = V1D    u_modal
@@ -260,7 +268,13 @@ int main (int argc, char **argv)
   vandermonde1d(order, pointsGL, V1D);
   V1D.invert(V1Dinv);
 
-
+  // Go from nodal to modal
+  fullMatrix<scalar> Nod2Mod(N_s,N_s);
+  fullMatrix<scalar> Mod2Nod(N_s,N_s);
+  Nod2Mod.gemm(V1Dinv, phiGL);   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
+  Nod2Mod.invert(Mod2Nod);
+  
+  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Multiply des fonctions de formes et derivees avec les poids
@@ -388,6 +402,7 @@ int main (int argc, char **argv)
   //
   scalar* h_phi     = new scalar[N_G*N_s];          makeZero(h_phi,N_G*N_s);
   scalar* h_phiGL   = new scalar[N_GL*N_s];         makeZero(h_phiGL,N_GL*N_s);
+  scalar* h_phiGLinv= new scalar[N_GL*N_s];         makeZero(h_phiGLinv,N_GL*N_s);
   scalar* h_phi_w   = new scalar[N_G*N_s];          makeZero(h_phi_w,N_G*N_s);          
   scalar* h_dphi    = new scalar[D*N_G*N_s];	    makeZero(h_dphi,D*N_G*N_s);	 
   scalar* h_dphi_w  = new scalar[D*N_G*N_s];	    makeZero(h_dphi_w,D*N_G*N_s);
@@ -398,7 +413,9 @@ int main (int argc, char **argv)
   scalar* h_Us      = new scalar[N_s*N_E*N_F];	    makeZero(h_Us,N_s*N_E*N_F);	 
   scalar* h_Ustar   = new scalar[N_s*N_E*N_F];	    makeZero(h_Ustar,N_s*N_E*N_F);
   scalar* h_DU      = new scalar[N_s*N_E*N_F];	    makeZero(h_DU,N_s*N_E*N_F);	 
-  scalar* h_U       = new scalar[N_s*N_E*N_F];	    makeZero(h_U,N_s*N_E*N_F);	 
+  scalar* h_U       = new scalar[N_s*N_E*N_F];	    makeZero(h_U,N_s*N_E*N_F);
+  scalar* h_UMod    = new scalar[N_s*N_E*N_F];      makeZero(h_UMod,N_s*N_E*N_F);
+  scalar* h_UModNew = new scalar[N_s*N_E*N_F];      makeZero(h_UModNew,N_s*N_E*N_F);
   scalar* h_UF      = new scalar[2*N_F*M_s*M_T];    makeZero(h_UF,2*N_F*M_s*M_T); 
   scalar* h_Uinteg  = new scalar[N_F*N_G*N_E];	    makeZero(h_Uinteg,N_F*N_G*N_E);	 
   scalar* h_dUinteg = new scalar[D*N_G*N_E*N_F];    makeZero(h_dUinteg,D*N_G*N_E*N_F); 
@@ -412,12 +429,16 @@ int main (int argc, char **argv)
   scalar* h_q       = new scalar[M_G*M_T*N_F*2];    makeZero(h_q,M_G*M_T*N_F*2); 
   scalar* h_Q       = new scalar[N_s*N_E*N_F];      makeZero(h_Q,N_s*N_E*N_F);   
 
+  scalar* h_Nod2Mod = new scalar[N_s*N_s];          makeZero(h_Nod2Mod, N_s*N_s);
+  scalar* h_Mod2Nod = new scalar[N_s*N_s];          makeZero(h_Mod2Nod, N_s*N_s);
+  
   scalar* h_Vtmp    = new scalar[N_s*N_E];          makeZero(h_Vtmp, N_s*N_E);
   scalar* h_dVinteg = new scalar[N_G*N_E];          makeZero(h_dVinteg, N_G*N_E);
   
   // copy from the fullMatrix to the pointer format (column major)
   copyMatrixToPointer(phi,h_phi);
   copyMatrixToPointer(phiGL,h_phiGL);
+  copyMatrixToPointer(phiGLinv,h_phiGLinv);
   copyMatrixToPointer(V1D,h_V1D);
   copyMatrixToPointer(V1Dinv,h_V1Dinv);
   copyMatrixToPointer(phi_w,h_phi_w);
@@ -442,10 +463,8 @@ int main (int argc, char **argv)
       }
     }
   }
-
-  // Calculate the complete nodal to modal transform = V1Dinv*phiGL
-  scalar* h_Nod2Mod = new scalar[N_s*N_s]; makeZero(h_Nod2Mod,N_s*N_s);
-  blasGemm("N","N", N_s, N_s, N_G, 1, h_V1Dinv, N_s, h_phiGL, N_GL, 0.0, h_Nod2Mod, N_s);
+  copyMatrixToPointer(Nod2Mod,h_Nod2Mod);
+  copyMatrixToPointer(Mod2Nod,h_Mod2Nod);
 
   //
   // Initialize and allocate some stuff on the device
@@ -957,6 +976,22 @@ int main (int argc, char **argv)
     } // end RK4 loop
 
 
+    // Limit the solution if you so want to do so
+    if(cpu){
+      if (limiter==1){
+	// Go from nodal to modal representation
+	blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Nod2Mod, N_s, h_U, N_s, 0.0, h_UMod, N_s);
+
+	// Limit the solution according to Krivodonova
+	Lcpu_hsl(N_s, N_E, N_F, h_UMod, h_UModNew);
+	
+	// Go back to nodal representation (slightly distors the solution at 1e-12)
+        blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Mod2Nod, N_s, h_UModNew, N_s, 0.0, h_U, N_s);
+      }
+    }
+	
+
+    
     T = T + Dt;
 
 
@@ -988,101 +1023,135 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
 
-  if (passive){
-
-    // Initial condition
-    fullMatrix<scalar> Uinit(N_s, N_E*N_F);
+  // Initial condition
+  fullMatrix<scalar> Uinit(N_s, N_E*N_F);
+  if(multifluid){
+    if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
+    else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
+    else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
+    else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
+    else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
+    else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
+  }
+  else if (passive){
     if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, Uinit);
-    scalar* h_Uinit = new scalar[N_s*N_E*N_F];  makeZero(h_Uinit,N_s*N_E*N_F);
-    for(int e = 0; e < N_E; e++){
-      for(int fc = 0; fc < N_F; fc++){
-	for(int i = 0; i < N_s; i++){
-	  h_Uinit[(e*N_F+fc)*N_s+i] = Uinit(i,e*N_F+fc);}}}
-
-    // Change to primitive variables
-    for(int e = 0; e < N_E; e++){
+  }
+  scalar* h_Uinit = new scalar[N_s*N_E*N_F];  makeZero(h_Uinit,N_s*N_E*N_F);
+  for(int e = 0; e < N_E; e++){
+    for(int fc = 0; fc < N_F; fc++){
       for(int i = 0; i < N_s; i++){
-	h_Uinit[(e*N_F+1)*N_s+i] = h_Uinit[(e*N_F+1)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; // velocity
-	h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; // conservative phi
-	h_U    [(e*N_F+1)*N_s+i] = h_U    [(e*N_F+1)*N_s+i]/h_U    [(e*N_F+0)*N_s+i]; // velocity
-	h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i]; // conservative phi
+	h_Uinit[(e*N_F+fc)*N_s+i] = Uinit(i,e*N_F+fc);}}}
+
+  // Change to primitive variables
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+      // velocity
+      h_Uinit[(e*N_F+1)*N_s+i] = h_Uinit[(e*N_F+1)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; 
+      h_U    [(e*N_F+1)*N_s+i] = h_U    [(e*N_F+1)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
+      if      (multifluid){
+	// gamma: get everything in terms of gamma
+	if      (model==0){
+	  h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i];
+	  h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];}
+	else if (model==1){
+	  h_Uinit[(e*N_F+3)*N_s+i] = 1+1.0/h_Uinit[(e*N_F+3)*N_s+i];
+	  h_U    [(e*N_F+3)*N_s+i] = 1+1.0/h_U    [(e*N_F+3)*N_s+i];}
+	// pressure = (gamma-1)*(E-0.5 rho*v*v)
+	h_Uinit[(e*N_F+2)*N_s+i] = (h_Uinit[(e*N_F+3)*N_s+i]-1)*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
+	h_U    [(e*N_F+2)*N_s+i] = (h_U    [(e*N_F+3)*N_s+i]-1)*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
+      }
+      else if (passive){
+	// pressure = (gamma-1)*(E-0.5 rho*v*v)
+	h_Uinit[(e*N_F+2)*N_s+i] = (gamma0-1)*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
+	h_U    [(e*N_F+2)*N_s+i] = (gamma0-1)*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
+	// conservative phi
+	h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; 
+	h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
       }
     }
+  }
     
-    // Collocate the solution to the integration points
-    scalar* h_Uinitg = new scalar[N_G*N_E*N_F];  makeZero(h_Uinitg,N_G*N_E*N_F);
-    scalar* h_Ug     = new scalar[N_G*N_E*N_F];  makeZero(h_Ug    ,N_G*N_E*N_F);
-    blasGemm("N","N", N_G, N_E*N_F, N_s, 1, h_phi, N_G, h_Uinit, N_s, 0.0, h_Uinitg, N_G);
-    blasGemm("N","N", N_G, N_E*N_F, N_s, 1, h_phi, N_G, h_U    , N_s, 0.0, h_Ug    , N_G);
+  // Collocate the solution to the integration points
+  scalar* h_Uinitg = new scalar[N_G*N_E*N_F];  makeZero(h_Uinitg,N_G*N_E*N_F);
+  scalar* h_Ug     = new scalar[N_G*N_E*N_F];  makeZero(h_Ug    ,N_G*N_E*N_F);
+  blasGemm("N","N", N_G, N_E*N_F, N_s, 1, h_phi, N_G, h_Uinit, N_s, 0.0, h_Uinitg, N_G);
+  blasGemm("N","N", N_G, N_E*N_F, N_s, 1, h_phi, N_G, h_U    , N_s, 0.0, h_Ug    , N_G);
 
-
-    // Take the cell average of the solution
-    scalar* h_UinitAvg = new scalar[N_E*N_F];  makeZero(h_UinitAvg,N_E*N_F);
-    scalar* h_UAvg     = new scalar[N_E*N_F];  makeZero(h_UAvg    ,N_E*N_F);
-    scalar dx = XYZNodes(1,0*D+0)-XYZNodes(0,0*D+0);
-    for(int e = 0; e < N_E; e++){
-      for(int fc = 0; fc < N_F; fc++){
-	for(int g = 0; g < N_G; g++){
-	  h_UinitAvg[e*N_F+fc] += h_Uinitg[(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
-	  h_UAvg    [e*N_F+fc] += h_Ug    [(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
-	}
-      }
-    }
-
-    // Go directly from nodal to modal representation
-    scalar* h_UinitMod = new scalar[N_s*N_E*N_F];  makeZero(h_UinitMod,N_s*N_E*N_F);
-    scalar* h_UMod     = new scalar[N_s*N_E*N_F];  makeZero(h_UMod    ,N_s*N_E*N_F);
-    blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Nod2Mod,  N_s, h_Uinit, N_s, 0.0, h_UinitMod, N_s);
-    blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Nod2Mod,  N_s, h_U    , N_s, 0.0, h_UMod    , N_s);
-    
-    // Get the cell average from the modal representation
-    scalar* h_UinitModAvg = new scalar[N_E*N_F];  makeZero(h_UinitModAvg,N_E*N_F);
-    scalar* h_UModAvg     = new scalar[N_E*N_F];  makeZero(h_UModAvg    ,N_E*N_F);
-    for(int e = 0; e < N_E; e++){
-      for(int fc = 0; fc < N_F; fc++){
-	h_UinitModAvg[e*N_F+fc] = h_UinitMod[(e*N_F+0)*N_s+0]*sqrt(2.0)*h_J[e]; // gamma_n = 2/(2n+1) see p45
-	h_UModAvg    [e*N_F+fc] = h_UMod    [(e*N_F+0)*N_s+0]*sqrt(2.0)*h_J[e]; // gamma_n = 2/(2n+1) see p45
-      }
-    }
-
-    // Calculate the L2 norm of the error
-    scalar* h_Err2    = new scalar[N_F]; makeZero(h_Err2   , N_F);
-    scalar* h_Err2Mod = new scalar[N_F]; makeZero(h_Err2Mod, N_F);
-    for(int e = 0; e < N_E; e++){
-      for(int fc = 0; fc < N_F; fc++){
-	h_Err2[fc]    += (h_UinitAvg[e*N_F+fc] - h_UAvg[e*N_F+fc])*(h_UinitAvg[e*N_F+fc] - h_UAvg[e*N_F+fc]);
-	h_Err2Mod[fc] += (h_UinitModAvg[e*N_F+fc]-h_UModAvg[e*N_F+fc])*(h_UinitModAvg[e*N_F+fc]-h_UModAvg[e*N_F+fc]);
-      }
-    }
-
-    // Output some stuff in a file to read by post-proc
-    std::string error = "error.dat"; 
-    FILE *f = fopen(error.c_str(),"w");
-    fprintf(f,"%12.7f\t", dx);
+  // Take the cell average of the solution
+  scalar* h_UinitAvg = new scalar[N_E*N_F];  makeZero(h_UinitAvg,N_E*N_F);
+  scalar* h_UAvg     = new scalar[N_E*N_F];  makeZero(h_UAvg    ,N_E*N_F);
+  scalar dx = XYZNodes(1,0*D+0)-XYZNodes(0,0*D+0);
+  for(int e = 0; e < N_E; e++){
     for(int fc = 0; fc < N_F; fc++){
-      fprintf(f,"%20.16E\t", sqrt(h_Err2[fc]/N_E));
+      for(int g = 0; g < N_G; g++){
+	h_UinitAvg[e*N_F+fc] += h_Uinitg[(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
+	h_UAvg    [e*N_F+fc] += h_Ug    [(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
+      }
     }
-    fprintf(f,"\n");
-    fprintf(f,"%12.7f\t", dx);
-    for(int fc = 0; fc < N_F; fc++){
-      fprintf(f,"%20.16E\t", sqrt(h_Err2Mod[fc]/N_E));
-    }
-    
-    // Free some stuff
-    delete[] h_Uinit;
-    delete[] h_Uinitg;
-    delete[] h_UinitAvg;
-    delete[] h_UinitModAvg;
-    delete[] h_Ug;
-    delete[] h_UAvg;
-    delete[] h_UModAvg;
-    delete[] h_UinitMod;
-    delete[] h_UMod;
-    delete[] h_Err2;
-    delete[] h_Err2Mod;
   }
 
+  // Go directly from nodal to modal representation
+  scalar* h_UinitMod = new scalar[N_s*N_E*N_F];  makeZero(h_UinitMod,N_s*N_E*N_F);
+  blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Nod2Mod,  N_s, h_Uinit, N_s, 0.0, h_UinitMod, N_s);
+  blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Nod2Mod,  N_s, h_U    , N_s, 0.0, h_UMod    , N_s);
+    
+  // Get the cell average from the modal representation
+  scalar* h_UinitModAvg = new scalar[N_E*N_F];  makeZero(h_UinitModAvg,N_E*N_F);
+  scalar* h_UModAvg     = new scalar[N_E*N_F];  makeZero(h_UModAvg    ,N_E*N_F);
+  for(int e = 0; e < N_E; e++){
+    for(int fc = 0; fc < N_F; fc++){
+      h_UinitModAvg[e*N_F+fc] = h_UinitMod[(e*N_F+fc)*N_s+0]*sqrt(2.0)*h_J[e]; // gamma_n = 2/(2n+1) see p45
+      h_UModAvg    [e*N_F+fc] = h_UMod    [(e*N_F+fc)*N_s+0]*sqrt(2.0)*h_J[e]; // gamma_n = 2/(2n+1) see p45
+    }
+  }
 
+  // Calculate the different norms of the error
+  scalar E = 0;
+  scalar EMod = 0;
+  scalar* h_Err1      = new scalar[N_F]; makeZero(h_Err1   , N_F);
+  scalar* h_Err1Mod   = new scalar[N_F]; makeZero(h_Err1Mod, N_F);
+  scalar* h_Err2      = new scalar[N_F]; makeZero(h_Err2   , N_F);
+  scalar* h_Err2Mod   = new scalar[N_F]; makeZero(h_Err2Mod, N_F);
+  scalar* h_ErrInf    = new scalar[N_F]; makeZero(h_ErrInf   , N_F);
+  scalar* h_ErrInfMod = new scalar[N_F]; makeZero(h_ErrInfMod, N_F);
+  for(int e = 0; e < N_E; e++){
+    for(int fc = 0; fc < N_F; fc++){
+      E    = h_UinitAvg   [e*N_F+fc]-h_UAvg   [e*N_F+fc];
+      EMod = h_UinitModAvg[e*N_F+fc]-h_UModAvg[e*N_F+fc];
+      h_Err1[fc]    += fabs(E);
+      h_Err1Mod[fc] += fabs(EMod);
+      h_Err2[fc]    += E   *E;
+      h_Err2Mod[fc] += EMod*EMod;
+      if (h_ErrInf[fc]    < fabs(E   ))  h_ErrInf   [fc] = fabs(E);
+      if (h_ErrInfMod[fc] < fabs(EMod))  h_ErrInfMod[fc] = fabs(EMod);
+    }
+  }
+  
+  // Output some stuff in a file to read by post-proc
+  std::string error = "error.dat"; 
+  FILE *f = fopen(error.c_str(),"w");
+  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_Err1[fc]/N_E);          fprintf(f,"\n");
+  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_Err1Mod[fc]/N_E);       fprintf(f,"\n");
+  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", sqrt(h_Err2[fc]/N_E));    fprintf(f,"\n");
+  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", sqrt(h_Err2Mod[fc]/N_E)); fprintf(f,"\n");
+  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_ErrInf[fc]);            fprintf(f,"\n");
+  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_ErrInfMod[fc]);         fprintf(f,"\n");
+  
+  // Free some stuff
+  delete[] h_Uinit;
+  delete[] h_Uinitg;
+  delete[] h_UinitAvg;
+  delete[] h_UinitModAvg;
+  delete[] h_Ug;
+  delete[] h_UAvg;
+  delete[] h_UModAvg;
+  delete[] h_UinitMod;
+  delete[] h_Err1;
+  delete[] h_Err1Mod;
+  delete[] h_Err2;
+  delete[] h_Err2Mod;
+  delete[] h_ErrInf;
+  delete[] h_ErrInfMod;
   
 
 
@@ -1129,6 +1198,7 @@ int main (int argc, char **argv)
   delete[] h_Minv;
   delete[] h_phi;
   delete[] h_phiGL;
+  delete[] h_phiGLinv;
   delete[] h_phi_w;
   delete[] h_dphi;
   delete[] h_dphi_w;
@@ -1137,6 +1207,8 @@ int main (int argc, char **argv)
   delete[] h_J;
   delete[] h_invJac;
   delete[] h_U;
+  delete[] h_UMod;
+  delete[] h_UModNew;
   delete[] h_Us;
   delete[] h_Ustar;
   delete[] h_DU;
@@ -1153,6 +1225,9 @@ int main (int argc, char **argv)
   delete[] h_q;
   delete[] h_Q;
 
+  delete[] h_Nod2Mod;
+  delete[] h_Mod2Nod;
+  
   delete[] h_Vtmp;
   delete[] h_dVinteg;
   
@@ -1205,3 +1280,4 @@ void vandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scala
     for(int i=0;i<P.size1();i++) V1D(i,j) = P(i,0);
   }
 }
+
