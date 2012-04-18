@@ -65,6 +65,7 @@ void makeZero(scalar* A, int size){
 void average_cell_p0(const int N_s, const int N_E, const int N_F, fullMatrix<scalar> &U);
 
 void vandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D);
+void monovandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D);
 
 int main (int argc, char **argv)
 {
@@ -236,6 +237,30 @@ int main (int argc, char **argv)
     }    
   }
 
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Monomial to Lagrange basis transforms
+  //
+  //////////////////////////////////////////////////////////////////////////
+  fullMatrix<scalar> points1D(N_G,1); for(int g=0; g<N_G; g++) {points1D(g,0) = points(g,0);}
+  fullMatrix<scalar> monoV1D;
+  fullMatrix<scalar> monoV1Dinv;
+  monovandermonde1d(order, points1D, monoV1D);
+  monoV1D.invert(monoV1Dinv);
+
+  for(int i = 0; i<monoV1D.size1();i++){
+    for(int j = 0; j<monoV1D.size2();j++){
+      printf("%f\t",monoV1D(i,j));
+    }
+    printf("\n");
+  }
+
+  // Go from lagrange to monomial basis 
+  fullMatrix<scalar> Lag2Mono(N_s,N_s);
+  fullMatrix<scalar> Mono2Lag(N_s,N_s);
+  Lag2Mono.gemm(monoV1Dinv, phi);   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
+  Lag2Mono.invert(Mono2Lag);
+
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -267,7 +292,7 @@ int main (int argc, char **argv)
   fullMatrix<scalar> V1Dinv;
   vandermonde1d(order, pointsGL, V1D);
   V1D.invert(V1Dinv);
-
+  
   // Go from nodal to modal
   fullMatrix<scalar> Nod2Mod(N_s,N_s);
   fullMatrix<scalar> Mod2Nod(N_s,N_s);
@@ -347,6 +372,17 @@ int main (int argc, char **argv)
   }
 
   if (order0) average_cell_p0(N_s, N_E, N_F, U);
+
+
+  // Setup an dummy initial condition to validate the limiting
+  for(int fc=0; fc<N_F; fc++){
+    U(0,0*N_F+fc) = 1;
+    U(1,0*N_F+fc) = 2;
+    U(0,1*N_F+fc) = 3;
+    U(1,1*N_F+fc) = 1.5;
+    U(0,2*N_F+fc) = 1;
+    U(1,2*N_F+fc) = 0.5;
+  }
   
   // print the initial condition to the file
   printf("Initial condition written to output file.\n");
@@ -408,6 +444,9 @@ int main (int argc, char **argv)
   scalar* h_dphi_w  = new scalar[D*N_G*N_s];	    makeZero(h_dphi_w,D*N_G*N_s);
   scalar* h_V1D     = new scalar[N_GL*N_s];         makeZero(h_V1D,N_GL*N_s);
   scalar* h_V1Dinv  = new scalar[N_GL*N_s];         makeZero(h_V1Dinv,N_s*N_GL);
+  scalar* h_monoV1D     = new scalar[N_GL*N_s];         makeZero(h_monoV1D,N_GL*N_s);
+  scalar* h_monoV1Dinv  = new scalar[N_GL*N_s];         makeZero(h_monoV1Dinv,N_s*N_GL);
+  scalar* h_weight  = new scalar[N_G];              makeZero(h_weight,N_G);
   scalar* h_J       = new scalar[N_E];              makeZero(h_J,N_E);                                 // not same as J!!
   scalar* h_invJac  = new scalar[N_G*D*N_E*D];      makeZero(h_invJac,N_G*D*N_E*D);                    // not same as invJac!!
   scalar* h_Us      = new scalar[N_s*N_E*N_F];	    makeZero(h_Us,N_s*N_E*N_F);	 
@@ -416,6 +455,8 @@ int main (int argc, char **argv)
   scalar* h_U       = new scalar[N_s*N_E*N_F];	    makeZero(h_U,N_s*N_E*N_F);
   scalar* h_UMod    = new scalar[N_s*N_E*N_F];      makeZero(h_UMod,N_s*N_E*N_F);
   scalar* h_UModNew = new scalar[N_s*N_E*N_F];      makeZero(h_UModNew,N_s*N_E*N_F);
+  scalar* h_A       = new scalar[N_s*N_E*N_F];      makeZero(h_A,N_s*N_E*N_F);
+  scalar* h_Alim    = new scalar[N_s*N_E*N_F];      makeZero(h_Alim,N_s*N_E*N_F);
   scalar* h_UF      = new scalar[2*N_F*M_s*M_T];    makeZero(h_UF,2*N_F*M_s*M_T); 
   scalar* h_Uinteg  = new scalar[N_F*N_G*N_E];	    makeZero(h_Uinteg,N_F*N_G*N_E);	 
   scalar* h_dUinteg = new scalar[D*N_G*N_E*N_F];    makeZero(h_dUinteg,D*N_G*N_E*N_F); 
@@ -431,6 +472,9 @@ int main (int argc, char **argv)
 
   scalar* h_Nod2Mod = new scalar[N_s*N_s];          makeZero(h_Nod2Mod, N_s*N_s);
   scalar* h_Mod2Nod = new scalar[N_s*N_s];          makeZero(h_Mod2Nod, N_s*N_s);
+
+  scalar* h_Lag2Mono = new scalar[N_s*N_s];         makeZero(h_Lag2Mono, N_s*N_s);
+  scalar* h_Mono2Lag = new scalar[N_s*N_s];         makeZero(h_Mono2Lag, N_s*N_s);
   
   scalar* h_Vtmp    = new scalar[N_s*N_E];          makeZero(h_Vtmp, N_s*N_E);
   scalar* h_dVinteg = new scalar[N_G*N_E];          makeZero(h_dVinteg, N_G*N_E);
@@ -441,6 +485,9 @@ int main (int argc, char **argv)
   copyMatrixToPointer(phiGLinv,h_phiGLinv);
   copyMatrixToPointer(V1D,h_V1D);
   copyMatrixToPointer(V1Dinv,h_V1Dinv);
+  copyMatrixToPointer(monoV1D,h_monoV1D);
+  copyMatrixToPointer(monoV1Dinv,h_monoV1Dinv);
+  for(int g=0; g<N_G; g++) h_weight[g] = weight(g,0);
   copyMatrixToPointer(phi_w,h_phi_w);
   copyMatrixToPointer(dphi,h_dphi);
   copyMatrixToPointer(dphi_w,h_dphi_w);
@@ -465,7 +512,10 @@ int main (int argc, char **argv)
   }
   copyMatrixToPointer(Nod2Mod,h_Nod2Mod);
   copyMatrixToPointer(Mod2Nod,h_Mod2Nod);
-
+  copyMatrixToPointer(Lag2Mono,h_Lag2Mono);
+  copyMatrixToPointer(Mono2Lag,h_Mono2Lag);
+  
+  
   //
   // Initialize and allocate some stuff on the device
   //
@@ -963,10 +1013,16 @@ int main (int argc, char **argv)
 	  CUDA_SAFE_CALL(cudaThreadSynchronize());
 	}
       }
-      
+
+
+      //
+      //
+      // ATTENTION: commented those lines for limiter testing
+      //
+      //
       if (cpu){
-	if (blas==1) {blasAxpy(N_s*N_F*N_E, gamma[k], h_DU, 1, h_U, 1);}      
-	else Lcpu_add(N_s, N_E, N_F, h_U, h_DU, gamma[k]); // do U.add(DU,gamma[k])
+	//if (blas==1) {blasAxpy(N_s*N_F*N_E, gamma[k], h_DU, 1, h_U, 1);}      
+	//else Lcpu_add(N_s, N_E, N_F, h_U, h_DU, gamma[k]); // do U.add(DU,gamma[k])
       }
       else if (!cpu){
       	if (blas==1) {cublasAxpy(N_s*N_F*N_E, gamma[k], d_DU, 1, d_U, 1);}      
@@ -979,15 +1035,44 @@ int main (int argc, char **argv)
     // Limit the solution if you so want to do so
     if(cpu){
       if (limiter==1){
-	// Go from nodal to modal representation
-	blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Nod2Mod, N_s, h_U, N_s, 0.0, h_UMod, N_s);
-
-	// Limit the solution according to Krivodonova
-	Lcpu_hsl(N_s, N_E, N_F, h_UMod, h_UModNew);
+	// Go from conservative to primitive space
+	//Lcpu_Cons2Prim(N_s, N_E, N_F, h_U, multifluid, passive, model, gamma0);
 	
-	// Go back to nodal representation (slightly distors the solution at 1e-12)
-        blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Mod2Nod, N_s, h_UModNew, N_s, 0.0, h_U, N_s);
+	// // Go from nodal to modal representation
+	// blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Nod2Mod, N_s, h_U, N_s, 0.0, h_UMod, N_s);
+
+	// // Limit the solution according to Krivodonova
+	// if (blas==1) {blasCopy(N_F*N_s*N_E, h_UMod, 1, h_UModNew, 1);}    
+	// else Lcpu_equal(N_s, N_E, N_F, h_UModNew, h_UMod);     // make UModNew = UMod;
+	// Lcpu_hsl(N_s, N_E, N_F, boundaryMap, h_UMod, h_UModNew);
+	
+	// // Go back to nodal representation (slightly distors the solution at 1e-12)
+        // blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Mod2Nod, N_s, h_UModNew, N_s, 0.0, h_U, N_s);
+
+	// Go back to conservative form
+	//Lcpu_Prim2Cons(N_s, N_E, N_F, h_U, multifluid, passive, model, gamma0);
       }
+      if (limiter==2){ //HR limiting
+	printf("limit the solution\n");
+	// Go from lagrange to monomial representation
+	blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Lag2Mono, N_s, h_U, N_s, 0.0, h_A, N_s);
+
+	printf("a0:%f\t",h_A[(0*N_F+0)*N_s+0]);
+	printf("a1:%f\n",h_A[(0*N_F+0)*N_s+1]);
+	printf("b0:%f\t",h_A[(1*N_F+0)*N_s+0]);
+	printf("b1:%f\n",h_A[(1*N_F+0)*N_s+1]);
+	printf("c0:%f\t",h_A[(2*N_F+0)*N_s+0]);
+	printf("c1:%f\n",h_A[(2*N_F+0)*N_s+1]);
+	
+	// Limit the solution according to Liu
+	if (blas==1) {blasCopy(N_F*N_s*N_E, h_A, 1, h_Alim, 1);}    
+	else Lcpu_equal(N_s, N_E, N_F, h_Alim, h_A);     // make Alim = A;
+	Lcpu_hrl(N_s, N_E, N_F, N_G, boundaryMap, h_weight, h_monoV1D, h_A, h_Alim);
+	
+	// // Go back to lagrange representation
+        blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Mono2Lag, N_s, h_Alim, N_s, 0.0, h_U, N_s);
+      }
+
     }
 	
 
@@ -1204,11 +1289,15 @@ int main (int argc, char **argv)
   delete[] h_dphi_w;
   delete[] h_V1D;
   delete[] h_V1Dinv;  
+  delete[] h_monoV1D;
+  delete[] h_monoV1Dinv;  
   delete[] h_J;
   delete[] h_invJac;
   delete[] h_U;
   delete[] h_UMod;
   delete[] h_UModNew;
+  delete[] h_A;
+  delete[] h_Alim;
   delete[] h_Us;
   delete[] h_Ustar;
   delete[] h_DU;
@@ -1227,7 +1316,10 @@ int main (int argc, char **argv)
 
   delete[] h_Nod2Mod;
   delete[] h_Mod2Nod;
-  
+
+  delete[] h_Lag2Mono;
+  delete[] h_Mono2Lag;
+
   delete[] h_Vtmp;
   delete[] h_dVinteg;
   
@@ -1281,3 +1373,14 @@ void vandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scala
   }
 }
 
+void monovandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D){
+
+  // Purpose : Initialize the 1D Vandermonde Matrix, V_{ij} = (r_i)^j;
+  
+  V1D.resize(r.size1(),order+1);
+  for(int j=0;j<order+1;j++){
+    for(int i=0;i<r.size1();i++){
+      V1D(i,j) = pow(r(i,0),j);
+    }
+  }
+}

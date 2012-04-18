@@ -1102,23 +1102,213 @@ void cpu_zeroVector(int N_s, int N_E, int N_F, scalar* Q){
   }
 }
 
-void cpu_hsl(int N_s, int N_E, int N_F, scalar* U, scalar* UNew){
+void cpu_hsl(int N_s, int N_E, int N_F, int boundaryMap, scalar* U, scalar* UNew){
 
   scalar* c = new scalar[3];
-
-  // treat boundary conditions
   
+  // // Treat boundary conditions
+  // if(boundaryMap!=0){ // periodic
+  //   for(int fc = 0; fc < N_F; fc++){
+  //     for(int m = N_s-1; m > 0; m--){
+  // 	// Left side
+  // 	c[0] = sqrt((2*m+1)*(2*m+3))*U[(0*N_F+fc)*N_s+m];
+  // 	c[1] = U[((0+1)*N_F+fc)*N_s+m-1] - U[( 0     *N_F+fc)*N_s+m-1];
+  // 	c[2] = U[( 0   *N_F+fc)*N_s+m-1] - U[((N_E-1)*N_F+fc)*N_s+m-1];
+  // 	UNew[(0*N_F+fc)*N_s+m] = 1.0/sqrt((2*m+1)*(2*m+3))*minmod(c,3);
+  // 	// Right side
+  // 	c[0] = sqrt((2*m+1)*(2*m+3))*U[(0*N_F+fc)*N_s+m];
+  // 	c[1] = U[((0    )*N_F+fc)*N_s+m-1] - U[((N_E-1)*N_F+fc)*N_s+m-1];
+  // 	c[2] = U[((N_E-1)*N_F+fc)*N_s+m-1] - U[((N_E-2)*N_F+fc)*N_s+m-1];
+  // 	UNew[((N_E-1)*N_F+fc)*N_s+m] = 1.0/sqrt((2*m+1)*(2*m+3))*minmod(c,3);
+  //     }
+  //   }
+  // }
+  // else if(boundaryMap=0){ // farfield
+  //   for(int fc = 0; fc < N_F; fc++){
+  //     for(int m = N_s-1; m > 0; m--){
+  // 	// Left side
+  // 	c[0] = sqrt((2*m+1)*(2*m+3))*U[(0*N_F+fc)*N_s+m];
+  // 	c[1] = U[((0+1)*N_F+fc)*N_s+m-1] - U[( 0     *N_F+fc)*N_s+m-1];
+  // 	c[2] = 0;
+  // 	UNew[(0*N_F+fc)*N_s+m] = 1.0/sqrt((2*m+1)*(2*m+3))*minmod(c,3);
+  // 	// Right side
+  // 	c[0] = sqrt((2*m+1)*(2*m+3))*U[(0*N_F+fc)*N_s+m];
+  // 	c[1] = 0;
+  // 	c[2] = U[((N_E-1)*N_F+fc)*N_s+m-1] - U[((N_E-2)*N_F+fc)*N_s+m-1];
+  // 	UNew[((N_E-1)*N_F+fc)*N_s+m] = 1.0/sqrt((2*m+1)*(2*m+3))*minmod(c,3);
+  //     }
+  //   }
+  // }
+  
+  // Do the other elements
   for(int e = 1; e < N_E-1; e++){
     for(int fc = 0; fc < N_F; fc++){
-      for(int m = N_s-1; m >= 0; m--){
+      for(int m = N_s-1; m > 0; m--){
 	c[0] = sqrt((2*m+1)*(2*m+3))*U[(e*N_F+fc)*N_s+m];
 	c[1] = U[((e+1)*N_F+fc)*N_s+m-1] - U[( e   *N_F+fc)*N_s+m-1];
 	c[2] = U[( e   *N_F+fc)*N_s+m-1] - U[((e-1)*N_F+fc)*N_s+m-1];
 	UNew[(e*N_F+fc)*N_s+m] = 1.0/sqrt((2*m+1)*(2*m+3))*minmod(c,3);
+	if (UNew[(e*N_F+fc)*N_s+m] == U[(e*N_F+fc)*N_s+m]) break;
+      }
+    }
+  }
+
+  delete[] c;
+  
+}
+
+void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* A, scalar* Alim){
+
+  int N = N_s - 1;
+  scalar dU = 0;
+  scalar* avgdU = new scalar[3]; for(int i=0;i<3;i++) avgdU[i] = 0;
+  scalar* R     = new scalar[3]; for(int i=0;i<3;i++) R[i] = 0;
+  scalar* avgR  = new scalar[3]; for(int i=0;i<3;i++) avgR[i] = 0;
+  scalar* avgL  = new scalar[3];
+  scalar* c     = new scalar[2];
+
+  // Loop on derivatives
+  for(int m = N; m > 0; m--){
+    for(int fc = 0; fc < N_F; fc++){
+
+      // boundary condition on the left
+      int left = 0;
+      if      (boundaryMap == 0){left = 0;}//farfield
+      else if (boundaryMap == 1){left = N_E-1;}//periodic
+      for(int g=0; g<N_G; g++){
+	scalar dUL = 0;
+	dU = 0;
+
+	for(int i=m-1;i<N+1;i++){
+	  scalar fact = (scalar)factorial(i)/(scalar)factorial(i-(m-1));
+	  dUL += fact*A[(left*N_F+fc)*N_s+i]*V[(i-(m-1))*N_G+g];
+	  dU  += fact*A[(0*N_F+fc)*N_s+i]*V[(i-(m-1))*N_G+g];
+	}
+
+	avgdU[0] += dUL*weight[g];
+	avgdU[1] += dU *weight[g];
+      }
+
+      // Now loop on all the elements
+      for(int e = 0; e < N_E; e++){
+
+	// Get the index of the element on the right. The derivative
+	// averages have already been calculated in the cell e and e-1
+	int right = e+1; 
+	if (e == N_E-1){
+	  if      (boundaryMap == 0){right = e;}//farfield
+	  else if (boundaryMap == 1){right = 0;}//periodic
+	}
+
+	// Calculate the derivative average in the cell on the right
+	// of our cell and calculate the remainder polynomial in our
+	// cells and its two neighbors
+	for(int g = 0; g < N_G; g++){
+
+	  dU = 0;
+	  for(int k=0;k<3;k++) {R[k] = 0; avgR[k] = 0;}
+	  
+	  for(int i=m-1;i<N+1;i++){
+	    scalar fact = (scalar)factorial(i)/(scalar)factorial(i-(m-1)); 
+	    dU += fact*A[(right*N_F+fc)*N_s+i]*V[(i-(m-1))*N_G+g];
+	    if((m<N)&&(i>m)){
+	      R[0] += fact*Alim[(e*N_F+fc)*N_s+i]*pow(V[1*N_G+g]-2,i-(m-1));
+	      R[1] += fact*Alim[(e*N_F+fc)*N_s+i]*V[(i-(m-1))*N_G+g];
+	      R[2] += fact*Alim[(e*N_F+fc)*N_s+i]*pow(V[1*N_G+g]+2,i-(m-1));
+	    }// end if
+	  }
+
+	  avgdU[2] += dU*weight[g];
+	  avgR[0]  += R[0]*weight[g];
+	  avgR[1]  += R[1]*weight[g];
+	  avgR[2]  += R[2]*weight[g];
+
+	}// end integration loop
+
+	// Approximate the average of the linear part
+	avgL[0] = avgdU[0] - avgR[0];
+	avgL[1] = avgdU[1] - avgR[1];
+	avgL[2] = avgdU[2] - avgR[2];
+
+	// MUSCL approach to get candidate coefficients
+	c[0] = avgL[1] - avgL[0];
+	c[1] = avgL[2] - avgL[1];
+
+	Alim[(e*N_F+fc)*N_s+m] = minmod(c,2);
+
+	// Shift the averages so we can move on to the next cell
+	avgdU[0] = avgdU[1];
+	avgdU[1] = avgdU[2];
+	avgdU[2] = 0;
+      }// end loop on elements
+    }// end loop on fields
+  }// end loop on m
+
+  delete[] avgdU;
+  delete[] R;
+  delete[] avgR;
+  delete[] avgL;
+  delete[] c;
+}
+
+
+
+void cpu_Prim2Cons(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
+  // Go from characteristic to conservative variables
+  for(int e = 0; e < N_E; e++){
+    for(int fc = 0; fc < N_F; fc++){
+      for(int i = 0; i < N_s; i++){
+	scalar rho = U[(e*N_F+0)*N_s+i];
+	scalar u   = U[(e*N_F+1)*N_s+i];
+	scalar p   = U[(e*N_F+2)*N_s+i];
+
+	if(multifluid){
+	  scalar gamma=0;
+	  if      (model==0) gamma=U[(e*N_F+3)*N_s+i];
+	  else if (model==1) gamma=1.0+1.0/U[(e*N_F+3)*N_s+i];
+	  U[(e*N_F+1)*N_s+i] = rho*u;
+	  U[(e*N_F+2)*N_s+i] = p/(gamma-1.0) + 0.5*rho*u*u;
+	  if      (model==0) U[(e*N_F+3)*N_s+i] = rho*gamma;
+	}
+	else if(passive){
+	  scalar phic  = U[(e*N_F+3)*N_s+i];
+	  U[(e*N_F+1)*N_s+i] = rho*u;
+	  U[(e*N_F+2)*N_s+i] = p/(gamma0-1) + 0.5*rho*u*u;
+	  U[(e*N_F+3)*N_s+i] = rho*phic;
+	}
       }
     }
   }
 }
+
+void cpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
+  // Go from conservative to characteristic variables
+  for(int e = 0; e < N_E; e++){
+    for(int fc = 0; fc < N_F; fc++){
+      for(int i = 0; i < N_s; i++){
+	scalar rho  = U[(e*N_F+0)*N_s+i];
+	scalar rhou = U[(e*N_F+1)*N_s+i];
+	scalar E    = U[(e*N_F+2)*N_s+i];
+
+	if(multifluid){
+	  scalar gamma=0;
+	  if      (model==0) gamma=U[(e*N_F+3)*N_s+i]/rho;
+	  else if (model==1) gamma=1.0+1.0/U[(e*N_F+3)*N_s+i];
+	  U[(e*N_F+1)*N_s+i] = rhou/rho;
+	  U[(e*N_F+2)*N_s+i] = (gamma-1.0)*(E - 0.5*rhou*rhou/rho);
+	  if      (model==0) U[(e*N_F+3)*N_s+i] = gamma;
+	}
+	else if(passive){
+	  scalar rhophic  = U[(e*N_F+3)*N_s+i];
+	  U[(e*N_F+1)*N_s+i] = rhou/rho;
+	  U[(e*N_F+2)*N_s+i] = (gamma0-1)*(E - 0.5*rhou*rhou/rho);
+	  U[(e*N_F+3)*N_s+i] = rhophic/rho;
+	}
+      }
+    }
+  }
+}
+
 
 
 
@@ -1249,6 +1439,22 @@ void Lcpu_average_cell_p0(const int N_s, const int N_E, const int N_F, scalar* D
 }
 
 extern "C"
-void Lcpu_hsl(int N_s, int N_E, int N_F, scalar* U, scalar* UNew){
-  cpu_hsl(N_s, N_E, N_F, U, UNew);
+void Lcpu_hsl(int N_s, int N_E, int N_F, int boundaryMap, scalar* U, scalar* UNew){
+  cpu_hsl(N_s, N_E, N_F, boundaryMap, U, UNew);
+}
+
+extern "C"
+void Lcpu_Prim2Cons(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
+  cpu_Prim2Cons(N_s, N_E, N_F, U, multifluid, passive, model, gamma0);
+}
+
+extern "C"
+void Lcpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
+  cpu_Cons2Prim(N_s, N_E, N_F, U, multifluid, passive, model, gamma0);
+}
+
+
+extern "C"
+void Lcpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* A, scalar* Alim){
+  cpu_hrl(N_s, N_E, N_F, N_G, boundaryMap, weight, V, A, Alim);
 }

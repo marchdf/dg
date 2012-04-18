@@ -14,3 +14,8 @@ scalar minmod(scalar* c, int n){
   }
   return sign*minabs(c,n);
 }
+
+int factorial(int n)
+{
+  return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;
+}
