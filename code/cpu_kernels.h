@@ -30,7 +30,7 @@ extern "C" void Lcpu_gemm_q(int M_G, int M_s, int M_T, int N_F, scalar* Qtcj, sc
 extern "C" void Lcpu_solve(int N_s, int N_E, int N_F, scalar* DU, scalar* S, scalar* F, scalar* Q, scalar* Minv, scalar Dt);
 extern "C" void Lcpu_average_cell_p0(const int N_s, const int N_E, const int N_F, scalar* DU);
 extern "C" void Lcpu_hsl(int N_s, int N_E, int N_F, int boundaryMap, scalar* U, scalar* UNew);
-extern "C" void Lcpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* A, scalar* Alim);
+extern "C" void Lcpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* J, scalar* A, scalar* Alim);
 extern "C" void Lcpu_Prim2Cons(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0);
 extern "C" void Lcpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0);
 #endif

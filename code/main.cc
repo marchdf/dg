@@ -243,24 +243,27 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
   fullMatrix<scalar> points1D(N_G,1); for(int g=0; g<N_G; g++) {points1D(g,0) = points(g,0);}
+  fullMatrix<scalar> phiinv(N_s,N_G);
+  phi.invert(phiinv);
   fullMatrix<scalar> monoV1D;
   fullMatrix<scalar> monoV1Dinv;
   monovandermonde1d(order, points1D, monoV1D);
   monoV1D.invert(monoV1Dinv);
 
-  for(int i = 0; i<monoV1D.size1();i++){
-    for(int j = 0; j<monoV1D.size2();j++){
-      printf("%f\t",monoV1D(i,j));
-    }
-    printf("\n");
-  }
+  // for(int i = 0; i<monoV1D.size1();i++){
+  //   for(int j = 0; j<monoV1D.size2();j++){
+  //     printf("%f\t",monoV1D(i,j));
+  //   }
+  //   printf("\n");
+  // }
 
   // Go from lagrange to monomial basis 
   fullMatrix<scalar> Lag2Mono(N_s,N_s);
   fullMatrix<scalar> Mono2Lag(N_s,N_s);
   Lag2Mono.gemm(monoV1Dinv, phi);   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
   Lag2Mono.invert(Mono2Lag);
-
+  //Mono2Lag.gemm(phiinv,monoV1D);
+  
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -374,15 +377,32 @@ int main (int argc, char **argv)
   if (order0) average_cell_p0(N_s, N_E, N_F, U);
 
 
-  // Setup an dummy initial condition to validate the limiting
-  for(int fc=0; fc<N_F; fc++){
-    U(0,0*N_F+fc) = 1;
-    U(1,0*N_F+fc) = 2;
-    U(0,1*N_F+fc) = 3;
-    U(1,1*N_F+fc) = 1.5;
-    U(0,2*N_F+fc) = 1;
-    U(1,2*N_F+fc) = 0.5;
-  }
+  // // Setup an dummy initial condition to validate the limiting
+  // if(order==1){
+  //   for(int fc=0; fc<N_F; fc++){
+  //     U(0,0*N_F+fc) = 1;
+  //     U(1,0*N_F+fc) = 2;
+  //     U(0,1*N_F+fc) = 3;
+  //     U(1,1*N_F+fc) = 1.5;
+  //     U(0,2*N_F+fc) = 1;
+  //     U(1,2*N_F+fc) = 0.5;
+  //   }
+  // }
+  // else if (order==2){
+  //   printf("hello\n");
+  //   for(int fc=0; fc<N_F; fc++){
+  //     U(0,0*N_F+fc) = 1;
+  //     U(1,0*N_F+fc) = 1.5;
+  //     U(2,0*N_F+fc) = 0.75;
+  //     U(0,1*N_F+fc) = 1.75;
+  //     U(1,1*N_F+fc) = 0.5;
+  //     U(2,1*N_F+fc) = 1.25;
+  //     U(0,2*N_F+fc) = 1;
+  //     U(1,2*N_F+fc) = 0.75;
+  //     U(2,2*N_F+fc) = 2;
+  //   }
+  // }
+
   
   // print the initial condition to the file
   printf("Initial condition written to output file.\n");
@@ -403,6 +423,7 @@ int main (int argc, char **argv)
   fullMatrix<scalar> invJ(N_E,1);         // determinant of the inverse Jacobian
   dg_jacobians_elements(N_G, N_E, D, XYZNodes, dphi, Jac, invJac, J, invJ);
 
+  
   //////////////////////////////////////////////////////////////////////////   
   // 
   // Calculate the inverse mass matrices
@@ -572,7 +593,7 @@ int main (int argc, char **argv)
     CUDA_SAFE_CALL(cudaMemcpy(d_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar), cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(d_U, h_U, N_s*N_E*N_F*sizeof(scalar), cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemset(d_Q, (scalar)0.0, N_E*N_F*N_s*sizeof(scalar)))
-  }
+      }
 
   
   //////////////////////////////////////////////////////////////////////////   
@@ -896,6 +917,21 @@ int main (int argc, char **argv)
       }
       Tstar = T + beta[k]*Dt;
 
+      // Limit the solution if you so want to do so
+      if(k>0){
+      	if(cpu){
+      	  if (limiter==2){ //HR limiting
+      	    // Go from lagrange to monomial representation
+      	    blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Lag2Mono, N_s, h_Ustar, N_s, 0.0, h_A, N_s);
+      	    // Limit the solution according to Liu
+      	    Lcpu_hrl(N_s, N_E, N_F, N_G, boundaryMap, h_weight, h_monoV1D, h_J, h_A, h_Alim);
+      	    // Go back to lagrange representation
+      	    blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Mono2Lag, N_s, h_Alim, N_s, 0.0, h_Ustar, N_s);
+      	  }
+      	} // end limiting
+      }
+
+      
       // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
       if (cpu){
 	if(multifluid)   Lcpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, h_Ustar, h_UF);
@@ -931,7 +967,7 @@ int main (int argc, char **argv)
 
       // collocationUF: requires psi, UF, UintegF and some sizes
       if (cpu){
-	for(int k = 0; k < 2*N_F*M_T; k++){ h_UintegF[k] = h_UF[k];}
+	for(int kk = 0; kk < 2*N_F*M_T; kk++){ h_UintegF[kk] = h_UF[kk];}
       }
       else if(!cpu){
 	cublasCopy(2*N_F*M_T, d_UF, 1, d_UintegF, 1);
@@ -1014,25 +1050,20 @@ int main (int argc, char **argv)
 	}
       }
 
-
-      //
-      //
-      // ATTENTION: commented those lines for limiter testing
-      //
-      //
+      // ATTENTION commented these lines for debug reasons
       if (cpu){
-	//if (blas==1) {blasAxpy(N_s*N_F*N_E, gamma[k], h_DU, 1, h_U, 1);}      
-	//else Lcpu_add(N_s, N_E, N_F, h_U, h_DU, gamma[k]); // do U.add(DU,gamma[k])
+      	if (blas==1) {blasAxpy(N_s*N_F*N_E, gamma[k], h_DU, 1, h_U, 1);}      
+      	else Lcpu_add(N_s, N_E, N_F, h_U, h_DU, gamma[k]); // do U.add(DU,gamma[k])
       }
       else if (!cpu){
       	if (blas==1) {cublasAxpy(N_s*N_F*N_E, gamma[k], d_DU, 1, d_U, 1);}      
       	else Lgpu_add(N_s, N_E, N_F, d_U, d_DU, gamma[k]); // do U.add(DU,gamma[k]
       	CUDA_SAFE_CALL(cudaThreadSynchronize());
       }
+
     } // end RK4 loop
-
-
-    // Limit the solution if you so want to do so
+    T = T + Dt;
+    
     if(cpu){
       if (limiter==1){
 	// Go from conservative to primitive space
@@ -1047,38 +1078,43 @@ int main (int argc, char **argv)
 	// Lcpu_hsl(N_s, N_E, N_F, boundaryMap, h_UMod, h_UModNew);
 	
 	// // Go back to nodal representation (slightly distors the solution at 1e-12)
-        // blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Mod2Nod, N_s, h_UModNew, N_s, 0.0, h_U, N_s);
+	// blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Mod2Nod, N_s, h_UModNew, N_s, 0.0, h_U, N_s);
 
 	// Go back to conservative form
 	//Lcpu_Prim2Cons(N_s, N_E, N_F, h_U, multifluid, passive, model, gamma0);
       }
       if (limiter==2){ //HR limiting
-	printf("limit the solution\n");
 	// Go from lagrange to monomial representation
 	blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Lag2Mono, N_s, h_U, N_s, 0.0, h_A, N_s);
 
-	printf("a0:%f\t",h_A[(0*N_F+0)*N_s+0]);
-	printf("a1:%f\n",h_A[(0*N_F+0)*N_s+1]);
-	printf("b0:%f\t",h_A[(1*N_F+0)*N_s+0]);
-	printf("b1:%f\n",h_A[(1*N_F+0)*N_s+1]);
-	printf("c0:%f\t",h_A[(2*N_F+0)*N_s+0]);
-	printf("c1:%f\n",h_A[(2*N_F+0)*N_s+1]);
+	// printf("a0:%f\t",h_A[(0*N_F+0)*N_s+0]);
+	// printf("a1:%f\n",h_A[(0*N_F+0)*N_s+1]);
+	// //printf("a2:%f\n",h_A[(0*N_F+0)*N_s+2]);
+	// printf("b0:%f\t",h_A[(1*N_F+0)*N_s+0]);
+	// printf("b1:%f\n",h_A[(1*N_F+0)*N_s+1]);
+	// //printf("b2:%f\n",h_A[(1*N_F+0)*N_s+2]);
+	// printf("c0:%f\t",h_A[(2*N_F+0)*N_s+0]);
+	// printf("c1:%f\n",h_A[(2*N_F+0)*N_s+1]);
+	// //printf("c2:%f\n",h_A[(2*N_F+0)*N_s+2]);
 	
 	// Limit the solution according to Liu
-	if (blas==1) {blasCopy(N_F*N_s*N_E, h_A, 1, h_Alim, 1);}    
-	else Lcpu_equal(N_s, N_E, N_F, h_Alim, h_A);     // make Alim = A;
-	Lcpu_hrl(N_s, N_E, N_F, N_G, boundaryMap, h_weight, h_monoV1D, h_A, h_Alim);
-	
-	// // Go back to lagrange representation
-        blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Mono2Lag, N_s, h_Alim, N_s, 0.0, h_U, N_s);
+	Lcpu_hrl(N_s, N_E, N_F, N_G, boundaryMap, h_weight, h_monoV1D, h_J, h_A, h_Alim);
+
+	// printf("a0l:%f\t",h_Alim[(0*N_F+0)*N_s+0]);
+	// printf("a1l:%f\n",h_Alim[(0*N_F+0)*N_s+1]);
+	// //printf("a2l:%f\n",h_Alim[(0*N_F+0)*N_s+2]);
+	// printf("b0l:%f\t",h_Alim[(1*N_F+0)*N_s+0]);
+	// printf("b1l:%f\n",h_Alim[(1*N_F+0)*N_s+1]);
+	// //printf("b2l:%f\n",h_Alim[(1*N_F+0)*N_s+2]);
+	// printf("c0l:%f\t",h_Alim[(2*N_F+0)*N_s+0]);
+	// printf("c2l:%f\n",h_Alim[(2*N_F+0)*N_s+1]);
+	// //printf("c1l:%f\n",h_Alim[(2*N_F+0)*N_s+2]);
+
+	// Go back to lagrange representation
+	blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Mono2Lag, N_s, h_Alim, N_s, 0.0, h_U, N_s);
       }
-
-    }
-	
-
+    } // end limiting
     
-    T = T + Dt;
-
 
     //
     // Get the solution on the CPU so that we can 

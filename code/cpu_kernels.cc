@@ -1157,24 +1157,27 @@ void cpu_hsl(int N_s, int N_E, int N_F, int boundaryMap, scalar* U, scalar* UNew
   
 }
 
-void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* A, scalar* Alim){
+void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* J, scalar* A, scalar* Alim){
 
   int N = N_s - 1;
   scalar dU = 0;
-  scalar* avgdU = new scalar[3]; for(int i=0;i<3;i++) avgdU[i] = 0;
+  scalar* avgdU = new scalar[3]; 
   scalar* R     = new scalar[3]; for(int i=0;i<3;i++) R[i] = 0;
   scalar* avgR  = new scalar[3]; for(int i=0;i<3;i++) avgR[i] = 0;
-  scalar* avgL  = new scalar[3];
+  scalar* avgL  = new scalar[3]; for(int i=0;i<3;i++) avgL[i] = 0;
   scalar* c     = new scalar[2];
 
   // Loop on derivatives
   for(int m = N; m > 0; m--){
     for(int fc = 0; fc < N_F; fc++){
+    //for(int fc = 0; fc < 1; fc++){
+
+      for(int k=0;k<3;k++) avgdU[k] = 0;
 
       // boundary condition on the left
       int left = 0;
-      if      (boundaryMap == 0){left = 0;}//farfield
-      else if (boundaryMap == 1){left = N_E-1;}//periodic
+      if      (boundaryMap == 0  ){left = 0;}//farfield
+      else if (boundaryMap == N_E){left = N_E-1;}//periodic
       for(int g=0; g<N_G; g++){
 	scalar dUL = 0;
 	dU = 0;
@@ -1188,58 +1191,65 @@ void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight
 	avgdU[0] += dUL*weight[g];
 	avgdU[1] += dU *weight[g];
       }
-
+      
       // Now loop on all the elements
       for(int e = 0; e < N_E; e++){
-
 	// Get the index of the element on the right. The derivative
 	// averages have already been calculated in the cell e and e-1
 	int right = e+1; 
-	if (e == N_E-1){
-	  if      (boundaryMap == 0){right = e;}//farfield
-	  else if (boundaryMap == 1){right = 0;}//periodic
+	if (e == (N_E-1)){
+	  if      (boundaryMap == 0  ){right = e;}//farfield
+	  else if (boundaryMap == N_E){right = 0;}//periodic
 	}
-
+	//printf("ne:%i e%i right:%i\n",N_E,e,right);
+	
 	// Calculate the derivative average in the cell on the right
 	// of our cell and calculate the remainder polynomial in our
 	// cells and its two neighbors
 	for(int g = 0; g < N_G; g++){
 
 	  dU = 0;
-	  for(int k=0;k<3;k++) {R[k] = 0; avgR[k] = 0;}
+	  for(int k=0;k<3;k++) R[k] = 0;
 	  
 	  for(int i=m-1;i<N+1;i++){
-	    scalar fact = (scalar)factorial(i)/(scalar)factorial(i-(m-1)); 
-	    dU += fact*A[(right*N_F+fc)*N_s+i]*V[(i-(m-1))*N_G+g];
+	    scalar fact = (scalar)factorial(i)/(scalar)factorial(i-(m-1));
+	    dU  += fact*A[(right*N_F+fc)*N_s+i]*V[(i-(m-1))*N_G+g];
 	    if((m<N)&&(i>m)){
 	      R[0] += fact*Alim[(e*N_F+fc)*N_s+i]*pow(V[1*N_G+g]-2,i-(m-1));
 	      R[1] += fact*Alim[(e*N_F+fc)*N_s+i]*V[(i-(m-1))*N_G+g];
 	      R[2] += fact*Alim[(e*N_F+fc)*N_s+i]*pow(V[1*N_G+g]+2,i-(m-1));
 	    }// end if
 	  }
-
 	  avgdU[2] += dU*weight[g];
 	  avgR[0]  += R[0]*weight[g];
-	  avgR[1]  += R[1]*weight[g];
+	  avgR[1]  += R[1]*weight[g]; 
 	  avgR[2]  += R[2]*weight[g];
-
 	}// end integration loop
 
 	// Approximate the average of the linear part
-	avgL[0] = avgdU[0] - avgR[0];
-	avgL[1] = avgdU[1] - avgR[1];
-	avgL[2] = avgdU[2] - avgR[2];
-
+	avgL[0] = 0.5*(avgdU[0] - avgR[0]); // avg = \frac{1}{2} \int_{-1}^1 U \ud x
+	avgL[1] = 0.5*(avgdU[1] - avgR[1]);
+	avgL[2] = 0.5*(avgdU[2] - avgR[2]);
+	
 	// MUSCL approach to get candidate coefficients
-	c[0] = avgL[1] - avgL[0];
-	c[1] = avgL[2] - avgL[1];
+	c[0] = 0.5*(avgL[1] - avgL[0]);  // 1/dx = 1/2 = 0.5
+	c[1] = 0.5*(avgL[2] - avgL[1]);
 
-	Alim[(e*N_F+fc)*N_s+m] = minmod(c,2);
+	Alim[(e*N_F+fc)*N_s+m] = minmod(c,2); // or minmod2(c,2), minmod(c,2,eps), cminmod2(c,2,eps)
+	//Alim[(e*N_F+fc)*N_s+m] = cminmod(c,2,0.01); 
+	if(m==1){Alim[(e*N_F+fc)*N_s+0] = avgL[1];}
+	// Alim[(e*N_F+fc)*N_s+m] = A[(e*N_F+fc)*N_s+m];
+	// if(m==1){Alim[(e*N_F+fc)*N_s+0] = A[(e*N_F+fc)*N_s+0];}
 
 	// Shift the averages so we can move on to the next cell
+	// printf("  m=%i   avgdU0:%.4f avgR0:%.4f avgL0:%.4f \n",m,avgdU[0],avgR[0],avgL[0]);
+	// printf("  m=%i   avgdU1:%.4f avgR1:%.4f avgL1:%.4f \n",m,avgdU[1],avgR[1],avgL[1]);
+	// printf("  m=%i   avgdU2:%.4f avgR2:%.4f avgL2:%.4f \n",m,avgdU[2],avgR[2],avgL[2]);
+	// printf("  c0:%f  c1:%f\n",c[0],c[1]);
 	avgdU[0] = avgdU[1];
 	avgdU[1] = avgdU[2];
 	avgdU[2] = 0;
+	for(int k=0;k<3;k++) avgR[k] = 0;
       }// end loop on elements
     }// end loop on fields
   }// end loop on m
@@ -1455,6 +1465,6 @@ void Lcpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool 
 
 
 extern "C"
-void Lcpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* A, scalar* Alim){
-  cpu_hrl(N_s, N_E, N_F, N_G, boundaryMap, weight, V, A, Alim);
+void Lcpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* J, scalar* A, scalar* Alim){
+  cpu_hrl(N_s, N_E, N_F, N_G, boundaryMap, weight, V, J, A, Alim);
 }
