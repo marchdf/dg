@@ -23,6 +23,8 @@ lin
 passive
 #model
 passive
+#limiter
+LIMITER
 #number of fields
 5
 #initial condition

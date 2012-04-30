@@ -219,6 +219,17 @@ void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int 
   if((all==-1)||(all==2)) m.writeSolution(Et,  msh_lin, "et.pos",  "Et", step, time, append);
   if((all==-1)||(all==3)) m.writeSolution( G,  msh_lin,  "g.pos",   "G", step, time, append);
   if((all==-1)||(all==4)) m.writeSolution( P,  msh_lin,  "p.pos",   "P", step, time, append);
+
+  // std::string rhoF = "rho.txt"; 
+  // FILE *f = fopen(rhoF.c_str(),"w");
+  // for (int e=0; e<N_E; e++){
+  //   for (int fc=0; fc<N_F; fc++){
+  //     for (int i=0; i<N_s; i++){
+  // 	fprintf(f,"%i %12.7f %i %i ", step, time, 0, e, ); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_Err1[fc]/N_E);          fprintf(f,"\n");
+  //     }
+  //   }
+  // }
+  
 }
 
 void print_dg_multifluid_err(const int N_s, const int N_E, const int N_F, const int model, scalar* U, const simpleMesh m, const int msh_lin, const int all){

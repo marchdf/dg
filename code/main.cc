@@ -99,11 +99,12 @@ int main (int argc, char **argv)
 
   // Get the flux
   int  flux;
-  if      (inputs.getFlux()=="llf") flux = 0;
-  else if (inputs.getFlux()=="ncf") flux = 1;
-  else if (inputs.getFlux()=="roe") flux = 2;
+  if      (inputs.getFlux()=="llf") {flux = 0; printf("Using LLF\n");}
+  else if (inputs.getFlux()=="ncf") {flux = 1; printf("Using NCF\n");}
+  else if (inputs.getFlux()=="roe") {flux = 2; printf("Using ROE\n");}
   else{ printf("Invalid flux setup. Correct the deck.\n");}
   
+  // Get the mesh
   std::string fileName = inputs.getMeshfile();
   
   // Setup the problem type
@@ -122,9 +123,9 @@ int main (int argc, char **argv)
 
   // Setup the limiting
   int limiter = 0;
-  if      (inputs.getLimiter() == "hsl")   limiter = 1;
-  else if (inputs.getLimiter() == "hrl")   limiter = 2;
-  else{limiter = 0;}
+  if      (inputs.getLimiter() == "hsl")   {limiter = 1; printf("Using HS limiting\n");}
+  else if (inputs.getLimiter() == "hrl")   {limiter = 2; printf("Using HR limiting\n");}
+  else{limiter = 0; printf("No limiting\n");}
   
   // Setup the initial condition type
   bool simplew = false;

@@ -1,6 +1,6 @@
 # configuration
 directories       := . quadratures
-BINNAME           := dg1d_test
+BINNAME           := dg1d
 
 
 

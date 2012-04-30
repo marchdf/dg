@@ -108,7 +108,7 @@ void init_dg_sodtube_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar rhoR = 0.125;
   scalar uR   = 0;
   scalar pR   = 0.1;
-  scalar gammaR= 1.4;
+  scalar gammaR= 1.2;
   scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
   
   for(int e = 0; e < N_E; e++){
