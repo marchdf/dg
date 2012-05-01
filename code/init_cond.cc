@@ -39,7 +39,7 @@ void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = (scalar)rho;
 	U(i,e*N_F+1) = (scalar)rho*u;
 	U(i,e*N_F+2) = (scalar)rho*a*a/(gamma*(gamma-1)) + 0.5*rho*u*rho*u/rho;
-	if      (model==0) U(i,e*N_F+3) = (scalar)rho*gamma;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rho/(gamma-1);
 	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma-1);
       }
       else if ((x>-1.5)&&(x<-0.5)){
@@ -49,7 +49,7 @@ void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = (scalar)rho;
 	U(i,e*N_F+1) = (scalar)rho*u;
 	U(i,e*N_F+2) = (scalar)rho*a*a/(gamma*(gamma-1)) + 0.5*rho*u*rho*u/rho;
-	if      (model==0) U(i,e*N_F+3) = (scalar)rho*gamma;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rho/(gamma-1);
 	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma-1);
       }
       else if ((x>=-0.5)&&(x<=0.5)){
@@ -59,7 +59,7 @@ void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = (scalar)rho;
 	U(i,e*N_F+1) = (scalar)rho*u;
 	U(i,e*N_F+2) = (scalar)1.0/(gamma-1);
-	if      (model==0) U(i,e*N_F+3) = (scalar)rho*gamma;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rho/(gamma-1);
 	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma-1);
       }
       else if ((x>0.5)&&(x<1.5)){
@@ -69,7 +69,7 @@ void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = (scalar)rho;
 	U(i,e*N_F+1) = (scalar)rho*u;
 	U(i,e*N_F+2) = (scalar)rho*a*a/(gamma*(gamma-1)) + 0.5*rho*u*rho*u/rho;
-	if      (model==0) U(i,e*N_F+3) = (scalar)rho*gamma;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rho/(gamma-1);
 	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma-1);
       }
       else if (x>=1.5){
@@ -79,7 +79,7 @@ void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = (scalar)rho;
 	U(i,e*N_F+1) = (scalar)rho*u;
 	U(i,e*N_F+2) = (scalar)rho*a*a/(gamma*(gamma-1)) + 0.5*rho*u*rho*u/rho;
-	if      (model==0) U(i,e*N_F+3) = (scalar)rho*gamma;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rho/(gamma-1);
 	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma-1);
       }
     }
@@ -118,14 +118,14 @@ void init_dg_sodtube_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = rhoL;
 	U(i,e*N_F+1) = rhoL*uL;
 	U(i,e*N_F+2) = EtL ;
-	if      (model==0) U(i,e*N_F+3) = (scalar)rhoL*gammaL;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rhoL/(gammaL-1);
 	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaL-1);
       }
       else if (x>=0){
 	U(i,e*N_F+0) = rhoR;
 	U(i,e*N_F+1) = rhoR*uR;
 	U(i,e*N_F+2) = EtR ;
-	if      (model==0) U(i,e*N_F+3) = (scalar)rhoR*gammaR;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rhoR/(gammaR-1);
 	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaR-1);
       }
     }
@@ -157,14 +157,14 @@ void init_dg_contact_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = rhoL;
 	U(i,e*N_F+1) = rhoL*uL;
 	U(i,e*N_F+2) = EtL ;
-	if      (model==0) U(i,e*N_F+3) = (scalar)rhoL*gammaL;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rhoL/(gammaL-1);
 	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaL-1);
       }
       else if (x>=0){
 	U(i,e*N_F+0) = rhoR;
 	U(i,e*N_F+1) = rhoR*uR;
 	U(i,e*N_F+2) = EtR ;
-	if      (model==0) U(i,e*N_F+3) = (scalar)rhoR*gammaR;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rhoR/(gammaR-1);
 	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaR-1);
       }
     }
@@ -197,7 +197,7 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = rhoL;
 	U(i,e*N_F+1) = rhoL*uL;
 	U(i,e*N_F+2) = EtL ;
-	if      (model==0) U(i,e*N_F+3) = (scalar)rhoL*gammaL;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rhoL/(gammaL-1);
 	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaL-1);
 
       }
@@ -205,7 +205,7 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+0) = rhoR;
 	U(i,e*N_F+1) = rhoR*uR;
 	U(i,e*N_F+2) = EtR ;
-	if      (model==0) U(i,e*N_F+3) = (scalar)rhoR*gammaR;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rhoR/(gammaR-1);
 	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaR-1);
 
       }
@@ -233,7 +233,7 @@ void init_dg_sinegam_multifluid(const int N_s, const int N_E, const int N_F, con
       U(i,e*N_F+0) = rho;
       U(i,e*N_F+1) = rho*u;
       U(i,e*N_F+2) = 1.0/(gamma0+sinegam-1.0)*p + 0.5*rho*u*u;
-      if      (model==0) U(i,e*N_F+3) = (scalar)rho*(gamma0+sinegam);
+      if      (model==0) U(i,e*N_F+3) = (scalar)rho/(gamma0+sinegam-1);
       else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma0+sinegam-1);
     }
   }
@@ -254,11 +254,11 @@ void init_dg_expogam_multifluid(const int N_s, const int N_E, const int N_F, con
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
-      expogam = 0.0*exp(-x*x/(0.2*0.2));
+      expogam = A*exp(-x*x/(0.2*0.2));
       U(i,e*N_F+0) = rho;
       U(i,e*N_F+1) = rho*u;
       U(i,e*N_F+2) = 1.0/(gamma0+expogam-1.0)*p + 0.5*rho*u*u;
-      if      (model==0) U(i,e*N_F+3) = (scalar)rho*(gamma0+expogam);
+      if      (model==0) U(i,e*N_F+3) = (scalar)rho/(gamma0+expogam-1);
       else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma0+expogam-1);
     }
   }

@@ -165,7 +165,7 @@ void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int 
       if((all==-1)||(all==1)) Ux (i,e) = U(i,e*N_F+1)/rho;
       if((all==-1)||(all==2)) Et (i,e) = U(i,e*N_F+2);
       if((all==-1)||(all==3)){
-	if      (model==0) G  (i,e) = U(i,e*N_F+3)/rho;
+	if      (model==0) G  (i,e) = 1+rho/U(i,e*N_F+3);
 	else if (model==1) G  (i,e) = 1+1.0/U(i,e*N_F+3);}
       if((all==-1)||(all==4)) P  (i,e) = (G(i,e)-1)*(Et(i,e) - 0.5*U(i,e*N_F+1)*U(i,e*N_F+1)/rho);
     }
@@ -208,7 +208,7 @@ void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int 
       if((all==-1)||(all==1)) Ux (i,e) = U[(e*N_F+1)*N_s+i]/rho;
       if((all==-1)||(all==2)) Et (i,e) = U[(e*N_F+2)*N_s+i];
       if((all==-1)||(all==3)){
-	if      (model==0) G  (i,e) = U[(e*N_F+3)*N_s+i]/rho;
+	if      (model==0) G  (i,e) = 1+rho/U[(e*N_F+3)*N_s+i];
 	else if (model==1) G  (i,e) = 1+1.0/U[(e*N_F+3)*N_s+i];}
       if((all==-1)||(all==4)) P  (i,e) = (G(i,e)-1)*(Et(i,e) - 0.5*U[(e*N_F+1)*N_s+i]*U[(e*N_F+1)*N_s+i]/rho);
     }

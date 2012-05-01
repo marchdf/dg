@@ -1173,8 +1173,8 @@ int main (int argc, char **argv)
       if      (multifluid){
 	// gamma: get everything in terms of gamma
 	if      (model==0){
-	  h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i];
-	  h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];}
+	  h_Uinit[(e*N_F+3)*N_s+i] = 1+h_Uinit[(e*N_F+0)*N_s+i]/h_Uinit[(e*N_F+3)*N_s+i];
+	  h_U    [(e*N_F+3)*N_s+i] = 1+h_U    [(e*N_F+0)*N_s+i]/h_U    [(e*N_F+3)*N_s+i];}
 	else if (model==1){
 	  h_Uinit[(e*N_F+3)*N_s+i] = 1+1.0/h_Uinit[(e*N_F+3)*N_s+i];
 	  h_U    [(e*N_F+3)*N_s+i] = 1+1.0/h_U    [(e*N_F+3)*N_s+i];}
