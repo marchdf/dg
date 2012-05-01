@@ -22,12 +22,12 @@ for pd in pdir:
     for dxd in dxdir:
         dat    = loadtxt(pd+dxd+dxFile)
         print 'Loading', pd,dxd, 'data:', dat
-        dxs[pdcnt,dxdcnt] = dat[0,0]
-        errors[pdcnt,dxdcnt,0] = dat[0,1]
-        errors[pdcnt,dxdcnt,1] = dat[0,2]
-        errors[pdcnt,dxdcnt,2] = dat[0,3]
-        errors[pdcnt,dxdcnt,3] = dat[0,4]
-        errors[pdcnt,dxdcnt,4] = dat[0,5]
+        dxs[pdcnt,dxdcnt] = dat[2,0]
+        errors[pdcnt,dxdcnt,0] = dat[2,1]
+        errors[pdcnt,dxdcnt,1] = dat[2,2]
+        errors[pdcnt,dxdcnt,2] = dat[2,3]
+        errors[pdcnt,dxdcnt,3] = dat[2,4]
+        errors[pdcnt,dxdcnt,4] = dat[2,5]
         dxdcnt = dxdcnt+1
     pdcnt = pdcnt+1
 
@@ -129,7 +129,7 @@ for i in range(3,5): # loop on the different phi formulations
         print '      $\\nicefrac{{1}}{{{0:2.0f}}}$ & {1:12.2e} & {2:12.2f} & & {3:12.2e} & {4:12.2f} & & {5:12.2e} & {6:12.2f}\\\\'.format(1/dxs[1,j], errors[1,j,i], rate1, errors[2,j,i], rate2, errors[3,j,i], rate3)
     print '      \\bottomrule'
     print '    \\end{tabular}'
-    print '    \\caption{$L_2$ cell average error of $\phi_{nc}$ and convergence rates for different polynomials $p$. The conservative formulation is $2p+1$ super-convergent.}'
+    print '    \\caption{$L_2$ cell average error of $\phi_{nc}$ and convergence rates for different polynomials $p$. The non-conservative formulation is $2p+1$ super-convergent.}'
     print '    \\label{tab:conv_phinc}'
     print '  \\end{center}'
     print '\\end{table}'
