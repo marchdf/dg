@@ -1,0 +1,33 @@
+#Options
+cpu
+nodebug
+blas
+#time integration
+rk4
+#time step size
+0.00001
+#number of time steps
+50000
+#output factor
+50
+#spatial method
+dg  
+#order
+ORDER
+#flux
+FLUX
+#mesh file
+../../../../../mshORDER/my_line_ORDER_dxDX.msh
+lin
+#problem
+multifluid
+#model
+MODEL
+#limiter
+LIMITER
+#number of fields
+4
+#initial condition
+matfrnt
+#boundary condition
+farfield

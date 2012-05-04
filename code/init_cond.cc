@@ -108,20 +108,20 @@ void init_dg_sodtube_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar rhoR = 0.125;
   scalar uR   = 0;
   scalar pR   = 0.1;
-  scalar gammaR= 1.2;
+  scalar gammaR= 1.6;
   scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
   
   for(int e = 0; e < N_E; e++){
+    scalar x = XYZNodes(0,e*D+0);
     for(int i = 0; i < N_s; i++){
-      scalar x = XYZNodes(i,e*D+0);
-      if (x<0){
+      if (x<1E-8){
 	U(i,e*N_F+0) = rhoL;
 	U(i,e*N_F+1) = rhoL*uL;
 	U(i,e*N_F+2) = EtL ;
 	if      (model==0) U(i,e*N_F+3) = (scalar)rhoL/(gammaL-1);
 	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaL-1);
       }
-      else if (x>=0){
+      else if (x>=1E-8){
 	U(i,e*N_F+0) = rhoR;
 	U(i,e*N_F+1) = rhoR*uR;
 	U(i,e*N_F+2) = EtR ;
@@ -144,7 +144,7 @@ void init_dg_contact_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar EtL   = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
     
   // Right state
-  scalar rhoR   = 0.125;
+  scalar rhoR   = 1.0;
   scalar uR     = 1.0;
   scalar gammaR = 1.4;
   scalar pR     = 1.0;
@@ -153,14 +153,14 @@ void init_dg_contact_multifluid(const int N_s, const int N_E, const int N_F, con
   for(int e = 0; e < N_E; e++){
     scalar x = XYZNodes(0,e*D+0);
     for(int i = 0; i < N_s; i++){
-      if (x<0){
+      if (x<1E-8){
 	U(i,e*N_F+0) = rhoL;
 	U(i,e*N_F+1) = rhoL*uL;
 	U(i,e*N_F+2) = EtL ;
 	if      (model==0) U(i,e*N_F+3) = (scalar)rhoL/(gammaL-1);
 	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaL-1);
       }
-      else if (x>=0){
+      else if (x>=1E-8){
 	U(i,e*N_F+0) = rhoR;
 	U(i,e*N_F+1) = rhoR*uR;
 	U(i,e*N_F+2) = EtR ;
@@ -179,12 +179,12 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const int N_F, con
   // Left state
   scalar rhoL  = 1.0;
   scalar uL    = 1.0;
-  scalar gammaL= 1.2;
+  scalar gammaL= 1.4;
   scalar pL    = 1.0;
   scalar EtL   = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
     
   // Right state
-  scalar rhoR   = 1.0;
+  scalar rhoR   = 0.125;
   scalar uR     = 1.0;
   scalar gammaR = 1.6;
   scalar pR     = 1.0;
@@ -193,7 +193,7 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const int N_F, con
   for(int e = 0; e < N_E; e++){
     scalar x = XYZNodes(0,e*D+0);
     for(int i = 0; i < N_s; i++){
-      if (x<1E-6){
+      if (x<1E-8){
 	U(i,e*N_F+0) = rhoL;
 	U(i,e*N_F+1) = rhoL*uL;
 	U(i,e*N_F+2) = EtL ;
@@ -201,7 +201,7 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const int N_F, con
 	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaL-1);
 
       }
-      else if (x>=1E-6){
+      else if (x>=1E-8){
 	U(i,e*N_F+0) = rhoR;
 	U(i,e*N_F+1) = rhoR*uR;
 	U(i,e*N_F+2) = EtR ;
@@ -221,19 +221,21 @@ void init_dg_sinegam_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar u       = 1.0;
   scalar gamma0  = 1.4;
   scalar sinegam = 0.0;  // sine perturbation on gamma
-  scalar A       = 0.10; // amplitude of the perturbation
+  scalar sinerho = 0.0;  // sine perturbation on rho
+  scalar Agam    = 0.20; // amplitude of the perturbation on gamma
+  scalar Arho    = 0.20; // amplitude of the perturbation on rho
   scalar p       = 1.0;
-  scalar Et      = 1.0/(gamma0+sinegam-1.0)*p + 0.5*rho*u*u;
+  scalar Et      = 1.0/(gamma0+sinegam-1.0)*p + 0.5*(rho+sinerho)*u*u;
   
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
-      if ((x<-1)||(x>1)) sinegam = 0;
-      else               sinegam = A*sin(M_PI*x);
-      U(i,e*N_F+0) = rho;
-      U(i,e*N_F+1) = rho*u;
-      U(i,e*N_F+2) = 1.0/(gamma0+sinegam-1.0)*p + 0.5*rho*u*u;
-      if      (model==0) U(i,e*N_F+3) = (scalar)rho/(gamma0+sinegam-1);
+      sinegam = Agam*sin(M_PI*x);
+      sinerho = Arho*sin(4*M_PI*x);
+      U(i,e*N_F+0) = rho+sinerho;
+      U(i,e*N_F+1) = (rho+sinerho)*u;
+      U(i,e*N_F+2) = 1.0/(gamma0+sinegam-1.0)*p + 0.5*(rho+sinerho)*u*u;
+      if      (model==0) U(i,e*N_F+3) = (scalar)(rho+sinerho)/(gamma0+sinegam-1);
       else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma0+sinegam-1);
     }
   }

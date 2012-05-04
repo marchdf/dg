@@ -22,12 +22,12 @@ for pd in pdir:
     for dxd in dxdir:
         dat    = loadtxt(pd+dxd+dxFile)
         print 'Loading', pd,dxd, 'data:', dat
-        dxs[pdcnt,dxdcnt] = dat[2,0]
-        errors[pdcnt,dxdcnt,0] = dat[2,1]
-        errors[pdcnt,dxdcnt,1] = dat[2,2]
-        errors[pdcnt,dxdcnt,2] = dat[2,3]
-        errors[pdcnt,dxdcnt,3] = dat[2,4]
-        errors[pdcnt,dxdcnt,4] = dat[2,5]
+        dxs[pdcnt,dxdcnt] = dat[0,0]
+        errors[pdcnt,dxdcnt,0] = dat[0,1]
+        errors[pdcnt,dxdcnt,1] = dat[0,2]
+        errors[pdcnt,dxdcnt,2] = dat[0,3]
+        errors[pdcnt,dxdcnt,3] = dat[0,4]
+        errors[pdcnt,dxdcnt,4] = dat[0,5]
         dxdcnt = dxdcnt+1
     pdcnt = pdcnt+1
 
@@ -39,32 +39,25 @@ for i in range(0,len(pdir)):
     err_th[i,:] = dxs[i,:]**(2*i+1)*errors[i,0,0]/dxs[i,0]**(2*i+1)
 
 # plot these
-markertype = ['s','d','o','p','h']
-cmap = ['r','g','b','m','c']
-cnt = 0
+markertype = ['ks','kp','kh','kd','ko']
 for i in range(0,len(pdir)):
     figure(i)
     clf()
     # error for rho
-    #loglog(dxs[i,:],errors[i,:,0],color=cmap[cnt],linewidth=2)
-    #loglog(dxs[i,:],errors[i,:,0],markertype[cnt],markeredgecolor='k',markerfacecolor=cmap[cnt],markersize=12)
-    #cnt = cnt + 1
+    loglog(dxs[i,:],errors[i,:,0],color='r',linewidth=2)
+    loglog(dxs[i,:],errors[i,:,0],markertype[0],markerfacecolor='r',markersize=12)
     # error for u
-    #loglog(dxs[i,:],errors[i,:,1],color=cmap[cnt],linewidth=2)
-    #loglog(dxs[i,:],errors[i,:,1],markertype[cnt],markeredgecolor='k',markerfacecolor=cmap[cnt],markersize=12)
-    #cnt = cnt + 1
+    loglog(dxs[i,:],errors[i,:,1],color='g',linewidth=2)
+    loglog(dxs[i,:],errors[i,:,1],markertype[1],markerfacecolor='g',markersize=12)
     # error for E
-    loglog(dxs[i,:],errors[i,:,2],color=cmap[cnt],linewidth=2)
-    loglog(dxs[i,:],errors[i,:,2],markertype[cnt],markeredgecolor='k',markerfacecolor=cmap[cnt],markersize=12)
-    cnt = cnt + 1
+    loglog(dxs[i,:],errors[i,:,2],color='b',linewidth=2)
+    loglog(dxs[i,:],errors[i,:,2],markertype[2],markerfacecolor='b',markersize=12)
     # error for phic
-    loglog(dxs[i,:],errors[i,:,3],color=cmap[cnt],linewidth=2)
-    loglog(dxs[i,:],errors[i,:,3],markertype[cnt],markeredgecolor='k',markerfacecolor=cmap[cnt],markersize=12)
-    cnt = cnt + 1
+    loglog(dxs[i,:],errors[i,:,3],color='m',linewidth=2)
+    loglog(dxs[i,:],errors[i,:,3],markertype[3],markerfacecolor='m',markersize=12)
     # error for phinc
-    loglog(dxs[i,:],errors[i,:,4],color=cmap[cnt],linewidth=2)
-    loglog(dxs[i,:],errors[i,:,4],markertype[cnt],markeredgecolor='k',markerfacecolor=cmap[cnt],markersize=12)
-    cnt = 0
+    loglog(dxs[i,:],errors[i,:,4],color='c',linewidth=2)
+    loglog(dxs[i,:],errors[i,:,4],markertype[4],markerfacecolor='c',markersize=12)
     # theoretical: p+1 slope
     loglog(dxs[i,:],err_th[i,:],color='k',linewidth=2,linestyle='dashed')
     xlabel('$\Delta x$',fontsize=22,fontweight='bold')
@@ -136,7 +129,7 @@ for i in range(3,5): # loop on the different phi formulations
         print '      $\\nicefrac{{1}}{{{0:2.0f}}}$ & {1:12.2e} & {2:12.2f} & & {3:12.2e} & {4:12.2f} & & {5:12.2e} & {6:12.2f}\\\\'.format(1/dxs[1,j], errors[1,j,i], rate1, errors[2,j,i], rate2, errors[3,j,i], rate3)
     print '      \\bottomrule'
     print '    \\end{tabular}'
-    print '    \\caption{$L_2$ cell average error of $\phi_{nc}$ and convergence rates for different polynomials $p$. The non-conservative formulation is $2p+1$ super-convergent.}'
+    print '    \\caption{$L_2$ cell average error of $\phi_{nc}$ and convergence rates for different polynomials $p$. The conservative formulation is $2p+1$ super-convergent.}'
     print '    \\label{tab:conv_phinc}'
     print '  \\end{center}'
     print '\\end{table}'

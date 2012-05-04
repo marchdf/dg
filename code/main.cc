@@ -1171,16 +1171,16 @@ int main (int argc, char **argv)
       h_Uinit[(e*N_F+1)*N_s+i] = h_Uinit[(e*N_F+1)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; 
       h_U    [(e*N_F+1)*N_s+i] = h_U    [(e*N_F+1)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
       if      (multifluid){
-	// gamma: get everything in terms of gamma
+	// gamma: get everything in terms of 1/(gamma-1)
 	if      (model==0){
-	  h_Uinit[(e*N_F+3)*N_s+i] = 1+h_Uinit[(e*N_F+0)*N_s+i]/h_Uinit[(e*N_F+3)*N_s+i];
-	  h_U    [(e*N_F+3)*N_s+i] = 1+h_U    [(e*N_F+0)*N_s+i]/h_U    [(e*N_F+3)*N_s+i];}
+	  h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i];
+	  h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];}
 	else if (model==1){
-	  h_Uinit[(e*N_F+3)*N_s+i] = 1+1.0/h_Uinit[(e*N_F+3)*N_s+i];
-	  h_U    [(e*N_F+3)*N_s+i] = 1+1.0/h_U    [(e*N_F+3)*N_s+i];}
+	  h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i];
+	  h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i];}
 	// pressure = (gamma-1)*(E-0.5 rho*v*v)
-	h_Uinit[(e*N_F+2)*N_s+i] = (h_Uinit[(e*N_F+3)*N_s+i]-1)*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
-	h_U    [(e*N_F+2)*N_s+i] = (h_U    [(e*N_F+3)*N_s+i]-1)*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
+	h_Uinit[(e*N_F+2)*N_s+i] = 1.0/h_Uinit[(e*N_F+3)*N_s+i]*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
+	h_U    [(e*N_F+2)*N_s+i] = 1.0/h_U    [(e*N_F+3)*N_s+i]*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
       }
       else if (passive){
 	// pressure = (gamma-1)*(E-0.5 rho*v*v)
