@@ -9,7 +9,7 @@ rc('font', family='sans-serif')
 
 #load the files
 pdir  = ['p1','p2']
-dxdir = ['dx0','dx1','dx2','dx3','dx4']
+dxdir = ['dx0','dx1','dx2','dx3']#,'dx4']
 fdir  = ['llf','ncf','roe']
 mdir  = ['invgamma','gammamod']
 dxFile  = 'error.dat'

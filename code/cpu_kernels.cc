@@ -1225,8 +1225,8 @@ void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight
 	c[0] = 0.5*(avgL[1] - avgL[0]);  // 1/dx = 1/2 = 0.5
 	c[1] = 0.5*(avgL[2] - avgL[1]);
 
-	Alim[(e*N_F+fc)*N_s+m] = minmod(c,2); // or minmod2(c,2), minmod(c,2,eps), cminmod2(c,2,eps)
-	//Alim[(e*N_F+fc)*N_s+m] = cminmod(c,2,0.01); 
+	Alim[(e*N_F+fc)*N_s+m] = minmod(c,2)/(scalar)factorial(m); // or minmod2(c,2), minmod(c,2,eps), cminmod2(c,2,eps)
+	//Alim[(e*N_F+fc)*N_s+m] = cminmod(c,2,0.01)/(scalar)factorial(m); 
 	if(m==1){Alim[(e*N_F+fc)*N_s+0] = avgL[1];}
 	// Alim[(e*N_F+fc)*N_s+m] = A[(e*N_F+fc)*N_s+m];
 	// if(m==1){Alim[(e*N_F+fc)*N_s+0] = A[(e*N_F+fc)*N_s+0];}

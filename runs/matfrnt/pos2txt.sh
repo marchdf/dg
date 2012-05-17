@@ -13,11 +13,16 @@ GMSH='gmsh pos2txt.geo'
 flux=('llf' 'ncf' 'roe');
 model=('invgamma' 'gammamod');
 field=('rho' 'ux' 'et' 'p' 'g');
-for i in {1..2}; do # loop on dg order
-    for j in {0..3}; do #loop on delta x
-	for k in {0..2}; do # loop on fluxes
+# for i in {1..2}; do # loop on dg order
+#     for j in {0..3}; do #loop on delta x
+# 	for k in {0..2}; do # loop on fluxes
+# 	    for p in {0..1}; do  # loop on models
+# 		for n in {0..4}; do # loop on fields
+for i in 4; do # loop on dg order
+    for j in 3; do #loop on delta x
+	for k in 2; do # loop on fluxes
 	    for p in {0..1}; do  # loop on models
-		for n in {0..4}; do # loop on fields
+		for n in 3; do # loop on fields
 		    file='p'$i'/dx'$j'/'${flux[k]}'/'${model[p]}'/'${field[n]}'.pos';
 		    echo 'Converting the following files to .txt '$file;
 		    sed -e 's|ORDER|'$i'|g' \

@@ -9,7 +9,7 @@ rc('font', family='sans-serif')
 
 #load the files
 #pdir  = ['p0','p1','p2','p3','p4']
-pdir  = ['p1','p2']
+pdir  = ['p1','p2','p3','p4']
 dxdir = ['dx0','dx1','dx2','dx3','dx4']
 fdir  = ['llf','ncf','roe']
 mdir  = ['invgamma','gammamod']
@@ -102,7 +102,7 @@ for i in range(0,len(pdir)): # loop on element orders
     loglog(dxs[i,pltdx]+eps,errors[i,pltdx,k,1,j]+eps,markertype[cnt],markerfacecolor='g',markeredgecolor='g',markersize=12)
     cnt = 0
     # theoretical: 2p+1 slope
-    loglog(dxs[i,pltdx],err_th[i,pltdx],color='k',linewidth=2,linestyle='dashed')
+    #loglog(dxs[i,pltdx],err_th[i,pltdx],color='k',linewidth=2,linestyle='dashed')
     xlabel('$\Delta x$',fontsize=22,fontweight='bold')
     ylabel('$E$',fontsize=22,fontweight='bold')
     setp(gca().get_ymajorticklabels(),fontsize=18,fontweight='bold');

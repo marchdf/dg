@@ -15,12 +15,12 @@ mdir  = ['invgamma','gammamod']
 fieldFile=['rho', 'ux', 'p', 'g']
 fieldLatex = ['$\\rho$', '$u$', '$p$', '$\\gamma$']
 
-pd  = pdir[1]
+pd  = pdir[2]
 dxd = dxdir[3]
 fd  = fdir[2]
 field = fieldFile[3]
 md = mdir[1]
-T = 0.2
+T = 0.12
 cmap = ['r','g','b','m','c']
 markertype = ['.', 'x']
 for j in range(0,len(mdir)): # loop on the models 

@@ -16,7 +16,7 @@ rm -rf $(find p* -type d);
 flux=('llf' 'ncf' 'roe');
 model=('invgamma' 'gammamod');
 limiter='hrl';
-for i in {1..2}; do
+for i in {1..3}; do
     for j in {0..4}; do
 	for k in {0..2}; do
 	    for p in {0..1}; do
