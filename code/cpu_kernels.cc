@@ -1160,7 +1160,6 @@ void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight
   // Loop on derivatives
   for(int m = N; m > 0; m--){
     for(int fc = 0; fc < N_F; fc++){
-    //for(int fc = 0; fc < 1; fc++){
 
       for(int k=0;k<3;k++) avgdU[k] = 0;
 
@@ -1172,10 +1171,9 @@ void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight
 	scalar dUL = 0;
 	dU = 0;
 
-	for(int i=m-1;i<N+1;i++){
-	  scalar fact = (scalar)factorial(i)/(scalar)factorial(i-(m-1));
-	  dUL += fact*A[(left*N_F+fc)*N_s+i]*V[(i-(m-1))*N_G+g];
-	  dU  += fact*A[(0*N_F+fc)*N_s+i]*V[(i-(m-1))*N_G+g];
+	for(int j=0;j<=N-(m-1);j++){
+	  dUL += A[(left*N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
+	  dU  += A[(0   *N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
 	}
 
 	avgdU[0] += dUL*weight[g];
@@ -1191,23 +1189,21 @@ void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight
 	  if      (boundaryMap == 0  ){right = e;}//farfield
 	  else if (boundaryMap == N_E){right = 0;}//periodic
 	}
-	//printf("ne:%i e%i right:%i\n",N_E,e,right);
 	
 	// Calculate the derivative average in the cell on the right
 	// of our cell and calculate the remainder polynomial in our
-	// cells and its two neighbors
+	// cells and its two neighbors	
 	for(int g = 0; g < N_G; g++){
 
 	  dU = 0;
 	  for(int k=0;k<3;k++) R[k] = 0;
-	  
-	  for(int i=m-1;i<N+1;i++){
-	    scalar fact = (scalar)factorial(i)/(scalar)factorial(i-(m-1));
-	    dU  += fact*A[(right*N_F+fc)*N_s+i]*V[(i-(m-1))*N_G+g];
-	    if((m<N)&&(i>m)){
-	      R[0] += fact*Alim[(e*N_F+fc)*N_s+i]*pow(V[1*N_G+g]-2,i-(m-1));
-	      R[1] += fact*Alim[(e*N_F+fc)*N_s+i]*V[(i-(m-1))*N_G+g];
-	      R[2] += fact*Alim[(e*N_F+fc)*N_s+i]*pow(V[1*N_G+g]+2,i-(m-1));
+
+	  for(int j=0;j<=N-(m-1);j++){
+	    dU  += A[(right*N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
+	    if(j>=2){
+	      R[0] += Alim[(e*N_F+fc)*N_s+(j+m-1)]*pow(V[1*N_G+g]-2,j)/(scalar)factorial(j);
+	      R[1] += Alim[(e*N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
+	      R[2] += Alim[(e*N_F+fc)*N_s+(j+m-1)]*pow(V[1*N_G+g]+2,j)/(scalar)factorial(j);
 	    }// end if
 	  }
 	  avgdU[2] += dU*weight[g];
@@ -1225,17 +1221,12 @@ void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight
 	c[0] = 0.5*(avgL[1] - avgL[0]);  // 1/dx = 1/2 = 0.5
 	c[1] = 0.5*(avgL[2] - avgL[1]);
 
-	Alim[(e*N_F+fc)*N_s+m] = minmod(c,2)/(scalar)factorial(m); // or minmod2(c,2), minmod(c,2,eps), cminmod2(c,2,eps)
-	//Alim[(e*N_F+fc)*N_s+m] = cminmod(c,2,0.01)/(scalar)factorial(m); 
-	if(m==1){Alim[(e*N_F+fc)*N_s+0] = avgL[1];}
-	// Alim[(e*N_F+fc)*N_s+m] = A[(e*N_F+fc)*N_s+m];
-	// if(m==1){Alim[(e*N_F+fc)*N_s+0] = A[(e*N_F+fc)*N_s+0];}
+	Alim[(e*N_F+fc)*N_s+m] = minmod(c,2);
+	//Alim[(e*N_F+fc)*N_s+m] = cminmod(c,2,0.01);
+	//or use minmod2(c,2), minmod(c,2,eps), cminmod(c,2,0.01); cminmod2(c,2,eps)
+	if(m==1){Alim[(e*N_F+fc)*N_s+0] = avgL[1];}//avgL[1];}
 
 	// Shift the averages so we can move on to the next cell
-	// printf("  m=%i   avgdU0:%.4f avgR0:%.4f avgL0:%.4f \n",m,avgdU[0],avgR[0],avgL[0]);
-	// printf("  m=%i   avgdU1:%.4f avgR1:%.4f avgL1:%.4f \n",m,avgdU[1],avgR[1],avgL[1]);
-	// printf("  m=%i   avgdU2:%.4f avgR2:%.4f avgL2:%.4f \n",m,avgdU[2],avgR[2],avgL[2]);
-	// printf("  c0:%f  c1:%f\n",c[0],c[1]);
 	avgdU[0] = avgdU[1];
 	avgdU[1] = avgdU[2];
 	avgdU[2] = 0;
@@ -1254,7 +1245,7 @@ void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight
 
 
 void cpu_Prim2Cons(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
-  // Go from characteristic to conservative variables
+  // Go from primitive to conservative variables
   for(int e = 0; e < N_E; e++){
     for(int fc = 0; fc < N_F; fc++){
       for(int i = 0; i < N_s; i++){
@@ -1263,9 +1254,7 @@ void cpu_Prim2Cons(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool p
 	scalar p   = U[(e*N_F+2)*N_s+i];
 
 	if(multifluid){
-	  scalar gamma=0;
-	  if      (model==0) gamma=1.0+1.0/U[(e*N_F+3)*N_s+i];
-	  else if (model==1) gamma=1.0+1.0/U[(e*N_F+3)*N_s+i];
+	  scalar gamma= gamma=1.0+1.0/U[(e*N_F+3)*N_s+i];
 	  U[(e*N_F+1)*N_s+i] = rho*u;
 	  U[(e*N_F+2)*N_s+i] = p/(gamma-1.0) + 0.5*rho*u*u;
 	  if      (model==0) U[(e*N_F+3)*N_s+i] = rho/(gamma-1);
@@ -1282,7 +1271,7 @@ void cpu_Prim2Cons(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool p
 }
 
 void cpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
-  // Go from conservative to characteristic variables
+  // Go from conservative to primitive variables
   for(int e = 0; e < N_E; e++){
     for(int fc = 0; fc < N_F; fc++){
       for(int i = 0; i < N_s; i++){
@@ -1452,7 +1441,6 @@ extern "C"
 void Lcpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
   cpu_Cons2Prim(N_s, N_E, N_F, U, multifluid, passive, model, gamma0);
 }
-
 
 extern "C"
 void Lcpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* J, scalar* A, scalar* Alim){

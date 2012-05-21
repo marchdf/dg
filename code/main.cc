@@ -922,12 +922,16 @@ int main (int argc, char **argv)
       if(k>0){
       	if(cpu){
       	  if (limiter==2){ //HR limiting
+	    // Go from conservative to primitive space
+	    //Lcpu_Cons2Prim(N_s, N_E, N_F, h_Ustar, multifluid, passive, model, gamma0);
       	    // Go from lagrange to monomial representation
       	    blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Lag2Mono, N_s, h_Ustar, N_s, 0.0, h_A, N_s);
       	    // Limit the solution according to Liu
       	    Lcpu_hrl(N_s, N_E, N_F, N_G, boundaryMap, h_weight, h_monoV1D, h_J, h_A, h_Alim);
       	    // Go back to lagrange representation
       	    blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Mono2Lag, N_s, h_Alim, N_s, 0.0, h_Ustar, N_s);
+	    // Go back to conservative form
+	    //Lcpu_Prim2Cons(N_s, N_E, N_F, h_Ustar, multifluid, passive, model, gamma0);
       	  }
       	} // end limiting
       }
@@ -1051,7 +1055,6 @@ int main (int argc, char **argv)
 	}
       }
 
-      // ATTENTION commented these lines for debug reasons
       if (cpu){
       	if (blas==1) {blasAxpy(N_s*N_F*N_E, gamma[k], h_DU, 1, h_U, 1);}      
       	else Lcpu_add(N_s, N_E, N_F, h_U, h_DU, gamma[k]); // do U.add(DU,gamma[k])
@@ -1085,34 +1088,16 @@ int main (int argc, char **argv)
 	//Lcpu_Prim2Cons(N_s, N_E, N_F, h_U, multifluid, passive, model, gamma0);
       }
       if (limiter==2){ //HR limiting
+	// Go from conservative to primitive space
+	//Lcpu_Cons2Prim(N_s, N_E, N_F, h_U, multifluid, passive, model, gamma0);
 	// Go from lagrange to monomial representation
 	blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Lag2Mono, N_s, h_U, N_s, 0.0, h_A, N_s);
-
-	// printf("a0:%f\t",h_A[(0*N_F+0)*N_s+0]);
-	// printf("a1:%f\n",h_A[(0*N_F+0)*N_s+1]);
-	// //printf("a2:%f\n",h_A[(0*N_F+0)*N_s+2]);
-	// printf("b0:%f\t",h_A[(1*N_F+0)*N_s+0]);
-	// printf("b1:%f\n",h_A[(1*N_F+0)*N_s+1]);
-	// //printf("b2:%f\n",h_A[(1*N_F+0)*N_s+2]);
-	// printf("c0:%f\t",h_A[(2*N_F+0)*N_s+0]);
-	// printf("c1:%f\n",h_A[(2*N_F+0)*N_s+1]);
-	// //printf("c2:%f\n",h_A[(2*N_F+0)*N_s+2]);
-	
 	// Limit the solution according to Liu
 	Lcpu_hrl(N_s, N_E, N_F, N_G, boundaryMap, h_weight, h_monoV1D, h_J, h_A, h_Alim);
-
-	// printf("a0l:%f\t",h_Alim[(0*N_F+0)*N_s+0]);
-	// printf("a1l:%f\n",h_Alim[(0*N_F+0)*N_s+1]);
-	// //printf("a2l:%f\n",h_Alim[(0*N_F+0)*N_s+2]);
-	// printf("b0l:%f\t",h_Alim[(1*N_F+0)*N_s+0]);
-	// printf("b1l:%f\n",h_Alim[(1*N_F+0)*N_s+1]);
-	// //printf("b2l:%f\n",h_Alim[(1*N_F+0)*N_s+2]);
-	// printf("c0l:%f\t",h_Alim[(2*N_F+0)*N_s+0]);
-	// printf("c2l:%f\n",h_Alim[(2*N_F+0)*N_s+1]);
-	// //printf("c1l:%f\n",h_Alim[(2*N_F+0)*N_s+2]);
-
 	// Go back to lagrange representation
 	blasGemm("N","N", N_s, N_E*N_F, N_s, 1, h_Mono2Lag, N_s, h_Alim, N_s, 0.0, h_U, N_s);
+	// Go back to conservative form
+	//Lcpu_Prim2Cons(N_s, N_E, N_F, h_U, multifluid, passive, model, gamma0);
       }
     } // end limiting
     
@@ -1412,12 +1397,12 @@ void vandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scala
 
 void monovandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D){
 
-  // Purpose : Initialize the 1D Vandermonde Matrix, V_{ij} = (r_i)^j;
+  // Purpose : Initialize the 1D Vandermonde Matrix, V_{ij} = (r_i)^j/factorial(j);
   
   V1D.resize(r.size1(),order+1);
   for(int j=0;j<order+1;j++){
     for(int i=0;i<r.size1();i++){
-      V1D(i,j) = pow(r(i,0),j);
+      V1D(i,j) = pow(r(i,0),j)/(scalar)factorial(j);
     }
   }
 }
