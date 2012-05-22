@@ -70,7 +70,6 @@ void monovandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<s
 int main (int argc, char **argv)
 {
 
-
   
   ////////////////////////////////////////////////////////////////////////////
   //

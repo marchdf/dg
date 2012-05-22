@@ -3,87 +3,128 @@
 #include <stdio.h>
 #include <algorithm>
 
+// Define the architecture scope (eg. need global for gpu stuff)
+#ifdef USE_CPU
+#define arch_scope 
+#elif USE_GPU
+#define arch_scope __global__
+#endif
 
 // Kernel definitions
-void cpu_equal(int N_s, int N_E, int N_F, scalar* A, scalar* B){
-  for(int e = 0; e < N_E; e++){
-    for(int i = 0; i < N_s; i++){
-      for(int fc = 0; fc < N_F; fc++){
-	A[(e*N_F+fc)*N_s+i] = B[(e*N_F+fc)*N_s+i];
-      }
-    }
-  }
+arch_scope void cpu_equal(int N_s, int N_E, int N_F, scalar* A, scalar* B){
+
+#ifdef USE_CPU
+  for(int e = 0; e < N_E; e++)
+    for(int i = 0; i < N_s; i++)
+      for(int fc = 0; fc < N_F; fc++)
+#elif USE_GPU
+  int e = blockIdx.x;
+  int i = threadIdx.x;
+  int fc = threadIdx.y;
+#endif
+
+  A[(e*N_F+fc)*N_s+i] = B[(e*N_F+fc)*N_s+i];
 }
 
-void cpu_add(int N_s, int N_E, int N_F, scalar* A, scalar* B, scalar c){
+arch_scope void cpu_add(int N_s, int N_E, int N_F, scalar* A, scalar* B, scalar c){
 
   // A = A + c*B
-  for(int e = 0; e < N_E; e++){
-    for(int i = 0; i < N_s; i++){
-      for(int fc = 0; fc < N_F; fc++){
-	A[(e*N_F+fc)*N_s+i] =  A[(e*N_F+fc)*N_s+i] + c*B[(e*N_F+fc)*N_s+i];
-      }
-    }
-  }
+#ifdef USE_CPU
+  for(int e = 0; e < N_E; e++)
+    for(int i = 0; i < N_s; i++)
+      for(int fc = 0; fc < N_F; fc++)
+#elif USE_GPU
+  int e = blockIdx.x;
+  int i = threadIdx.x;
+  int fc = threadIdx.y;
+#endif
+
+  A[(e*N_F+fc)*N_s+i] =  A[(e*N_F+fc)*N_s+i] + c*B[(e*N_F+fc)*N_s+i];
 }
 
 
-void cpu_mapToFace_shallow(int M_s, int M_T, int N_F, int* map, scalar* U, scalar* UF){
+arch_scope void cpu_mapToFace_shallow(int M_s, int M_T, int N_F, int* map, scalar* U, scalar* UF){
 
+#ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
     for(int j = 0; j < M_s; j++){
       for(int fc = 0; fc < N_F; fc++){
-	for(int d = 0; d < 2; d++){
-	  int idx = -1;
-	  int face;
-	  face= ((t*N_F+fc)*2+d)*M_s+j;
-	  idx = map[face];
-	  if(idx != -1){
-	    UF[face] = U[idx];
-	  }
-	  else if (idx == -1){
-	    if      (fc == 0) UF[((t*N_F+fc)*2+1)*M_s+j] = UF[((t*N_F+fc)*2+0)*M_s+j]; // eta
-	    else if (fc == 1) UF[((t*N_F+fc)*2+1)*M_s+j] = -UF[((t*N_F+fc)*2+0)*M_s+j]; // ux
-	    else if (fc == 2) UF[((t*N_F+fc)*2+1)*M_s+j] = -UF[((t*N_F+fc)*2+0)*M_s+j]; // uy
-	  }
-	}
+#elif USE_GPU
+  int t = blockIdx.x;
+  int j = threadIdx.x;
+  int fc= threadIdx.y;
+#endif
+
+  int idx = -1;
+  int face;
+  for(int d = 0; d < 2; d++){
+    face= ((t*N_F+fc)*2+d)*M_s+j;
+    idx = map[face];
+    if(idx != -1){
+      UF[face] = U[idx];
+    }
+    else if (idx == -1){
+      if      (fc == 0) UF[((t*N_F+fc)*2+1)*M_s+j] = UF[((t*N_F+fc)*2+0)*M_s+j]; // eta
+      else if (fc == 1) UF[((t*N_F+fc)*2+1)*M_s+j] = -UF[((t*N_F+fc)*2+0)*M_s+j]; // ux
+      else if (fc == 2) UF[((t*N_F+fc)*2+1)*M_s+j] = -UF[((t*N_F+fc)*2+0)*M_s+j]; // uy
+    }
+  }
+  
+#ifdef USE_CPU
       }
     }
   }
+#endif
 }
 
-void cpu_mapToFace_mhd(int M_s, int M_T, int N_F, int* map, scalar* U, scalar* UF){
+arch_scope void cpu_mapToFace_mhd(int M_s, int M_T, int N_F, int* map, scalar* U, scalar* UF){
 
+#ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
     for(int j = 0; j < M_s; j++){
       for(int fc = 0; fc < N_F; fc++){
-	for(int d = 0; d < 2; d++){
-	  int idx = -1;
-	  int face;
-	  face= ((t*N_F+fc)*2+d)*M_s+j;
-	  idx = map[face];
-	  if(idx != -1){
-	    UF[face] = U[idx];
-	  }
-	}
+#elif USE_GPU
+  int t = blockIdx.x;
+  int j = threadIdx.x;
+  int fc= threadIdx.y;
+#endif
+
+  int idx = -1;
+  int face;
+
+  for(int d = 0; d < 2; d++){
+    face= ((t*N_F+fc)*2+d)*M_s+j;
+    idx = map[face];
+    if(idx != -1){
+      UF[face] = U[idx];
+    }
+  }
+
+#ifdef USE_CPU
       }
     }
   }
+#endif
 }
 
 
-void cpu_mapToFace_multifluid(int M_s, int M_T, int N_F, int N_s, int boundaryMap, scalar* U, scalar* UF){
+arch_scope void cpu_mapToFace_multifluid(int M_s, int M_T, int N_F, int N_s, int boundaryMap, scalar* U, scalar* UF){
+
+#ifdef USE_CPU
+  for(int t = 0; t < M_T; t++){
+    for(int fc = 0; fc < N_F; fc++){    
+#elif USE_GPU
+  int t = blockIdx.x;
+  int fc= threadIdx.y;
+#endif
 
   // All other boundaries
-  for(int t = 1; t < M_T-1; t++){ 
-    for(int fc = 0; fc < N_F; fc++){    
+  if ((t<=1)&&(t<M_T-1)){
       UF[(t*N_F+fc)*2+0] = U[((t-1)*N_F+fc)*N_s+1];
-      UF[(t*N_F+fc)*2+1] = U[(t*N_F+fc)*N_s+0];
-    }
-  }
+      UF[(t*N_F+fc)*2+1] = U[(t*N_F+fc)*N_s+0];}
 
   // Start and end boundaries
-  for(int fc = 0; fc < N_F; fc++){
+  else if (t==0){
     UF[(0*N_F+fc)*2+1]       = U[(0*N_F+fc)*N_s+0];     
     UF[((M_T-1)*N_F+fc)*2+0] = U[((M_T-2)*N_F+fc)*N_s+1];
     if      (boundaryMap == 0){      //farfield
@@ -95,6 +136,11 @@ void cpu_mapToFace_multifluid(int M_s, int M_T, int N_F, int N_s, int boundaryMa
       UF[((M_T-1)*N_F+fc)*2+1]  = UF[(0*N_F+fc)*2+1];
     }
   }
+
+#ifdef USE_CPU
+    }
+  }
+#endif
 }
 
 void cpu_mapToFace_passive(int M_s, int M_T, int N_F, int N_s, int boundaryMap, scalar* U, scalar* UF){

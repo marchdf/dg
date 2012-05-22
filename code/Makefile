@@ -1,7 +1,10 @@
+# arguments
+ARCH=USE_CPU     # or USE_GPU
+PREC=USE_DOUBLE  # or USE_FLOAT
+
 # configuration
 directories       := . quadratures
 BINNAME           := dg1d
-
 
 
 # flags
@@ -10,8 +13,8 @@ CUDA_SDK_PATH     := /home/marchdf/NVIDIA_GPU_Computing_SDK/C
 INCLUDES += -I. -I$(CUDA_INSTALL_PATH)/include -I$(CUDA_SDK_PATH)/common/inc
 LIBS              := -L$(CUDA_INSTALL_PATH)/lib64 -L$(CUDA_SDK_PATH)/lib -lcutil_x86_64
 CFLAGS 	          := -03
-CPPFLAGS          := -I. -DHAVE_BLAS -DHAVE_LAPACK -w -ansi
-CUFLAGS	          := --ptxas-options=-v #-arch sm_13 
+CPPFLAGS          := -I. -DHAVE_BLAS -DHAVE_LAPACK -w -ansi -D$(ARCH) -D$(PREC)
+CUFLAGS	          := --ptxas-options=-v -D$(PREC) #-arch sm_13 
 LDFLAGS           := -lrt -lm -lblas -lstdc++ -llapack -lcudart -lcublas 
 
 # compilers
