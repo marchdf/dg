@@ -438,14 +438,15 @@ int main (int argc, char **argv)
   //   GPU calculations
   //
   //==========================================================================
-
+#ifdef USE_GPU
   // Choose the device
   CUDA_SAFE_CALL(cudaSetDevice(0));
 
   // Use cublas or not
   cublasStatus status;
   status = cublasInit();
-
+#endif
+  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Send stuff to the GPU
@@ -540,6 +541,7 @@ int main (int argc, char **argv)
   //
   // Initialize and allocate some stuff on the device
   //
+#ifdef USE_GPU
   scalar* d_phi, *d_phi_w, *d_dphi, *d_dphi_w;
   scalar* d_J, *d_invJac;
   scalar* d_Minv;
@@ -549,51 +551,50 @@ int main (int argc, char **argv)
   scalar* d_sJ, *d_fJ; 
   scalar* d_S, *d_F, *d_Q;
 
-  if (!cpu){
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_phi,N_G*N_s*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_phi_w,N_G*N_s*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_dphi,D*N_G*N_s*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_dphi_w,D*N_G*N_s*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_J,N_E*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_invJac,N_G*D*N_E*D*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_Minv,N_s*N_s*N_E*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_U,N_s*N_E*N_F*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_phi,N_G*N_s*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_phi_w,N_G*N_s*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_dphi,D*N_G*N_s*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_dphi_w,D*N_G*N_s*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_J,N_E*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_invJac,N_G*D*N_E*D*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_Minv,N_s*N_s*N_E*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_U,N_s*N_E*N_F*sizeof(scalar)));
     
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_Us,N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_Ustar,N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_DU,N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_UF,M_s*M_T*N_F*2*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_Us,N_s*N_E*N_F*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_Ustar,N_s*N_E*N_F*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_DU,N_s*N_E*N_F*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_UF,M_s*M_T*N_F*2*sizeof(scalar)));
 
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_Uinteg,N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_dUinteg,D*N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_UintegF,M_G*M_T*N_F*2*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_Uinteg,N_G*N_E*N_F*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_dUinteg,D*N_G*N_E*N_F*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_UintegF,M_G*M_T*N_F*2*sizeof(scalar)));
     
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_s,N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_sJ,N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_S,N_s*N_E*N_F*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_s,N_G*N_E*N_F*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_sJ,N_G*N_E*N_F*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_S,N_s*N_E*N_F*sizeof(scalar)));
     
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_f,D*N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_fJ,D*N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_F,N_s*N_E*N_F*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_f,D*N_G*N_E*N_F*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_fJ,D*N_G*N_E*N_F*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_F,N_s*N_E*N_F*sizeof(scalar)));
     
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_q,M_G*M_T*N_F*2*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_Q,N_s*N_E*N_F*sizeof(scalar)));
-  }
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_q,M_G*M_T*N_F*2*sizeof(scalar)));
+  CUDA_SAFE_CALL(cudaMalloc((void**) &d_Q,N_s*N_E*N_F*sizeof(scalar)));
+#endif
 
   //
   // Send the stuff to the device
   //
-  if (!cpu){     
-    CUDA_SAFE_CALL(cudaMemcpy(d_phi, h_phi, N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(d_phi_w, h_phi_w, N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(d_dphi, h_dphi, D*N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(d_dphi_w, h_dphi_w, D*N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(d_J, h_J, N_E*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(d_invJac, h_invJac, N_G*D*N_E*D*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(d_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(d_U, h_U, N_s*N_E*N_F*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemset(d_Q, (scalar)0.0, N_E*N_F*N_s*sizeof(scalar)))
-      }
+#ifdef USE_GPU
+  CUDA_SAFE_CALL(cudaMemcpy(d_phi, h_phi, N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
+  CUDA_SAFE_CALL(cudaMemcpy(d_phi_w, h_phi_w, N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
+  CUDA_SAFE_CALL(cudaMemcpy(d_dphi, h_dphi, D*N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
+  CUDA_SAFE_CALL(cudaMemcpy(d_dphi_w, h_dphi_w, D*N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
+  CUDA_SAFE_CALL(cudaMemcpy(d_J, h_J, N_E*sizeof(scalar), cudaMemcpyHostToDevice));
+  CUDA_SAFE_CALL(cudaMemcpy(d_invJac, h_invJac, N_G*D*N_E*D*sizeof(scalar), cudaMemcpyHostToDevice));
+  CUDA_SAFE_CALL(cudaMemcpy(d_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar), cudaMemcpyHostToDevice));
+  CUDA_SAFE_CALL(cudaMemcpy(d_U, h_U, N_s*N_E*N_F*sizeof(scalar), cudaMemcpyHostToDevice));
+  CUDA_SAFE_CALL(cudaMemset(d_Q, (scalar)0.0, N_E*N_F*N_s*sizeof(scalar)))
+#endif
 
   
   //////////////////////////////////////////////////////////////////////////   
@@ -1266,32 +1267,32 @@ int main (int argc, char **argv)
   // Free stuff on the device
   //
   //////////////////////////////////////////////////////////////////////////   
+#ifdef USE_GPU
   status = cublasShutdown();
-  if (!cpu){
-    CUDA_SAFE_CALL(cudaFree(d_phi));
-    CUDA_SAFE_CALL(cudaFree(d_phi_w));
-    CUDA_SAFE_CALL(cudaFree(d_dphi));
-    CUDA_SAFE_CALL(cudaFree(d_dphi_w));
-    CUDA_SAFE_CALL(cudaFree(d_J));
-    CUDA_SAFE_CALL(cudaFree(d_invJac));
-    CUDA_SAFE_CALL(cudaFree(d_Minv));
-    CUDA_SAFE_CALL(cudaFree(d_U));
-    CUDA_SAFE_CALL(cudaFree(d_Us));
-    CUDA_SAFE_CALL(cudaFree(d_Ustar));
-    CUDA_SAFE_CALL(cudaFree(d_DU));
-    CUDA_SAFE_CALL(cudaFree(d_UF));
-    CUDA_SAFE_CALL(cudaFree(d_Uinteg));
-    CUDA_SAFE_CALL(cudaFree(d_dUinteg));
-    CUDA_SAFE_CALL(cudaFree(d_UintegF));
-    CUDA_SAFE_CALL(cudaFree(d_s));
-    CUDA_SAFE_CALL(cudaFree(d_sJ));
-    CUDA_SAFE_CALL(cudaFree(d_S));
-    CUDA_SAFE_CALL(cudaFree(d_f));
-    CUDA_SAFE_CALL(cudaFree(d_fJ));
-    CUDA_SAFE_CALL(cudaFree(d_F));
-    CUDA_SAFE_CALL(cudaFree(d_q));
-    CUDA_SAFE_CALL(cudaFree(d_Q));
-  }
+  CUDA_SAFE_CALL(cudaFree(d_phi));
+  CUDA_SAFE_CALL(cudaFree(d_phi_w));
+  CUDA_SAFE_CALL(cudaFree(d_dphi));
+  CUDA_SAFE_CALL(cudaFree(d_dphi_w));
+  CUDA_SAFE_CALL(cudaFree(d_J));
+  CUDA_SAFE_CALL(cudaFree(d_invJac));
+  CUDA_SAFE_CALL(cudaFree(d_Minv));
+  CUDA_SAFE_CALL(cudaFree(d_U));
+  CUDA_SAFE_CALL(cudaFree(d_Us));
+  CUDA_SAFE_CALL(cudaFree(d_Ustar));
+  CUDA_SAFE_CALL(cudaFree(d_DU));
+  CUDA_SAFE_CALL(cudaFree(d_UF));
+  CUDA_SAFE_CALL(cudaFree(d_Uinteg));
+  CUDA_SAFE_CALL(cudaFree(d_dUinteg));
+  CUDA_SAFE_CALL(cudaFree(d_UintegF));
+  CUDA_SAFE_CALL(cudaFree(d_s));
+  CUDA_SAFE_CALL(cudaFree(d_sJ));
+  CUDA_SAFE_CALL(cudaFree(d_S));
+  CUDA_SAFE_CALL(cudaFree(d_f));
+  CUDA_SAFE_CALL(cudaFree(d_fJ));
+  CUDA_SAFE_CALL(cudaFree(d_F));
+  CUDA_SAFE_CALL(cudaFree(d_q));
+  CUDA_SAFE_CALL(cudaFree(d_Q));
+#endif
   
 
   
