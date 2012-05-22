@@ -45,7 +45,8 @@ extern "C" {
                       std::complex<double> *alpha, std::complex<double> *a, int *lda, 
                       std::complex<double> *x, int *incx, std::complex<double> *beta, 
                       std::complex<double> *y, int *incy);
-  void F77NAME(dscal)(int *n, double *alpha,double *x,  int *incx);
+  void F77NAME(dscal)(int *n, double *alpha, double *x,int *incx);
+  void F77NAME(sscal)(int *n, float *alpha,  float *x, int *incx);
   void F77NAME(zscal)(int *n, std::complex<double> *alpha,std::complex<double> *x,  int *incx);
 }
 #endif

@@ -57,7 +57,7 @@ void JacobiGQ(const int alpha, const int beta, const int N, fullMatrix<scalar> &
   }
 
   // Form symmetric matrix from recurrence.
-  fullMatrix<scalar> J(N+1,N+1); J.scale(0.0);
+  fullMatrix<scalar> J(N+1,N+1); J.scale((scalar)0.0);
   fullMatrix<scalar> h1(1,N+1);
   for(int j=0;j<N+1;j++) h1(0,j) = 2*j+alpha+beta;
 
@@ -69,8 +69,8 @@ void JacobiGQ(const int alpha, const int beta, const int N, fullMatrix<scalar> &
   J.add(J.transpose());
 
   // Compute quadrature by eigenvalue solve
-  fullVector<double> eigenValReal(N+1);
-  fullVector<double> eigenValImag(N+1);
+  fullVector<scalar> eigenValReal(N+1);
+  fullVector<scalar> eigenValImag(N+1);
   fullMatrix<scalar> leftEigenVect(N+1,N+1);
   fullMatrix<scalar> rightEigenVect(N+1,N+1);
   bool sortRealPart=true;

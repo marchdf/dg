@@ -5,8 +5,6 @@
 class deck {
 
  private:
-  std::string _proc;
-  bool _debug;
   bool _blas;
   std::string _timeMeth;
   double _Dt;
@@ -25,8 +23,6 @@ class deck {
   std::string _bc;
   
  public:
-  inline std::string getProc() { return _proc;}
-  inline bool getDebug() {return _debug;}
   inline bool getBlas() {return _blas;}
   inline std::string getTimeMeth() { return _timeMeth;}
   inline double getTimeStep() {return _Dt;}

@@ -16,11 +16,6 @@ void deck::readDeck(const char *fileName)
   getline(input,line);
   if (line!="#Options")
     printf("Invalid file format\n");
-  getline(input,_proc);
-  getline(input,line);
-  if (line=="debug")
-    _debug = true;
-  else _debug = false;
   getline(input,line);
   if (line=="blas")
     _blas = true;

@@ -363,6 +363,16 @@ class fullMatrix
   }
 #endif
   ;
+  void scale(const float s)
+#if !defined(HAVE_BLAS)
+  {
+    if(s == 0.) // this is not really correct nan*0 (or inf*0) is expected to give nan
+      for(int i = 0; i < _r * _c; ++i) _data[i] = 0.;
+    else
+      for(int i = 0; i < _r * _c; ++i) _data[i] *= s;
+  }
+#endif
+  ;
   inline void add(const double &a) 
   {
     for(int i = 0; i < _r * _c; ++i) _data[i] += a;
@@ -426,9 +436,19 @@ class fullMatrix
   }
 #endif
   ;
-  bool eig(fullVector<double> &eigenValReal, fullVector<double> &eigenValImag,
+  bool eig(fullVector<float> &eigenValReal, fullVector<float> &eigenValImag,
            fullMatrix<scalar> &leftEigenVect, fullMatrix<scalar> &rightEigenVect,
            bool sortRealPart=false)
+#if !defined(HAVE_LAPACK)
+  {
+    printf("Eigenvalue computations requires LAPACK");
+    return false;
+  }
+#endif
+  ;
+  bool eig(fullVector<double> &eigenValReal, fullVector<double> &eigenValImag,
+	  fullMatrix<scalar> &leftEigenVect, fullMatrix<scalar> &rightEigenVect,
+	  bool sortRealPart=false)
 #if !defined(HAVE_LAPACK)
   {
     printf("Eigenvalue computations requires LAPACK");
