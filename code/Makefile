@@ -1,6 +1,6 @@
-# arguments
-ARCH=USE_CPU     # or USE_GPU
-PREC=USE_DOUBLE  # or USE_FLOAT
+# defaults
+ARCH=USE_CPU
+PREC=USE_DOUBLE
 
 # configuration
 directories       := . quadratures
@@ -14,7 +14,7 @@ INCLUDES += -I. -I$(CUDA_INSTALL_PATH)/include -I$(CUDA_SDK_PATH)/common/inc
 LIBS              := -L$(CUDA_INSTALL_PATH)/lib64 -L$(CUDA_SDK_PATH)/lib -lcutil_x86_64
 CFLAGS 	          := -03
 CPPFLAGS          := -I. -DHAVE_BLAS -DHAVE_LAPACK -w -ansi -D$(ARCH) -D$(PREC)
-CUFLAGS	          := --ptxas-options=-v -D$(PREC) #-arch sm_13 
+CUFLAGS	          := --ptxas-options=-v -D$(ARCH) -D$(PREC) #-arch sm_13 
 LDFLAGS           := -lrt -lm -lblas -lstdc++ -llapack -lcudart -lcublas 
 
 # compilers
@@ -50,7 +50,12 @@ $(DDIR)/%.d : %.c
 $(DDIR)/%.d : %.cu
 	@echo "Dependencies of $<"
 	@mkdir -p $(@D)
+ifeq ($(ARCH),USE_GPU)
 	@$(NVCC) $(CUFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o $@|'>$@
+else ifeq ($(ARCH),USE_CPU)
+	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$@
+endif
+
 
 all: $(BINNAME)
 
@@ -73,9 +78,17 @@ $(ODIR)/%.o : %.cc
 
 $(ODIR)/%.o : %.cu
 	@mkdir -p $(@D)
+ifeq ($(ARCH),USE_GPU)
 	@$(NVCC) $(CUFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
+else ifeq ($(ARCH),USE_CPU)
+	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
+endif
 	@echo "Compilation of $<"
+ifeq ($(ARCH),USE_GPU)
 	$(NVCC) $(CUFLAGS) $(INCLUDES) -c $< -o $@
+else ifeq ($(ARCH),USE_CPU)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -x c++ -c $< -o $@
+endif
 
 $(BINNAME) : $(objs)
 	@echo "Link of $@"

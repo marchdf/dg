@@ -7,10 +7,26 @@
 #ifdef USE_CPU
 #define arch_global
 #define arch_device
+#define arch_args
+#define arch_args_array(x) 
 #elif USE_GPU
 #define arch_global __global__
 #define arch_device __device__
+#define arch_args   <<<dimGrid,dimBlock>>>
+#define arch_args_array(x)   <<<dimGrid,dimBlock,x>>>
 #endif
+
+// Define some extra functions
+#define min(X, Y)  ((X) < (Y) ? (X) : (Y))
+#define max(X, Y)  ((X) > (Y) ? (X) : (Y))
+
+inline int cpu_signum(scalar val){return val>0? 1 : (val<0? -1 : 0);}
+inline scalar cpu_minabs(scalar* c, int n);
+scalar cpu_minmod  (scalar* c, int n);             // eq 2.19 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
+scalar cpu_minmod2 (scalar* c, int n);             // eq 2.20 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
+scalar cpu_cminmod (scalar* c, int n, scalar eps); // eq 2.21 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
+scalar cpu_cminmod2(scalar* c, int n, scalar eps); // eq 2.21 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
+int cpu_factorial(int n);
 
 ////////////////////////////////////////////////////////////////////////////
 //
@@ -156,7 +172,7 @@ arch_global void cpu_mapToFace_multifluid(int M_s, int M_T, int N_F, int N_s, in
 
 
 //==========================================================================
-void cpu_mapToFace_passive(int M_s, int M_T, int N_F, int N_s, int boundaryMap, scalar* U, scalar* UF){
+arch_global void cpu_mapToFace_passive(int M_s, int M_T, int N_F, int N_s, int boundaryMap, scalar* U, scalar* UF){
 
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
@@ -422,7 +438,7 @@ arch_global void cpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, in
   else if (model==1) gamma=1+1.0/Ug[(e*N_F+3)*N_G+g];
   scalar p = (gamma-1)*(Et - 0.5*rho*u*u);
   scalar EtplusP = Et + p;
-  scalar dudx = (dUg[(e*N_F+1)*N_G+g]-u*dUg[(e*N_F+0)*N_G+g])/rho*invJac[e*N_G+g];
+  //scalar dudx = (dUg[(e*N_F+1)*N_G+g]-u*dUg[(e*N_F+0)*N_G+g])/rho*invJac[e*N_G+g];
   scalar dalphadx = dUg[(e*N_F+3)*N_G+g]*invJac[e*N_G+g];
   //dudx += dUg[((e*N_F+1)*N_G+g)*D+alpha];//*invJac[((e*N_G+g)*D+0)*D+alpha];
   //scalar dudx = dUg[e*N_G+g]*invJac[e*N_G+g];
@@ -470,7 +486,7 @@ arch_global void cpu_evaluate_sf_passive(int D, int N_G, int N_E, int N_F, scala
   scalar u     = Ug[(e*N_F+1)*N_G+g]/rho;  // (rho u / rho) = u
   scalar Et    = Ug[(e*N_F+2)*N_G+g];
   scalar phic  = Ug[(e*N_F+3)*N_G+g]/rho;
-  scalar phinc = Ug[(e*N_F+4)*N_G+g];
+  //scalar phinc = Ug[(e*N_F+4)*N_G+g];
   scalar p     = (gamma-1)*(Et - 0.5*rho*u*u);
   scalar EtplusP = Et + p;
   scalar dphincdx = dUg[(e*N_F+4)*N_G+g]*invJac[e*N_G+g];
@@ -540,10 +556,12 @@ arch_global void cpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar
   
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
+    scalar* vap = new scalar[M_G*2*8];
     for(int g = 0; g < M_G; g++){
 #elif USE_GPU
   int t = blockIdx.x;
   int g = threadIdx.x;
+  extern __shared__ scalar vap[];
 #endif
 
   scalar nx = normals[t*2+0];
@@ -570,7 +588,7 @@ arch_global void cpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar
   scalar vdotnR = uR*nx+vR*ny;
   scalar BdotnL = BxL*nx+ByL*ny;
   scalar BdotnR = BxR*nx+ByR*ny;
-  scalar aveBdotn = 0.5*(BdotnL + BdotnR);      
+  //scalar aveBdotn = 0.5*(BdotnL + BdotnR);      
   scalar pL = (gamma-1)*(EtL - 0.5*(rhoL*vdotvL+BdotBL));
   scalar pR = (gamma-1)*(EtR - 0.5*(rhoR*vdotvR+BdotBR));
   scalar PbarL = pL+0.5*BdotBL;
@@ -580,7 +598,6 @@ arch_global void cpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar
 
   // Evaluate the right and left eigenvalues
   int sizevap = 8;
-  scalar* vap = new scalar[2*sizevap];
   scalar alfenL  = BdotnL/sqrt(rhoL);
   scalar alfenR  = BdotnR/sqrt(rhoR);
   scalar a2L = (gamma*pL+BdotBL)/rhoL;
@@ -590,29 +607,28 @@ arch_global void cpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar
   scalar csL = sqrt(0.5*(a2L - sqrt( a2L*a2L - 4.0*gamma*pL*BdotnL*BdotnL/(rhoL*rhoL))));
   scalar csR = sqrt(0.5*(a2R - sqrt( a2R*a2R - 4.0*gamma*pR*BdotnR*BdotnR/(rhoR*rhoR))));
 
-  vap[0*sizevap+0] = fabs(vdotnL);
-  vap[0*sizevap+1] = fabs(vdotnL) + alfenL;
-  vap[0*sizevap+2] = fabs(vdotnL) - alfenL;
-  vap[0*sizevap+3] = fabs(vdotnL) + cfL;
-  vap[0*sizevap+4] = fabs(vdotnL) - cfL;
-  vap[0*sizevap+5] = fabs(vdotnL) + csL;
-  vap[0*sizevap+6] = fabs(vdotnL) - csL;
-  vap[0*sizevap+7] = fabs(vdotnL);
+  vap[(g*2+0)*sizevap+0] = fabs(vdotnL);
+  vap[(g*2+0)*sizevap+1] = fabs(vdotnL) + alfenL;
+  vap[(g*2+0)*sizevap+2] = fabs(vdotnL) - alfenL;
+  vap[(g*2+0)*sizevap+3] = fabs(vdotnL) + cfL;
+  vap[(g*2+0)*sizevap+4] = fabs(vdotnL) - cfL;
+  vap[(g*2+0)*sizevap+5] = fabs(vdotnL) + csL;
+  vap[(g*2+0)*sizevap+6] = fabs(vdotnL) - csL;
+  vap[(g*2+0)*sizevap+7] = fabs(vdotnL);
       
-  vap[1*sizevap+0] = fabs(vdotnR);
-  vap[1*sizevap+1] = fabs(vdotnR) + alfenR;
-  vap[1*sizevap+2] = fabs(vdotnR) - alfenR;
-  vap[1*sizevap+3] = fabs(vdotnR) + cfR;
-  vap[1*sizevap+4] = fabs(vdotnR) - cfR;
-  vap[1*sizevap+5] = fabs(vdotnR) + csR;
-  vap[1*sizevap+6] = fabs(vdotnR) - csR;
-  vap[1*sizevap+7] = fabs(vdotnR);
+  vap[(g*2+1)*sizevap+0] = fabs(vdotnR);
+  vap[(g*2+1)*sizevap+1] = fabs(vdotnR) + alfenR;
+  vap[(g*2+1)*sizevap+2] = fabs(vdotnR) - alfenR;
+  vap[(g*2+1)*sizevap+3] = fabs(vdotnR) + cfR;
+  vap[(g*2+1)*sizevap+4] = fabs(vdotnR) - cfR;
+  vap[(g*2+1)*sizevap+5] = fabs(vdotnR) + csR;
+  vap[(g*2+1)*sizevap+6] = fabs(vdotnR) - csR;
+  vap[(g*2+1)*sizevap+7] = fabs(vdotnR);
 
   scalar maxvap = 0;
   for (int k = 0; k < 2*sizevap; k++){
-    if (maxvap<vap[k]) maxvap = vap[k];
+    if (maxvap<vap[g*16+k]) maxvap = vap[g*16+k];
   }
-  delete[] vap;
 
   // Upwinding on the source term
   // scalar upBdotnL = aveBdotn;
@@ -672,6 +688,7 @@ arch_global void cpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar
 
 #ifdef USE_CPU
     }
+    delete[] vap;
   }
 #endif
 }
@@ -684,8 +701,10 @@ arch_global void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, 
   
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
+    scalar* vap = new scalar[4*(4+4)];
 #elif USE_GPU
   int t = blockIdx.x;
+  extern __shared__ scalar vap[];
 #endif
 
   scalar rhoL= UgF[(t*N_F+0)*2+0];
@@ -712,19 +731,18 @@ arch_global void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, 
 
   // Evaluate the right and left eigenvalues
   int sizevap = 4;
-  scalar* vap = new scalar[2*sizevap];
   scalar aL = sqrt((gammaL*pL)/rhoL);
   scalar aR = sqrt((gammaR*pR)/rhoR);
 
   vap[0*sizevap+0] = fabs(uL) - aL;
   vap[0*sizevap+1] = fabs(uL);
-  vap[0*sizevap+2] = fabs(uL);
-  vap[0*sizevap+3] = fabs(uL) + aL;
+  vap[0*sizevap+2] = fabs(uL) + aL;
+  vap[0*sizevap+3] = fabs(uL);
 
   vap[1*sizevap+0] = fabs(uR) - aR;
   vap[1*sizevap+1] = fabs(uR);
-  vap[1*sizevap+2] = fabs(uR);
-  vap[1*sizevap+3] = fabs(uR) + aR;
+  vap[1*sizevap+2] = fabs(uR) + aR;
+  vap[1*sizevap+3] = fabs(uR);
 
   scalar maxvap = 0;
   for (int k = 0; k < 2*sizevap; k++){
@@ -732,9 +750,8 @@ arch_global void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, 
   }
   // scalar SL = std::min(vap[0*sizevap+0],vap[1*sizevap+0]);
   // scalar SR = std::max(vap[0*sizevap+3],vap[1*sizevap+3]);
-  scalar SL = std::min(fabs(uL)-aL,fabs(uR)-aR);
-  scalar SR = std::max(fabs(uL)+aR,fabs(uR)+aR);
-  delete[] vap;
+  scalar SL = min(fabs(uL)-aL,fabs(uR)-aR);
+  scalar SR = max(fabs(uL)+aR,fabs(uR)+aR);
     
   //
   // Evaluate the fluxes on the right and left
@@ -843,48 +860,48 @@ arch_global void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, 
     scalar DpRoe= (gammaRoe-1)*(gammaRoe-1)*(alphaRoe*(iR-iL) - iRoe*(alphaR-alphaL));
     scalar pRoe = (gammaRoe-1)*iRoe;
 
-    scalar* vapRoe = new scalar[4];
-    vapRoe[0] = uRoe-aRoe;
-    vapRoe[1] = uRoe;
-    vapRoe[2] = uRoe+aRoe;
-    vapRoe[3] = uRoe;
+    // Roe eigenvalues
+    vap[2*sizevap+0] = uRoe-aRoe;
+    vap[2*sizevap+1] = uRoe;
+    vap[2*sizevap+2] = uRoe+aRoe;
+    vap[2*sizevap+3] = uRoe;
 
-    scalar* vep = new scalar[4*4];
-    vep[0*4+0] = 1;
-    vep[0*4+1] = uRoe-aRoe;
-    vep[0*4+2] = HRoe-uRoe*aRoe;
-    vep[0*4+3] = 0;
-
-    vep[1*4+0] = 1;
-    vep[1*4+1] = uRoe;
-    vep[1*4+2] = 0.5*uRoe*uRoe;
-    vep[1*4+3] = 0;
-
-    vep[2*4+0] = 1;
-    vep[2*4+1] = uRoe+aRoe;
-    vep[2*4+2] = HRoe+uRoe*aRoe;
-    vep[2*4+3] = 0;
-      
-    vep[3*4+0] = 0;
-    vep[3*4+1] = 0;
-    vep[3*4+2] = pRoe;
-    vep[3*4+3] = 1;
-
-    scalar* aiRoe= new scalar[4];
-    aiRoe[1] = (rhoR-rhoL) - DpRoe/(aRoe*aRoe);
-    aiRoe[2] = (DpRoe + rhoRoe*aRoe*(uR-uL))/(2*aRoe*aRoe);
-    aiRoe[0] = (DpRoe - rhoRoe*aRoe*(uR-uL))/(2*aRoe*aRoe);
-    aiRoe[3] = alphaR-alphaL;
+    // Roe waves strengths
+    vap[3*sizevap+1] = (rhoR-rhoL) - DpRoe/(aRoe*aRoe);
+    vap[3*sizevap+2] = (DpRoe + rhoRoe*aRoe*(uR-uL))/(2*aRoe*aRoe);
+    vap[3*sizevap+0] = (DpRoe - rhoRoe*aRoe*(uR-uL))/(2*aRoe*aRoe);
+    vap[3*sizevap+3] = alphaR-alphaL;
     // aiRoe[1]= (gamma-1)/(aRoe*aRoe)*((rhoR-rhoL)*(HRoe-uRoe*uRoe)+uRoe*(rhoR*uR-rhoL*uL)-(EtR-EtL));
     // aiRoe[0]=1/(2*aRoe)*((rhoR-rhoL)*(uRoe+aRoe)-(rhoR*uR-rhoL*uL)-aRoe*aiRoe[1]);
     // aiRoe[2]=(rhoR-rhoL)-(aiRoe[0]+aiRoe[1]);
+
+    // Roe eigenvectors
+    vap[(4+0)*sizevap+0] = 1;
+    vap[(4+0)*sizevap+1] = uRoe-aRoe;
+    vap[(4+0)*sizevap+2] = HRoe-uRoe*aRoe;
+    vap[(4+0)*sizevap+3] = 0;
+
+    vap[(4+1)*sizevap+0] = 1;
+    vap[(4+1)*sizevap+1] = uRoe;
+    vap[(4+1)*sizevap+2] = 0.5*uRoe*uRoe;
+    vap[(4+1)*sizevap+3] = 0;
+
+    vap[(4+2)*sizevap+0] = 1;
+    vap[(4+2)*sizevap+1] = uRoe+aRoe;
+    vap[(4+2)*sizevap+2] = HRoe+uRoe*aRoe;
+    vap[(4+2)*sizevap+3] = 0;
+      
+    vap[(4+3)*sizevap+0] = 0;
+    vap[(4+3)*sizevap+1] = 0;
+    vap[(4+3)*sizevap+2] = pRoe;
+    vap[(4+3)*sizevap+3] = 1;
 
     //first: fx = rho*u;
     // if      (uRoe>0)  qL = cpu_flux1_multifluid(rhoL,uL) + aiRoe[0]*vapRoe[0]*vep[0*3+0];
     // else if (uRoe<=0) qL = cpu_flux1_multifluid(rhoR,uR) - aiRoe[2]*vapRoe[2]*vep[2*3+0];
     scalar qL = 0;
     qL = 0.5*(cpu_flux1_multifluid(rhoL,uL) + cpu_flux1_multifluid(rhoR,uR));
-    for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*4+0];
+    for(int k=0;k<4;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+0];
     q[(t*N_F+0)*2+0] = -qL;
     q[(t*N_F+0)*2+1] = qL;
       
@@ -892,7 +909,7 @@ arch_global void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, 
     // if      (uRoe>0)  qL = cpu_flux2_passive(rhoL,uL,pL) + aiRoe[0]*vapRoe[0]*vep[0*3+1];
     // else if (uRoe<=0) qL = cpu_flux2_passive(rhoR,uR,pR) - aiRoe[2]*vapRoe[2]*vep[2*3+1];
     qL = 0.5*(cpu_flux2_multifluid(rhoL,uL,pL)  + cpu_flux2_multifluid(rhoR,uR,pR));
-    for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*4+1];
+    for(int k=0;k<4;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+1];
     q[(t*N_F+1)*2+0] = -qL;
     q[(t*N_F+1)*2+1] = qL;
 
@@ -900,7 +917,7 @@ arch_global void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, 
     // if      (uRoe>0)  qL = cpu_flux3_multifluid(EtPL,uL) + aiRoe[0]*vapRoe[0]*vep[0*3+2];
     // else if (uRoe<=0) qL = cpu_flux3_multifluid(EtPR,uR) - aiRoe[2]*vapRoe[2]*vep[2*3+2];
     qL = 0.5*(cpu_flux3_multifluid(EtPL,uL) + cpu_flux3_multifluid(EtPR,uR));
-    for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*4+2];
+    for(int k=0;k<4;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+2];
     q[(t*N_F+2)*2+0] = -qL; 
     q[(t*N_F+2)*2+1] = qL;
 
@@ -911,15 +928,13 @@ arch_global void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, 
     else if (model==1){
       qL = 0;
       ncterm = -0.5*uRoe*(alphaR-alphaL);}
-    for(int k=0;k<4;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*4+3];
+    for(int k=0;k<4;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+3];
     q[(t*N_F+3)*2+0] = -qL + ncterm;
     q[(t*N_F+3)*2+1] = qL  + ncterm;
            
-    delete[] vapRoe;
-    delete[] vep;
-    delete[] aiRoe;
   }
 #ifdef USE_CPU
+  delete[] vap;
   }
 #endif
 }
@@ -932,8 +947,10 @@ arch_global void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, sca
   
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
+    scalar* vap = new scalar[3*(4+3)];
 #elif USE_GPU
   int t = blockIdx.x;
+  extern __shared__ scalar vap[];
 #endif
 
   scalar rhoL   = UgF[(t*N_F+0)*2+0];
@@ -952,20 +969,17 @@ arch_global void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, sca
   scalar EtPR   = EtR+pR;
 
   // Evaluate the right and left eigenvalues
-  int sizevap = 4;
-  scalar* vap = new scalar[2*sizevap];
+  int sizevap = 3;
   scalar aL = sqrt((gamma*pL)/rhoL);
   scalar aR = sqrt((gamma*pR)/rhoR);
 
   vap[0*sizevap+0] = fabs(uL) - aL;
   vap[0*sizevap+1] = fabs(uL);
-  vap[0*sizevap+2] = fabs(uL);
-  vap[0*sizevap+3] = fabs(uL) + aL;
+  vap[0*sizevap+2] = fabs(uL) + aL;
 
   vap[1*sizevap+0] = fabs(uR) - aR;
   vap[1*sizevap+1] = fabs(uR);
-  vap[1*sizevap+2] = fabs(uR);
-  vap[1*sizevap+3] = fabs(uR) + aR;
+  vap[1*sizevap+2] = fabs(uR) + aR;
 
   scalar maxvap = 0;
   for (int k = 0; k < 2*sizevap; k++){
@@ -973,9 +987,9 @@ arch_global void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, sca
   }
   // scalar SL = std::min(vap[0*sizevap+0],vap[1*sizevap+0]);
   // scalar SR = std::max(vap[0*sizevap+3],vap[1*sizevap+3]);
-  scalar SL = std::min(fabs(uL)-aL,fabs(uR)-aR);
-  scalar SR = std::max(fabs(uL)+aR,fabs(uR)+aR);
-  delete[] vap;
+  scalar SL = min(fabs(uL)-aL,fabs(uR)-aR);
+  scalar SR = max(fabs(uL)+aR,fabs(uR)+aR);
+
     
   //
   // Evaluate the fluxes on the right and left
@@ -1079,35 +1093,38 @@ arch_global void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, sca
     scalar HRoe = (sqrt(rhoL)*HL+sqrt(rhoR)*HR)/(sqrt(rhoL)+sqrt(rhoR));
     scalar aRoe = sqrt((gamma-1)*(HRoe-0.5*uRoe*uRoe));
 
-    scalar* vapRoe = new scalar[3];
-    vapRoe[0] = uRoe-aRoe;
-    vapRoe[1] = uRoe;
-    vapRoe[2] = uRoe+aRoe;
+    // Roe eigenvalues
+    vap[2*sizevap+0] = uRoe-aRoe;
+    vap[2*sizevap+1] = uRoe;
+    vap[2*sizevap+2] = uRoe+aRoe;
 
-    scalar* vep = new scalar[3*3];
-    vep[0*3+0] = 1;
-    vep[0*3+1] = uRoe-aRoe;
-    vep[0*3+2] = HRoe-uRoe*aRoe;
+    // Roe waves strengths
+    vap[3*sizevap+1]= (gamma-1)/(aRoe*aRoe)*((rhoR-rhoL)*(HRoe-uRoe*uRoe)+uRoe*(rhoR*uR-rhoL*uL)-(EtR-EtL));
+    vap[3*sizevap+0]= 1/(2*aRoe)*((rhoR-rhoL)*(uRoe+aRoe)-(rhoR*uR-rhoL*uL)-aRoe*vap[3*sizevap+1]);
+    vap[3*sizevap+2]= (rhoR-rhoL)-(vap[3*sizevap+0]+vap[3*sizevap+1]);
+    // aiRoe[1]= (gamma-1)/(aRoe*aRoe)*((rhoR-rhoL)*(HRoe-uRoe*uRoe)+uRoe*(rhoR*uR-rhoL*uL)-(EtR-EtL));
+    // aiRoe[0]=1/(2*aRoe)*((rhoR-rhoL)*(uRoe+aRoe)-(rhoR*uR-rhoL*uL)-aRoe*aiRoe[1]);
+    // aiRoe[2]=(rhoR-rhoL)-(aiRoe[0]+aiRoe[1]);
 
-    vep[1*3+0] = 1;
-    vep[1*3+1] = uRoe;
-    vep[1*3+2] = 0.5*uRoe*uRoe;
+    // Roe eigenvectors
+    vap[(4+0)*sizevap+0] = 1;
+    vap[(4+0)*sizevap+1] = uRoe-aRoe;
+    vap[(4+0)*sizevap+2] = HRoe-uRoe*aRoe;
 
-    vep[2*3+0] = 1;
-    vep[2*3+1] = uRoe+aRoe;
-    vep[2*3+2] = HRoe+uRoe*aRoe;
+    vap[(4+1)*sizevap+0] = 1;
+    vap[(4+1)*sizevap+1] = uRoe;
+    vap[(4+1)*sizevap+2] = 0.5*uRoe*uRoe;
 
-    scalar* aiRoe= new scalar[3];
-    aiRoe[1]= (gamma-1)/(aRoe*aRoe)*((rhoR-rhoL)*(HRoe-uRoe*uRoe)+uRoe*(rhoR*uR-rhoL*uL)-(EtR-EtL));
-    aiRoe[0]=1/(2*aRoe)*((rhoR-rhoL)*(uRoe+aRoe)-(rhoR*uR-rhoL*uL)-aRoe*aiRoe[1]);
-    aiRoe[2]=(rhoR-rhoL)-(aiRoe[0]+aiRoe[1]);
+    vap[(4+2)*sizevap+0] = 1;
+    vap[(4+2)*sizevap+1] = uRoe+aRoe;
+    vap[(4+2)*sizevap+2] = HRoe+uRoe*aRoe;
 
     //first: fx = rho*u; 
     scalar qL = 0;
     // if      (uRoe>0)  qL = cpu_flux1_multifluid(rhoL,uL) + aiRoe[0]*vapRoe[0]*vep[0*3+0];
     // else if (uRoe<=0) qL = cpu_flux1_multifluid(rhoR,uR) - aiRoe[2]*vapRoe[2]*vep[2*3+0];
     qL = 0.5*(cpu_flux1_passive(rhoL,uL) + cpu_flux1_passive(rhoR,uR));
-    for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*3+0];
+    for(int k=0;k<3;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+0];
     q[(t*N_F+0)*2+0] = -qL;
     q[(t*N_F+0)*2+1] = qL;
       
@@ -1115,7 +1132,7 @@ arch_global void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, sca
     // if      (uRoe>0)  qL = cpu_flux2_passive(rhoL,uL,pL) + aiRoe[0]*vapRoe[0]*vep[0*3+1];
     // else if (uRoe<=0) qL = cpu_flux2_passive(rhoR,uR,pR) - aiRoe[2]*vapRoe[2]*vep[2*3+1];
     qL = 0.5*(cpu_flux2_passive(rhoL,uL,pL)  + cpu_flux2_passive(rhoR,uR,pR));
-    for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*3+1];
+    for(int k=0;k<3;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+1];
     q[(t*N_F+1)*2+0] = -qL;
     q[(t*N_F+1)*2+1] = qL;
 
@@ -1123,7 +1140,7 @@ arch_global void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, sca
     // if      (uRoe>0)  qL = cpu_flux3_passive(EtPL,uL) + aiRoe[0]*vapRoe[0]*vep[0*3+2];
     // else if (uRoe<=0) qL = cpu_flux3_passive(EtPR,uR) - aiRoe[2]*vapRoe[2]*vep[2*3+2];
     qL = 0.5*(cpu_flux3_passive(EtPL,uL) + cpu_flux3_passive(EtPR,uR));
-    for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*3+2];
+    for(int k=0;k<3;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+2];
     q[(t*N_F+2)*2+0] = -qL; 
     q[(t*N_F+2)*2+1] = qL;
 
@@ -1131,21 +1148,19 @@ arch_global void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, sca
     // if      (uRoe>0)  qL = cpu_flux4_passive(rhoL,uL,phicL) + aiRoe[0]*vapRoe[0]*vep[0*3+1];
     // else if (uRoe<=0) qL = cpu_flux4_passive(rhoR,uR,phicR) - aiRoe[2]*vapRoe[2]*vep[2*3+1];
     qL = 0.5*(cpu_flux4_passive(rhoL,uL,phicL) + cpu_flux4_passive(rhoR,uR,phicR));
-    for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*3+0];
+    for(int k=0;k<3;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+0];
     q[(t*N_F+3)*2+0] = -qL; 
     q[(t*N_F+3)*2+1] = qL;
 
     //fifth:
     qL = 0.0;
-    for(int k=0;k<3;k++) qL += -0.5*aiRoe[k]*fabs(vapRoe[k])*vep[k*3+0];
+    for(int k=0;k<3;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+0];
     q[(t*N_F+4)*2+0] = -qL - 0.5*uRoe*(phincR-phincL);
     q[(t*N_F+4)*2+1] = qL  - 0.5*uRoe*(phincR-phincL);
      
-    delete[] vapRoe;
-    delete[] vep;
-    delete[] aiRoe;
   }
 #ifdef USE_CPU
+    delete[] vap;
   }
 #endif
 }
@@ -1404,6 +1419,7 @@ arch_global void cpu_hsl(int N_s, int N_E, int N_F, int boundaryMap, scalar* U, 
 //==========================================================================
 arch_global void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* J, scalar* A, scalar* Alim){
 
+#ifdef USE_CPU
   int N = N_s - 1;
   scalar dU = 0;
   scalar* avgdU = new scalar[3]; 
@@ -1456,9 +1472,9 @@ arch_global void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, sc
 	  for(int j=0;j<=N-(m-1);j++){
 	    dU  += A[(right*N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
 	    if(j>=2){
-	      R[0] += Alim[(e*N_F+fc)*N_s+(j+m-1)]*pow(V[1*N_G+g]-2,j)/(scalar)factorial(j);
+	      R[0] += Alim[(e*N_F+fc)*N_s+(j+m-1)]*pow(V[1*N_G+g]-2,j)/(scalar)cpu_factorial(j);
 	      R[1] += Alim[(e*N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
-	      R[2] += Alim[(e*N_F+fc)*N_s+(j+m-1)]*pow(V[1*N_G+g]+2,j)/(scalar)factorial(j);
+	      R[2] += Alim[(e*N_F+fc)*N_s+(j+m-1)]*pow(V[1*N_G+g]+2,j)/(scalar)cpu_factorial(j);
 	    }// end if
 	  }
 	  avgdU[2] += dU*weight[g];
@@ -1476,7 +1492,7 @@ arch_global void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, sc
 	c[0] = 0.5*(avgL[1] - avgL[0]);  // 1/dx = 1/2 = 0.5
 	c[1] = 0.5*(avgL[2] - avgL[1]);
 
-	Alim[(e*N_F+fc)*N_s+m] = minmod(c,2);
+	Alim[(e*N_F+fc)*N_s+m] = cpu_minmod(c,2);
 	//Alim[(e*N_F+fc)*N_s+m] = cminmod(c,2,0.01);
 	//or use minmod2(c,2), minmod(c,2,eps), cminmod(c,2,0.01); cminmod2(c,2,eps)
 	if(m==1){Alim[(e*N_F+fc)*N_s+0] = avgL[1];}//avgL[1];}
@@ -1495,6 +1511,79 @@ arch_global void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, sc
   delete[] avgR;
   delete[] avgL;
   delete[] c;
+
+#elif USE_GPU
+  int e = blockIdx.x;
+  int fc= threadIdx.y;
+  
+  int N = N_s - 1;
+  scalar avgdUL = 0, avgdUC=0, avgdUR=0;
+  scalar dUL = 0, dUC = 0, dUR = 0;
+  scalar RL = 0, RC=0, RR=0;
+  scalar avgRL = 0, avgRC=0, avgRR=0;
+  scalar avgLL = 0, avgLC=0, avgLR=0;
+  extern __shared__ scalar c[];
+
+  // Loop on derivatives
+  for(int m = N; m > 0; m--){
+    avgdUL = 0; avgdUC=0; avgdUR=0;
+
+    int left  = e-1;
+    int right = e+1; 
+    if (e==0){
+      if      (boundaryMap == 0  ){left = 0;}//farfield
+      else if (boundaryMap == N_E){left = N_E-1;}//periodic
+    }
+    else if (e == (N_E-1)){
+      if      (boundaryMap == 0  ){right = e;}//farfield
+      else if (boundaryMap == N_E){right = 0;}//periodic
+    }
+	
+    // Calculate the derivative average in the cells: left, center,
+    // right calculate the remainder polynomial in our cells and its
+    // two neighbors
+    for(int g = 0; g < N_G; g++){
+      dUL = 0; dUC = 0; dUR = 0;
+      RL  = 0; RC  = 0; RR  = 0;
+
+      for(int j=0;j<=N-(m-1);j++){
+	dUL += A[(left *N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
+	dUC += A[(e    *N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
+	dUR += A[(right*N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
+	if(j>=2){
+	  RL += Alim[(e*N_F+fc)*N_s+(j+m-1)]*pow(V[1*N_G+g]-2,j)/(scalar)cpu_factorial(j);
+	  RC += Alim[(e*N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
+	  RR += Alim[(e*N_F+fc)*N_s+(j+m-1)]*pow(V[1*N_G+g]+2,j)/(scalar)cpu_factorial(j);
+	}// end if
+      }
+      avgdUL += dUL*weight[g];
+      avgdUC += dUC*weight[g];
+      avgdUR += dUR*weight[g];
+      avgRL  += RL*weight[g];
+      avgRC  += RC*weight[g]; 
+      avgRR  += RR*weight[g];
+    }// end integration loop
+
+    // Approximate the average of the linear part
+    avgLL = 0.5*(avgdUL - avgRL); // avg = \frac{1}{2} \int_{-1}^1 U \ud x
+    avgLC = 0.5*(avgdUC - avgRC);
+    avgLR = 0.5*(avgdUR - avgRR);
+	
+    // MUSCL approach to get candidate coefficients
+    c[0] = 0.5*(avgLC - avgLL);  // 1/dx = 1/2 = 0.5
+    c[1] = 0.5*(avgLR - avgLC);
+
+  // 	Alim[(e*N_F+fc)*N_s+m] = cpu_minmod(c,2);
+  // 	//Alim[(e*N_F+fc)*N_s+m] = cminmod(c,2,0.01);
+  // 	//or use minmod2(c,2), minmod(c,2,eps), cminmod(c,2,0.01); cminmod2(c,2,eps)
+  // 	if(m==1){Alim[(e*N_F+fc)*N_s+0] = avgL[1];}//avgL[1];}
+
+    avgRL=0; avgRC=0; avgRR=0;
+  }// end loop on m
+
+#endif
+
+  
 }
 
 
@@ -1504,12 +1593,10 @@ arch_global void cpu_Prim2Cons(int N_s, int N_E, int N_F, scalar* U, bool multif
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
-    for(int fc = 0; fc < N_F; fc++){
-      for(int i = 0; i < N_s; i++){
+    for(int i = 0; i < N_s; i++){
 #elif USE_GPU
   int e = blockIdx.x;
-  int i = threadIDx.x;
-  int fc= threadIdx.y;
+  int i = threadIdx.x;
 #endif
 
   scalar rho = U[(e*N_F+0)*N_s+i];
@@ -1530,23 +1617,20 @@ arch_global void cpu_Prim2Cons(int N_s, int N_E, int N_F, scalar* U, bool multif
   }
 
 #ifdef USE_CPU
-      }
     }
   }
 #endif
 }
 
 //==========================================================================
-void cpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
+arch_global void cpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
   // Go from conservative to primitive variables
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
-    for(int fc = 0; fc < N_F; fc++){
-      for(int i = 0; i < N_s; i++){
+    for(int i = 0; i < N_s; i++){
 #elif USE_GPU
   int e = blockIdx.x;
-  int i = threadIDx.x;
-  int fc= threadIdx.y;
+  int i = threadIdx.x;
 #endif
 
   scalar rho  = U[(e*N_F+0)*N_s+i];
@@ -1569,7 +1653,6 @@ void cpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool p
   }
 
 #ifdef USE_CPU
-      }
     }
   }
 #endif
@@ -1585,140 +1668,366 @@ void cpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool p
 
 extern "C" 
 void Lcpu_equal(int N_s, int N_E, int N_F, scalar* A, scalar* B){
-  cpu_equal(N_s, N_E, N_F, A, B);
+
+#ifdef USE_GPU
+  dim3 dimBlock(N_s,N_F,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  cpu_equal arch_args (N_s, N_E, N_F, A, B);
 }
 
 extern "C" 
 void Lcpu_add(int N_s, int N_E, int N_F, scalar* A, scalar* B, scalar c){
-  cpu_add(N_s, N_E, N_F, A, B, c);
+
+#ifdef USE_GPU
+  dim3 dimBlock(N_s,N_F,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  cpu_add arch_args (N_s, N_E, N_F, A, B, c);
 }
 
 extern "C" 
 void Lcpu_mapToFace_shallow(int M_s, int M_T, int N_F, int* map, scalar* U, scalar* UF){
-  cpu_mapToFace_shallow(M_s, M_T, N_F, map, U, UF);
+
+#ifdef USE_GPU
+  dim3 dimBlock(M_s,N_F,1);
+  dim3 dimGrid(M_T,1);
+#endif
+
+  cpu_mapToFace_shallow arch_args (M_s, M_T, N_F, map, U, UF);
 }
 
 extern "C" 
 void Lcpu_mapToFace_mhd(int M_s, int M_T, int N_F, int* map, scalar* U, scalar* UF){
-  cpu_mapToFace_mhd(M_s, M_T, N_F, map, U, UF);
+
+#ifdef USE_GPU
+  dim3 dimBlock(M_s,N_F,1);
+  dim3 dimGrid(M_T,1);
+#endif
+
+  cpu_mapToFace_mhd arch_args (M_s, M_T, N_F, map, U, UF);
 }
 
 extern "C" 
 void Lcpu_mapToFace_multifluid(int M_s, int M_T, int N_F, int N_s, int boundaryMap, scalar* U, scalar* UF){
-  cpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, U, UF);
+
+#ifdef USE_GPU
+  dim3 dimBlock(1,N_F,1);
+  dim3 dimGrid(M_T,1);
+#endif
+
+  cpu_mapToFace_multifluid arch_args (M_s, M_T, N_F, N_s, boundaryMap, U, UF);
 }
 
 extern "C" 
 void Lcpu_mapToFace_passive(int M_s, int M_T, int N_F, int N_s, int boundaryMap, scalar* U, scalar* UF){
-  cpu_mapToFace_passive(M_s, M_T, N_F, N_s, boundaryMap, U, UF);
+
+#ifdef USE_GPU
+  dim3 dimBlock(1,N_F,1);
+  dim3 dimGrid(M_T,1);
+#endif
+
+  cpu_mapToFace_passive arch_args (M_s, M_T, N_F, N_s, boundaryMap, U, UF);
 }
 
 extern "C"
 void Lcpu_boundary(int M_s, int N_F, int M_B, int* boundaryMap, scalar* UF){
-  cpu_boundary(M_s, N_F, M_B, boundaryMap, UF);
+
+#ifdef USE_GPU
+  dim3 dimBlock(M_s,N_F,1);
+  dim3 dimGrid(M_B,1);
+#endif
+
+  cpu_boundary arch_args (M_s, N_F, M_B, boundaryMap, UF);
 }
 
 extern "C" 
 void Lcpu_mapToElement(int N_s, int N_E, int N_F, scalar* Q, scalar* q){
-  cpu_mapToElement(N_s, N_E, N_F, Q, q);
+
+#ifdef USE_GPU
+  dim3 dimBlock(1,N_F,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  cpu_mapToElement arch_args (N_s, N_E, N_F, Q, q);
 }
 
 extern "C" 
 void Lcpu_collocationU(int D, int N_G, int N_s, int N_E, int N_F, scalar* Ug, scalar* dUg, scalar* phi, scalar* dphi, scalar* U){
-  cpu_collocationU(D, N_G, N_s, N_E, N_F, Ug, dUg, phi, dphi, U);
+
+#ifdef USE_GPU
+  dim3 dimBlock(N_G,N_F,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  cpu_collocationU arch_args (D, N_G, N_s, N_E, N_F, Ug, dUg, phi, dphi, U);
 }
 
 extern "C" 
 void Lcpu_collocationUF(int M_G, int M_s, int M_T, int N_F, scalar* UgF, scalar* psi, scalar* UF){
-  cpu_collocationUF(M_G, M_s, M_T, N_F, UgF, psi, UF);
+
+#ifdef USE_GPU
+  dim3 dimBlock(M_G,N_F,1);
+  dim3 dimGrid(M_T,1);
+#endif
+
+  cpu_collocationUF arch_args (M_G, M_s, M_T, N_F, UgF, psi, UF);
 }
 
 extern "C" 
 void Lcpu_evaluate_sf_shallow(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar H0, scalar G0){
-  cpu_evaluate_sf_shallow(D, N_G, N_E, N_F, s, f, Ug, H0, G0);
+
+#ifdef USE_GPU
+  dim3 dimBlock(N_G,1,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  cpu_evaluate_sf_shallow arch_args (D, N_G, N_E, N_F, s, f, Ug, H0, G0);
 }
 
 extern "C" 
 void Lcpu_evaluate_sf_mhd(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac, scalar gamma){
-  cpu_evaluate_sf_mhd(D, N_G, N_E, N_F, s, f, Ug, dUg, invJac, gamma);
+
+#ifdef USE_GPU
+  dim3 dimBlock(N_G,1,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  cpu_evaluate_sf_mhd arch_args (D, N_G, N_E, N_F, s, f, Ug, dUg, invJac, gamma);
 }
 
 extern "C" 
 void Lcpu_evaluate_sf_multifluid(int D, int N_G, int N_E, int N_F, int model, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
-  cpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, s, f, Ug, dUg, invJac);
+
+#ifdef USE_GPU
+  dim3 dimBlock(N_G,1,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  cpu_evaluate_sf_multifluid arch_args (D, N_G, N_E, N_F, model, s, f, Ug, dUg, invJac);
 }
 
 extern "C" 
 void Lcpu_evaluate_sf_passive(int D, int N_G, int N_E, int N_F, scalar gamma, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
-  cpu_evaluate_sf_passive(D, N_G, N_E, N_F, gamma, s, f, Ug, dUg, invJac);
+
+#ifdef USE_GPU
+  dim3 dimBlock(N_G,1,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  cpu_evaluate_sf_passive arch_args (D, N_G, N_E, N_F, gamma, s, f, Ug, dUg, invJac);
 }
 
 extern "C" 
 void Lcpu_evaluate_q_shallow(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scalar H0, scalar G0, scalar* normals){
-  cpu_evaluate_q_shallow(M_G, M_T, N_F, q, UgF, H0, G0, normals);
+
+#ifdef USE_GPU
+  dim3 dimBlock(M_G,1,1);
+  dim3 dimGrid(M_T,1);
+#endif
+
+  cpu_evaluate_q_shallow arch_args (M_G, M_T, N_F, q, UgF, H0, G0, normals);
 }
 
 extern "C" 
 void Lcpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scalar gamma, scalar* normals){
-  cpu_evaluate_q_mhd(M_G, M_T, N_F, q, UgF, gamma, normals);
+
+#ifdef USE_GPU
+  dim3 dimBlock(M_G,1,1);
+  dim3 dimGrid(M_T,1);
+#endif
+
+  cpu_evaluate_q_mhd arch_args_array(M_G*2*8*sizeof(scalar)) (M_G, M_T, N_F, q, UgF, gamma, normals);
 }
 
 extern "C" 
 void Lcpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, scalar* q, scalar* UgF){
-  cpu_evaluate_q_multifluid(M_G, M_T, N_F, flux, model, q, UgF);
+
+#ifdef USE_GPU
+  dim3 dimBlock(1,1,1);
+  dim3 dimGrid(M_T,1);
+#endif
+
+  cpu_evaluate_q_multifluid arch_args_array(4*(4+4)*sizeof(scalar)) (M_G, M_T, N_F, flux, model, q, UgF);
 }
 
 extern "C" 
 void Lcpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, scalar gamma, scalar* q, scalar* UgF){
-  cpu_evaluate_q_passive(M_G, M_T, N_F, flux, gamma, q, UgF);
+
+#ifdef USE_GPU
+  dim3 dimBlock(1,1,1);
+  dim3 dimGrid(M_T,1);
+#endif
+
+  cpu_evaluate_q_passive arch_args_array(3*(4+3)*sizeof(scalar)) (M_G, M_T, N_F, flux, gamma, q, UgF);
 }
 
 extern "C" 
 void Lcpu_redistribute_sf(int D, int N_G, int N_E, int N_F, scalar* sJ, scalar* fJ, scalar* s, scalar* f, scalar* J, scalar* invJac){
-  cpu_redistribute_sf(D, N_G, N_E, N_F, sJ, fJ, s, f, J, invJac);
+#ifdef USE_GPU
+  dim3 dimBlock(N_G,N_F,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  cpu_redistribute_sf arch_args (D, N_G, N_E, N_F, sJ, fJ, s, f, J, invJac);
 }
 
 extern "C" 
 void Lcpu_gemm_sf(int D, int N_G, int N_s, int N_E, int N_F, scalar* S, scalar* F, scalar* sJ, scalar* fJ, scalar* phi_w, scalar* dphi_w){
-  cpu_gemm_sf(D, N_G, N_s, N_E, N_F, S, F, sJ, fJ, phi_w, dphi_w);
+
+#ifdef USE_GPU
+  dim3 dimBlock(N_s,N_F,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  cpu_gemm_sf arch_args (D, N_G, N_s, N_E, N_F, S, F, sJ, fJ, phi_w, dphi_w);
 }
 
 extern "C"
 void Lcpu_redistribute_q(int M_G, int M_T, int N_F, scalar* qJ, scalar* q){
-  cpu_redistribute_q(M_G, M_T, N_F, qJ, q);
+
+#ifdef USE_GPU
+  dim3 dimBlock(M_G,N_F,1);
+  dim3 dimGrid(M_T,1);
+#endif
+
+  cpu_redistribute_q arch_args (M_G, M_T, N_F, qJ, q);
 }
 
 extern "C" 
 void Lcpu_gemm_q(int M_G, int M_s, int M_T, int N_F, scalar* Qtcj, scalar* qJ, scalar* psi_w){
-  cpu_gemm_q(M_G, M_s, M_T, N_F, Qtcj, qJ, psi_w);
+
+#ifdef USE_GPU
+  dim3 dimBlock(M_s,N_F,1);
+  dim3 dimGrid(M_T,1);
+#endif
+
+  cpu_gemm_q arch_args (M_G, M_s, M_T, N_F, Qtcj, qJ, psi_w);
 }
 
 extern "C" 
 void Lcpu_solve(int N_s, int N_E, int N_F, scalar* DU, scalar* S, scalar* F, scalar* Q, scalar* Minv, scalar Dt){
-  cpu_solve(N_s, N_E, N_F, DU, S, F, Q, Minv, Dt);
+
+#ifdef USE_GPU
+  dim3 dimBlock(N_s,N_F,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  cpu_solve arch_args (N_s, N_E, N_F, DU, S, F, Q, Minv, Dt);
 }
 
 extern "C"
 void Lcpu_average_cell_p0(const int N_s, const int N_E, const int N_F, scalar* DU){
-  cpu_average_cell_p0(N_s, N_E, N_F, DU);
+
+#ifdef USE_GPU
+  dim3 dimBlock(1,N_F,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  cpu_average_cell_p0 arch_args (N_s, N_E, N_F, DU);
 }
 
 extern "C"
 void Lcpu_hsl(int N_s, int N_E, int N_F, int boundaryMap, scalar* U, scalar* UNew){
-  cpu_hsl(N_s, N_E, N_F, boundaryMap, U, UNew);
+
+#ifdef USE_GPU
+  dim3 dimBlock(N_s,N_F,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  cpu_hsl arch_args (N_s, N_E, N_F, boundaryMap, U, UNew);
 }
 
 extern "C"
 void Lcpu_Prim2Cons(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
-  cpu_Prim2Cons(N_s, N_E, N_F, U, multifluid, passive, model, gamma0);
+
+#ifdef USE_GPU
+  dim3 dimBlock(N_s,1,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  cpu_Prim2Cons arch_args (N_s, N_E, N_F, U, multifluid, passive, model, gamma0);
 }
 
 extern "C"
 void Lcpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
-  cpu_Cons2Prim(N_s, N_E, N_F, U, multifluid, passive, model, gamma0);
+
+#ifdef USE_GPU
+  dim3 dimBlock(N_s,1,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  cpu_Cons2Prim arch_args (N_s, N_E, N_F, U, multifluid, passive, model, gamma0);
 }
 
 extern "C"
 void Lcpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* J, scalar* A, scalar* Alim){
-  cpu_hrl(N_s, N_E, N_F, N_G, boundaryMap, weight, V, J, A, Alim);
+
+#ifdef USE_GPU
+  dim3 dimBlock(1,N_F,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  cpu_hrl arch_args_array(2*sizeof(scalar)) (N_s, N_E, N_F, N_G, boundaryMap, weight, V, J, A, Alim);
+}
+
+//===============================================================
+//
+//  Limiter functions
+//
+//===============================================================
+inline scalar cpu_minabs(scalar* c, int n){
+  scalar minabs = fabs(c[0]);
+  for(int i=1;i<n;i++) if (minabs>fabs(c[i])) minabs = fabs(c[i]);
+  return minabs;
+}
+
+scalar cpu_minmod(scalar* c, int n){
+  // Generalized minmod function
+  // eq 2.19 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
+  int sign = cpu_signum(c[0]);
+  for(int i=1; i<n; i++){
+    if (sign!=cpu_signum(c[i])) return 0;
+  }
+  return sign*cpu_minabs(c,n);
+}
+
+scalar cpu_minmod2(scalar* c, int n){
+  // eq 2.20 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
+  scalar min = c[0];
+  for(int i=1; i<n; i++) if(fabs(c[i])<fabs(min)) min = c[i];
+  return min;
+}
+
+scalar cpu_cminmod(scalar* c, int n, scalar eps){
+  // eq 2.21 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
+  // using minmod
+  scalar* cc = new scalar[2];
+  scalar sum = 0;
+  for(int i=0;i<n;i++) sum += c[i];
+  cc[0] =(1+eps)*cpu_minmod(c,n);
+  cc[1] =(scalar)sum/n;
+  scalar m = cpu_minmod(cc,2);
+  delete[] cc;
+  return m;    
+}
+
+scalar cpu_cminmod2(scalar* c, int n, scalar eps){
+  // eq 2.21 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
+  // using minmod2
+  scalar* cc = new scalar[2];
+  scalar sum = 0;
+  for(int i=0;i<n;i++) sum += c[i];
+  cc[0] =(1+eps)*cpu_minmod(c,n);
+  cc[1] =(scalar)sum/n;
+  scalar m = cpu_minmod2(cc,2);
+  delete[] cc;
+  return m;    
+}
+
+int cpu_factorial(int n)
+{
+  return (n == 1 || n == 0) ? 1 : cpu_factorial(n - 1) * n;
 }
