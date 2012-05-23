@@ -2,7 +2,7 @@
 #define CPU_KERNELS_H
 #include <scalar_def.h>
 #include <math.h>
-//#include <limiter_fct.h>
+#include <macros.h>
 
 // Here I define the gpu kernels I will be using
 extern "C" void Lcpu_equal(int N_s, int N_E, int N_F, scalar* A, scalar* B);

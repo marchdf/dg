@@ -1,38 +1,28 @@
 #include <cpu_kernels.h>
 #include <cstdlib>
 #include <stdio.h>
-#include <algorithm>
 
-// Define the architecture scope (eg. need global for gpu stuff)
+//==========================================================================
+//
+// Limiter prototype function definitions
+//
+//==========================================================================
+
+arch_device inline int cpu_signum(scalar val){return val>0? 1 : (val<0? -1 : 0);}
+arch_device inline scalar cpu_minabs(scalar* c, int n);
+arch_device scalar cpu_minmod  (scalar* c, int n); // eq 2.19 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
+arch_device scalar cpu_minmod2 (scalar* c, int n); // eq 2.20 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
 #ifdef USE_CPU
-#define arch_global
-#define arch_device
-#define arch_args
-#define arch_args_array(x) 
-#elif USE_GPU
-#define arch_global __global__
-#define arch_device __device__
-#define arch_args   <<<dimGrid,dimBlock>>>
-#define arch_args_array(x)   <<<dimGrid,dimBlock,x>>>
-#endif
-
-// Define some extra functions
-#define min(X, Y)  ((X) < (Y) ? (X) : (Y))
-#define max(X, Y)  ((X) > (Y) ? (X) : (Y))
-
-inline int cpu_signum(scalar val){return val>0? 1 : (val<0? -1 : 0);}
-inline scalar cpu_minabs(scalar* c, int n);
-scalar cpu_minmod  (scalar* c, int n);             // eq 2.19 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
-scalar cpu_minmod2 (scalar* c, int n);             // eq 2.20 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
 scalar cpu_cminmod (scalar* c, int n, scalar eps); // eq 2.21 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
 scalar cpu_cminmod2(scalar* c, int n, scalar eps); // eq 2.21 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
-int cpu_factorial(int n);
+#endif
+arch_device int cpu_factorial(int n);
 
-////////////////////////////////////////////////////////////////////////////
+//==========================================================================
 //
 // Kernel definitions
 //
-////////////////////////////////////////////////////////////////////////////   
+//==========================================================================
 
 //==========================================================================
 arch_global void cpu_equal(int N_s, int N_E, int N_F, scalar* A, scalar* B){
@@ -748,10 +738,8 @@ arch_global void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, 
   for (int k = 0; k < 2*sizevap; k++){
     if (maxvap<vap[k]) maxvap = vap[k];
   }
-  // scalar SL = std::min(vap[0*sizevap+0],vap[1*sizevap+0]);
-  // scalar SR = std::max(vap[0*sizevap+3],vap[1*sizevap+3]);
-  scalar SL = min(fabs(uL)-aL,fabs(uR)-aR);
-  scalar SR = max(fabs(uL)+aR,fabs(uR)+aR);
+  scalar SL = MIN(fabs(uL)-aL,fabs(uR)-aR);
+  scalar SR = MAX(fabs(uL)+aR,fabs(uR)+aR);
     
   //
   // Evaluate the fluxes on the right and left
@@ -985,11 +973,8 @@ arch_global void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, sca
   for (int k = 0; k < 2*sizevap; k++){
     if (maxvap<vap[k]) maxvap = vap[k];
   }
-  // scalar SL = std::min(vap[0*sizevap+0],vap[1*sizevap+0]);
-  // scalar SR = std::max(vap[0*sizevap+3],vap[1*sizevap+3]);
-  scalar SL = min(fabs(uL)-aL,fabs(uR)-aR);
-  scalar SR = max(fabs(uL)+aR,fabs(uR)+aR);
-
+  scalar SL = MIN(fabs(uL)-aL,fabs(uR)-aR);
+  scalar SR = MAX(fabs(uL)+aR,fabs(uR)+aR);
     
   //
   // Evaluate the fluxes on the right and left
@@ -1573,10 +1558,10 @@ arch_global void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, sc
     c[0] = 0.5*(avgLC - avgLL);  // 1/dx = 1/2 = 0.5
     c[1] = 0.5*(avgLR - avgLC);
 
-  // 	Alim[(e*N_F+fc)*N_s+m] = cpu_minmod(c,2);
-  // 	//Alim[(e*N_F+fc)*N_s+m] = cminmod(c,2,0.01);
-  // 	//or use minmod2(c,2), minmod(c,2,eps), cminmod(c,2,0.01); cminmod2(c,2,eps)
-  // 	if(m==1){Alim[(e*N_F+fc)*N_s+0] = avgL[1];}//avgL[1];}
+    Alim[(e*N_F+fc)*N_s+m] = cpu_minmod(c,2);
+    //Alim[(e*N_F+fc)*N_s+m] = cminmod(c,2,0.01);
+    //or use minmod2(c,2), minmod(c,2,eps), cminmod(c,2,0.01); cminmod2(c,2,eps)
+    if(m==1){Alim[(e*N_F+fc)*N_s+0] = avgLC;}
 
     avgRL=0; avgRC=0; avgRR=0;
   }// end loop on m
@@ -1660,11 +1645,11 @@ arch_global void cpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multif
 
 
 
-//===============================================================
+//==========================================================================
 //
 //  Host C functions
 //
-//===============================================================
+//==========================================================================
 
 extern "C" 
 void Lcpu_equal(int N_s, int N_E, int N_F, scalar* A, scalar* B){
@@ -1973,18 +1958,18 @@ void Lcpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weigh
   cpu_hrl arch_args_array(2*sizeof(scalar)) (N_s, N_E, N_F, N_G, boundaryMap, weight, V, J, A, Alim);
 }
 
-//===============================================================
+//==========================================================================
 //
 //  Limiter functions
 //
-//===============================================================
-inline scalar cpu_minabs(scalar* c, int n){
+//==========================================================================
+arch_device inline scalar cpu_minabs(scalar* c, int n){
   scalar minabs = fabs(c[0]);
   for(int i=1;i<n;i++) if (minabs>fabs(c[i])) minabs = fabs(c[i]);
   return minabs;
 }
 
-scalar cpu_minmod(scalar* c, int n){
+arch_device scalar cpu_minmod(scalar* c, int n){
   // Generalized minmod function
   // eq 2.19 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
   int sign = cpu_signum(c[0]);
@@ -1994,13 +1979,14 @@ scalar cpu_minmod(scalar* c, int n){
   return sign*cpu_minabs(c,n);
 }
 
-scalar cpu_minmod2(scalar* c, int n){
+arch_device scalar cpu_minmod2(scalar* c, int n){
   // eq 2.20 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
   scalar min = c[0];
   for(int i=1; i<n; i++) if(fabs(c[i])<fabs(min)) min = c[i];
   return min;
 }
 
+#ifdef USE_CPU
 scalar cpu_cminmod(scalar* c, int n, scalar eps){
   // eq 2.21 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
   // using minmod
@@ -2010,7 +1996,7 @@ scalar cpu_cminmod(scalar* c, int n, scalar eps){
   cc[0] =(1+eps)*cpu_minmod(c,n);
   cc[1] =(scalar)sum/n;
   scalar m = cpu_minmod(cc,2);
-  delete[] cc;
+  //delete[] cc;
   return m;    
 }
 
@@ -2026,8 +2012,18 @@ scalar cpu_cminmod2(scalar* c, int n, scalar eps){
   delete[] cc;
   return m;    
 }
+#endif
 
-int cpu_factorial(int n)
+arch_device int cpu_factorial(int n)
 {
+#ifdef USE_CPU
   return (n == 1 || n == 0) ? 1 : cpu_factorial(n - 1) * n;
+#elif USE_GPU  // no recursion for device less than 2.0
+  int f = n;
+  while (n>0){
+    f*=n;
+    n--;
+  }
+  return f;
+#endif 
 }
