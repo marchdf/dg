@@ -436,8 +436,8 @@ int main (int argc, char **argv)
   scalar* h_Ustar   = new scalar[N_s*N_E*N_F];	    makeZero(h_Ustar,N_s*N_E*N_F);
   scalar* h_DU      = new scalar[N_s*N_E*N_F];	    makeZero(h_DU,N_s*N_E*N_F);	 
   scalar* h_U       = new scalar[N_s*N_E*N_F];	    makeZero(h_U,N_s*N_E*N_F);
-  scalar* h_UMod    = new scalar[N_s*N_E*N_F];      makeZero(h_UMod,N_s*N_E*N_F);
-  scalar* h_UModNew = new scalar[N_s*N_E*N_F];      makeZero(h_UModNew,N_s*N_E*N_F);
+  // scalar* h_UMod    = new scalar[N_s*N_E*N_F];      makeZero(h_UMod,N_s*N_E*N_F);
+  // scalar* h_UModNew = new scalar[N_s*N_E*N_F];      makeZero(h_UModNew,N_s*N_E*N_F);
   scalar* h_A       = new scalar[N_s*N_E*N_F];      makeZero(h_A,N_s*N_E*N_F);
   scalar* h_Alim    = new scalar[N_s*N_E*N_F];      makeZero(h_Alim,N_s*N_E*N_F);
   scalar* h_UF      = new scalar[2*N_F*M_s*M_T];    makeZero(h_UF,2*N_F*M_s*M_T); 
@@ -453,8 +453,8 @@ int main (int argc, char **argv)
   scalar* h_q       = new scalar[M_G*M_T*N_F*2];    makeZero(h_q,M_G*M_T*N_F*2); 
   scalar* h_Q       = new scalar[N_s*N_E*N_F];      makeZero(h_Q,N_s*N_E*N_F);   
 
-  scalar* h_Nod2Mod = new scalar[N_s*N_s];          makeZero(h_Nod2Mod, N_s*N_s);
-  scalar* h_Mod2Nod = new scalar[N_s*N_s];          makeZero(h_Mod2Nod, N_s*N_s);
+  // scalar* h_Nod2Mod = new scalar[N_s*N_s];          makeZero(h_Nod2Mod, N_s*N_s);
+  // scalar* h_Mod2Nod = new scalar[N_s*N_s];          makeZero(h_Mod2Nod, N_s*N_s);
 
   scalar* h_Lag2Mono = new scalar[N_s*N_s];         makeZero(h_Lag2Mono, N_s*N_s);
   scalar* h_Mono2Lag = new scalar[N_s*N_s];         makeZero(h_Mono2Lag, N_s*N_s);
@@ -985,40 +985,40 @@ int main (int argc, char **argv)
     }
   }
 
-  // Go directly from nodal to modal representation
-  scalar* h_UinitMod = new scalar[N_s*N_E*N_F];  makeZero(h_UinitMod,N_s*N_E*N_F);
-  hostblasGemm('N','N', N_s, N_E*N_F, N_s, 1, h_Nod2Mod,  N_s, h_Uinit, N_s, 0.0, h_UinitMod, N_s);
-  hostblasGemm('N','N', N_s, N_E*N_F, N_s, 1, h_Nod2Mod,  N_s, h_U    , N_s, 0.0, h_UMod    , N_s);
+  // // Go directly from nodal to modal representation
+  // scalar* h_UinitMod = new scalar[N_s*N_E*N_F];  makeZero(h_UinitMod,N_s*N_E*N_F);
+  // hostblasGemm('N','N', N_s, N_E*N_F, N_s, 1, h_Nod2Mod,  N_s, h_Uinit, N_s, 0.0, h_UinitMod, N_s);
+  // hostblasGemm('N','N', N_s, N_E*N_F, N_s, 1, h_Nod2Mod,  N_s, h_U    , N_s, 0.0, h_UMod    , N_s);
     
-  // Get the cell average from the modal representation
-  scalar* h_UinitModAvg = new scalar[N_E*N_F];  makeZero(h_UinitModAvg,N_E*N_F);
-  scalar* h_UModAvg     = new scalar[N_E*N_F];  makeZero(h_UModAvg    ,N_E*N_F);
-  for(int e = 0; e < N_E; e++){
-    for(int fc = 0; fc < N_F; fc++){
-      h_UinitModAvg[e*N_F+fc] = h_UinitMod[(e*N_F+fc)*N_s+0]*sqrt(2.0)*h_J[e]; // gamma_n = 2/(2n+1) see p45
-      h_UModAvg    [e*N_F+fc] = h_UMod    [(e*N_F+fc)*N_s+0]*sqrt(2.0)*h_J[e]; // gamma_n = 2/(2n+1) see p45
-    }
-  }
+  // // Get the cell average from the modal representation
+  // scalar* h_UinitModAvg = new scalar[N_E*N_F];  makeZero(h_UinitModAvg,N_E*N_F);
+  // scalar* h_UModAvg     = new scalar[N_E*N_F];  makeZero(h_UModAvg    ,N_E*N_F);
+  // for(int e = 0; e < N_E; e++){
+  //   for(int fc = 0; fc < N_F; fc++){
+  //     h_UinitModAvg[e*N_F+fc] = h_UinitMod[(e*N_F+fc)*N_s+0]*sqrt(2.0)*h_J[e]; // gamma_n = 2/(2n+1) see p45
+  //     h_UModAvg    [e*N_F+fc] = h_UMod    [(e*N_F+fc)*N_s+0]*sqrt(2.0)*h_J[e]; // gamma_n = 2/(2n+1) see p45
+  //   }
+  // }
 
   // Calculate the different norms of the error
   scalar E = 0;
   scalar EMod = 0;
   scalar* h_Err1      = new scalar[N_F]; makeZero(h_Err1   , N_F);
-  scalar* h_Err1Mod   = new scalar[N_F]; makeZero(h_Err1Mod, N_F);
+  //scalar* h_Err1Mod   = new scalar[N_F]; makeZero(h_Err1Mod, N_F);
   scalar* h_Err2      = new scalar[N_F]; makeZero(h_Err2   , N_F);
-  scalar* h_Err2Mod   = new scalar[N_F]; makeZero(h_Err2Mod, N_F);
+  //scalar* h_Err2Mod   = new scalar[N_F]; makeZero(h_Err2Mod, N_F);
   scalar* h_ErrInf    = new scalar[N_F]; makeZero(h_ErrInf   , N_F);
-  scalar* h_ErrInfMod = new scalar[N_F]; makeZero(h_ErrInfMod, N_F);
+  //scalar* h_ErrInfMod = new scalar[N_F]; makeZero(h_ErrInfMod, N_F);
   for(int e = 0; e < N_E; e++){
     for(int fc = 0; fc < N_F; fc++){
       E    = h_UinitAvg   [e*N_F+fc]-h_UAvg   [e*N_F+fc];
-      EMod = h_UinitModAvg[e*N_F+fc]-h_UModAvg[e*N_F+fc];
+      //EMod = h_UinitModAvg[e*N_F+fc]-h_UModAvg[e*N_F+fc];
       h_Err1[fc]    += fabs(E);
-      h_Err1Mod[fc] += fabs(EMod);
+      //h_Err1Mod[fc] += fabs(EMod);
       h_Err2[fc]    += E   *E;
-      h_Err2Mod[fc] += EMod*EMod;
+      //h_Err2Mod[fc] += EMod*EMod;
       if (h_ErrInf[fc]    < fabs(E   ))  h_ErrInf   [fc] = fabs(E);
-      if (h_ErrInfMod[fc] < fabs(EMod))  h_ErrInfMod[fc] = fabs(EMod);
+      //if (h_ErrInfMod[fc] < fabs(EMod))  h_ErrInfMod[fc] = fabs(EMod);
     }
   }
   
@@ -1026,27 +1026,28 @@ int main (int argc, char **argv)
   std::string error = "error.dat"; 
   FILE *f = fopen(error.c_str(),"w");
   fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_Err1[fc]/N_E);          fprintf(f,"\n");
-  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_Err1Mod[fc]/N_E);       fprintf(f,"\n");
+  //fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_Err1Mod[fc]/N_E);       fprintf(f,"\n");
   fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", sqrt(h_Err2[fc]/N_E));    fprintf(f,"\n");
-  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", sqrt(h_Err2Mod[fc]/N_E)); fprintf(f,"\n");
+  //fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", sqrt(h_Err2Mod[fc]/N_E)); fprintf(f,"\n");
   fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_ErrInf[fc]);            fprintf(f,"\n");
-  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_ErrInfMod[fc]);         fprintf(f,"\n");
+  //fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_ErrInfMod[fc]);         fprintf(f,"\n");
+  fclose(f);
   
   // Free some stuff
   delete[] h_Uinit;
   delete[] h_Uinitg;
   delete[] h_UinitAvg;
-  delete[] h_UinitModAvg;
+  //delete[] h_UinitModAvg;
   delete[] h_Ug;
   delete[] h_UAvg;
-  delete[] h_UModAvg;
-  delete[] h_UinitMod;
+  //delete[] h_UModAvg;
+  //delete[] h_UinitMod;
   delete[] h_Err1;
-  delete[] h_Err1Mod;
+  //delete[] h_Err1Mod;
   delete[] h_Err2;
-  delete[] h_Err2Mod;
+  //delete[] h_Err2Mod;
   delete[] h_ErrInf;
-  delete[] h_ErrInfMod;
+  //delete[] h_ErrInfMod;
   
 
 
@@ -1106,12 +1107,13 @@ int main (int argc, char **argv)
   // delete[] h_V1D;
   // delete[] h_V1Dinv;  
   delete[] h_monoV1D;
-  delete[] h_monoV1Dinv;  
+  delete[] h_monoV1Dinv;
+  delete[] h_weight;
   delete[] h_J;
   delete[] h_invJac;
   delete[] h_U;
-  delete[] h_UMod;
-  delete[] h_UModNew;
+  //delete[] h_UMod;
+  //delete[] h_UModNew;
   delete[] h_A;
   delete[] h_Alim;
   delete[] h_Us;
@@ -1130,8 +1132,8 @@ int main (int argc, char **argv)
   delete[] h_q;
   delete[] h_Q;
 
-  delete[] h_Nod2Mod;
-  delete[] h_Mod2Nod;
+  // delete[] h_Nod2Mod;
+  // delete[] h_Mod2Nod;
 
   delete[] h_Lag2Mono;
   delete[] h_Mono2Lag;

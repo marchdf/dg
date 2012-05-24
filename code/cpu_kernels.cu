@@ -1404,102 +1404,9 @@ arch_global void cpu_hsl(int N_s, int N_E, int N_F, int boundaryMap, scalar* U, 
 //==========================================================================
 arch_global void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* J, scalar* A, scalar* Alim){
 
-  //#ifdef USE_CPU
-  // int N = N_s - 1;
-  // scalar dU = 0;
-  // scalar* avgdU = new scalar[3]; 
-  // scalar* R     = new scalar[3]; for(int i=0;i<3;i++) R[i] = 0;
-  // scalar* avgR  = new scalar[3]; for(int i=0;i<3;i++) avgR[i] = 0;
-  // scalar* avgL  = new scalar[3]; for(int i=0;i<3;i++) avgL[i] = 0;
-  // scalar* c     = new scalar[2];
-
-  // // Loop on derivatives
-  // for(int m = N; m > 0; m--){
-  //   for(int fc = 0; fc < N_F; fc++){
-
-  //     for(int k=0;k<3;k++) avgdU[k] = 0;
-
-  //     // boundary condition on the left
-  //     int left = 0;
-  //     if      (boundaryMap == 0  ){left = 0;}//farfield
-  //     else if (boundaryMap == N_E){left = N_E-1;}//periodic
-  //     for(int g=0; g<N_G; g++){
-  // 	scalar dUL = 0;
-  // 	dU = 0;
-
-  // 	for(int j=0;j<=N-(m-1);j++){
-  // 	  dUL += A[(left*N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
-  // 	  dU  += A[(0   *N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
-  // 	}
-
-  // 	avgdU[0] += dUL*weight[g];
-  // 	avgdU[1] += dU *weight[g];
-  //     }
-      
-  //     // Now loop on all the elements
-  //     for(int e = 0; e < N_E; e++){
-  // 	// Get the index of the element on the right. The derivative
-  // 	// averages have already been calculated in the cell e and e-1
-  // 	int right = e+1; 
-  // 	if (e == (N_E-1)){
-  // 	  if      (boundaryMap == 0  ){right = e;}//farfield
-  // 	  else if (boundaryMap == N_E){right = 0;}//periodic
-  // 	}
-	
-  // 	// Calculate the derivative average in the cell on the right
-  // 	// of our cell and calculate the remainder polynomial in our
-  // 	// cells and its two neighbors	
-  // 	for(int g = 0; g < N_G; g++){
-
-  // 	  dU = 0;
-  // 	  for(int k=0;k<3;k++) R[k] = 0;
-
-  // 	  for(int j=0;j<=N-(m-1);j++){
-  // 	    dU  += A[(right*N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
-  // 	    if(j>=2){
-  // 	      R[0] += Alim[(e*N_F+fc)*N_s+(j+m-1)]*pow(V[1*N_G+g]-2,j)/(scalar)cpu_factorial(j);
-  // 	      R[1] += Alim[(e*N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
-  // 	      R[2] += Alim[(e*N_F+fc)*N_s+(j+m-1)]*pow(V[1*N_G+g]+2,j)/(scalar)cpu_factorial(j);
-  // 	    }// end if
-  // 	  }
-  // 	  avgdU[2] += dU*weight[g];
-  // 	  avgR[0]  += R[0]*weight[g];
-  // 	  avgR[1]  += R[1]*weight[g]; 
-  // 	  avgR[2]  += R[2]*weight[g];
-  // 	}// end integration loop
-
-  // 	// Approximate the average of the linear part
-  // 	avgL[0] = 0.5*(avgdU[0] - avgR[0]); // avg = \frac{1}{2} \int_{-1}^1 U \ud x
-  // 	avgL[1] = 0.5*(avgdU[1] - avgR[1]);
-  // 	avgL[2] = 0.5*(avgdU[2] - avgR[2]);
-	
-  // 	// MUSCL approach to get candidate coefficients
-  // 	c[0] = 0.5*(avgL[1] - avgL[0]);  // 1/dx = 1/2 = 0.5
-  // 	c[1] = 0.5*(avgL[2] - avgL[1]);
-
-  // 	Alim[(e*N_F+fc)*N_s+m] = cpu_minmod(c,2);
-  // 	//Alim[(e*N_F+fc)*N_s+m] = cminmod(c,2,0.01);
-  // 	//or use minmod2(c,2), minmod(c,2,eps), cminmod(c,2,0.01); cminmod2(c,2,eps)
-  // 	if(m==1){Alim[(e*N_F+fc)*N_s+0] = avgL[1];}//avgL[1];}
-
-  // 	// Shift the averages so we can move on to the next cell
-  // 	avgdU[0] = avgdU[1];
-  // 	avgdU[1] = avgdU[2];
-  // 	avgdU[2] = 0;
-  // 	for(int k=0;k<3;k++) avgR[k] = 0;
-  //     }// end loop on elements
-  //   }// end loop on fields
-  // }// end loop on m
-
-  // delete[] avgdU;
-  // delete[] R;
-  // delete[] avgR;
-  // delete[] avgL;
-  // delete[] c;
-
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
-    scalar* c = new scalar [N_F*2];
+    scalar* c = new scalar[2*N_F];
     for(int fc = 0; fc < N_F; fc++){
 #elif USE_GPU
   int e = blockIdx.x;
@@ -1563,7 +1470,7 @@ arch_global void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, sc
     c[fc*2+0] = 0.5*(avgLC - avgLL);  // 1/dx = 1/2 = 0.5
     c[fc*2+1] = 0.5*(avgLR - avgLC);
 
-    Alim[(e*N_F+fc)*N_s+m] = cpu_minmod(c,2);
+    Alim[(e*N_F+fc)*N_s+m] = cpu_minmod(&c[fc*2],2); // give it a subset of c (the part you want minmod to act on)
     //Alim[(e*N_F+fc)*N_s+m] = cminmod(c,2,0.01);
     //or use minmod2(c,2), minmod(c,2,eps), cminmod(c,2,0.01); cminmod2(c,2,eps)
     if(m==1){Alim[(e*N_F+fc)*N_s+0] = avgLC;}
@@ -1573,6 +1480,7 @@ arch_global void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, sc
 
 #ifdef USE_CPU
     }
+    delete[] c;
   }
 #endif  
 }
