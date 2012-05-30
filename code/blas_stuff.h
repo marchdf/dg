@@ -12,6 +12,7 @@
 #define F77NAME(x) (x##_)
 #endif
 
+
 // Specialisation of fullVector/Matrix operations using BLAS and LAPACK
 
 #if defined(HAVE_BLAS)

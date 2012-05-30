@@ -175,6 +175,7 @@ class fullMatrix
   // get information (size, value)
   inline int size1() const { return _r; }
   inline int size2() const { return _c; }
+  inline const scalar * getDataPtr() const { return _data; }
   inline scalar get(int r, int c) const
   {
     #ifdef _DEBUG

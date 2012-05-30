@@ -1402,7 +1402,7 @@ arch_global void cpu_hsl(int N_s, int N_E, int N_F, int boundaryMap, scalar* U, 
 }
 
 //==========================================================================
-arch_global void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* J, scalar* A, scalar* Alim){
+arch_global void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* A, scalar* Alim){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -1862,14 +1862,14 @@ void Lcpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool 
 }
 
 extern "C"
-void Lcpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* J, scalar* A, scalar* Alim){
+void Lcpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* A, scalar* Alim){
 
 #ifdef USE_GPU
   dim3 dimBlock(1,N_F,1);
   dim3 dimGrid(N_E,1);
 #endif
 
-  cpu_hrl arch_args_array(N_F*2*sizeof(scalar)) (N_s, N_E, N_F, N_G, boundaryMap, weight, V, J, A, Alim);
+  cpu_hrl arch_args_array(N_F*2*sizeof(scalar)) (N_s, N_E, N_F, N_G, boundaryMap, weight, V, A, Alim);
 }
 
 //==========================================================================

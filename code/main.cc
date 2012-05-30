@@ -20,31 +20,15 @@
 #include <init_cond.h>
 #include <print_sol.h>
 #include <macros.h>
-
+#include <rk.h>
+#include <misc.h>
+#include <limiting.h>
 
 //
 // Function prototypes
 //
 void copyMatrixToPointer(fullMatrix<scalar> &A, scalar* h_A);
 void copyMatrixToPointer(const fullMatrix<scalar> &A, scalar* h_A);
-void blasScopy(int N, float* x, int INCX, float* y, int INCY){
-  F77NAME(scopy)(&N, x, &INCX, y, &INCY);
-}
-void blasSaxpy(int M, float alpha, float* x, int INCX, float* y, int INCY){
-  F77NAME(saxpy)(&M, &alpha, x ,&INCX, y, &INCY);
-}
-void blasSgemm(char or1, char or2, int M , int N, int K, float alpha, float* A, int LDA, float* B, int LDB, float beta, float* C, int LDC){
-  F77NAME(sgemm)(&or1, &or2, &M, &N, &K, &alpha, A, &LDA, B, &LDB, &beta, C, &LDC);
-}
-void blasDcopy(int N, double* x, int INCX, double* y, int INCY){
-  F77NAME(dcopy)(&N, x, &INCX, y, &INCY);
-}
-void blasDaxpy(int M, double alpha, double* x, int INCX, double* y, int INCY){
-  F77NAME(daxpy)(&M, &alpha, x ,&INCX, y, &INCY);
-}
-void blasDgemm(char or1, char or2, int M , int N, int K, double alpha, double* A, int LDA, double* B, int LDB, double beta, double* C, int LDC){
-  F77NAME(dgemm)(&or1, &or2, &M, &N, &K, &alpha, A, &LDA, B, &LDB, &beta, C, &LDC);
-}
 void get_element_types(const int order, int &msh_lin){
   if      (order==0)  { msh_lin = MSH_LIN_2;  }
   else if (order==1)  { msh_lin = MSH_LIN_2;  }
@@ -71,6 +55,7 @@ int factorial(int n){ return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;}
 
 int main (int argc, char **argv)
 {
+
 
   
   ////////////////////////////////////////////////////////////////////////////
@@ -118,8 +103,8 @@ int main (int argc, char **argv)
 
   // Setup the limiting
   int limiter = 0;
-  if      (inputs.getLimiter() == "hsl")   {limiter = 1; printf("Using HS limiting\n");}
-  else if (inputs.getLimiter() == "hrl")   {limiter = 2; printf("Using HR limiting\n");}
+  if      (inputs.getLimiter() == "hrl")   {limiter = 1; printf("Using HR limiting\n");}
+  else if (inputs.getLimiter() == "hsl")   {limiter = 2; printf("Using HS limiting\n");}
   else{limiter = 0; printf("No limiting\n");}
   
   // Setup the initial condition type
@@ -685,7 +670,11 @@ int main (int argc, char **argv)
   
   
   printf("==== Now RK 4 steps =====\n");
-  
+  Limiting Limiter = Limiting(false, limiter, N_s, N_E, N_F, N_G, boundaryMap, Lag2Mono, Mono2Lag, monoV1D, weight);
+  Limiter.HRlimiting(h_U);
+  RK rk4 = RK(4);
+  //rk4.RK_integration(Dt, N_t, output_factor, h_U, blas, N_s, N_E, M_T, N_G, N_F, Limiter);
+
   // Time  integration  
   for (int n = 1; n <= N_t; n++){
 
@@ -723,13 +712,13 @@ int main (int argc, char **argv)
 
       // Limit the solution if you so want to do so
       if(k>0){
-	if (limiter==2){ //HR limiting
+	if (limiter==1){ //HR limiting
 	  // Go from conservative to primitive space
 	  //Lcpu_Cons2Prim(N_s, N_E, N_F, arch(Ustar, multifluid, passive, model, gamma0);
 	  // Go from lagrange to monomial representation
 	  blasGemm('N','N', N_s, N_E*N_F, N_s, 1, arch(Lag2Mono), N_s, arch(Ustar), N_s, 0.0, arch(A), N_s);
 	  // Limit the solution according to Liu
-	  Lcpu_hrl(N_s, N_E, N_F, N_G, boundaryMap, arch(weight), arch(monoV1D), arch(J), arch(A), arch(Alim));
+	  Lcpu_hrl(N_s, N_E, N_F, N_G, boundaryMap, arch(weight), arch(monoV1D), arch(A), arch(Alim));
 	  // Go back to lagrange representation
 	  blasGemm('N','N', N_s, N_E*N_F, N_s, 1, arch(Mono2Lag), N_s, arch(Alim), N_s, 0.0, arch(Ustar), N_s);
 	  // Go back to conservative form
@@ -857,7 +846,7 @@ int main (int argc, char **argv)
     } // end RK4 loop
     T = T + Dt;
     
-    if (limiter==1){
+    if (limiter==2){
       // Go from conservative to primitive space
       //Lcpu_Cons2Prim(N_s, N_E, N_F, arch(U, multifluid, passive, model, gamma0);
       
@@ -875,13 +864,13 @@ int main (int argc, char **argv)
       // Go back to conservative form
       //Lcpu_Prim2Cons(N_s, N_E, N_F, arch(U, multifluid, passive, model, gamma0);
     }
-    else if (limiter==2){ //HR limiting
+    else if (limiter==1){ //HR limiting
       // Go from conservative to primitive space
       //Lcpu_Cons2Prim(N_s, N_E, N_F, arch(U, multifluid, passive, model, gamma0);
       // Go from lagrange to monomial representation
       blasGemm('N','N', N_s, N_E*N_F, N_s, 1, arch(Lag2Mono), N_s, arch(U), N_s, 0.0, arch(A), N_s);
       // Limit the solution according to Liu
-      Lcpu_hrl(N_s, N_E, N_F, N_G, boundaryMap, arch(weight), arch(monoV1D), arch(J), arch(A), arch(Alim));
+      Lcpu_hrl(N_s, N_E, N_F, N_G, boundaryMap, arch(weight), arch(monoV1D), arch(A), arch(Alim));
       // Go back to lagrange representation
       blasGemm('N','N', N_s, N_E*N_F, N_s, 1, arch(Mono2Lag), N_s, arch(Alim), N_s, 0.0, arch(U), N_s);
       // Go back to conservative form

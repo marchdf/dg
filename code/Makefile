@@ -12,13 +12,14 @@ CUDA_INSTALL_PATH := /usr/local/cuda
 CUDA_SDK_PATH     := /home/marchdf/NVIDIA_GPU_Computing_SDK/C
 INCLUDES += -I. -I$(CUDA_INSTALL_PATH)/include -I$(CUDA_SDK_PATH)/common/inc
 LIBS              := -L$(CUDA_INSTALL_PATH)/lib64 -L$(CUDA_SDK_PATH)/lib -lcutil_x86_64
+LDFLAGS           := -lrt -lm -lblas -lstdc++ -llapack -lcudart -lcublas 
 CFLAGS 	          := -03
 CPPFLAGS          := -I. -DHAVE_BLAS -DHAVE_LAPACK -w -ansi -D$(ARCH) -D$(PREC)
 CUFLAGS	          := --ptxas-options=-v -D$(ARCH) -D$(PREC)  
 ifeq ($(PREC),USE_DOUBLE)
 CUFLAGS	          := $(CUFLAGS) -arch sm_13
 endif
-LDFLAGS           := -lrt -lm -lblas -lstdc++ -llapack -lcudart -lcublas 
+
 
 # compilers
 NVCC              := nvcc
