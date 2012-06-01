@@ -20,7 +20,7 @@ dxd = dxdir[3]
 fd  = fdir[2]
 field = fieldFile[3]
 md = mdir[1]
-T = 0.12
+T = 0.2
 cmap = ['r','g','b','m','c']
 markertype = ['.', 'x']
 for j in range(0,len(mdir)): # loop on the models 

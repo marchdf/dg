@@ -5,7 +5,7 @@ import matplotlib.axis as axis
 from pylab import*
 
 rc('text', usetex=True)
-rc('font', family='sans-serif')
+rc('font', family='serif', serif='Times')
 
 #load the files
 pdir  = ['p0/','p1/','p2/','p3/','p4/']
@@ -67,10 +67,11 @@ for i in range(0,len(pdir)):
     cnt = 0
     # theoretical: p+1 slope
     loglog(dxs[i,:],err_th[i,:],color='k',linewidth=2,linestyle='dashed')
-    xlabel('$\Delta x$',fontsize=22,fontweight='bold')
-    ylabel('$L_2$ error',fontsize=22,fontweight='bold')
+    xlabel(r"$\Delta x$",fontsize=22)
+    ylabel(r"$L_2$ \textit{error}",fontsize=22)
     setp(gca().get_ymajorticklabels(),fontsize=18,fontweight='bold');
     setp(gca().get_xmajorticklabels(),fontsize=18,fontweight='bold');    
+    setp(gca(),xlim=[0.01,0.5])
     setp(gca(),ylim=[1e-16,1e-1])
     savefig('p'+str(i)+'.png',format='png')
     savefig('p'+str(i)+'.eps',format='eps')

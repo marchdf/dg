@@ -18,8 +18,7 @@ class Limiting
   scalar* _weight; // integration weights
   scalar* _A;      // monomial solution
   scalar* _Alim;   // holds the limited monomial solution
-  bool    _limit;  // limit?
-  int     _method; // HR=1
+  int     _method; // no limit= 0; HR=1
   int     _N_s;
   int     _N_E;
   int     _N_F;
@@ -28,14 +27,13 @@ class Limiting
   
  public:
   // constructor
- Limiting(bool limit) : _limit(limit){}
+ Limiting(int method) : _method(method){}
   
- Limiting(bool limit, int method, int N_s, int N_E, int N_F, int N_G, int boundaryMap,
+ Limiting(int method, int N_s, int N_E, int N_F, int N_G, int boundaryMap,
 	  fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, fullMatrix<scalar> &V1D, fullMatrix<scalar> &weight)
-   : _limit(limit), _method(method), _N_s(N_s), _N_E(N_E), _N_F(N_F), _N_G(N_G), _boundaryMap(boundaryMap){
+   : _method(method), _N_s(N_s), _N_E(N_E), _N_F(N_F), _N_G(N_G), _boundaryMap(boundaryMap){
     switch (_method){
-    case 1:
-      _limit    = true;
+    case 1:{
 #ifdef USE_CPU
       _Lag2Mono = new scalar[_N_s*_N_s];     copyMatrixToPointer(Lag2Mono,_Lag2Mono);
       _Mono2Lag = new scalar[_N_s*_N_s];     copyMatrixToPointer(Mono2Lag,_Mono2Lag);
@@ -44,18 +42,42 @@ class Limiting
       _A        = new scalar[_N_s*_N_E*N_F];
       _Alim     = new scalar[_N_s*_N_E*N_F];
 #elif USE_GPU
-      
+      // tmp host pointers to copy data to gpu
+      scalar* tmpLag2Mono = new scalar[_N_s*_N_s];     copyMatrixToPointer(Lag2Mono,tmpLag2Mono);
+      scalar* tmpMono2Lag = new scalar[_N_s*_N_s];     copyMatrixToPointer(Mono2Lag,tmpMono2Lag);
+      scalar* tmpV1D      = new scalar[_N_G*_N_s];     copyMatrixToPointer(V1D,tmpV1D);
+      scalar* tmpweight   = new scalar[_N_G];          copyMatrixToPointer(weight,tmpweight);
+
+      // Allocate on GPU
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_Lag2Mono,_N_s*_N_s*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_Mono2Lag,_N_s*_N_s*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_V1D,_N_G*_N_s*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_weight,_N_G*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_A,_N_s*_N_E*_N_F*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_Alim,_N_s*_N_E*_N_F*sizeof(scalar)));
+
+      // Copy data to GPU
+      CUDA_SAFE_CALL(cudaMemcpy(_Lag2Mono, tmpLag2Mono, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
+      CUDA_SAFE_CALL(cudaMemcpy(_Mono2Lag, tmpMono2Lag, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
+      CUDA_SAFE_CALL(cudaMemcpy(_V1D, tmpV1D, N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
+      CUDA_SAFE_CALL(cudaMemcpy(_weight, tmpweight, N_G*sizeof(scalar), cudaMemcpyHostToDevice));
+	    
+      delete[] tmpLag2Mono;	
+      delete[] tmpMono2Lag;	
+      delete[] tmpV1D;	
+      delete[] tmpweight;   
 #endif
+    }
       break;
     default:
       printf("Bad method input. Defaulting to no limiting.\n");
-      _limit = false;
+      _method = 0;
     }
   }
   
   // destructor
   ~Limiting(){
-    if(_limit){
+    if(_method!=0){
 #ifdef USE_CPU
       if(_Lag2Mono) delete[] _Lag2Mono;
       if(_Mono2Lag) delete[] _Mono2Lag;
@@ -64,17 +86,17 @@ class Limiting
       if(_A)        delete[] _A;
       if(_Alim)     delete[] _Alim;
 #elif USE_GPU
-      if(_Lag2Mono) delete[] _Lag2Mono;
-      if(_Mono2Lag) delete[] _Mono2Lag;
-      if(_V1D)      delete[] _V1D;
-      if(_weight)   delete[] _weight;
-      if(_A)        delete[] _A;
-      if(_Alim)     delete[] _Alim;
+      if(_Lag2Mono) CUDA_SAFE_CALL(cudaFree(_Lag2Mono));
+      if(_Mono2Lag) CUDA_SAFE_CALL(cudaFree(_Mono2Lag));
+      if(_V1D)      CUDA_SAFE_CALL(cudaFree(_V1D));
+      if(_weight)   CUDA_SAFE_CALL(cudaFree(_weight));
+      if(_A)        CUDA_SAFE_CALL(cudaFree(_A));
+      if(_Alim)     CUDA_SAFE_CALL(cudaFree(_Alim));
 #endif      
     }	      
   }
   
-  bool getLimitingStatus() const {return _limit;}
+  int getLimitingMethod() const {return _method;}
 
   void HRlimiting(scalar* U){
     blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);

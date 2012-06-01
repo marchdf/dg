@@ -5,7 +5,8 @@ import matplotlib.axis as axis
 from pylab import*
 
 rc('text', usetex=True)
-rc('font', family='sans-serif')
+#rc('font', family='sans-serif')
+rc('font', family='serif', serif='Times')
 
 #load the files
 #pdir  = ['p0','p1','p2','p3','p4']
@@ -69,8 +70,8 @@ for i in range(0,len(pdir)): # loop on element orders
             loglog(dxs[i,pltdx]+eps,errors[i,pltdx,k,1,j]+eps,markertype[k],markerfacecolor='g',markeredgecolor='g',markersize=12)
         # theoretical: 2p+1 slope
         loglog(dxs[i,pltdx],err_th[i,pltdx],color='k',linewidth=2,linestyle='dashed')
-        xlabel('$\Delta x$',fontsize=22,fontweight='bold')
-        ylabel('$E$',fontsize=22,fontweight='bold')
+        xlabel(r"$\Delta x$",fontsize=22)
+        ylabel(r"$L_\infty$ \textit{error}",fontsize=22)
         setp(gca().get_ymajorticklabels(),fontsize=18,fontweight='bold');
         setp(gca().get_xmajorticklabels(),fontsize=18,fontweight='bold');    
         setp(gca(),ylim=[1e-16,1e-1])
@@ -102,12 +103,13 @@ for i in range(0,len(pdir)): # loop on element orders
     loglog(dxs[i,pltdx]+eps,errors[i,pltdx,k,1,j]+eps,markertype[cnt],markerfacecolor='g',markeredgecolor='g',markersize=12)
     cnt = 0
     # theoretical: 2p+1 slope
-    #loglog(dxs[i,pltdx],err_th[i,pltdx],color='k',linewidth=2,linestyle='dashed')
-    xlabel('$\Delta x$',fontsize=22,fontweight='bold')
-    ylabel('$E$',fontsize=22,fontweight='bold')
+    loglog(dxs[i,pltdx],err_th[i,pltdx],color='k',linewidth=2,linestyle='dashed')
+    xlabel(r"$\Delta x$",fontsize=22)
+    ylabel(r"$L_\infty$ \textit{error}",fontsize=22)
     setp(gca().get_ymajorticklabels(),fontsize=18,fontweight='bold');
     setp(gca().get_xmajorticklabels(),fontsize=18,fontweight='bold');    
-    setp(gca(),xlim=[0.5*dxs[i,pltdx].min(),2*dxs[i,pltdx].max()],ylim=[1e-16,1e-1])
+    setp(gca(),xlim=[0.01,0.5])
+    setp(gca(),ylim=[1e-16,1e-1])
     savefig(pdir[i]+fdir[k]+'_p_g.png',format='png')
     savefig(pdir[i]+fdir[k]+'_p_g.eps',format='eps')
 

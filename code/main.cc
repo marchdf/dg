@@ -102,11 +102,11 @@ int main (int argc, char **argv)
   else{ printf("Invalid model setup. Correct the deck.\n");}
 
   // Setup the limiting
-  int limiter = 0;
-  if      (inputs.getLimiter() == "hrl")   {limiter = 1; printf("Using HR limiting\n");}
-  else if (inputs.getLimiter() == "hsl")   {limiter = 2; printf("Using HS limiting\n");}
-  else{limiter = 0; printf("No limiting\n");}
-  
+  int limiterMethod = 0;
+  if      (inputs.getLimiter() == "hrl")   {limiterMethod = 1; printf("Using HR limiting\n");}
+  else if (inputs.getLimiter() == "hsl")   {limiterMethod = 2; printf("Using HS limiting\n");}
+  else{limiterMethod = 0; printf("No limiting\n");}
+
   // Setup the initial condition type
   bool simplew = false;
   bool sodtube = false;
@@ -355,6 +355,12 @@ int main (int argc, char **argv)
   if(multifluid)print_dg_multifluid(N_s, N_E, N_F, model, U, m, msh_lin, 0, 0, 0,-1);
   if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, U, m, msh_lin, 0, 0, 0,-1);
 
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Setup the limiter
+  //
+  //////////////////////////////////////////////////////////////////////////
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, boundaryMap, Lag2Mono, Mono2Lag, monoV1D, weight);
   
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -670,8 +676,6 @@ int main (int argc, char **argv)
   
   
   printf("==== Now RK 4 steps =====\n");
-  Limiting Limiter = Limiting(false, limiter, N_s, N_E, N_F, N_G, boundaryMap, Lag2Mono, Mono2Lag, monoV1D, weight);
-  Limiter.HRlimiting(h_U);
   RK rk4 = RK(4);
   //rk4.RK_integration(Dt, N_t, output_factor, h_U, blas, N_s, N_E, M_T, N_G, N_F, Limiter);
 
@@ -712,18 +716,7 @@ int main (int argc, char **argv)
 
       // Limit the solution if you so want to do so
       if(k>0){
-	if (limiter==1){ //HR limiting
-	  // Go from conservative to primitive space
-	  //Lcpu_Cons2Prim(N_s, N_E, N_F, arch(Ustar, multifluid, passive, model, gamma0);
-	  // Go from lagrange to monomial representation
-	  blasGemm('N','N', N_s, N_E*N_F, N_s, 1, arch(Lag2Mono), N_s, arch(Ustar), N_s, 0.0, arch(A), N_s);
-	  // Limit the solution according to Liu
-	  Lcpu_hrl(N_s, N_E, N_F, N_G, boundaryMap, arch(weight), arch(monoV1D), arch(A), arch(Alim));
-	  // Go back to lagrange representation
-	  blasGemm('N','N', N_s, N_E*N_F, N_s, 1, arch(Mono2Lag), N_s, arch(Alim), N_s, 0.0, arch(Ustar), N_s);
-	  // Go back to conservative form
-	  //Lcpu_Prim2Cons(N_s, N_E, N_F, arch(Ustar, multifluid, passive, model, gamma0);
-      	} // end limiting
+	if (limiterMethod==1){Limiter.HRlimiting(arch(Ustar));}
       }
       
       
@@ -846,7 +839,8 @@ int main (int argc, char **argv)
     } // end RK4 loop
     T = T + Dt;
     
-    if (limiter==2){
+    if (limiterMethod==1){ Limiter.HRlimiting(arch(U));}
+    else if (limiterMethod==2){
       // Go from conservative to primitive space
       //Lcpu_Cons2Prim(N_s, N_E, N_F, arch(U, multifluid, passive, model, gamma0);
       
@@ -864,19 +858,6 @@ int main (int argc, char **argv)
       // Go back to conservative form
       //Lcpu_Prim2Cons(N_s, N_E, N_F, arch(U, multifluid, passive, model, gamma0);
     }
-    else if (limiter==1){ //HR limiting
-      // Go from conservative to primitive space
-      //Lcpu_Cons2Prim(N_s, N_E, N_F, arch(U, multifluid, passive, model, gamma0);
-      // Go from lagrange to monomial representation
-      blasGemm('N','N', N_s, N_E*N_F, N_s, 1, arch(Lag2Mono), N_s, arch(U), N_s, 0.0, arch(A), N_s);
-      // Limit the solution according to Liu
-      Lcpu_hrl(N_s, N_E, N_F, N_G, boundaryMap, arch(weight), arch(monoV1D), arch(A), arch(Alim));
-      // Go back to lagrange representation
-      blasGemm('N','N', N_s, N_E*N_F, N_s, 1, arch(Mono2Lag), N_s, arch(Alim), N_s, 0.0, arch(U), N_s);
-      // Go back to conservative form
-      //Lcpu_Prim2Cons(N_s, N_E, N_F, arch(U, multifluid, passive, model, gamma0);
-    } // end limiting
-    
     
 
     //

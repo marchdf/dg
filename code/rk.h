@@ -84,7 +84,7 @@ class RK
 	Tstar = T + _beta[k]*Dt;
 
 	//Limit the solution if you so want to do so
-	if(k>0){if (Limiter.getLimitingStatus()) Limiter.HRlimiting(arch(Ustar));}
+	if(k>0){if (Limiter.getLimitingMethod()!=0) Limiter.HRlimiting(arch(Ustar));}
 
 	// Solve: DU = Dt*Minv*f(Ustar)
 	// solve: requires Q, F, S, Dt, Minv, DU 
