@@ -16,7 +16,7 @@ fieldFile=['rho', 'ux', 'p', 'g']
 fieldLatex = ['$\\rho$', '$u$', '$p$', '$\\gamma$']
 
 pd  = pdir[2]
-dxd = dxdir[3]
+dxd = dxdir[4]
 fd  = fdir[2]
 field = fieldFile[3]
 md = mdir[1]

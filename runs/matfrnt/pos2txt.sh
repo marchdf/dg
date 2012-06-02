@@ -18,8 +18,8 @@ field=('rho' 'ux' 'et' 'p' 'g');
 # 	for k in {0..2}; do # loop on fluxes
 # 	    for p in {0..1}; do  # loop on models
 # 		for n in {0..4}; do # loop on fields
-for i in 4; do # loop on dg order
-    for j in 3; do #loop on delta x
+for i in 2; do # loop on dg order
+    for j in 4; do #loop on delta x
 	for k in 2; do # loop on fluxes
 	    for p in {0..1}; do  # loop on models
 		for n in 3; do # loop on fields
