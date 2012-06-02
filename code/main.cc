@@ -2,9 +2,11 @@
 #include <iomanip>
 #include <stdio.h>
 #include "stdlib.h"
+#ifdef USE_GPU
 #include <cutil.h>
 #include <cutil_inline.h>
 #include <cublas.h>
+#endif
 #include <time.h>
 #include "fullMatrix.h"
 #include "polynomialBasis.h"
