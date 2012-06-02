@@ -10,9 +10,14 @@ BINNAME           := dg1d
 # flags
 CUDA_INSTALL_PATH := /usr/local/cuda
 CUDA_SDK_PATH     := /home/marchdf/NVIDIA_GPU_Computing_SDK/C
+#INCLUDES += -I. -I$(CUDA_INSTALL_PATH)/include -I$(CUDA_SDK_PATH)/common/inc
+LIBS              := 
+LDFLAGS           := -lrt -lm -lblas -lstdc++ -llapack 
+ifeq ($(ARCH),USE_GPU)
 INCLUDES += -I. -I$(CUDA_INSTALL_PATH)/include -I$(CUDA_SDK_PATH)/common/inc
-LIBS              := -L$(CUDA_INSTALL_PATH)/lib64 -L$(CUDA_SDK_PATH)/lib -lcutil_x86_64
-LDFLAGS           := -lrt -lm -lblas -lstdc++ -llapack -lcudart -lcublas 
+LIBS              := $(LIBS) -L$(CUDA_INSTALL_PATH)/lib64 -L$(CUDA_SDK_PATH)/lib -lcutil_x86_64
+LDFLAGS           := $(LDFLAGS) -lcudart -lcublas 
+endif
 CFLAGS 	          := -03
 CPPFLAGS          := -I. -DHAVE_BLAS -DHAVE_LAPACK -w -ansi -D$(ARCH) -D$(PREC)
 CUFLAGS	          := --ptxas-options=-v -D$(ARCH) -D$(PREC)  
