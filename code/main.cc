@@ -45,9 +45,6 @@ void get_element_types(const int order, int &msh_lin){
   else if (order==10) { msh_lin = MSH_LIN_11; }
   else {printf("Invalid order number.");}
 }
-void makeZero(scalar* A, int size){
-  for(int k=0; k < size; k++) A[k] = 0.0;
-}
 void average_cell_p0(const int N_s, const int N_E, const int N_F, fullMatrix<scalar> &U);
 
 void vandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D);
@@ -586,96 +583,6 @@ int main (int argc, char **argv)
   beta[0] = 0.0; beta[1] = 0.5; beta[2] = 0.5; beta[3] = 1.0;
   scalar *gamma = new scalar[4];
   gamma[0] = 1.0/6.0; gamma[1] = 2.0/6.0; gamma[2] = 2.0/6.0; gamma[3] = 1.0/6.0;
-
-  // Initialize the first DU evaluation
-  // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
-  printf("=========== First DU evaluation ==============\n");
-  if(multifluid)   Lcpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, arch(U), arch(UF));
-  else if(passive) Lcpu_mapToFace_passive(M_s, M_T, N_F, N_s, boundaryMap, arch(U), arch(UF));
-  
-      
-  // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes
-  if (blas == 1){
-    blasGemm('N','N', N_G  , N_E*N_F, N_s, 1, arch(phi),  N_G  , arch(U), N_s, 0.0, arch(Uinteg), N_G);
-    blasGemm('N','N', N_G*D, N_E*N_F, N_s, 1, arch(dphi), N_G*D, arch(U), N_s, 0.0, arch(dUinteg), N_G*D);}
-  else Lcpu_collocationU(D, N_G, N_s, N_E, N_F, arch(Uinteg), arch(dUinteg), arch(phi), arch(dphi), arch(U));
-  
-  // }
-  // else if(!cpu){
-  //   if (blas == 1){
-  //     cublasGemm('N','N', N_G  , N_E*N_F, N_s, 1, d_phi , N_G  , d_U, N_s, 0.0, d_Uinteg , N_G);
-  //     cublasGemm('N','N', N_G*D, N_E*N_F, N_s, 1, d_dphi, N_G*D, d_U, N_s, 0.0, d_dUinteg, N_G*D);}
-  //   else Lgpu_collocationU(D, N_G, N_s, N_E, N_F, d_Uinteg, d_dUinteg, d_phi, d_dphi, d_U);
-  //   CUDA_SAFE_CALL(cudaThreadSynchronize());
-  // }
-  
-  // collocationUF: requires psi, UF, UintegF and some sizes
-  blasCopy(2*N_F*M_T, arch(UF), 1, arch(UintegF), 1);
-  
-  //for(int k = 0; k < 2*N_F*M_T; k++){ arch(UintegF[k]) = arch(UF[k]);}
-  // else if(!cpu){
-  //   cublasCopy(2*N_F*M_T, d_UF, 1, d_UintegF, 1);
-  //   CUDA_SAFE_CALL(cudaThreadSynchronize());
-  // }
-  
-  // evaluate_sf: requires Uinteg, (dUintegR), H0, G0, s,f 
-  if(multifluid) Lcpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, arch(s), arch(f), arch(Uinteg), arch(dUinteg), arch(invJac));
-  if(passive)    Lcpu_evaluate_sf_passive(D, N_G, N_E, N_F, gamma0, arch(s), arch(f), arch(Uinteg), arch(dUinteg), arch(invJac));
-
-  // evaluate_q: requires UintegF, normals, q, H0, G0
-  if(multifluid) Lcpu_evaluate_q_multifluid(M_G, M_T, N_F, flux, model, arch(q), arch(UintegF));
-  if(passive)    Lcpu_evaluate_q_passive(M_G, M_T, N_F, flux, gamma0, arch(q), arch(UintegF));
-  
-    
-  // redistribute_sf: requires J, invJac, s, f, phi_w, dphi_w, sJ, fJ, S, F
-  Lcpu_redistribute_sf(D, N_G, N_E, N_F, arch(sJ), arch(fJ), arch(s), arch(f), arch(J), arch(invJac));
-  
-  // else if (!cpu){
-  //   Lgpu_redistribute_sf(D, N_G, N_E, N_F, d_sJ, d_fJ, d_s, d_f, d_J, d_invJac);
-  //   CUDA_SAFE_CALL(cudaThreadSynchronize());
-  // }
-
-  // matrix-matrix for sf
-  if (blas==1) {
-    blasGemm('T','N', N_s, N_E*N_F, N_G  , 1, arch(phi_w ), N_G  , arch(sJ), N_G  , 0.0, arch(S), N_s);
-    blasGemm('T','N', N_s, N_E*N_F, N_G*D, 1, arch(dphi_w), N_G*D, arch(fJ), N_G*D, 0.0, arch(F), N_s);
-  }
-  else Lcpu_gemm_sf(D, N_G, N_s, N_E, N_F, arch(S), arch(F), arch(sJ), arch(fJ), arch(phi_w), arch(dphi_w));
-  
-  // else if (!cpu){
-  //   if (blas==1) {
-  //     cublasGemm('T','N', N_s, N_E*N_F, N_G  , 1, d_phi_w , N_G  , d_sJ, N_G  , 0.0, d_S, N_s);
-  //     cublasGemm('T','N', N_s, N_E*N_F, N_G*D, 1, d_dphi_w, N_G*D, d_fJ, N_G*D, 0.0, d_F, N_s);
-  //   }
-  //   else Lgpu_gemm_sf(D, N_G, N_s, N_E, N_F, d_S, d_F, d_sJ, d_fJ, d_phi_w, d_dphi_w);
-  // }
-  
-
-  // map_q: requires map, Qtcj, Q (might want to do this in the previous step)
-  Lcpu_mapToElement(N_s, N_E, N_F, arch(Q), arch(q));
-  
-  // else if (!cpu){
-  //   Lgpu_mapToElement(N_s, N_E, N_F, d_Q, d_q);
-  //   CUDA_SAFE_CALL(cudaThreadSynchronize());
-  // }
-
-  // solve: requires Q, F, S, Dt, Minv, DU
-  Lcpu_solve(N_s, N_E, N_F, arch(DU), arch(S), arch(F), arch(Q), arch(Minv), Dt);
-  
-  // else if (!cpu){
-  //   Lgpu_solve(N_s, N_E, N_F, d_DU, d_S, d_F, d_Q, d_Minv, Dt);
-  //   CUDA_SAFE_CALL(cudaThreadSynchronize());
-  // }
-  
-  // if 0-order average the solution in the cells
-  if (order0){
-    Lcpu_average_cell_p0(N_s, N_E, N_F, arch(DU));
-    // else if (!cpu){
-    //   Lgpu_average_cell_p0(N_s, N_E, N_F, d_DU);
-    //   CUDA_SAFE_CALL(cudaThreadSynchronize());
-    // }
-  }
-  
   
   printf("==== Now RK 4 steps =====\n");
   RK rk4 = RK(4);

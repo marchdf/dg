@@ -53,9 +53,9 @@ class RK
     double Tstar = 0;
     int count = 1;
 #ifdef USE_CPU
-    scalar* h_Us    = new scalar[N_s*N_E*N_F];
-    scalar* h_Ustar = new scalar[N_s*N_E*N_F];
-    scalar* h_DU    = new scalar[N_s*N_E*N_F];
+    scalar* h_Us    = new scalar[N_s*N_E*N_F];  makeZero(h_Us,N_s*N_E*N_F);	 
+    scalar* h_Ustar = new scalar[N_s*N_E*N_F];  makeZero(h_Ustar,N_s*N_E*N_F);
+    scalar* h_DU    = new scalar[N_s*N_E*N_F];  makeZero(h_DU,N_s*N_E*N_F);	 
 #elif USE_GPU
     scalar* d_U, *d_Us, *d_Ustar, *d_DU, *d_UF;
     CUDA_SAFE_CALL(cudaMalloc((void**) &d_U,N_s*N_E*N_F*sizeof(scalar)));
@@ -65,8 +65,7 @@ class RK
     CUDA_SAFE_CALL(cudaMalloc((void**) &d_DU,N_s*N_E*N_F*sizeof(scalar)));
 #endif
 
-    // ATTENTION: need to initialize the first step with euler.
-    // Need to do a solve operation (and average the solution for p=0)
+    // ATTENTION Need to do a solve operation (and average the solution for p=0)
     
     // Time integration
     for (int n = 1; n <= Nt; n++){

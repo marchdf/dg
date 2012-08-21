@@ -18,3 +18,7 @@ void blasDaxpy(int M, double alpha, double* x, int INCX, double* y, int INCY){
 void blasDgemm(char or1, char or2, int M , int N, int K, double alpha, double* A, int LDA, double* B, int LDB, double beta, double* C, int LDC){
   F77NAME(dgemm)(&or1, &or2, &M, &N, &K, &alpha, A, &LDA, B, &LDB, &beta, C, &LDC);
 }
+
+void makeZero(scalar* A, int size){
+  for(int k=0; k < size; k++) A[k] = 0.0;
+}
