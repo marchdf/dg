@@ -586,7 +586,7 @@ int main (int argc, char **argv)
   
   printf("==== Now RK 4 steps =====\n");
   RK rk4 = RK(4);
-  //rk4.RK_integration(Dt, N_t, output_factor, h_U, blas, N_s, N_E, M_T, N_G, N_F, Limiter);
+  rk4.RK_integration(Dt, N_t, output_factor, h_U, h_Minv, blas, N_s, N_E, M_T, N_G, N_F, Limiter, order0);
 
   // Time  integration  
   for (int n = 1; n <= N_t; n++){

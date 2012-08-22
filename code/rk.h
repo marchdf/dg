@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <scalar_def.h>
 #include <macros.h>
-//#include <common_kernels.h>
+#include <rk_kernels.h>
 #include <cpu_kernels.h>
 #include <limiting.h>
 
@@ -44,8 +44,8 @@ class RK
   }
   
   // main RK integration function
-  void RK_integration(scalar Dt, int Nt, int output_factor, scalar* h_U, int blas, 
-		      int N_s, int N_E, int M_T, int N_G, int N_F, Limiting &Limiter){
+  void RK_integration(scalar Dt, int Nt, int output_factor, scalar* h_U, scalar* h_Minv, int blas, 
+		      int N_s, int N_E, int M_T, int N_G, int N_F, Limiting &Limiter, bool order0){
 
   
     // Initialize some vars
@@ -53,20 +53,22 @@ class RK
     double Tstar = 0;
     int count = 1;
 #ifdef USE_CPU
-    scalar* h_Us    = new scalar[N_s*N_E*N_F];  makeZero(h_Us,N_s*N_E*N_F);	 
+    scalar* h_Us    = new scalar[N_s*N_E*N_F];  makeZero(h_Us   ,N_s*N_E*N_F);	 
     scalar* h_Ustar = new scalar[N_s*N_E*N_F];  makeZero(h_Ustar,N_s*N_E*N_F);
-    scalar* h_DU    = new scalar[N_s*N_E*N_F];  makeZero(h_DU,N_s*N_E*N_F);	 
+    scalar* h_DU    = new scalar[N_s*N_E*N_F];  makeZero(h_DU   ,N_s*N_E*N_F);
+    scalar* h_f     = new scalar[N_s*N_E*N_F];  makeZero(h_f    ,N_s*N_E*N_F);
 #elif USE_GPU
-    scalar* d_U, *d_Us, *d_Ustar, *d_DU, *d_UF;
+    scalar* d_U, *d_Us, *d_Ustar, *d_DU, *d_UF, *d_f, *d_Minv;
     CUDA_SAFE_CALL(cudaMalloc((void**) &d_U,N_s*N_E*N_F*sizeof(scalar)));
     CUDA_SAFE_CALL(cudaMemcpy(d_U, h_U, N_s*N_E*N_F*sizeof(scalar), cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMalloc((void**) &d_Us,N_s*N_E*N_F*sizeof(scalar)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &d_Ustar,N_s*N_E*N_F*sizeof(scalar)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &d_DU,N_s*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &d_f,N_s*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &d_Minv,N_s*N_s*N_E*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemcpy(d_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar), cudaMemcpyHostToDevice));
 #endif
 
-    // ATTENTION Need to do a solve operation (and average the solution for p=0)
-    
     // Time integration
     for (int n = 1; n <= Nt; n++){
 
@@ -85,23 +87,24 @@ class RK
 	//Limit the solution if you so want to do so
 	if(k>0){if (Limiter.getLimitingMethod()!=0) Limiter.HRlimiting(arch(Ustar));}
 
+	// ATTENTION NOW YOU HAVE TO CALC f(Ustar)
+	
 	// Solve: DU = Dt*Minv*f(Ustar)
-	// solve: requires Q, F, S, Dt, Minv, DU 
-	// Lcpu_solve(N_s, N_E, N_F, arch(DU), arch(S), arch(F), arch(Q), arch(Minv), Dt);
+	Lsolver(N_s, N_E, N_F, Dt, arch(Minv), arch(f), arch(DU));
 
 	// if 0-order average the solution in the cells
-	//if (order0){Lcpu_average_cell_p0(N_s, N_E, N_F, arch(DU));}
+	if (order0){Laverage_cell_p0(N_s, N_E, N_F, arch(DU));}
 
 	// U = U + gamma*DU
-	/* if (blas==1) {blasAxpy(N_s*N_F*N_E, _gamma[k], arch(DU), 1, arch(U), 1);}       */
-	/* else Lcpu_add(N_s, N_E, N_F, arch(U), arch(DU), _gamma[k]); // do U.add(DU,gamma[k]) */
+	if (blas==1) {blasAxpy(N_s*N_F*N_E, _gamma[k], arch(DU), 1, arch(U), 1);}       
+	else Lcpu_add(N_s, N_E, N_F, arch(U), arch(DU), _gamma[k]); // do U.add(DU,gamma[k])
 
       }// end loop on k
       
       T = T + Dt;
 
       // Limit solution
-      //if (Limiter.getLimitingStatus()) Limiter.HRlimiting(arch(U));
+      if (Limiter.getLimitingMethod()!=0) Limiter.HRlimiting(arch(U));
 
       // Output the solution
       if(n % (Nt/output_factor) == 0){
@@ -111,13 +114,11 @@ class RK
 	CUDA_SAFE_CALL(cudaMemcpy(h_U, d_U, N_s*N_F*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
 #endif
 		     
-	//printf("Solution written to output file at step %i and time %f.\n",n,n*Dt);
-	/* if(multifluid)print_dg_multifluid(N_s, N_E, N_F, model, h_U, m, msh_lin, count, n*Dt, 1,-1); */
-	/* if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, h_U, m, msh_lin, count, n*Dt, 1,-1); */
+	printf("Solution NOT written to output file at step %i and time %f.\n",n,n*Dt);
+	//if(multifluid)print_dg_multifluid(N_s, N_E, N_F, model, h_U, m, msh_lin, count, n*Dt, 1,-1); 
+	//if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, h_U, m, msh_lin, count, n*Dt, 1,-1); 
 	count++;
-      }
-
-
+      }// end output steps
     }// end loop on time
 
 
@@ -126,15 +127,19 @@ class RK
     delete[] h_Us;
     delete[] h_Ustar;
     delete[] h_DU;
+    delete[] h_f;
 #elif USE_GPU
     CUDA_SAFE_CALL(cudaFree(d_U));
     CUDA_SAFE_CALL(cudaFree(d_Us));
     CUDA_SAFE_CALL(cudaFree(d_Ustar));
     CUDA_SAFE_CALL(cudaFree(d_DU));
+    CUDA_SAFE_CALL(cudaFree(d_f));
+    CUDA_SAFE_CALL(cudaFree(d_Minv));
 #endif
-  };
+  }; // end main RK function
 
   
 };
 
 #endif // RK_H
+
