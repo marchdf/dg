@@ -14,8 +14,4 @@ void dg_jacobians_face(const int M_T, const int D, fullMatrix<scalar> &XYZNodesF
 void dg_inverse_mass_matrix(const int order, const int elem_type, const std::string getElemType, const int N_s, const int N_E, const int D, fullMatrix<scalar> &XYZNodes, scalar* Minv);
 void dg_mappings(const int M_s, const int M_T, const int N_F, const int N_s, const int N_E, const std::vector<simpleInterface> &interfaces, std::map<int,int> &ElementMap, const std::vector<std::vector<int> > &closures, int* map, int* invmap);
 
-
-
-
-
 #endif

@@ -25,6 +25,7 @@
 #include <rk.h>
 #include <misc.h>
 #include <limiting.h>
+#include <dg_solver.h>
 
 //
 // Function prototypes
@@ -585,209 +586,217 @@ int main (int argc, char **argv)
   gamma[0] = 1.0/6.0; gamma[1] = 2.0/6.0; gamma[2] = 2.0/6.0; gamma[3] = 1.0/6.0;
   
   printf("==== Now RK 4 steps =====\n");
+  DG_SOLVER dgsolver = DG_SOLVER(D, N_F, N_E, N_s, N_G, M_T, M_s, M_G,
+  				 h_phi, h_dphi, h_phi_w, h_dphi_w, h_J, h_invJac,
+  				 boundaryMap, flux, model, gamma0, blas, multifluid, passive);
   RK rk4 = RK(4);
-  rk4.RK_integration(Dt, N_t, output_factor, h_U, h_Minv, blas, N_s, N_E, M_T, N_G, N_F, Limiter, order0);
+  rk4.RK_integration(Dt, N_t, output_factor,
+  		     D, N_F, N_E, N_s, N_G, M_T, M_s,
+  		     h_Minv, 
+  		     h_U,
+  		     Limiter, blas, order0, dgsolver, multifluid, passive, model, gamma0,
+		     msh_lin, m);
 
-  // Time  integration  
-  for (int n = 1; n <= N_t; n++){
+//   // Time  integration  
+//   for (int n = 1; n <= N_t; n++){
 
-    //
-    // RK4
-    //
+//     //
+//     // RK4
+//     //
     
-    if (blas==1) {blasCopy(N_F*N_s*N_E, arch(U), 1, arch(Us), 1);}    
-    else Lcpu_equal(N_s, N_E, N_F, arch(Us), arch(U));// make Us = U;
+//     if (blas==1) {blasCopy(N_F*N_s*N_E, arch(U), 1, arch(Us), 1);}    
+//     else Lcpu_equal(N_s, N_E, N_F, arch(Us), arch(U));// make Us = U;
     
-    // else if (!cpu){
-    //   if (blas==1) {cublasCopy(N_F*N_s*N_E, d_U, 1, d_Us, 1);}    
-    //   else Lgpu_equal(N_s, N_E, N_F, d_Us, d_U);// make Us = U;
-    //   CUDA_SAFE_CALL(cudaThreadSynchronize());
-    // }
+//     // else if (!cpu){
+//     //   if (blas==1) {cublasCopy(N_F*N_s*N_E, d_U, 1, d_Us, 1);}    
+//     //   else Lgpu_equal(N_s, N_E, N_F, d_Us, d_U);// make Us = U;
+//     //   CUDA_SAFE_CALL(cudaThreadSynchronize());
+//     // }
 
-    for(int k = 0; k < 4; k++){
-      if (blas==1) {blasCopy(N_F*N_s*N_E, arch(Us), 1, arch(Ustar), 1);}    
-      else Lcpu_equal(N_s, N_E, N_F, arch(Ustar), arch(Us)); // make Ustar = Us;
+//     for(int k = 0; k < 4; k++){
+//       if (blas==1) {blasCopy(N_F*N_s*N_E, arch(Us), 1, arch(Ustar), 1);}    
+//       else Lcpu_equal(N_s, N_E, N_F, arch(Ustar), arch(Us)); // make Ustar = Us;
       
-      // else if (!cpu){
-      // 	if (blas==1) {cublasCopy(N_F*N_s*N_E, d_Us, 1, d_Ustar, 1);}    
-      // 	else Lgpu_equal(N_s, N_E, N_F, d_Ustar, d_Us); // make Ustar = Us;
-      // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-      // }
-      if (blas==1) {blasAxpy(N_s*N_F*N_E, beta[k], arch(DU), 1, arch(Ustar), 1);}      
-      else Lcpu_add(N_s, N_E, N_F, arch(Ustar), arch(DU), beta[k]);// do Ustar.add(DU,beta[k]);
+//       // else if (!cpu){
+//       // 	if (blas==1) {cublasCopy(N_F*N_s*N_E, d_Us, 1, d_Ustar, 1);}    
+//       // 	else Lgpu_equal(N_s, N_E, N_F, d_Ustar, d_Us); // make Ustar = Us;
+//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
+//       // }
+//       if (blas==1) {blasAxpy(N_s*N_F*N_E, beta[k], arch(DU), 1, arch(Ustar), 1);}      
+//       else Lcpu_add(N_s, N_E, N_F, arch(Ustar), arch(DU), beta[k]);// do Ustar.add(DU,beta[k]);
       
-      // else if (!cpu){
-      // 	if (blas==1) {cublasAxpy(N_s*N_F*N_E, beta[k], d_DU, 1, d_Ustar, 1);}      
-      // 	else Lgpu_add(N_s, N_E, N_F, d_Ustar, d_DU, beta[k]);// do Ustar.add(DU,beta[k]);
-      // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-      // }
-      Tstar = T + beta[k]*Dt;
+//       // else if (!cpu){
+//       // 	if (blas==1) {cublasAxpy(N_s*N_F*N_E, beta[k], d_DU, 1, d_Ustar, 1);}      
+//       // 	else Lgpu_add(N_s, N_E, N_F, d_Ustar, d_DU, beta[k]);// do Ustar.add(DU,beta[k]);
+//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
+//       // }
+//       Tstar = T + beta[k]*Dt;
 
-      // Limit the solution if you so want to do so
-      if(k>0){
-	if (limiterMethod==1){Limiter.HRlimiting(arch(Ustar));}
-      }
+//       // Limit the solution if you so want to do so
+//       if(k>0){
+// 	if (limiterMethod==1){Limiter.HRlimiting(arch(Ustar));}
+//       }
       
       
-      // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
-      if(multifluid)   Lcpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, arch(Ustar), arch(UF));
-      else if(passive) Lcpu_mapToFace_passive(M_s, M_T, N_F, N_s, boundaryMap, arch(Ustar), arch(UF));
+//       // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
+//       if(multifluid)   Lcpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, arch(Ustar), arch(UF));
+//       else if(passive) Lcpu_mapToFace_passive(M_s, M_T, N_F, N_s, boundaryMap, arch(Ustar), arch(UF));
       
-      // else if(!cpu){
-      // 	if(multifluid) Lgpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, d_Ustar, d_UF);
-      // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-      // }
+//       // else if(!cpu){
+//       // 	if(multifluid) Lgpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, d_Ustar, d_UF);
+//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
+//       // }
 
-      // // Get the velocity field (to later find the derivative)
-      // for(int e = 0; e < N_E; e++){
-      // 	for(int i = 0; i < N_s; i++){
-      // 	  arch(Vtmp[e*N_s+i]) = arch(Ustar[(e*N_F+1)*N_s+i])/arch(Ustar[(e*N_F+0)*N_s+i]); // u = (rho u)/rho
-      // 	}
-      // }
+//       // // Get the velocity field (to later find the derivative)
+//       // for(int e = 0; e < N_E; e++){
+//       // 	for(int i = 0; i < N_s; i++){
+//       // 	  arch(Vtmp[e*N_s+i]) = arch(Ustar[(e*N_F+1)*N_s+i])/arch(Ustar[(e*N_F+0)*N_s+i]); // u = (rho u)/rho
+//       // 	}
+//       // }
 
-      // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes
-      if (blas==1) {
-	blasGemm('N','N', N_G  , N_E*N_F, N_s, 1, arch(phi),  N_G  , arch(Ustar), N_s, 0.0, arch(Uinteg), N_G);
-	blasGemm('N','N', N_G*D, N_E*N_F, N_s, 1, arch(dphi), N_G*D, arch(Ustar), N_s, 0.0, arch(dUinteg), N_G*D);}
-	//blasGemm('N','N', N_G, N_E, N_s, 1, arch(dphi, N_G, arch(Vtmp, N_s, 0.0, arch(dVinteg, N_G);}
-      else Lcpu_collocationU(D, N_G, N_s, N_E, N_F, arch(Uinteg), arch(dUinteg), arch(phi), arch(dphi), arch(Ustar));
+//       // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes
+//       if (blas==1) {
+// 	blasGemm('N','N', N_G  , N_E*N_F, N_s, 1, arch(phi),  N_G  , arch(Ustar), N_s, 0.0, arch(Uinteg), N_G);
+// 	blasGemm('N','N', N_G*D, N_E*N_F, N_s, 1, arch(dphi), N_G*D, arch(Ustar), N_s, 0.0, arch(dUinteg), N_G*D);}
+// 	//blasGemm('N','N', N_G, N_E, N_s, 1, arch(dphi, N_G, arch(Vtmp, N_s, 0.0, arch(dVinteg, N_G);}
+//       else Lcpu_collocationU(D, N_G, N_s, N_E, N_F, arch(Uinteg), arch(dUinteg), arch(phi), arch(dphi), arch(Ustar));
       
-      // else if(!cpu){
-      // 	if (blas==1) {
-      // 	  cublasGemm('N','N', N_G  , N_E*N_F, N_s, 1, d_phi , N_G  , d_Ustar, N_s, 0.0, d_Uinteg , N_G);
-      // 	  cublasGemm('N','N', N_G*D, N_E*N_F, N_s, 1, d_dphi, N_G*D, d_Ustar, N_s, 0.0, d_dUinteg, N_G*D);}
-      // 	else Lgpu_collocationU(D, N_G, N_s, N_E, N_F, d_Uinteg, d_dUinteg, d_phi, d_dphi, d_Ustar);
-      // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-      // }
+//       // else if(!cpu){
+//       // 	if (blas==1) {
+//       // 	  cublasGemm('N','N', N_G  , N_E*N_F, N_s, 1, d_phi , N_G  , d_Ustar, N_s, 0.0, d_Uinteg , N_G);
+//       // 	  cublasGemm('N','N', N_G*D, N_E*N_F, N_s, 1, d_dphi, N_G*D, d_Ustar, N_s, 0.0, d_dUinteg, N_G*D);}
+//       // 	else Lgpu_collocationU(D, N_G, N_s, N_E, N_F, d_Uinteg, d_dUinteg, d_phi, d_dphi, d_Ustar);
+//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
+//       // }
 
-      // collocationUF: requires psi, UF, UintegF and some sizes
-      blasCopy(2*N_F*M_T, arch(UF), 1, arch(UintegF), 1);
+//       // collocationUF: requires psi, UF, UintegF and some sizes
+//       blasCopy(2*N_F*M_T, arch(UF), 1, arch(UintegF), 1);
       
-      //for(int kk = 0; kk < 2*N_F*M_T; kk++){ arch(UintegF[kk]) = arch(UF[kk]);}
-      // else if(!cpu){
-      // 	cublasCopy(2*N_F*M_T, d_UF, 1, d_UintegF, 1);
-      // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-      // }
+//       //for(int kk = 0; kk < 2*N_F*M_T; kk++){ arch(UintegF[kk]) = arch(UF[kk]);}
+//       // else if(!cpu){
+//       // 	cublasCopy(2*N_F*M_T, d_UF, 1, d_UintegF, 1);
+//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
+//       // }
      
-      // evaluate_sf: requires Uinteg, (dUintegR), H0, G0, s,f 
-      if(multifluid) Lcpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, arch(s), arch(f), arch(Uinteg), arch(dUinteg), arch(invJac));
-      if(passive)    Lcpu_evaluate_sf_passive(D, N_G, N_E, N_F, gamma0, arch(s), arch(f), arch(Uinteg), arch(dUinteg), arch(invJac));
+//       // evaluate_sf: requires Uinteg, (dUintegR), H0, G0, s,f 
+//       if(multifluid) Lcpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, arch(s), arch(f), arch(Uinteg), arch(dUinteg), arch(invJac));
+//       if(passive)    Lcpu_evaluate_sf_passive(D, N_G, N_E, N_F, gamma0, arch(s), arch(f), arch(Uinteg), arch(dUinteg), arch(invJac));
       
-      // else if(!cpu){
-      // 	if(multifluid) Lgpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, d_s, d_f, d_Uinteg, d_dUinteg, d_invJac);
-      // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-      // }
+//       // else if(!cpu){
+//       // 	if(multifluid) Lgpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, d_s, d_f, d_Uinteg, d_dUinteg, d_invJac);
+//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
+//       // }
 
-      // evaluate_q: requires UintegF, normals, q, H0, G0
-      if(multifluid) Lcpu_evaluate_q_multifluid(M_G, M_T, N_F, flux, model, arch(q), arch(UintegF));
-      if(passive)    Lcpu_evaluate_q_passive(M_G, M_T, N_F, flux, gamma0, arch(q), arch(UintegF));
+//       // evaluate_q: requires UintegF, normals, q, H0, G0
+//       if(multifluid) Lcpu_evaluate_q_multifluid(M_G, M_T, N_F, flux, model, arch(q), arch(UintegF));
+//       if(passive)    Lcpu_evaluate_q_passive(M_G, M_T, N_F, flux, gamma0, arch(q), arch(UintegF));
       
-      // else if (!cpu){
-      // 	if(multifluid) Lgpu_evaluate_q_multifluid(M_G, M_T, N_F, model, d_q, d_UintegF);
-      // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-      // }
+//       // else if (!cpu){
+//       // 	if(multifluid) Lgpu_evaluate_q_multifluid(M_G, M_T, N_F, model, d_q, d_UintegF);
+//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
+//       // }
 
-      // redistribute_sf: requires J, invJac, s, f, phi_w, dphi_w, sJ, fJ, S, F
-      Lcpu_redistribute_sf(D, N_G, N_E, N_F, arch(sJ), arch(fJ), arch(s), arch(f), arch(J), arch(invJac));
+//       // redistribute_sf: requires J, invJac, s, f, phi_w, dphi_w, sJ, fJ, S, F
+//       Lcpu_redistribute_sf(D, N_G, N_E, N_F, arch(sJ), arch(fJ), arch(s), arch(f), arch(J), arch(invJac));
       
-      // else if (!cpu){
-      // 	Lgpu_redistribute_sf(D, N_G, N_E, N_F, d_sJ, d_fJ, d_s, d_f, d_J, d_invJac);
-      // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-      // }
+//       // else if (!cpu){
+//       // 	Lgpu_redistribute_sf(D, N_G, N_E, N_F, d_sJ, d_fJ, d_s, d_f, d_J, d_invJac);
+//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
+//       // }
 
-      // matrix-matrix multiply for sf
-      if (blas==1)  {
-	blasGemm('T','N', N_s, N_E*N_F, N_G  , 1, arch(phi_w) , N_G  , arch(sJ), N_G  , 0.0, arch(S), N_s);
-	blasGemm('T','N', N_s, N_E*N_F, N_G*D, 1, arch(dphi_w), N_G*D, arch(fJ), N_G*D, 0.0, arch(F), N_s);}
-      else Lcpu_gemm_sf(D, N_G, N_s, N_E, N_F, arch(S), arch(F), arch(sJ), arch(fJ), arch(phi_w), arch(dphi_w));
+//       // matrix-matrix multiply for sf
+//       if (blas==1)  {
+// 	blasGemm('T','N', N_s, N_E*N_F, N_G  , 1, arch(phi_w) , N_G  , arch(sJ), N_G  , 0.0, arch(S), N_s);
+// 	blasGemm('T','N', N_s, N_E*N_F, N_G*D, 1, arch(dphi_w), N_G*D, arch(fJ), N_G*D, 0.0, arch(F), N_s);}
+//       else Lcpu_gemm_sf(D, N_G, N_s, N_E, N_F, arch(S), arch(F), arch(sJ), arch(fJ), arch(phi_w), arch(dphi_w));
       
-      // else if (!cpu){
-      // 	if (blas==1)  {
-      // 	  cublasGemm('T','N', N_s, N_E*N_F, N_G  , 1, d_phi_w , N_G  , d_sJ, N_G  , 0.0, d_S, N_s);
-      // 	  cublasGemm('T','N', N_s, N_E*N_F, N_G*D, 1, d_dphi_w, N_G*D, d_fJ, N_G*D, 0.0, d_F, N_s);}
-      // 	else Lgpu_gemm_sf(D, N_G, N_s, N_E, N_F, d_S, d_F, d_sJ, d_fJ, d_phi_w, d_dphi_w);
-      // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-      // }
+//       // else if (!cpu){
+//       // 	if (blas==1)  {
+//       // 	  cublasGemm('T','N', N_s, N_E*N_F, N_G  , 1, d_phi_w , N_G  , d_sJ, N_G  , 0.0, d_S, N_s);
+//       // 	  cublasGemm('T','N', N_s, N_E*N_F, N_G*D, 1, d_dphi_w, N_G*D, d_fJ, N_G*D, 0.0, d_F, N_s);}
+//       // 	else Lgpu_gemm_sf(D, N_G, N_s, N_E, N_F, d_S, d_F, d_sJ, d_fJ, d_phi_w, d_dphi_w);
+//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
+//       // }
 
-      // map_q: requires map, Qtcj, Q (might want to do this in the previous step)
-      Lcpu_mapToElement(N_s, N_E, N_F, arch(Q), arch(q));
+//       // map_q: requires map, Qtcj, Q (might want to do this in the previous step)
+//       Lcpu_mapToElement(N_s, N_E, N_F, arch(Q), arch(q));
       
-      // else if (!cpu){
-      // 	Lgpu_mapToElement(N_s, N_E, N_F, d_Q, d_q);
-      // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-      // }
+//       // else if (!cpu){
+//       // 	Lgpu_mapToElement(N_s, N_E, N_F, d_Q, d_q);
+//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
+//       // }
 
-      // solve: requires Q, F, S, Dt, Minv, DU 
-      Lcpu_solve(N_s, N_E, N_F, arch(DU), arch(S), arch(F), arch(Q), arch(Minv), Dt);
+//       // solve: requires Q, F, S, Dt, Minv, DU 
+//       Lcpu_solve(N_s, N_E, N_F, arch(DU), arch(S), arch(F), arch(Q), arch(Minv), Dt);
       
-      // else if (!cpu){
-      // 	Lgpu_solve(N_s, N_E, N_F, d_DU, d_S, d_F, d_Q, d_Minv, Dt);
-      // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-      // }
+//       // else if (!cpu){
+//       // 	Lgpu_solve(N_s, N_E, N_F, d_DU, d_S, d_F, d_Q, d_Minv, Dt);
+//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
+//       // }
 
 
-      // if 0-order average the solution in the cells
-      if (order0){
-	Lcpu_average_cell_p0(N_s, N_E, N_F, arch(DU));
-	// else if (!cpu){
-	//   Lgpu_average_cell_p0(N_s, N_E, N_F, d_DU);
-	//   CUDA_SAFE_CALL(cudaThreadSynchronize());
-	// }
-      }
+//       // if 0-order average the solution in the cells
+//       if (order0){
+// 	Lcpu_average_cell_p0(N_s, N_E, N_F, arch(DU));
+// 	// else if (!cpu){
+// 	//   Lgpu_average_cell_p0(N_s, N_E, N_F, d_DU);
+// 	//   CUDA_SAFE_CALL(cudaThreadSynchronize());
+// 	// }
+//       }
       
       
-      if (blas==1) {blasAxpy(N_s*N_F*N_E, gamma[k], arch(DU), 1, arch(U), 1);}      
-      else Lcpu_add(N_s, N_E, N_F, arch(U), arch(DU), gamma[k]); // do U.add(DU,gamma[k])
+//       if (blas==1) {blasAxpy(N_s*N_F*N_E, gamma[k], arch(DU), 1, arch(U), 1);}      
+//       else Lcpu_add(N_s, N_E, N_F, arch(U), arch(DU), gamma[k]); // do U.add(DU,gamma[k])
       
-      // else if (!cpu){
-      // 	if (blas==1) {cublasAxpy(N_s*N_F*N_E, gamma[k], d_DU, 1, d_U, 1);}      
-      // 	else Lgpu_add(N_s, N_E, N_F, d_U, d_DU, gamma[k]); // do U.add(DU,gamma[k]
-      // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-      // }
+//       // else if (!cpu){
+//       // 	if (blas==1) {cublasAxpy(N_s*N_F*N_E, gamma[k], d_DU, 1, d_U, 1);}      
+//       // 	else Lgpu_add(N_s, N_E, N_F, d_U, d_DU, gamma[k]); // do U.add(DU,gamma[k]
+//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
+//       // }
 
-    } // end RK4 loop
-    T = T + Dt;
+//     } // end RK4 loop
+//     T = T + Dt;
     
-    if (limiterMethod==1){ Limiter.HRlimiting(arch(U));}
-    else if (limiterMethod==2){
-      // Go from conservative to primitive space
-      //Lcpu_Cons2Prim(N_s, N_E, N_F, arch(U, multifluid, passive, model, gamma0);
+//     if (limiterMethod==1){ Limiter.HRlimiting(arch(U));}
+//     else if (limiterMethod==2){
+//       // Go from conservative to primitive space
+//       //Lcpu_Cons2Prim(N_s, N_E, N_F, arch(U, multifluid, passive, model, gamma0);
       
-      // // Go from nodal to modal representation
-      // blasGemm('N','N', N_s, N_E*N_F, N_s, 1, arch(Nod2Mod, N_s, arch(U, N_s, 0.0, arch(UMod, N_s);
+//       // // Go from nodal to modal representation
+//       // blasGemm('N','N', N_s, N_E*N_F, N_s, 1, arch(Nod2Mod, N_s, arch(U, N_s, 0.0, arch(UMod, N_s);
       
-      // // Limit the solution according to Krivodonova
-      // if (blas==1) {blasCopy(N_F*N_s*N_E, arch(UMod, 1, arch(UModNew, 1);}    
-      // else Lcpu_equal(N_s, N_E, N_F, arch(UModNew, arch(UMod);     // make UModNew = UMod;
-      // Lcpu_hsl(N_s, N_E, N_F, boundaryMap, arch(UMod, arch(UModNew);
+//       // // Limit the solution according to Krivodonova
+//       // if (blas==1) {blasCopy(N_F*N_s*N_E, arch(UMod, 1, arch(UModNew, 1);}    
+//       // else Lcpu_equal(N_s, N_E, N_F, arch(UModNew, arch(UMod);     // make UModNew = UMod;
+//       // Lcpu_hsl(N_s, N_E, N_F, boundaryMap, arch(UMod, arch(UModNew);
       
-      // // Go back to nodal representation (slightly distors the solution at 1e-12)
-      // blasGemm('N','N', N_s, N_E*N_F, N_s, 1, arch(Mod2Nod, N_s, arch(UModNew, N_s, 0.0, arch(U, N_s);
+//       // // Go back to nodal representation (slightly distors the solution at 1e-12)
+//       // blasGemm('N','N', N_s, N_E*N_F, N_s, 1, arch(Mod2Nod, N_s, arch(UModNew, N_s, 0.0, arch(U, N_s);
       
-      // Go back to conservative form
-      //Lcpu_Prim2Cons(N_s, N_E, N_F, arch(U, multifluid, passive, model, gamma0);
-    }
+//       // Go back to conservative form
+//       //Lcpu_Prim2Cons(N_s, N_E, N_F, arch(U, multifluid, passive, model, gamma0);
+//     }
     
 
-    //
-    // Get the solution on the CPU so that we can 
-    // output it to a file 
-    // 
+//     //
+//     // Get the solution on the CPU so that we can 
+//     // output it to a file 
+//     // 
 
-    if(n % (N_t/output_factor) == 0){
+//     if(n % (N_t/output_factor) == 0){
 
-      // Get the solution to the CPU
-#ifdef  USE_GPU
-      CUDA_SAFE_CALL(cudaMemcpy(h_U, d_U, N_s*N_F*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
-#endif
+//       // Get the solution to the CPU
+// #ifdef  USE_GPU
+//       CUDA_SAFE_CALL(cudaMemcpy(h_U, d_U, N_s*N_F*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
+// #endif
 		     
-      printf("Solution written to output file at step %i and time %f.\n",n,n*Dt);
-      if(multifluid)print_dg_multifluid(N_s, N_E, N_F, model, h_U, m, msh_lin, count, n*Dt, 1,-1);
-      if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, h_U, m, msh_lin, count, n*Dt, 1,-1);
-      count++;
-    }
+//       printf("Solution written to output file at step %i and time %f.\n",n,n*Dt);
+//       if(multifluid)print_dg_multifluid(N_s, N_E, N_F, model, h_U, m, msh_lin, count, n*Dt, 1,-1);
+//       if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, h_U, m, msh_lin, count, n*Dt, 1,-1);
+//       count++;
+//     }
         
-  } // end time integration
+//   } // end time integration
 
 
 

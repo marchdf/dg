@@ -10,6 +10,7 @@
 #include <rk_kernels.h>
 #include <cpu_kernels.h>
 #include <limiting.h>
+#include <dg_solver.h>
 
 class RK
 {
@@ -20,7 +21,7 @@ class RK
 
  public:
   // constructor
- RK(int order) : _order(order){
+  RK(int order) : _order(order){
     switch (_order){
     case 4:
       _beta = new scalar[4];
@@ -35,19 +36,23 @@ class RK
       _gamma = new scalar[4];
       _gamma[0] = 1.0/6.0; _gamma[1] = 2.0/6.0; _gamma[2] = 2.0/6.0; _gamma[3] = 1.0/6.0;
     }
-  }
+  };
 
   // destructor
   ~RK(){
     if(_beta)        delete[] _beta;
     if(_gamma)       delete[] _gamma;
-  }
+  };
   
   // main RK integration function
-  void RK_integration(scalar Dt, int Nt, int output_factor, scalar* h_U, scalar* h_Minv, int blas, 
-		      int N_s, int N_E, int M_T, int N_G, int N_F, Limiting &Limiter, bool order0){
+  void RK_integration(scalar Dt, int N_t, int output_factor,
+		      int D, int N_F, int N_E, int N_s, int N_G, int M_T, int M_s,
+		      scalar* h_Minv, 
+		      scalar* h_U,
+		      Limiting &Limiter, int blas, bool order0, DG_SOLVER &dgsolver, bool multifluid, bool passive, int model,
+		      scalar gamma0,
+		      int msh_lin, simpleMesh &m){
 
-  
     // Initialize some vars
     double T = 0;
     double Tstar = 0;
@@ -70,7 +75,7 @@ class RK
 #endif
 
     // Time integration
-    for (int n = 1; n <= Nt; n++){
+    for (int n = 1; n <= N_t; n++){
 
       // Us = U
       if (blas==1) {blasCopy(N_F*N_s*N_E, arch(U), 1, arch(Us), 1);}
@@ -87,7 +92,8 @@ class RK
 	//Limit the solution if you so want to do so
 	if(k>0){if (Limiter.getLimitingMethod()!=0) Limiter.HRlimiting(arch(Ustar));}
 
-	// ATTENTION NOW YOU HAVE TO CALC f(Ustar)
+	// Now you have to calculate f(Ustar)
+	dgsolver.dg_solver(arch(Ustar),arch(f));
 	
 	// Solve: DU = Dt*Minv*f(Ustar)
 	Lsolver(N_s, N_E, N_F, Dt, arch(Minv), arch(f), arch(DU));
@@ -107,16 +113,16 @@ class RK
       if (Limiter.getLimitingMethod()!=0) Limiter.HRlimiting(arch(U));
 
       // Output the solution
-      if(n % (Nt/output_factor) == 0){
+      if(n % (N_t/output_factor) == 0){
 
 	// Get the solution to the CPU
 #ifdef  USE_GPU
 	CUDA_SAFE_CALL(cudaMemcpy(h_U, d_U, N_s*N_F*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
 #endif
 		     
-	printf("Solution NOT written to output file at step %i and time %f.\n",n,n*Dt);
-	//if(multifluid)print_dg_multifluid(N_s, N_E, N_F, model, h_U, m, msh_lin, count, n*Dt, 1,-1); 
-	//if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, h_U, m, msh_lin, count, n*Dt, 1,-1); 
+	printf("Solution written to output file at step %i and time %f.\n",n,n*Dt);
+	if(multifluid)print_dg_multifluid(N_s, N_E, N_F, model, h_U, m, msh_lin, count, n*Dt, 1,-1); 
+	if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, h_U, m, msh_lin, count, n*Dt, 1,-1); 
 	count++;
       }// end output steps
     }// end loop on time
@@ -136,10 +142,9 @@ class RK
     CUDA_SAFE_CALL(cudaFree(d_f));
     CUDA_SAFE_CALL(cudaFree(d_Minv));
 #endif
-  }; // end main RK function
+  }; //end main RK function
 
-  
-};
+}; //end the RK clcass
 
 #endif // RK_H
 

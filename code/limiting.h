@@ -70,7 +70,7 @@ class Limiting
     }
       break;
     default:
-      printf("Bad method input. Defaulting to no limiting.\n");
+      printf("No limiting.\n");
       _method = 0;
     }
   }

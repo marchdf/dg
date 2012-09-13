@@ -28,6 +28,7 @@ extern "C" void Lcpu_gemm_sf(int D, int N_G, int N_s, int N_E, int N_F, scalar* 
 extern "C" void Lcpu_redistribute_q(int M_G, int M_T, int N_F, scalar* qJ, scalar* q);
 extern "C" void Lcpu_gemm_q(int M_G, int M_s, int M_T, int N_F, scalar* Qtcj, scalar* qJ, scalar* psi_w);
 extern "C" void Lcpu_solve(int N_s, int N_E, int N_F, scalar* DU, scalar* S, scalar* F, scalar* Q, scalar* Minv, scalar Dt);
+extern "C" void Lcpu_addSFQ(int N_s, int N_E, int N_F, scalar* A, scalar* S, scalar* F, scalar* Q); // A = S+F+Q
 extern "C" void Lcpu_average_cell_p0(const int N_s, const int N_E, const int N_F, scalar* DU);
 extern "C" void Lcpu_hsl(int N_s, int N_E, int N_F, int boundaryMap, scalar* U, scalar* UNew);
 extern "C" void Lcpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* A, scalar* Alim);
