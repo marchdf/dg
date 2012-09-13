@@ -56,8 +56,6 @@ int factorial(int n){ return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;}
 int main (int argc, char **argv)
 {
 
-
-  
   ////////////////////////////////////////////////////////////////////////////
   //
   // Read arguments from deck
@@ -360,7 +358,8 @@ int main (int argc, char **argv)
   // Setup the limiter
   //
   //////////////////////////////////////////////////////////////////////////
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, boundaryMap, Lag2Mono, Mono2Lag, monoV1D, weight);
+  scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++) h_weight[g] = (scalar)weight(g,0);  
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, boundaryMap, Lag2Mono, Mono2Lag, monoV1D, h_weight);
   
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -401,67 +400,24 @@ int main (int argc, char **argv)
   
   //////////////////////////////////////////////////////////////////////////   
   //
-  // Send stuff to the GPU
+  // Initialize some stuff on the host
   //
   //////////////////////////////////////////////////////////////////////////   
 
   //
-  //  Initialize some stuff on the host. We need to transform
-  //  the data in fullMatrix to a pointer form to transfer to GPU
-  //  note: it's got to be column major sorted
+  //  We need to transform the data in fullMatrix to a pointer form to
+  //  transfer to GPU note: it's got to be column major sorted
   //
   scalar* h_phi     = new scalar[N_G*N_s];          makeZero(h_phi,N_G*N_s);
-  // scalar* h_phiGL   = new scalar[N_GL*N_s];         makeZero(h_phiGL,N_GL*N_s);
-  // scalar* h_phiGLinv= new scalar[N_GL*N_s];         makeZero(h_phiGLinv,N_GL*N_s);
   scalar* h_phi_w   = new scalar[N_G*N_s];          makeZero(h_phi_w,N_G*N_s);          
   scalar* h_dphi    = new scalar[D*N_G*N_s];	    makeZero(h_dphi,D*N_G*N_s);	 
   scalar* h_dphi_w  = new scalar[D*N_G*N_s];	    makeZero(h_dphi_w,D*N_G*N_s);
-  // scalar* h_V1D     = new scalar[N_GL*N_s];         makeZero(h_V1D,N_GL*N_s);
-  // scalar* h_V1Dinv  = new scalar[N_GL*N_s];         makeZero(h_V1Dinv,N_s*N_GL);
-  scalar* h_monoV1D     = new scalar[N_G*N_s];         makeZero(h_monoV1D,N_G*N_s);
-  scalar* h_monoV1Dinv  = new scalar[N_G*N_s];         makeZero(h_monoV1Dinv,N_s*N_G);
-  scalar* h_weight  = new scalar[N_G];              makeZero(h_weight,N_G);
   scalar* h_J       = new scalar[N_E];              makeZero(h_J,N_E);                                 // not same as J!!
   scalar* h_invJac  = new scalar[N_G*D*N_E*D];      makeZero(h_invJac,N_G*D*N_E*D);                    // not same as invJac!!
-  scalar* h_Us      = new scalar[N_s*N_E*N_F];	    makeZero(h_Us,N_s*N_E*N_F);	 
-  scalar* h_Ustar   = new scalar[N_s*N_E*N_F];	    makeZero(h_Ustar,N_s*N_E*N_F);
-  scalar* h_DU      = new scalar[N_s*N_E*N_F];	    makeZero(h_DU,N_s*N_E*N_F);	 
   scalar* h_U       = new scalar[N_s*N_E*N_F];	    makeZero(h_U,N_s*N_E*N_F);
-  // scalar* h_UMod    = new scalar[N_s*N_E*N_F];      makeZero(h_UMod,N_s*N_E*N_F);
-  // scalar* h_UModNew = new scalar[N_s*N_E*N_F];      makeZero(h_UModNew,N_s*N_E*N_F);
-  scalar* h_A       = new scalar[N_s*N_E*N_F];      makeZero(h_A,N_s*N_E*N_F);
-  scalar* h_Alim    = new scalar[N_s*N_E*N_F];      makeZero(h_Alim,N_s*N_E*N_F);
-  scalar* h_UF      = new scalar[2*N_F*M_s*M_T];    makeZero(h_UF,2*N_F*M_s*M_T); 
-  scalar* h_Uinteg  = new scalar[N_F*N_G*N_E];	    makeZero(h_Uinteg,N_F*N_G*N_E);	 
-  scalar* h_dUinteg = new scalar[D*N_G*N_E*N_F];    makeZero(h_dUinteg,D*N_G*N_E*N_F); 
-  scalar* h_UintegF = new scalar[2*N_F*M_G*M_T];    makeZero(h_UintegF,2*N_F*M_G*M_T); 
-  scalar* h_s       = new scalar[N_G*N_E*N_F];	    makeZero(h_s,N_G*N_E*N_F);	 
-  scalar* h_sJ      = new scalar[N_G*N_E*N_F];	    makeZero(h_sJ,N_G*N_E*N_F);	 
-  scalar* h_S       = new scalar[N_s*N_E*N_F];	    makeZero(h_S,N_s*N_E*N_F);	 
-  scalar* h_f       = new scalar[D*N_F*N_G*N_E];    makeZero(h_f,D*N_F*N_G*N_E); 
-  scalar* h_fJ      = new scalar[D*N_G*N_E*N_F];    makeZero(h_fJ,D*N_G*N_E*N_F); 
-  scalar* h_F       = new scalar[N_s*N_E*N_F];	    makeZero(h_F,N_s*N_E*N_F);	 
-  scalar* h_q       = new scalar[M_G*M_T*N_F*2];    makeZero(h_q,M_G*M_T*N_F*2); 
-  scalar* h_Q       = new scalar[N_s*N_E*N_F];      makeZero(h_Q,N_s*N_E*N_F);   
 
-  // scalar* h_Nod2Mod = new scalar[N_s*N_s];          makeZero(h_Nod2Mod, N_s*N_s);
-  // scalar* h_Mod2Nod = new scalar[N_s*N_s];          makeZero(h_Mod2Nod, N_s*N_s);
-
-  scalar* h_Lag2Mono = new scalar[N_s*N_s];         makeZero(h_Lag2Mono, N_s*N_s);
-  scalar* h_Mono2Lag = new scalar[N_s*N_s];         makeZero(h_Mono2Lag, N_s*N_s);
-  
-  scalar* h_Vtmp    = new scalar[N_s*N_E];          makeZero(h_Vtmp, N_s*N_E);
-  scalar* h_dVinteg = new scalar[N_G*N_E];          makeZero(h_dVinteg, N_G*N_E);
-  
   // copy from the fullMatrix to the pointer format (column major)
   copyMatrixToPointer(phi,h_phi);
-  // copyMatrixToPointer(phiGL,h_phiGL);
-  // copyMatrixToPointer(phiGLinv,h_phiGLinv);
-  // copyMatrixToPointer(V1D,h_V1D);
-  // copyMatrixToPointer(V1Dinv,h_V1Dinv);
-  copyMatrixToPointer(monoV1D,h_monoV1D);
-  copyMatrixToPointer(monoV1Dinv,h_monoV1Dinv);
-  for(int g=0; g<N_G; g++) h_weight[g] = weight(g,0);
   copyMatrixToPointer(phi_w,h_phi_w);
   copyMatrixToPointer(dphi,h_dphi);
   copyMatrixToPointer(dphi_w,h_dphi_w);
@@ -484,88 +440,7 @@ int main (int argc, char **argv)
       }
     }
   }
-  // copyMatrixToPointer(Nod2Mod,h_Nod2Mod);
-  // copyMatrixToPointer(Mod2Nod,h_Mod2Nod);
-  copyMatrixToPointer(Lag2Mono,h_Lag2Mono);
-  copyMatrixToPointer(Mono2Lag,h_Mono2Lag);
-  
-  
-  //
-  // Initialize and allocate some stuff on the device
-  //
-#ifdef USE_GPU
-  scalar* d_phi, *d_phi_w, *d_dphi, *d_dphi_w;
-  scalar* d_J, *d_invJac;
-  scalar* d_Minv;
-  scalar* d_U, *d_Us, *d_Ustar, *d_DU, *d_UF;
-  scalar* d_Uinteg, *d_dUinteg, *d_UintegF;
-  scalar* d_s, *d_f, *d_q; 
-  scalar* d_sJ, *d_fJ; 
-  scalar* d_S, *d_F, *d_Q;
-  scalar* d_A, *d_Alim;
-  scalar* d_Lag2Mono, *d_Mono2Lag;
-  scalar* d_weight;
-  scalar* d_monoV1D;
-  
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_phi,N_G*N_s*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_phi_w,N_G*N_s*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_dphi,D*N_G*N_s*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_dphi_w,D*N_G*N_s*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_J,N_E*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_invJac,N_G*D*N_E*D*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_Minv,N_s*N_s*N_E*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_U,N_s*N_E*N_F*sizeof(scalar)));
-    
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_Us,N_s*N_E*N_F*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_Ustar,N_s*N_E*N_F*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_DU,N_s*N_E*N_F*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_UF,M_s*M_T*N_F*2*sizeof(scalar)));
-
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_Uinteg,N_G*N_E*N_F*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_dUinteg,D*N_G*N_E*N_F*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_UintegF,M_G*M_T*N_F*2*sizeof(scalar)));
-    
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_s,N_G*N_E*N_F*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_sJ,N_G*N_E*N_F*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_S,N_s*N_E*N_F*sizeof(scalar)));
-    
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_f,D*N_G*N_E*N_F*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_fJ,D*N_G*N_E*N_F*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_F,N_s*N_E*N_F*sizeof(scalar)));
-    
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_q,M_G*M_T*N_F*2*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_Q,N_s*N_E*N_F*sizeof(scalar)));
-
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_A   ,N_s*N_E*N_F*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_Alim,N_s*N_E*N_F*sizeof(scalar)));
-
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_Lag2Mono,N_s*N_s*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_Mono2Lag,N_s*N_s*sizeof(scalar)));
-  
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_weight,N_G*sizeof(scalar)));
-
-  CUDA_SAFE_CALL(cudaMalloc((void**) &d_monoV1D,N_G*N_s*sizeof(scalar)));
-
-  //
-  // Send the stuff to the device
-  //
-  CUDA_SAFE_CALL(cudaMemcpy(d_phi, h_phi, N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-  CUDA_SAFE_CALL(cudaMemcpy(d_phi_w, h_phi_w, N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-  CUDA_SAFE_CALL(cudaMemcpy(d_dphi, h_dphi, D*N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-  CUDA_SAFE_CALL(cudaMemcpy(d_dphi_w, h_dphi_w, D*N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-  CUDA_SAFE_CALL(cudaMemcpy(d_J, h_J, N_E*sizeof(scalar), cudaMemcpyHostToDevice));
-  CUDA_SAFE_CALL(cudaMemcpy(d_invJac, h_invJac, N_G*D*N_E*D*sizeof(scalar), cudaMemcpyHostToDevice));
-  CUDA_SAFE_CALL(cudaMemcpy(d_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar), cudaMemcpyHostToDevice));
-  CUDA_SAFE_CALL(cudaMemcpy(d_U, h_U, N_s*N_E*N_F*sizeof(scalar), cudaMemcpyHostToDevice));
-  CUDA_SAFE_CALL(cudaMemset(d_Q, (scalar)0.0, N_E*N_F*N_s*sizeof(scalar)));
-  CUDA_SAFE_CALL(cudaMemcpy(d_Lag2Mono, h_Lag2Mono, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-  CUDA_SAFE_CALL(cudaMemcpy(d_Mono2Lag, h_Mono2Lag, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-  CUDA_SAFE_CALL(cudaMemcpy(d_weight, h_weight, N_G*sizeof(scalar), cudaMemcpyHostToDevice));
-  CUDA_SAFE_CALL(cudaMemcpy(d_monoV1D, h_monoV1D, N_G*sizeof(scalar), cudaMemcpyHostToDevice));
-
-#endif
-
-  
+ 
   //////////////////////////////////////////////////////////////////////////   
   //
   // Solve the problem on the CPU/GPU.
@@ -579,12 +454,6 @@ int main (int argc, char **argv)
   int output_factor = inputs.getOutputFactor();
   int count = 1;
  
-  // Runge-Kutta 4 coefficients
-  scalar *beta = new scalar[4];
-  beta[0] = 0.0; beta[1] = 0.5; beta[2] = 0.5; beta[3] = 1.0;
-  scalar *gamma = new scalar[4];
-  gamma[0] = 1.0/6.0; gamma[1] = 2.0/6.0; gamma[2] = 2.0/6.0; gamma[3] = 1.0/6.0;
-  
   printf("==== Now RK 4 steps =====\n");
   DG_SOLVER dgsolver = DG_SOLVER(D, N_F, N_E, N_s, N_G, M_T, M_s, M_G,
   				 h_phi, h_dphi, h_phi_w, h_dphi_w, h_J, h_invJac,
@@ -596,208 +465,6 @@ int main (int argc, char **argv)
   		     h_U,
   		     Limiter, blas, order0, dgsolver, multifluid, passive, model, gamma0,
 		     msh_lin, m);
-
-//   // Time  integration  
-//   for (int n = 1; n <= N_t; n++){
-
-//     //
-//     // RK4
-//     //
-    
-//     if (blas==1) {blasCopy(N_F*N_s*N_E, arch(U), 1, arch(Us), 1);}    
-//     else Lcpu_equal(N_s, N_E, N_F, arch(Us), arch(U));// make Us = U;
-    
-//     // else if (!cpu){
-//     //   if (blas==1) {cublasCopy(N_F*N_s*N_E, d_U, 1, d_Us, 1);}    
-//     //   else Lgpu_equal(N_s, N_E, N_F, d_Us, d_U);// make Us = U;
-//     //   CUDA_SAFE_CALL(cudaThreadSynchronize());
-//     // }
-
-//     for(int k = 0; k < 4; k++){
-//       if (blas==1) {blasCopy(N_F*N_s*N_E, arch(Us), 1, arch(Ustar), 1);}    
-//       else Lcpu_equal(N_s, N_E, N_F, arch(Ustar), arch(Us)); // make Ustar = Us;
-      
-//       // else if (!cpu){
-//       // 	if (blas==1) {cublasCopy(N_F*N_s*N_E, d_Us, 1, d_Ustar, 1);}    
-//       // 	else Lgpu_equal(N_s, N_E, N_F, d_Ustar, d_Us); // make Ustar = Us;
-//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-//       // }
-//       if (blas==1) {blasAxpy(N_s*N_F*N_E, beta[k], arch(DU), 1, arch(Ustar), 1);}      
-//       else Lcpu_add(N_s, N_E, N_F, arch(Ustar), arch(DU), beta[k]);// do Ustar.add(DU,beta[k]);
-      
-//       // else if (!cpu){
-//       // 	if (blas==1) {cublasAxpy(N_s*N_F*N_E, beta[k], d_DU, 1, d_Ustar, 1);}      
-//       // 	else Lgpu_add(N_s, N_E, N_F, d_Ustar, d_DU, beta[k]);// do Ustar.add(DU,beta[k]);
-//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-//       // }
-//       Tstar = T + beta[k]*Dt;
-
-//       // Limit the solution if you so want to do so
-//       if(k>0){
-// 	if (limiterMethod==1){Limiter.HRlimiting(arch(Ustar));}
-//       }
-      
-      
-//       // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
-//       if(multifluid)   Lcpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, arch(Ustar), arch(UF));
-//       else if(passive) Lcpu_mapToFace_passive(M_s, M_T, N_F, N_s, boundaryMap, arch(Ustar), arch(UF));
-      
-//       // else if(!cpu){
-//       // 	if(multifluid) Lgpu_mapToFace_multifluid(M_s, M_T, N_F, N_s, boundaryMap, d_Ustar, d_UF);
-//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-//       // }
-
-//       // // Get the velocity field (to later find the derivative)
-//       // for(int e = 0; e < N_E; e++){
-//       // 	for(int i = 0; i < N_s; i++){
-//       // 	  arch(Vtmp[e*N_s+i]) = arch(Ustar[(e*N_F+1)*N_s+i])/arch(Ustar[(e*N_F+0)*N_s+i]); // u = (rho u)/rho
-//       // 	}
-//       // }
-
-//       // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes
-//       if (blas==1) {
-// 	blasGemm('N','N', N_G  , N_E*N_F, N_s, 1, arch(phi),  N_G  , arch(Ustar), N_s, 0.0, arch(Uinteg), N_G);
-// 	blasGemm('N','N', N_G*D, N_E*N_F, N_s, 1, arch(dphi), N_G*D, arch(Ustar), N_s, 0.0, arch(dUinteg), N_G*D);}
-// 	//blasGemm('N','N', N_G, N_E, N_s, 1, arch(dphi, N_G, arch(Vtmp, N_s, 0.0, arch(dVinteg, N_G);}
-//       else Lcpu_collocationU(D, N_G, N_s, N_E, N_F, arch(Uinteg), arch(dUinteg), arch(phi), arch(dphi), arch(Ustar));
-      
-//       // else if(!cpu){
-//       // 	if (blas==1) {
-//       // 	  cublasGemm('N','N', N_G  , N_E*N_F, N_s, 1, d_phi , N_G  , d_Ustar, N_s, 0.0, d_Uinteg , N_G);
-//       // 	  cublasGemm('N','N', N_G*D, N_E*N_F, N_s, 1, d_dphi, N_G*D, d_Ustar, N_s, 0.0, d_dUinteg, N_G*D);}
-//       // 	else Lgpu_collocationU(D, N_G, N_s, N_E, N_F, d_Uinteg, d_dUinteg, d_phi, d_dphi, d_Ustar);
-//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-//       // }
-
-//       // collocationUF: requires psi, UF, UintegF and some sizes
-//       blasCopy(2*N_F*M_T, arch(UF), 1, arch(UintegF), 1);
-      
-//       //for(int kk = 0; kk < 2*N_F*M_T; kk++){ arch(UintegF[kk]) = arch(UF[kk]);}
-//       // else if(!cpu){
-//       // 	cublasCopy(2*N_F*M_T, d_UF, 1, d_UintegF, 1);
-//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-//       // }
-     
-//       // evaluate_sf: requires Uinteg, (dUintegR), H0, G0, s,f 
-//       if(multifluid) Lcpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, arch(s), arch(f), arch(Uinteg), arch(dUinteg), arch(invJac));
-//       if(passive)    Lcpu_evaluate_sf_passive(D, N_G, N_E, N_F, gamma0, arch(s), arch(f), arch(Uinteg), arch(dUinteg), arch(invJac));
-      
-//       // else if(!cpu){
-//       // 	if(multifluid) Lgpu_evaluate_sf_multifluid(D, N_G, N_E, N_F, model, d_s, d_f, d_Uinteg, d_dUinteg, d_invJac);
-//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-//       // }
-
-//       // evaluate_q: requires UintegF, normals, q, H0, G0
-//       if(multifluid) Lcpu_evaluate_q_multifluid(M_G, M_T, N_F, flux, model, arch(q), arch(UintegF));
-//       if(passive)    Lcpu_evaluate_q_passive(M_G, M_T, N_F, flux, gamma0, arch(q), arch(UintegF));
-      
-//       // else if (!cpu){
-//       // 	if(multifluid) Lgpu_evaluate_q_multifluid(M_G, M_T, N_F, model, d_q, d_UintegF);
-//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-//       // }
-
-//       // redistribute_sf: requires J, invJac, s, f, phi_w, dphi_w, sJ, fJ, S, F
-//       Lcpu_redistribute_sf(D, N_G, N_E, N_F, arch(sJ), arch(fJ), arch(s), arch(f), arch(J), arch(invJac));
-      
-//       // else if (!cpu){
-//       // 	Lgpu_redistribute_sf(D, N_G, N_E, N_F, d_sJ, d_fJ, d_s, d_f, d_J, d_invJac);
-//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-//       // }
-
-//       // matrix-matrix multiply for sf
-//       if (blas==1)  {
-// 	blasGemm('T','N', N_s, N_E*N_F, N_G  , 1, arch(phi_w) , N_G  , arch(sJ), N_G  , 0.0, arch(S), N_s);
-// 	blasGemm('T','N', N_s, N_E*N_F, N_G*D, 1, arch(dphi_w), N_G*D, arch(fJ), N_G*D, 0.0, arch(F), N_s);}
-//       else Lcpu_gemm_sf(D, N_G, N_s, N_E, N_F, arch(S), arch(F), arch(sJ), arch(fJ), arch(phi_w), arch(dphi_w));
-      
-//       // else if (!cpu){
-//       // 	if (blas==1)  {
-//       // 	  cublasGemm('T','N', N_s, N_E*N_F, N_G  , 1, d_phi_w , N_G  , d_sJ, N_G  , 0.0, d_S, N_s);
-//       // 	  cublasGemm('T','N', N_s, N_E*N_F, N_G*D, 1, d_dphi_w, N_G*D, d_fJ, N_G*D, 0.0, d_F, N_s);}
-//       // 	else Lgpu_gemm_sf(D, N_G, N_s, N_E, N_F, d_S, d_F, d_sJ, d_fJ, d_phi_w, d_dphi_w);
-//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-//       // }
-
-//       // map_q: requires map, Qtcj, Q (might want to do this in the previous step)
-//       Lcpu_mapToElement(N_s, N_E, N_F, arch(Q), arch(q));
-      
-//       // else if (!cpu){
-//       // 	Lgpu_mapToElement(N_s, N_E, N_F, d_Q, d_q);
-//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-//       // }
-
-//       // solve: requires Q, F, S, Dt, Minv, DU 
-//       Lcpu_solve(N_s, N_E, N_F, arch(DU), arch(S), arch(F), arch(Q), arch(Minv), Dt);
-      
-//       // else if (!cpu){
-//       // 	Lgpu_solve(N_s, N_E, N_F, d_DU, d_S, d_F, d_Q, d_Minv, Dt);
-//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-//       // }
-
-
-//       // if 0-order average the solution in the cells
-//       if (order0){
-// 	Lcpu_average_cell_p0(N_s, N_E, N_F, arch(DU));
-// 	// else if (!cpu){
-// 	//   Lgpu_average_cell_p0(N_s, N_E, N_F, d_DU);
-// 	//   CUDA_SAFE_CALL(cudaThreadSynchronize());
-// 	// }
-//       }
-      
-      
-//       if (blas==1) {blasAxpy(N_s*N_F*N_E, gamma[k], arch(DU), 1, arch(U), 1);}      
-//       else Lcpu_add(N_s, N_E, N_F, arch(U), arch(DU), gamma[k]); // do U.add(DU,gamma[k])
-      
-//       // else if (!cpu){
-//       // 	if (blas==1) {cublasAxpy(N_s*N_F*N_E, gamma[k], d_DU, 1, d_U, 1);}      
-//       // 	else Lgpu_add(N_s, N_E, N_F, d_U, d_DU, gamma[k]); // do U.add(DU,gamma[k]
-//       // 	CUDA_SAFE_CALL(cudaThreadSynchronize());
-//       // }
-
-//     } // end RK4 loop
-//     T = T + Dt;
-    
-//     if (limiterMethod==1){ Limiter.HRlimiting(arch(U));}
-//     else if (limiterMethod==2){
-//       // Go from conservative to primitive space
-//       //Lcpu_Cons2Prim(N_s, N_E, N_F, arch(U, multifluid, passive, model, gamma0);
-      
-//       // // Go from nodal to modal representation
-//       // blasGemm('N','N', N_s, N_E*N_F, N_s, 1, arch(Nod2Mod, N_s, arch(U, N_s, 0.0, arch(UMod, N_s);
-      
-//       // // Limit the solution according to Krivodonova
-//       // if (blas==1) {blasCopy(N_F*N_s*N_E, arch(UMod, 1, arch(UModNew, 1);}    
-//       // else Lcpu_equal(N_s, N_E, N_F, arch(UModNew, arch(UMod);     // make UModNew = UMod;
-//       // Lcpu_hsl(N_s, N_E, N_F, boundaryMap, arch(UMod, arch(UModNew);
-      
-//       // // Go back to nodal representation (slightly distors the solution at 1e-12)
-//       // blasGemm('N','N', N_s, N_E*N_F, N_s, 1, arch(Mod2Nod, N_s, arch(UModNew, N_s, 0.0, arch(U, N_s);
-      
-//       // Go back to conservative form
-//       //Lcpu_Prim2Cons(N_s, N_E, N_F, arch(U, multifluid, passive, model, gamma0);
-//     }
-    
-
-//     //
-//     // Get the solution on the CPU so that we can 
-//     // output it to a file 
-//     // 
-
-//     if(n % (N_t/output_factor) == 0){
-
-//       // Get the solution to the CPU
-// #ifdef  USE_GPU
-//       CUDA_SAFE_CALL(cudaMemcpy(h_U, d_U, N_s*N_F*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
-// #endif
-		     
-//       printf("Solution written to output file at step %i and time %f.\n",n,n*Dt);
-//       if(multifluid)print_dg_multifluid(N_s, N_E, N_F, model, h_U, m, msh_lin, count, n*Dt, 1,-1);
-//       if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, h_U, m, msh_lin, count, n*Dt, 1,-1);
-//       count++;
-//     }
-        
-//   } // end time integration
-
 
 
   //////////////////////////////////////////////////////////////////////////   
@@ -873,40 +540,18 @@ int main (int argc, char **argv)
     }
   }
 
-  // // Go directly from nodal to modal representation
-  // scalar* h_UinitMod = new scalar[N_s*N_E*N_F];  makeZero(h_UinitMod,N_s*N_E*N_F);
-  // hostblasGemm('N','N', N_s, N_E*N_F, N_s, 1, h_Nod2Mod,  N_s, h_Uinit, N_s, 0.0, h_UinitMod, N_s);
-  // hostblasGemm('N','N', N_s, N_E*N_F, N_s, 1, h_Nod2Mod,  N_s, h_U    , N_s, 0.0, h_UMod    , N_s);
-    
-  // // Get the cell average from the modal representation
-  // scalar* h_UinitModAvg = new scalar[N_E*N_F];  makeZero(h_UinitModAvg,N_E*N_F);
-  // scalar* h_UModAvg     = new scalar[N_E*N_F];  makeZero(h_UModAvg    ,N_E*N_F);
-  // for(int e = 0; e < N_E; e++){
-  //   for(int fc = 0; fc < N_F; fc++){
-  //     h_UinitModAvg[e*N_F+fc] = h_UinitMod[(e*N_F+fc)*N_s+0]*sqrt(2.0)*h_J[e]; // gamma_n = 2/(2n+1) see p45
-  //     h_UModAvg    [e*N_F+fc] = h_UMod    [(e*N_F+fc)*N_s+0]*sqrt(2.0)*h_J[e]; // gamma_n = 2/(2n+1) see p45
-  //   }
-  // }
-
   // Calculate the different norms of the error
   scalar E = 0;
   scalar EMod = 0;
   scalar* h_Err1      = new scalar[N_F]; makeZero(h_Err1   , N_F);
-  //scalar* h_Err1Mod   = new scalar[N_F]; makeZero(h_Err1Mod, N_F);
   scalar* h_Err2      = new scalar[N_F]; makeZero(h_Err2   , N_F);
-  //scalar* h_Err2Mod   = new scalar[N_F]; makeZero(h_Err2Mod, N_F);
   scalar* h_ErrInf    = new scalar[N_F]; makeZero(h_ErrInf   , N_F);
-  //scalar* h_ErrInfMod = new scalar[N_F]; makeZero(h_ErrInfMod, N_F);
   for(int e = 0; e < N_E; e++){
     for(int fc = 0; fc < N_F; fc++){
       E    = h_UinitAvg   [e*N_F+fc]-h_UAvg   [e*N_F+fc];
-      //EMod = h_UinitModAvg[e*N_F+fc]-h_UModAvg[e*N_F+fc];
       h_Err1[fc]    += fabs(E);
-      //h_Err1Mod[fc] += fabs(EMod);
       h_Err2[fc]    += E   *E;
-      //h_Err2Mod[fc] += EMod*EMod;
       if (h_ErrInf[fc]    < fabs(E   ))  h_ErrInf   [fc] = fabs(E);
-      //if (h_ErrInfMod[fc] < fabs(EMod))  h_ErrInfMod[fc] = fabs(EMod);
     }
   }
   
@@ -914,29 +559,19 @@ int main (int argc, char **argv)
   std::string error = "error.dat"; 
   FILE *f = fopen(error.c_str(),"w");
   fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_Err1[fc]/N_E);          fprintf(f,"\n");
-  //fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_Err1Mod[fc]/N_E);       fprintf(f,"\n");
   fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", sqrt(h_Err2[fc]/N_E));    fprintf(f,"\n");
-  //fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", sqrt(h_Err2Mod[fc]/N_E)); fprintf(f,"\n");
   fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_ErrInf[fc]);            fprintf(f,"\n");
-  //fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_ErrInfMod[fc]);         fprintf(f,"\n");
   fclose(f);
   
   // Free some stuff
   delete[] h_Uinit;
   delete[] h_Uinitg;
   delete[] h_UinitAvg;
-  //delete[] h_UinitModAvg;
   delete[] h_Ug;
   delete[] h_UAvg;
-  //delete[] h_UModAvg;
-  //delete[] h_UinitMod;
   delete[] h_Err1;
-  //delete[] h_Err1Mod;
   delete[] h_Err2;
-  //delete[] h_Err2Mod;
   delete[] h_ErrInf;
-  //delete[] h_ErrInfMod;
-  
 
 
   //////////////////////////////////////////////////////////////////////////   
@@ -945,35 +580,6 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////   
 #ifdef USE_GPU
-  CUDA_SAFE_CALL(cudaFree(d_phi));
-  CUDA_SAFE_CALL(cudaFree(d_phi_w));
-  CUDA_SAFE_CALL(cudaFree(d_dphi));
-  CUDA_SAFE_CALL(cudaFree(d_dphi_w));
-  CUDA_SAFE_CALL(cudaFree(d_J));
-  CUDA_SAFE_CALL(cudaFree(d_invJac));
-  CUDA_SAFE_CALL(cudaFree(d_Minv));
-  CUDA_SAFE_CALL(cudaFree(d_U));
-  CUDA_SAFE_CALL(cudaFree(d_Us));
-  CUDA_SAFE_CALL(cudaFree(d_Ustar));
-  CUDA_SAFE_CALL(cudaFree(d_DU));
-  CUDA_SAFE_CALL(cudaFree(d_UF));
-  CUDA_SAFE_CALL(cudaFree(d_Uinteg));
-  CUDA_SAFE_CALL(cudaFree(d_dUinteg));
-  CUDA_SAFE_CALL(cudaFree(d_UintegF));
-  CUDA_SAFE_CALL(cudaFree(d_s));
-  CUDA_SAFE_CALL(cudaFree(d_sJ));
-  CUDA_SAFE_CALL(cudaFree(d_S));
-  CUDA_SAFE_CALL(cudaFree(d_f));
-  CUDA_SAFE_CALL(cudaFree(d_fJ));
-  CUDA_SAFE_CALL(cudaFree(d_F));
-  CUDA_SAFE_CALL(cudaFree(d_q));
-  CUDA_SAFE_CALL(cudaFree(d_Q));
-  CUDA_SAFE_CALL(cudaFree(d_A));
-  CUDA_SAFE_CALL(cudaFree(d_Alim));
-  CUDA_SAFE_CALL(cudaFree(d_Lag2Mono));
-  CUDA_SAFE_CALL(cudaFree(d_Mono2Lag));
-  CUDA_SAFE_CALL(cudaFree(d_weight));
-  CUDA_SAFE_CALL(cudaFree(d_monoV1D));
   status = cublasShutdown();
 #endif
   
@@ -987,51 +593,15 @@ int main (int argc, char **argv)
 
   delete[] h_Minv;
   delete[] h_phi;
-  // delete[] h_phiGL;
-  // delete[] h_phiGLinv;
   delete[] h_phi_w;
   delete[] h_dphi;
   delete[] h_dphi_w;
-  // delete[] h_V1D;
-  // delete[] h_V1Dinv;  
-  delete[] h_monoV1D;
-  delete[] h_monoV1Dinv;
   delete[] h_weight;
   delete[] h_J;
   delete[] h_invJac;
   delete[] h_U;
-  //delete[] h_UMod;
-  //delete[] h_UModNew;
-  delete[] h_A;
-  delete[] h_Alim;
-  delete[] h_Us;
-  delete[] h_Ustar;
-  delete[] h_DU;
-  delete[] h_UF;
-  delete[] h_Uinteg;
-  delete[] h_dUinteg;
-  delete[] h_UintegF;
-  delete[] h_s;
-  delete[] h_sJ;
-  delete[] h_S;
-  delete[] h_f;
-  delete[] h_fJ;
-  delete[] h_F;
-  delete[] h_q;
-  delete[] h_Q;
 
-  // delete[] h_Nod2Mod;
-  // delete[] h_Mod2Nod;
-
-  delete[] h_Lag2Mono;
-  delete[] h_Mono2Lag;
-
-  delete[] h_Vtmp;
-  delete[] h_dVinteg;
   
-  delete[] beta;
-  delete[] gamma;
-
 }// end main
 
 

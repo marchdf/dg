@@ -30,7 +30,7 @@ class Limiting
  Limiting(int method) : _method(method){}
   
  Limiting(int method, int N_s, int N_E, int N_F, int N_G, int boundaryMap,
-	  fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, fullMatrix<scalar> &V1D, fullMatrix<scalar> &weight)
+	  fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, fullMatrix<scalar> &V1D, scalar* weight)
    : _method(method), _N_s(N_s), _N_E(N_E), _N_F(N_F), _N_G(N_G), _boundaryMap(boundaryMap){
     switch (_method){
     case 1:{
@@ -38,7 +38,7 @@ class Limiting
       _Lag2Mono = new scalar[_N_s*_N_s];     copyMatrixToPointer(Lag2Mono,_Lag2Mono);
       _Mono2Lag = new scalar[_N_s*_N_s];     copyMatrixToPointer(Mono2Lag,_Mono2Lag);
       _V1D      = new scalar[_N_G*_N_s];     copyMatrixToPointer(V1D,_V1D);
-      _weight   = new scalar[_N_G];          copyMatrixToPointer(weight,_weight);
+      _weight   = new scalar[_N_G];          memcpy(_weight,weight,N_G*sizeof(scalar));
       _A        = new scalar[_N_s*_N_E*N_F];
       _Alim     = new scalar[_N_s*_N_E*N_F];
 #elif USE_GPU
@@ -46,7 +46,6 @@ class Limiting
       scalar* tmpLag2Mono = new scalar[_N_s*_N_s];     copyMatrixToPointer(Lag2Mono,tmpLag2Mono);
       scalar* tmpMono2Lag = new scalar[_N_s*_N_s];     copyMatrixToPointer(Mono2Lag,tmpMono2Lag);
       scalar* tmpV1D      = new scalar[_N_G*_N_s];     copyMatrixToPointer(V1D,tmpV1D);
-      scalar* tmpweight   = new scalar[_N_G];          copyMatrixToPointer(weight,tmpweight);
 
       // Allocate on GPU
       CUDA_SAFE_CALL(cudaMalloc((void**) &_Lag2Mono,_N_s*_N_s*sizeof(scalar)));
@@ -60,12 +59,11 @@ class Limiting
       CUDA_SAFE_CALL(cudaMemcpy(_Lag2Mono, tmpLag2Mono, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
       CUDA_SAFE_CALL(cudaMemcpy(_Mono2Lag, tmpMono2Lag, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
       CUDA_SAFE_CALL(cudaMemcpy(_V1D, tmpV1D, N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_weight, tmpweight, N_G*sizeof(scalar), cudaMemcpyHostToDevice));
+      CUDA_SAFE_CALL(cudaMemcpy(_weight,weight, N_G*sizeof(scalar), cudaMemcpyHostToDevice));
 	    
       delete[] tmpLag2Mono;	
       delete[] tmpMono2Lag;	
       delete[] tmpV1D;	
-      delete[] tmpweight;   
 #endif
     }
       break;
