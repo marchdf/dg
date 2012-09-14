@@ -4,13 +4,12 @@
 #ifndef RK_H
 #define RK_H
 
-#include <stdio.h>
-#include <scalar_def.h>
 #include <macros.h>
 #include <rk_kernels.h>
 #include <cpu_kernels.h>
 #include <limiting.h>
 #include <dg_solver.h>
+#include <print_sol.h>
 
 class RK
 {
@@ -57,53 +56,63 @@ class RK
     double T = 0;
     double Tstar = 0;
     int count = 1;
+
+    scalar* _Us;
+    scalar* _Ustar;
+    scalar* _DU;
+    scalar* _f;
+    scalar* _Minv;    
 #ifdef USE_CPU
-    scalar* h_Us    = new scalar[N_s*N_E*N_F];  makeZero(h_Us   ,N_s*N_E*N_F);	 
-    scalar* h_Ustar = new scalar[N_s*N_E*N_F];  makeZero(h_Ustar,N_s*N_E*N_F);
-    scalar* h_DU    = new scalar[N_s*N_E*N_F];  makeZero(h_DU   ,N_s*N_E*N_F);
-    scalar* h_f     = new scalar[N_s*N_E*N_F];  makeZero(h_f    ,N_s*N_E*N_F);
+    _Us    = new scalar[N_s*N_E*N_F];  makeZero(_Us   ,N_s*N_E*N_F);	 
+    _Ustar = new scalar[N_s*N_E*N_F];  makeZero(_Ustar,N_s*N_E*N_F);
+    _DU    = new scalar[N_s*N_E*N_F];  makeZero(_DU   ,N_s*N_E*N_F);
+    _f     = new scalar[N_s*N_E*N_F];  makeZero(_f    ,N_s*N_E*N_F);
+    _Minv  = new scalar[N_s*N_s*N_E];  memcpy(_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar));
 #elif USE_GPU
-    scalar* d_U, *d_Us, *d_Ustar, *d_DU, *d_UF, *d_f, *d_Minv;
+    scalar* d_U;
+    // Allocate on device
     CUDA_SAFE_CALL(cudaMalloc((void**) &d_U,N_s*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_Us,N_s*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_Ustar,N_s*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_DU,N_s*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_f,N_s*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_Minv,N_s*N_s*N_E*sizeof(scalar)));
+
+    // Copy info to device
     CUDA_SAFE_CALL(cudaMemcpy(d_U, h_U, N_s*N_E*N_F*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_Us,N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_Ustar,N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_DU,N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_f,N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_Minv,N_s*N_s*N_E*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemcpy(d_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar), cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar), cudaMemcpyHostToDevice));
 #endif
 
     // Time integration
     for (int n = 1; n <= N_t; n++){
 
       // Us = U
-      if (blas==1) {blasCopy(N_F*N_s*N_E, arch(U), 1, arch(Us), 1);}
-      else Lcpu_equal(N_s, N_E, N_F, arch(Us), arch(U));
+      if (blas==1) {blasCopy(N_F*N_s*N_E, arch(U), 1, _Us, 1);}
+      else Lcpu_equal(N_s, N_E, N_F, _Us, arch(U));
 
       for(int k = 0; k < _order; k++){
 	// Ustar = Us + beta*DU
-	if (blas==1) {blasCopy(N_F*N_s*N_E, arch(Us), 1, arch(Ustar), 1);}
-	else Lcpu_equal(N_s, N_E, N_F, arch(Ustar), arch(Us)); // make Ustar = Us;
-	if (blas==1) {blasAxpy(N_s*N_F*N_E, _beta[k], arch(DU), 1, arch(Ustar), 1);}
-	else Lcpu_add(N_s, N_E, N_F, arch(Ustar), arch(DU), _beta[k]);// do Ustar.add(DU,beta[k]);
+	if (blas==1) {blasCopy(N_F*N_s*N_E, _Us, 1, _Ustar, 1);}
+	else Lcpu_equal(N_s, N_E, N_F, _Ustar, _Us); // make Ustar = Us;
+	if (blas==1) {blasAxpy(N_s*N_F*N_E, _beta[k], _DU, 1, _Ustar, 1);}
+	else Lcpu_add(N_s, N_E, N_F, _Ustar, _DU, _beta[k]);// do Ustar.add(DU,beta[k]);
 	Tstar = T + _beta[k]*Dt;
 
 	//Limit the solution if you so want to do so
-	if(k>0){if (Limiter.getLimitingMethod()!=0) Limiter.HRlimiting(arch(Ustar));}
+	if(k>0){if (Limiter.getLimitingMethod()!=0) Limiter.HRlimiting(_Ustar);}
 
 	// Now you have to calculate f(Ustar)
-	dgsolver.dg_solver(arch(Ustar),arch(f));
+	dgsolver.dg_solver(_Ustar,_f);
 	
 	// Solve: DU = Dt*Minv*f(Ustar)
-	Lsolver(N_s, N_E, N_F, Dt, arch(Minv), arch(f), arch(DU));
+	Lsolver(N_s, N_E, N_F, Dt, _Minv, _f, _DU);
 
 	// if 0-order average the solution in the cells
-	if (order0){Laverage_cell_p0(N_s, N_E, N_F, arch(DU));}
+	if (order0){Laverage_cell_p0(N_s, N_E, N_F, _DU);}
 
 	// U = U + gamma*DU
-	if (blas==1) {blasAxpy(N_s*N_F*N_E, _gamma[k], arch(DU), 1, arch(U), 1);}       
-	else Lcpu_add(N_s, N_E, N_F, arch(U), arch(DU), _gamma[k]); // do U.add(DU,gamma[k])
+	if (blas==1) {blasAxpy(N_s*N_F*N_E, _gamma[k], _DU, 1, arch(U), 1);}       
+	else Lcpu_add(N_s, N_E, N_F, arch(U), _DU, _gamma[k]); // do U.add(DU,gamma[k])
 
       }// end loop on k
       
@@ -130,17 +139,18 @@ class RK
 
     // Free some stuff
 #ifdef USE_CPU
-    delete[] h_Us;
-    delete[] h_Ustar;
-    delete[] h_DU;
-    delete[] h_f;
+    delete[] _Us;
+    delete[] _Ustar;
+    delete[] _DU;
+    delete[] _f;
+    delete[] _Minv;
 #elif USE_GPU
     CUDA_SAFE_CALL(cudaFree(d_U));
-    CUDA_SAFE_CALL(cudaFree(d_Us));
-    CUDA_SAFE_CALL(cudaFree(d_Ustar));
-    CUDA_SAFE_CALL(cudaFree(d_DU));
-    CUDA_SAFE_CALL(cudaFree(d_f));
-    CUDA_SAFE_CALL(cudaFree(d_Minv));
+    CUDA_SAFE_CALL(cudaFree(_Us));
+    CUDA_SAFE_CALL(cudaFree(_Ustar));
+    CUDA_SAFE_CALL(cudaFree(_DU));
+    CUDA_SAFE_CALL(cudaFree(_f));
+    CUDA_SAFE_CALL(cudaFree(_Minv));
 #endif
   }; //end main RK function
 

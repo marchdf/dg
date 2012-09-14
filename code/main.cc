@@ -14,14 +14,10 @@
 #include "quadratures/Gauss.h"
 #include "GmshDefines.h"
 #include "simpleMesh.h"
-#include <blas_stuff.h>
 #include <scalar_def.h>
 #include <dg_functions.h>
-#include <cpu_kernels.h>
 #include <deck.h>
 #include <init_cond.h>
-#include <print_sol.h>
-#include <macros.h>
 #include <rk.h>
 #include <misc.h>
 #include <limiting.h>

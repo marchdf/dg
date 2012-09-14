@@ -1,12 +1,7 @@
 #ifndef LIMITING_H
 #define LIMITING_H
 
-#include <stdio.h>
-#include <scalar_def.h>
-#include <macros.h>
-#include <fullMatrix.h>
 #include <misc.h>
-#include <cpu_kernels.h>
 
 class Limiting
 {

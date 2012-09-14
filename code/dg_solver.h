@@ -4,9 +4,6 @@
 #ifndef DG_SOLVER_H
 #define DG_SOLVER_H
 
-#include <stdio.h>
-#include <scalar_def.h>
-
 class DG_SOLVER
 {
  private:

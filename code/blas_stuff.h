@@ -4,10 +4,6 @@
 #include <complex>
 #include <string.h>
 
-//#if defined(_MSC_VER)
-//#define F77NAME(x) (x)
-//#endif
-
 #if !defined(F77NAME)
 #define F77NAME(x) (x##_)
 #endif
