@@ -171,6 +171,45 @@ void init_dg_contact_multifluid(const int N_s, const int N_E, const int N_F, con
   }
 }
 
+void init_dg_rhotact_multifluid(const int N_s, const int N_E, const int N_F, const int D, const int model, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+  
+  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
+  
+  // Left state
+  scalar rhoL  = 1.0;
+  scalar uL    = 1.0;
+  scalar gammaL= 1.4;
+  scalar pL    = 1.0;
+  scalar EtL   = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
+  
+  // Right state
+  scalar rhoR   = 0.125;
+  scalar uR     = 1.0;
+  scalar gammaR = 1.4;
+  scalar pR     = 1.0;
+  scalar EtR    = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
+  
+  for(int e = 0; e < N_E; e++){
+    scalar x = XYZNodes(0,e*D+0);
+    for(int i = 0; i < N_s; i++){
+      if (x<1E-8){
+	U(i,e*N_F+0) = rhoL;
+	U(i,e*N_F+1) = rhoL*uL;
+	U(i,e*N_F+2) = EtL ;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rhoL/(gammaL-1);
+	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaL-1);
+      }
+      else if (x>=1E-8){
+	U(i,e*N_F+0) = rhoR;
+	U(i,e*N_F+1) = rhoR*uR;
+	U(i,e*N_F+2) = EtR ;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rhoR/(gammaR-1);
+	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gammaR-1);
+      }
+    }
+  }
+}
+
 
 void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const int N_F, const int D, const int model, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 

@@ -92,11 +92,20 @@ class Limiting
   int getLimitingMethod() const {return _method;}
 
   void HRlimiting(scalar* U){
+    // Change of variables
+    //Lcpu_Cons2Prim(N_s, N_E, N_F, h_U, multifluid, passive, model, gamma0);
+    //Lcpu_Cons2Half(N_s, N_E, N_F, h_U, multifluid, passive, model, gamma0);
+
+    // Go from lagrange to monomial representation
     blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);
     // Limit the solution according to Liu
     Lcpu_hrl(_N_s, _N_E, _N_F, _N_G, _boundaryMap, _weight, _V1D, _A, _Alim);
     // Go back to lagrange representation
     blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
+
+    // Go back to initial variables
+    //Lcpu_Prim2Cons(N_s, N_E, N_F, h_U, multifluid, passive, model, gamma0);
+    //Lcpu_Half2Cons(N_s, N_E, N_F, h_U, multifluid, passive, model, gamma0);
   }
 
   void copyMatrixToPointer(fullMatrix<scalar> &A, scalar* h_A){

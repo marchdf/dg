@@ -105,6 +105,7 @@ int main (int argc, char **argv)
   bool simplew = false;
   bool sodtube = false;
   bool contact = false;
+  bool rhotact = false;
   bool matfrnt = false;
   bool sinegam = false;
   bool expogam = false;
@@ -112,6 +113,7 @@ int main (int argc, char **argv)
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
   else if (inputs.getInitialCondition()=="contact") contact = true;
+  else if (inputs.getInitialCondition()=="rhotact") rhotact = true;
   else if (inputs.getInitialCondition()=="matfrnt") matfrnt = true;
   else if (inputs.getInitialCondition()=="sinegam") sinegam = true;
   else if (inputs.getInitialCondition()=="expogam") expogam = true;
@@ -334,6 +336,7 @@ int main (int argc, char **argv)
     if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
     else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
     else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
+    else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
     else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
     else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
     else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
@@ -475,6 +478,7 @@ int main (int argc, char **argv)
     if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
     else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
     else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
+    else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
     else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
     else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
     else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
