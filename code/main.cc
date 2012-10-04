@@ -98,7 +98,7 @@ int main (int argc, char **argv)
   // Setup the limiting
   int limiterMethod = 0;
   if      (inputs.getLimiter() == "hrl")   {limiterMethod = 1; printf("Using HR limiting\n");}
-  else if (inputs.getLimiter() == "hsl")   {limiterMethod = 2; printf("Using HS limiting\n");}
+  else if (inputs.getLimiter() == "myl")   {limiterMethod = 2; printf("Using my limiting\n");}
   else{limiterMethod = 0; printf("No limiting\n");}
 
   // Setup the initial condition type
@@ -358,7 +358,7 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
   scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++) h_weight[g] = (scalar)weight(g,0);  
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, boundaryMap, Lag2Mono, Mono2Lag, monoV1D, h_weight);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, boundaryMap, multifluid, passive, model, gamma0, Lag2Mono, Mono2Lag, monoV1D, h_weight);
   
   //////////////////////////////////////////////////////////////////////////   
   //

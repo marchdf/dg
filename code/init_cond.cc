@@ -218,14 +218,14 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const int N_F, con
   // Left state
   scalar rhoL  = 1.0;
   scalar uL    = 1.0;
-  scalar gammaL= 1.4;
+  scalar gammaL= 1.6;
   scalar pL    = 1.0;
   scalar EtL   = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
     
   // Right state
   scalar rhoR   = 0.125;
   scalar uR     = 1.0;
-  scalar gammaR = 1.6;
+  scalar gammaR = 1.4;
   scalar pR     = 1.0;
   scalar EtR    = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
   

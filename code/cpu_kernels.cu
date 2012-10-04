@@ -33,8 +33,8 @@ arch_global void cpu_equal(int N_s, int N_E, int N_F, scalar* A, scalar* B){
       for(int fc = 0; fc < N_F; fc++)
 #elif USE_GPU
 	int e = blockIdx.x;
-  int i = threadIdx.x;
-  int fc = threadIdx.y;
+        int i = threadIdx.x;
+	int fc = threadIdx.y;
 #endif
 
   A[(e*N_F+fc)*N_s+i] = B[(e*N_F+fc)*N_s+i];
@@ -50,8 +50,8 @@ arch_global void cpu_add(int N_s, int N_E, int N_F, scalar* A, scalar* B, scalar
       for(int fc = 0; fc < N_F; fc++)
 #elif USE_GPU
 	int e = blockIdx.x;
-  int i = threadIdx.x;
-  int fc = threadIdx.y;
+        int i = threadIdx.x;
+	int fc = threadIdx.y;
 #endif
 
   A[(e*N_F+fc)*N_s+i] =  A[(e*N_F+fc)*N_s+i] + c*B[(e*N_F+fc)*N_s+i];

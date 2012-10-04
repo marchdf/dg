@@ -16,16 +16,16 @@ fieldFile=['rho', 'ux', 'p', 'g']
 fieldLatex = ['$\\rho$', '$u$', '$p$', '$\\gamma$']
 
 pd  = pdir[2]
-dxd = dxdir[4]
-fd  = fdir[2]
-field = fieldFile[3]
+dxd = dxdir[3]
+fd  = fdir[0]
+field = fieldFile[0]
 md = mdir[1]
 T = 0.2
 cmap = ['r','g','b','m','c']
 markertype = ['.', 'x']
 for j in range(0,len(mdir)): # loop on the models 
     md  = mdir[j]
-    for k in range(2,3):#range(0,len(fieldFile)): # loop on fields
+    for k in range(0,4):#range(0,len(fieldFile)): # loop on fields
         field = fieldFile[k]
         print "Reading file: ", pd+'/'+dxd+'/'+fd+'/'+md+'/'+field+'.txt'
         dat = loadtxt(pd+'/'+dxd+'/'+fd+'/'+md+'/'+field+'.txt')
@@ -62,7 +62,9 @@ for j in range(0,len(mdir)): # loop on the models
         #gca().yaxis.set_major_formatter(major_formatter)
         setp(gca().get_xmajorticklabels(),fontsize=18,fontweight='bold');    
         setp(gca().get_ymajorticklabels(),fontsize=18,fontweight='bold');
-        if k < 3 : # for rho, u, p
+        if k < 2:
+            setp(gca(),ylim=[0,1.2])
+        elif k == 2 : # for rho, u, p
             #dy = 1e-12
             dy = 1e-1
             setp(gca(),ylim=[1-dy,1+dy])

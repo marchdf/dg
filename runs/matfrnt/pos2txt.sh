@@ -19,10 +19,10 @@ field=('rho' 'ux' 'et' 'p' 'g');
 # 	    for p in {0..1}; do  # loop on models
 # 		for n in {0..4}; do # loop on fields
 for i in 2; do # loop on dg order
-    for j in 4; do #loop on delta x
-	for k in 2; do # loop on fluxes
+    for j in 3; do #loop on delta x
+	for k in 0; do # loop on fluxes
 	    for p in {0..1}; do  # loop on models
-		for n in 3; do # loop on fields
+		for n in {0..4}; do # loop on fields
 		    file='p'$i'/dx'$j'/'${flux[k]}'/'${model[p]}'/'${field[n]}'.pos';
 		    echo 'Converting the following files to .txt '$file;
 		    sed -e 's|ORDER|'$i'|g' \

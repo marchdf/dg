@@ -99,7 +99,10 @@ class RK
 	Tstar = T + _beta[k]*Dt;
 
 	//Limit the solution if you so want to do so
-	if(k>0){if (Limiter.getLimitingMethod()!=0) Limiter.HRlimiting(_Ustar);}
+	if(k>0){
+	  if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(_Ustar);
+	  else if (Limiter.getLimitingMethod()==2) Limiter.MYlimiting(_Ustar);
+	}
 
 	// Now you have to calculate f(Ustar)
 	dgsolver.dg_solver(_Ustar,_f);
@@ -119,7 +122,8 @@ class RK
       T = T + Dt;
 
       // Limit solution
-      if (Limiter.getLimitingMethod()!=0) Limiter.HRlimiting(arch(U));
+      if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(arch(U));
+      else if (Limiter.getLimitingMethod()==2) Limiter.MYlimiting(arch(U));
 
       // Output the solution
       if(n % (N_t/output_factor) == 0){

@@ -19,16 +19,20 @@ class Limiting
   int     _N_F;
   int     _N_G;
   int     _boundaryMap;
+  bool    _multifluid;
+  bool    _passive;
+  int     _model;
+  scalar  _gamma0;
   
  public:
   // constructor
  Limiting(int method) : _method(method){}
   
- Limiting(int method, int N_s, int N_E, int N_F, int N_G, int boundaryMap,
-	  fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, fullMatrix<scalar> &V1D, scalar* weight)
-   : _method(method), _N_s(N_s), _N_E(N_E), _N_F(N_F), _N_G(N_G), _boundaryMap(boundaryMap){
+ Limiting(int method, int N_s, int N_E, int N_F, int N_G, int boundaryMap, bool multifluid, bool passive, int model, scalar gamma0, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, fullMatrix<scalar> &V1D, scalar* weight)
+   : _method(method), _N_s(N_s), _N_E(N_E), _N_F(N_F), _N_G(N_G), _boundaryMap(boundaryMap), _multifluid(multifluid), _passive(passive), _model(model), _gamma0(gamma0){
     switch (_method){
-    case 1:{
+    case 1:
+    case 2:
 #ifdef USE_CPU
       _Lag2Mono = new scalar[_N_s*_N_s];     copyMatrixToPointer(Lag2Mono,_Lag2Mono);
       _Mono2Lag = new scalar[_N_s*_N_s];     copyMatrixToPointer(Mono2Lag,_Mono2Lag);
@@ -60,7 +64,6 @@ class Limiting
       delete[] tmpMono2Lag;	
       delete[] tmpV1D;	
 #endif
-    }
       break;
     default:
       printf("No limiting.\n");
@@ -93,8 +96,8 @@ class Limiting
 
   void HRlimiting(scalar* U){
     // Change of variables
-    //Lcpu_Cons2Prim(N_s, N_E, N_F, h_U, multifluid, passive, model, gamma0);
-    //Lcpu_Cons2Half(N_s, N_E, N_F, h_U, multifluid, passive, model, gamma0);
+    //Lcpu_Cons2Prim(_N_s, _N_E, _N_F, U, _multifluid, _passive, _model, _gamma0);
+    //Lcpu_Cons2Half(_N_s, _N_E, _N_F, U, _multifluid, _passive, _model, _gamma0);
 
     // Go from lagrange to monomial representation
     blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);
@@ -104,10 +107,47 @@ class Limiting
     blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
 
     // Go back to initial variables
-    //Lcpu_Prim2Cons(N_s, N_E, N_F, h_U, multifluid, passive, model, gamma0);
-    //Lcpu_Half2Cons(N_s, N_E, N_F, h_U, multifluid, passive, model, gamma0);
+    //Lcpu_Prim2Cons(_N_s, _N_E, _N_F, U, _multifluid, _passive, _model, _gamma0);
+    //Lcpu_Half2Cons(_N_s, _N_E, _N_F, U, _multifluid, _passive, _model, _gamma0);
   }
 
+  void MYlimiting(scalar* U){
+
+    // Go from lagrange to monomial representation
+    blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);
+    // Limit the solution according to Liu
+    Lcpu_hrl(_N_s, _N_E, _N_F, _N_G, _boundaryMap, _weight, _V1D, _A, _Alim);
+
+    // My modification:
+    for(int e = 0; e < _N_E; e++){
+      if (_multifluid){
+	scalar a0 = _Alim[(e*_N_F+0)*_N_s+0];
+	scalar a1 = _Alim[(e*_N_F+0)*_N_s+1];
+	scalar b0 = _Alim[(e*_N_F+1)*_N_s+0];
+	scalar b1 = _Alim[(e*_N_F+1)*_N_s+1];
+	scalar g0 = _Alim[(e*_N_F+2)*_N_s+0];
+	scalar g1 = _Alim[(e*_N_F+2)*_N_s+1];
+	scalar d0 = _Alim[(e*_N_F+3)*_N_s+0];
+	scalar d1 = _Alim[(e*_N_F+3)*_N_s+1];
+	g1 = d1/d0*(g0-0.25*((b0+b1)*(b0+b1)/(a0+a1) + (b0-b1)*(b0-b1)/(a0-a1))) + 0.25*((b0+b1)*(b0+b1)/(a0+a1) - (b0-b1)*(b0-b1)/(a0-a1));
+	_Alim[(e*_N_F+2)*_N_s+1] = g1;
+      }
+      else if (_passive){
+	scalar a0 = _Alim[(e*_N_F+0)*_N_s+0];
+	scalar a1 = _Alim[(e*_N_F+0)*_N_s+1];
+	scalar b0 = _Alim[(e*_N_F+1)*_N_s+0];
+	scalar b1 = _Alim[(e*_N_F+1)*_N_s+1];
+	scalar g0 = _Alim[(e*_N_F+2)*_N_s+0];
+	scalar g1 = _Alim[(e*_N_F+2)*_N_s+1];
+	g1 = 0.25*((b0+b1)*(b0+b1)/(a0+a1) - (b0-b1)*(b0-b1)/(a0-a1));
+	_Alim[(e*_N_F+2)*_N_s+1] = g1;
+      }
+    }
+
+    // Go back to lagrange representation
+    blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
+  }
+  
   void copyMatrixToPointer(fullMatrix<scalar> &A, scalar* h_A){
   
     // Column major sorting

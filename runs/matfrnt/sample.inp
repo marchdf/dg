@@ -1,6 +1,4 @@
 #Options
-cpu
-nodebug
 blas
 #time integration
 rk4
