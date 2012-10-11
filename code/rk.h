@@ -135,7 +135,7 @@ class RK
 		     
 	printf("Solution written to output file at step %i and time %f.\n",n,n*Dt);
 	if(multifluid)print_dg_multifluid(N_s, N_E, N_F, model, h_U, m, msh_lin, count, n*Dt, 1,-1); 
-	if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, h_U, m, msh_lin, count, n*Dt, 1,-1); 
+	if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, h_U, m, msh_lin, count, n*Dt, 1,-1);
 	count++;
       }// end output steps
     }// end loop on time

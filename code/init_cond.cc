@@ -102,7 +102,6 @@ void init_dg_sodtube_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar pL   = 1.0;
   scalar gammaL= 1.4;
   scalar EtL  = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
-
     
   // Right state
   scalar rhoR = 0.125;
@@ -218,14 +217,14 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const int N_F, con
   // Left state
   scalar rhoL  = 1.0;
   scalar uL    = 1.0;
-  scalar gammaL= 1.6;
+  scalar gammaL= 1.4;
   scalar pL    = 1.0;
   scalar EtL   = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
     
   // Right state
   scalar rhoR   = 0.125;
   scalar uR     = 1.0;
-  scalar gammaR = 1.4;
+  scalar gammaR = 1.6;
   scalar pR     = 1.0;
   scalar EtR    = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
   
@@ -330,6 +329,42 @@ void init_dg_sinephi_passive(const int N_s, const int N_E, const int N_F, const 
       U(i,e*N_F+2) = 1.0/(gamma-1.0)*p + 0.5*(rho+sinerho)*u*u;
       U(i,e*N_F+3) = (rho+sinerho)*(phi+sinephi);
       U(i,e*N_F+4) = phi+sinephi;
+    }
+  }
+}
+
+void init_dg_sodmono_passive(const int N_s, const int N_E, const int N_F, const int D, scalar &gamma, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+
+  if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
+ 
+  gamma = 1.4;
+  // Left state
+  scalar rhoL = 1;
+  scalar uL   = 0;
+  scalar pL   = 1.0;
+  scalar EtL  = 1.0/(gamma-1.0)*pL + 0.5*rhoL*uL*uL;
+    
+  // Right state
+  scalar rhoR = 0.125;
+  scalar uR   = 0;
+  scalar pR   = 0.1;
+  scalar EtR  = 1.0/(gamma-1.0)*pR + 0.5*rhoR*uR*uR;
+  
+  for(int e = 0; e < N_E; e++){
+    scalar x = XYZNodes(0,e*D+0);
+    for(int i = 0; i < N_s; i++){
+      if (x<1E-8){
+	U(i,e*N_F+0) = rhoL;
+	U(i,e*N_F+1) = rhoL*uL;
+	U(i,e*N_F+2) = EtL ;
+      }
+      else if (x>=1E-8){
+	U(i,e*N_F+0) = rhoR;
+	U(i,e*N_F+1) = rhoR*uR;
+	U(i,e*N_F+2) = EtR ;
+      }
+      U(i,e*N_F+3) = 0;
+      U(i,e*N_F+4) = 0;
     }
   }
 }

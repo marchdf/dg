@@ -110,6 +110,7 @@ int main (int argc, char **argv)
   bool sinegam = false;
   bool expogam = false;
   bool sinephi = false;
+  bool sodmono = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
   else if (inputs.getInitialCondition()=="contact") contact = true;
@@ -118,6 +119,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="sinegam") sinegam = true;
   else if (inputs.getInitialCondition()=="expogam") expogam = true;
   else if (inputs.getInitialCondition()=="sinephi") sinephi = true;
+  else if (inputs.getInitialCondition()=="sodmono") sodmono = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // setup the boundary condition type
@@ -343,6 +345,7 @@ int main (int argc, char **argv)
   }
   else if (passive){
     if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, U);
+    if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, U);
   }
 
   if (order0) average_cell_p0(N_s, N_E, N_F, U);
@@ -485,6 +488,7 @@ int main (int argc, char **argv)
   }
   else if (passive){
     if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, Uinit);
+    if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, Uinit);
   }
   scalar* h_Uinit = new scalar[N_s*N_E*N_F];  makeZero(h_Uinit,N_s*N_E*N_F);
   for(int e = 0; e < N_E; e++){
