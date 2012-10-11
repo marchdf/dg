@@ -41,10 +41,17 @@ class DG_SOLVER
   scalar* _q       ; 
   scalar* _Q       ; 
 
+  // To calculate the conservation of certain fields
+  std::string consfile;
+  FILE *consf;
+  scalar* _UgC;
+  scalar* _I;
+  scalar* _weight; // integration weights
+  
  public:
   // constructor
  DG_SOLVER(int D, int N_F, int N_E, int N_s, int N_G, int M_T, int M_s, int M_G,
-	   scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* J, scalar* invJac,
+	   scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* J, scalar* invJac, scalar* weight,
 	   int boundaryMap, int flux, int model, scalar gamma0, int blas, bool multifluid, bool passive) :
   _D(D), _N_F(N_F), _N_E(N_E), _N_s(N_s), _N_G(N_G), _M_T(M_T), _M_s(M_s), _M_G(M_G),
     _boundaryMap(boundaryMap), _flux(flux), _model(model), _gamma0(gamma0), _blas(blas), _multifluid(multifluid), _passive(passive) {
@@ -115,7 +122,12 @@ class DG_SOLVER
 
 #endif
 
-
+    // Initialize some stuff for conservation calculations
+    consfile = "conservation.dat";
+    consf = fopen(consfile.c_str(),"w");
+    _UgC    = new scalar[N_G*N_E*N_F];  makeZero(_UgC,N_G*N_E*N_F);
+    _I      = new scalar[_N_F];
+    _weight = new scalar[_N_G];         memcpy(_weight,weight,_N_G*sizeof(scalar));
   };
 
   // destructor
@@ -159,6 +171,10 @@ class DG_SOLVER
     CUDA_SAFE_CALL(cudaFree(_q));
     CUDA_SAFE_CALL(cudaFree(_Q));
 #endif
+    delete[] _UgC;
+    delete[] _I;
+    delete[] _weight;
+    fclose(consf);
   };
 
   // Main solver function
@@ -201,6 +217,27 @@ class DG_SOLVER
     Lcpu_addSFQ(_N_s, _N_E, _N_F, f_rk, _S, _F, _Q);
     
   }; // end solver function
+
+
+  // Function to calculate conservation of certain quantities
+  void conservation(scalar* U, double time){
+
+    // Collocate the solution to the integration points
+    blasGemm('N','N', _N_G, _N_E*_N_F, _N_s, 1, _phi, _N_G, U, _N_s, 0.0, _UgC, _N_G);
+
+    // Take the cell average of the solution
+    makeZero(_I, _N_F);
+    for(int fc = 0; fc < _N_F; fc++){
+      for(int e = 0; e < _N_E; e++){
+    	for(int g = 0; g < _N_G; g++){
+	  _I[fc] += _UgC[(e*_N_F+fc)*_N_G+g]*_J[e]*_weight[g]; 
+    	}
+      }
+    }
+    // write to file
+    fprintf(consf,"%20.16E\t", time); for(int fc = 0; fc < _N_F; fc++) fprintf(consf,"%20.16E\t", _I[fc]); fprintf(consf,"\n");
+
+  };//end conservation function
 
 };
 

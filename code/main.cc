@@ -458,7 +458,7 @@ int main (int argc, char **argv)
  
   printf("==== Now RK 4 steps =====\n");
   DG_SOLVER dgsolver = DG_SOLVER(D, N_F, N_E, N_s, N_G, M_T, M_s, M_G,
-  				 h_phi, h_dphi, h_phi_w, h_dphi_w, h_J, h_invJac,
+  				 h_phi, h_dphi, h_phi_w, h_dphi_w, h_J, h_invJac, h_weight,
   				 boundaryMap, flux, model, gamma0, blas, multifluid, passive);
   RK rk4 = RK(4);
   rk4.RK_integration(Dt, N_t, output_factor,

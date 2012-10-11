@@ -83,6 +83,9 @@ class RK
     CUDA_SAFE_CALL(cudaMemcpy(_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar), cudaMemcpyHostToDevice));
 #endif
 
+    // Output conservation of the fields
+    dgsolver.conservation(h_U,0.0);
+    
     // Time integration
     for (int n = 1; n <= N_t; n++){
 
@@ -137,6 +140,10 @@ class RK
 	if(multifluid)print_dg_multifluid(N_s, N_E, N_F, model, h_U, m, msh_lin, count, n*Dt, 1,-1); 
 	if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, h_U, m, msh_lin, count, n*Dt, 1,-1);
 	count++;
+
+	// Output conservation of the fields
+	dgsolver.conservation(h_U,n*Dt);
+	
       }// end output steps
     }// end loop on time
 
