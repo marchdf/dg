@@ -16,9 +16,9 @@ rm -rf $(find p* -type d);
 flux=('llf' 'ncf' 'roe');
 model=('invgamma' 'gammamod');
 limiter='none';
-for i in {2..2}; do
-    for j in {3..3}; do
-	for k in {0..0}; do
+for i in {0..4}; do
+    for j in {0..6}; do
+	for k in {0..2}; do
 	    for p in {0..1}; do
 		dir='p'$i'/dx'$j'/'${flux[k]}'/'${model[p]};
 		echo 'Creating directory '$dir;

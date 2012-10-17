@@ -151,22 +151,31 @@ class Limiting
 	  scalar a1 = _Alim[(e*_N_F+0)*_N_s+1];
 	  scalar b0 = _Alim[(e*_N_F+1)*_N_s+0];
 	  scalar b1 = _Alim[(e*_N_F+1)*_N_s+1];
-	  scalar g0 = _Alim[(e*_N_F+2)*_N_s+0];
-	  scalar g1 = _Alim[(e*_N_F+2)*_N_s+1];
+	  scalar g0 = _A[(e*_N_F+2)*_N_s+0];
+	  scalar g1 = _A[(e*_N_F+2)*_N_s+1];
 	  scalar d0 = _Alim[(e*_N_F+3)*_N_s+0];
 	  scalar d1 = _Alim[(e*_N_F+3)*_N_s+1];
-	  g1 = d1/d0*(g0-0.25*((b0+b1)*(b0+b1)/(a0+a1) + (b0-b1)*(b0-b1)/(a0-a1))) + 0.25*((b0+b1)*(b0+b1)/(a0+a1) - (b0-b1)*(b0-b1)/(a0-a1)) + pressureLim[e*_N_s+1]*d0;
-	  _Alim[(e*_N_F+2)*_N_s+1] = g1;
+	  if (_model==0){
+	    scalar D1 = 0.5*((d0+d1)/(a0+a1)-(d0-d1)/(a0-a1));
+	    scalar D0 = 0.5*((d0-d1)/(a0-a1)-(d0+d1)/(a0+a1));
+	    d0 = D0; d1 = D1;
+	  }
+	  scalar g1lim = d1/d0*(g0-0.25*((b0+b1)*(b0+b1)/(a0+a1) + (b0-b1)*(b0-b1)/(a0-a1))) + 0.25*((b0+b1)*(b0+b1)/(a0+a1) - (b0-b1)*(b0-b1)/(a0-a1)) + pressureLim[e*_N_s+1]*d0;
+	  scalar g0lim = g0;
+	  _Alim[(e*_N_F+2)*_N_s+1] = g1lim;
+	  _Alim[(e*_N_F+2)*_N_s+0] = g0lim;
 	}
 	else if (_passive){
 	  scalar a0 = _Alim[(e*_N_F+0)*_N_s+0];
 	  scalar a1 = _Alim[(e*_N_F+0)*_N_s+1];
 	  scalar b0 = _Alim[(e*_N_F+1)*_N_s+0];
 	  scalar b1 = _Alim[(e*_N_F+1)*_N_s+1];
-	  scalar g0 = _Alim[(e*_N_F+2)*_N_s+0];
-	  scalar g1 = _Alim[(e*_N_F+2)*_N_s+1];
-	  g1 = 0.25*((b0+b1)*(b0+b1)/(a0+a1) - (b0-b1)*(b0-b1)/(a0-a1)) + pressureLim[e*_N_s+1]*_gamma0;
-	  _Alim[(e*_N_F+2)*_N_s+1] = g1;
+	  scalar g0 = _A[(e*_N_F+2)*_N_s+0];
+	  scalar g1 = _A[(e*_N_F+2)*_N_s+1];
+	  scalar g1lim = 0.25*((b0+b1)*(b0+b1)/(a0+a1) - (b0-b1)*(b0-b1)/(a0-a1)) + pressureLim[e*_N_s+1]*_gamma0;
+	  scalar g0lim = g0;
+	  _Alim[(e*_N_F+2)*_N_s+1] = g1lim;
+	  _Alim[(e*_N_F+2)*_N_s+0] = g0lim;
 	}
       }
     }
@@ -186,6 +195,12 @@ class Limiting
 	  scalar d0 = _Alim[(e*_N_F+3)*_N_s+0];
 	  scalar d1 = _Alim[(e*_N_F+3)*_N_s+1];
 	  scalar d2 = _Alim[(e*_N_F+3)*_N_s+2];
+	  if (_model==0){
+	    scalar D0 = d0/a0;
+	    scalar D1 = 0.5*((d0+d1+0.5*d2)/(a0+a1+0.5*a2) - (d0-d1+0.5*d2)/(a0-a1+0.5*a2));
+	    scalar D2 = (d0+d1+0.5*d2)/(a0+a1+0.5*a2) + (d0-d1+0.5*d2)/(a0-a1+0.5*a2) - 2*D0;
+	    d0 = D0; d1 = D1; d2 = D2;
+	  }
 	  scalar g2lim = (1/(1+1.0/6.0*d2/d0))
 	    *(d2/d0*(g0+1.0/6.0*g2 -0.5*b0*b0/a0)
 	      + 0.5*((b0+b1+0.5*b2)*(b0+b1+0.5*b2)/(a0+a1+0.5*a2) + (b0-b1+0.5*b2)*(b0-b1+0.5*b2)/(a0-a1+0.5*a2) - 2*b0*b0/a0)

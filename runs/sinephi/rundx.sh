@@ -1,4 +1,4 @@
-#!/bin/bash
+B[>1;2802;0c]#!/bin/bash
 #
 # Run the dg code for all the p=0,1,... for all the dx in those
 # directories
@@ -15,7 +15,7 @@ rm -rf $(find p* -type d);
 flux='llf';
 limiter='none';
 for i in {0..4}; do
-    for j in {0..4}; do
+    for j in {0..6}; do
 	echo 'Creating directory p'$i'/dx'$j;
 	mkdir -p 'p'$i'/dx'$j;
 	sed -e 's|ORDER|'$i'|g' \
