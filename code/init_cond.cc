@@ -304,6 +304,65 @@ void init_dg_expogam_multifluid(const int N_s, const int N_E, const int N_F, con
   }
 }
 
+void init_dg_shckint_multifluid(const int N_s, const int N_E, const int N_F, const int D, const int model, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+
+  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
+
+     
+  // Pre-shock state (material 1)
+  scalar rho02   = 0.1;
+  scalar u02     = 0.0;
+  scalar gamma02 = 1.6667;
+  scalar p02     = 1.0;
+  scalar Et02    = 1.0/(gamma02-1.0)*p02 + 0.5*rho02*u02*u02;
+  scalar c02     = sqrt(gamma02*p02/rho02); // sound speed
+  scalar M02     = u02/c02; //Mach number ahead of shock
+  
+  // Pre-shock state (material 2)
+  scalar rho01   = 1.0;
+  scalar u01     = 0.0;
+  scalar gamma01 = 1.4;
+  scalar p01     = 1.0;
+  scalar Et01    = 1.0/(gamma01-1.0)*p01 + 0.5*rho01*u01*u01;
+
+  // Post-shock state (material 1) (see p 101 Toro)
+  //scalar Ms = 9;   // Shock Mach number
+  scalar Ms     = M02+sqrt((gamma02+1)/(2.0*gamma02)*100.0 + (gamma02-1)/(2.0*gamma02));   // Shock Mach number (with ratio)
+  scalar S      = Ms*c02;  // shock speed
+  scalar rho4   = rho02*(gamma02+1) * (M02-Ms)*(M02-Ms)/((gamma02-1) * (M02-Ms)*(M02-Ms) + 2);
+  scalar p4     = p02  *(2*gamma02*(M02-Ms)*(M02-Ms) - (gamma02-1))/(gamma02+1);
+  scalar u4     = (1 - rho02/rho4)*S + u02*rho02/rho4;
+  scalar gamma4 = gamma02;
+  scalar Et4    = 1.0/(gamma4-1.0)*p4 + 0.5*rho4*u4*u4;
+
+  for(int e = 0; e < N_E; e++){
+    scalar x = XYZNodes(0,e*D+0);
+    for(int i = 0; i < N_s; i++){
+      if ((-1<=x)&&(x<-0.8)){
+	U(i,e*N_F+0) = rho4;
+	U(i,e*N_F+1) = rho4*u4;
+	U(i,e*N_F+2) = Et4;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rho4/(gamma4-1);
+	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma4-1);
+      }
+      else if ((-0.8<=x)&&(x<-0.2)){
+	U(i,e*N_F+0) = rho02;
+	U(i,e*N_F+1) = rho02*u02;
+	U(i,e*N_F+2) = Et02 ;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rho02/(gamma02-1);
+	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma02-1);
+      }
+      else if ((-0.2<=x)&&(x<1)){
+	U(i,e*N_F+0) = rho01;
+	U(i,e*N_F+1) = rho01*u01;
+	U(i,e*N_F+2) = Et01 ;
+	if      (model==0) U(i,e*N_F+3) = (scalar)rho01/(gamma01-1);
+	else if (model==1) U(i,e*N_F+3) = (scalar)1.0/(gamma01-1);
+      }
+    }
+  }
+}
+
 void init_dg_sinephi_passive(const int N_s, const int N_E, const int N_F, const int D, scalar &gamma, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);

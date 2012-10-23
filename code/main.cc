@@ -109,6 +109,7 @@ int main (int argc, char **argv)
   bool matfrnt = false;
   bool sinegam = false;
   bool expogam = false;
+  bool shckint = false;
   bool sinephi = false;
   bool sodmono = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
@@ -118,6 +119,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="matfrnt") matfrnt = true;
   else if (inputs.getInitialCondition()=="sinegam") sinegam = true;
   else if (inputs.getInitialCondition()=="expogam") expogam = true;
+  else if (inputs.getInitialCondition()=="shckint") shckint = true;
   else if (inputs.getInitialCondition()=="sinephi") sinephi = true;
   else if (inputs.getInitialCondition()=="sodmono") sodmono = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
@@ -342,6 +344,7 @@ int main (int argc, char **argv)
     else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
     else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
     else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
+    else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
   }
   else if (passive){
     if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, U);
@@ -485,6 +488,7 @@ int main (int argc, char **argv)
     else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
     else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
     else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
+    else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
   }
   else if (passive){
     if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, Uinit);

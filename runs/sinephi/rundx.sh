@@ -1,4 +1,4 @@
-B[>1;2802;0c]#!/bin/bash
+#!/bin/bash
 #
 # Run the dg code for all the p=0,1,... for all the dx in those
 # directories

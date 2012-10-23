@@ -18,7 +18,7 @@ model=('invgamma' 'gammamod');
 limiter='none';
 for i in {0..4}; do
     for j in {0..6}; do
-	for k in {0..2}; do
+	for k in {2..2}; do
 	    for p in {0..1}; do
 		dir='p'$i'/dx'$j'/'${flux[k]}'/'${model[p]};
 		echo 'Creating directory '$dir;

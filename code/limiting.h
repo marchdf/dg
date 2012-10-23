@@ -157,7 +157,7 @@ class Limiting
 	  scalar d1 = _Alim[(e*_N_F+3)*_N_s+1];
 	  if (_model==0){
 	    scalar D1 = 0.5*((d0+d1)/(a0+a1)-(d0-d1)/(a0-a1));
-	    scalar D0 = 0.5*((d0-d1)/(a0-a1)-(d0+d1)/(a0+a1));
+	    scalar D0 = 0.5*((d0-d1)/(a0-a1)+(d0+d1)/(a0+a1));
 	    d0 = D0; d1 = D1;
 	  }
 	  scalar g1lim = d1/d0*(g0-0.25*((b0+b1)*(b0+b1)/(a0+a1) + (b0-b1)*(b0-b1)/(a0-a1))) + 0.25*((b0+b1)*(b0+b1)/(a0+a1) - (b0-b1)*(b0-b1)/(a0-a1)) + pressureLim[e*_N_s+1]*d0;

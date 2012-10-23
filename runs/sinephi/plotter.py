@@ -8,8 +8,8 @@ rc('text', usetex=True)
 rc('font', family='serif', serif='Times')
 
 #load the files
-pdir  = ['p0/','p1/','p2/','p3/','p4/']
-dxdir = ['dx0/','dx1/','dx2/','dx3/','dx4/']
+pdir  = ['p0','p1','p2','p3']#,'p4']
+dxdir = ['dx1/','dx2/','dx3/','dx4/','dx5/','dx6/']
 dxFile  = 'error.dat'
 
 dxs    = zeros((size(pdir),size(dxdir)))
@@ -20,14 +20,14 @@ pdcnt = 0
 for pd in pdir:
     dxdcnt = 0
     for dxd in dxdir:
-        dat    = loadtxt(pd+dxd+dxFile)
+        dat    = loadtxt(pd+'/'+dxd+dxFile)
         print 'Loading', pd,dxd, 'data:', dat
-        dxs[pdcnt,dxdcnt] = dat[2,0]
-        errors[pdcnt,dxdcnt,0] = dat[2,1]
-        errors[pdcnt,dxdcnt,1] = dat[2,2]
-        errors[pdcnt,dxdcnt,2] = dat[2,3]
-        errors[pdcnt,dxdcnt,3] = dat[2,4]
-        errors[pdcnt,dxdcnt,4] = dat[2,5]
+        dxs[pdcnt,dxdcnt] = dat[1,0]
+        errors[pdcnt,dxdcnt,0] = dat[1,1]
+        errors[pdcnt,dxdcnt,1] = dat[1,2]
+        errors[pdcnt,dxdcnt,2] = dat[1,3]
+        errors[pdcnt,dxdcnt,3] = dat[1,4]
+        errors[pdcnt,dxdcnt,4] = dat[1,5]
         dxdcnt = dxdcnt+1
     pdcnt = pdcnt+1
 
@@ -36,7 +36,8 @@ err_th = zeros((size(pdir),size(dxdir)))
 x  = array([[1.,2.,3.],
             [4.,5.,6.]])
 for i in range(0,len(pdir)):
-    err_th[i,:] = dxs[i,:]**(2*i+1)*errors[i,0,0]/dxs[i,0]**(2*i+1)
+    order = int(pdir[i][-1])
+    err_th[i,:] = dxs[i,:]**(2*i+1)*errors[i,0,3]/dxs[i,0]**(2*i+1)
 
 # plot these
 markertype = ['s','d','o','p','h']
@@ -71,11 +72,9 @@ for i in range(0,len(pdir)):
     ylabel(r"$L_2$ \textit{error}",fontsize=22)
     setp(gca().get_ymajorticklabels(),fontsize=18,fontweight='bold');
     setp(gca().get_xmajorticklabels(),fontsize=18,fontweight='bold');    
-    setp(gca(),xlim=[0.01,0.5])
-    setp(gca(),ylim=[1e-16,1e-1])
-    savefig('p'+str(i)+'.png',format='png')
-    savefig('p'+str(i)+'.eps',format='eps')
-
+    setp(gca(),xlim=[0.5*dxs[i,:].min(),2*dxs[i,:].max()],ylim=[1e-16,1e-1])
+    savefig(pdir[i]+'.png',format='png')
+    savefig(pdir[i]+'.pdf',format='pdf')
 
 # make a latex table
 print '\\begin{table}[!htb]'
