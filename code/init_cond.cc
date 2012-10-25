@@ -311,7 +311,7 @@ void init_dg_shckint_multifluid(const int N_s, const int N_E, const int N_F, con
      
   // Pre-shock state (material 1)
   scalar rho02   = 0.1;
-  scalar u02     = 0.0;
+  scalar u02     =-2.0;
   scalar gamma02 = 1.6667;
   scalar p02     = 1.0;
   scalar Et02    = 1.0/(gamma02-1.0)*p02 + 0.5*rho02*u02*u02;
@@ -320,7 +320,7 @@ void init_dg_shckint_multifluid(const int N_s, const int N_E, const int N_F, con
   
   // Pre-shock state (material 2)
   scalar rho01   = 1.0;
-  scalar u01     = 0.0;
+  scalar u01     =-2.0;
   scalar gamma01 = 1.4;
   scalar p01     = 1.0;
   scalar Et01    = 1.0/(gamma01-1.0)*p01 + 0.5*rho01*u01*u01;
@@ -328,6 +328,7 @@ void init_dg_shckint_multifluid(const int N_s, const int N_E, const int N_F, con
   // Post-shock state (material 1) (see p 101 Toro)
   //scalar Ms = 9;   // Shock Mach number
   scalar Ms     = M02+sqrt((gamma02+1)/(2.0*gamma02)*100.0 + (gamma02-1)/(2.0*gamma02));   // Shock Mach number (with ratio)
+  printf("Ms=%f\n",Ms);
   scalar S      = Ms*c02;  // shock speed
   scalar rho4   = rho02*(gamma02+1) * (M02-Ms)*(M02-Ms)/((gamma02-1) * (M02-Ms)*(M02-Ms) + 2);
   scalar p4     = p02  *(2*gamma02*(M02-Ms)*(M02-Ms) - (gamma02-1))/(gamma02+1);

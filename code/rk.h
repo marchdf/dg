@@ -105,6 +105,7 @@ class RK
 	if(k>0){
 	  if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(_Ustar);
 	  else if (Limiter.getLimitingMethod()==2) Limiter.MYlimiting(_Ustar);
+	  else if (Limiter.getLimitingMethod()==3) Limiter.M2limiting(_Ustar);
 	}
 
 	// Now you have to calculate f(Ustar)
@@ -127,6 +128,7 @@ class RK
       // Limit solution
       if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(arch(U));
       else if (Limiter.getLimitingMethod()==2) Limiter.MYlimiting(arch(U));
+      else if (Limiter.getLimitingMethod()==3) Limiter.M2limiting(arch(U));
 
       // Output the solution
       if(n % (N_t/output_factor) == 0){

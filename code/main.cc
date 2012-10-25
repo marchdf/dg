@@ -99,6 +99,7 @@ int main (int argc, char **argv)
   int limiterMethod = 0;
   if      (inputs.getLimiter() == "hrl")   {limiterMethod = 1; printf("Using HR limiting\n");}
   else if (inputs.getLimiter() == "myl")   {limiterMethod = 2; printf("Using my limiting\n");}
+  else if (inputs.getLimiter() == "m2l")   {limiterMethod = 3; printf("Using m2 limiting\n");}
   else{limiterMethod = 0; printf("No limiting\n");}
 
   // Setup the initial condition type

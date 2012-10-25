@@ -10,9 +10,9 @@ rc('font', family='serif', serif='Times')
 
 #load the files
 #pdir  = ['p0','p1','p2','p3','p4']
-pdir  = ['p1','p2','p3','p4']
-dxdir = ['dx0','dx1','dx2','dx3','dx4']
-fdir  = ['llf','ncf','roe']
+pdir  = ['p0','p1','p2','p3','p4']
+dxdir = ['dx0','dx1','dx2','dx3','dx4','dx5','dx6']
+fdir  = ['roe']#,'ncf','roe']
 mdir  = ['invgamma','gammamod']
 dxFile  = 'error.dat'
 
@@ -31,11 +31,11 @@ for pd in pdir:
                 dat    = loadtxt(pd+'/'+dxd+'/'+fd+'/'+md+'/'+dxFile)
                 print 'Loading', pd,dxd,fd,md,'data:'
                 print dat
-                dxs   [pdcnt,dxdcnt]               = dat[5,0]
-                errors[pdcnt,dxdcnt,fdcnt,mdcnt,0] = dat[5,1]
-                errors[pdcnt,dxdcnt,fdcnt,mdcnt,1] = dat[5,2]
-                errors[pdcnt,dxdcnt,fdcnt,mdcnt,2] = dat[5,3]
-                errors[pdcnt,dxdcnt,fdcnt,mdcnt,3] = dat[5,4]
+                dxs   [pdcnt,dxdcnt]               = dat[2,0]
+                errors[pdcnt,dxdcnt,fdcnt,mdcnt,0] = dat[2,1]
+                errors[pdcnt,dxdcnt,fdcnt,mdcnt,1] = dat[2,2]
+                errors[pdcnt,dxdcnt,fdcnt,mdcnt,2] = dat[2,3]
+                errors[pdcnt,dxdcnt,fdcnt,mdcnt,3] = dat[2,4]
                 mdcnt = mdcnt+1
             fdcnt = fdcnt+1
         dxdcnt = dxdcnt+1
@@ -44,7 +44,6 @@ for pd in pdir:
 # Theoretical error
 err_th = zeros((size(pdir),size(dxdir)))
 for i in range(0,len(pdir)):
-    print 
     order = int(pdir[i][-1])
     err_th[i,:] = dxs[i,:]**(2*order+1)*errors[i,0,0,0,3]/dxs[i,0]**(2*order+1)
 
@@ -74,9 +73,9 @@ for i in range(0,len(pdir)): # loop on element orders
         ylabel(r"$L_\infty$ \textit{error}",fontsize=22)
         setp(gca().get_ymajorticklabels(),fontsize=18,fontweight='bold');
         setp(gca().get_xmajorticklabels(),fontsize=18,fontweight='bold');    
-        setp(gca(),ylim=[1e-16,1e-1])
+        setp(gca(),xlim=[0.5*dxs[i,:].min(),2*dxs[i,:].max()],ylim=[1e-16,1e-0])
         savefig(pdir[i]+field[j]+'.png',format='png')
-        savefig(pdir[i]+field[j]+'.eps',format='eps')
+        savefig(pdir[i]+field[j]+'.pdf',format='pdf')
         cnt = cnt+1
 
 cnt = 0
@@ -87,7 +86,7 @@ for i in range(0,len(pdir)): # loop on element orders
         pltdx = range(0,len(dxdir))
     figure(i)
     clf()
-    k = 2 # flux
+    k = 0 # flux
     # pressure
     j = 2 # field
     loglog(dxs[i,pltdx]+eps,errors[i,pltdx,k,0,j]+eps,color='r',linewidth=2)
@@ -108,10 +107,9 @@ for i in range(0,len(pdir)): # loop on element orders
     ylabel(r"$L_\infty$ \textit{error}",fontsize=22)
     setp(gca().get_ymajorticklabels(),fontsize=18,fontweight='bold');
     setp(gca().get_xmajorticklabels(),fontsize=18,fontweight='bold');    
-    setp(gca(),xlim=[0.01,0.5])
-    setp(gca(),ylim=[1e-16,1e-1])
+    setp(gca(),xlim=[0.5*dxs[i,:].min(),2*dxs[i,:].max()],ylim=[1e-16,1e-0])
     savefig(pdir[i]+fdir[k]+'_p_g.png',format='png')
-    savefig(pdir[i]+fdir[k]+'_p_g.eps',format='eps')
+    savefig(pdir[i]+fdir[k]+'_p_g.pdf',format='pdf')
 
 
 # # make a latex table
