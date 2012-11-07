@@ -164,7 +164,6 @@ int main (int argc, char **argv)
   fullMatrix<double> points, weight;
   gaussIntegration::getLine(order*2+1, points, weight);
 
-
   //////////////////////////////////////////////////////////////////////////   
   //
   // Define some numbers for clarity

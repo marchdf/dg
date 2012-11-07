@@ -235,7 +235,6 @@ class Limiting
       }
     }
 
-
     // Go back to lagrange representation
     blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
 

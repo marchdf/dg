@@ -11,7 +11,8 @@ rc('font', family='serif', serif='Times')
 #load the files
 #pdir  = ['p0','p1','p2','p3','p4']
 pdir  = ['p0','p1','p2','p3','p4']
-dxdir = ['dx0','dx1','dx2','dx3','dx4','dx5','dx6']
+#dxdir = ['dx0','dx1','dx2','dx3','dx4','dx5','dx6']
+dxdir = ['dx1','dx2','dx3','dx4','dx5','dx6']
 fdir  = ['roe']#,'ncf','roe']
 mdir  = ['invgamma','gammamod']
 dxFile  = 'error.dat'
