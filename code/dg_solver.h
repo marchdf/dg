@@ -26,7 +26,7 @@ class DG_SOLVER
   scalar* _phi_w   ; 
   scalar* _dphi    ; 
   scalar* _dphi_w  ;
-  scalar* _J;
+  scalar* _J       ;
   scalar* _invJac  ; 
   scalar* _UF      ; 
   scalar* _Uinteg  ; 
@@ -45,6 +45,8 @@ class DG_SOLVER
   std::string consfile;
   FILE *consf;
   scalar* _UgC;
+  scalar* _phiC;
+  scalar* _JC;
   scalar* _I;
   scalar* _weight; // integration weights
   
@@ -124,10 +126,12 @@ class DG_SOLVER
 
     // Initialize some stuff for conservation calculations
     consfile = "conservation.dat";
-    consf = fopen(consfile.c_str(),"w");
-    _UgC    = new scalar[N_G*N_E*N_F];  makeZero(_UgC,N_G*N_E*N_F);
-    _I      = new scalar[_N_F];
-    _weight = new scalar[_N_G];         memcpy(_weight,weight,_N_G*sizeof(scalar));
+    consf    = fopen(consfile.c_str(),"w");
+    _UgC     = new scalar[N_G*N_E*N_F];  makeZero(_UgC,N_G*N_E*N_F);
+    _phiC    = new scalar[N_G*N_s];      memcpy(_phiC,phi,N_G*N_s*sizeof(scalar));
+    _JC      = new scalar[N_E];          memcpy(_JC,J,N_E*sizeof(scalar));
+    _I       = new scalar[N_F];          makeZero(_I,N_F);
+    _weight  = new scalar[N_G];          memcpy(_weight,weight,_N_G*sizeof(scalar));
   };
 
   // destructor
@@ -223,14 +227,14 @@ class DG_SOLVER
   void conservation(scalar* U, double time){
 
     // Collocate the solution to the integration points
-    blasGemm('N','N', _N_G, _N_E*_N_F, _N_s, 1, _phi, _N_G, U, _N_s, 0.0, _UgC, _N_G);
+    hostblasGemm('N','N', _N_G, _N_E*_N_F, _N_s, 1, _phiC, _N_G, U, _N_s, 0.0, _UgC, _N_G);
 
     // Take the cell average of the solution
     makeZero(_I, _N_F);
     for(int fc = 0; fc < _N_F; fc++){
       for(int e = 0; e < _N_E; e++){
     	for(int g = 0; g < _N_G; g++){
-	  _I[fc] += _UgC[(e*_N_F+fc)*_N_G+g]*_J[e]*_weight[g]; 
+    	  _I[fc] += _UgC[(e*_N_F+fc)*_N_G+g]*_JC[e]*_weight[g];
     	}
       }
     }

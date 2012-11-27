@@ -84,7 +84,7 @@ class RK
 #endif
 
     // Output conservation of the fields
-    dgsolver.conservation(h_U,0.0);
+    dgsolver.conservation(h_U,0.0); 
     
     // Time integration
     for (int n = 1; n <= N_t; n++){
@@ -118,7 +118,7 @@ class RK
 	if (order0){Laverage_cell_p0(N_s, N_E, N_F, _DU);}
 
 	// U = U + gamma*DU
-	if (blas==1) {blasAxpy(N_s*N_F*N_E, _gamma[k], _DU, 1, arch(U), 1);}       
+	if (blas==1) {blasAxpy(N_s*N_F*N_E, _gamma[k], _DU, 1, arch(U), 1);}
 	else Lcpu_add(N_s, N_E, N_F, arch(U), _DU, _gamma[k]); // do U.add(DU,gamma[k])
 
       }// end loop on k
@@ -139,7 +139,7 @@ class RK
 #endif
 		     
 	printf("Solution written to output file at step %i and time %f.\n",n,n*Dt);
-	if(multifluid)print_dg_multifluid(N_s, N_E, N_F, model, h_U, m, msh_lin, count, n*Dt, 1,-1); 
+	if(multifluid)print_dg_multifluid(N_s, N_E, N_F, model, h_U, m, msh_lin, count, n*Dt, 1,-1);
 	if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, h_U, m, msh_lin, count, n*Dt, 1,-1);
 	count++;
 

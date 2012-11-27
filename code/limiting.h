@@ -33,7 +33,7 @@ class Limiting
     switch (_method){
     case 1:
     case 2:
-    case 3:
+    case 3:{
 #ifdef USE_CPU
       _Lag2Mono = new scalar[_N_s*_N_s];     copyMatrixToPointer(Lag2Mono,_Lag2Mono);
       _Mono2Lag = new scalar[_N_s*_N_s];     copyMatrixToPointer(Mono2Lag,_Mono2Lag);
@@ -65,6 +65,7 @@ class Limiting
       delete[] tmpMono2Lag;	
       delete[] tmpV1D;	
 #endif
+      }
       break;
     default:
       printf("No limiting.\n");
