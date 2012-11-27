@@ -244,7 +244,7 @@ class Limiting
 	    
   }
 
-    void M2limiting(scalar* U){
+  void M2limiting(scalar* U){
 
     // Get the pressure field
     scalar* pressure     = new scalar[_N_s*_N_E];
@@ -422,7 +422,137 @@ class Limiting
 	    
   }
 
+  void M3limiting(scalar* U){
 
+    // Get the pressure field
+    scalar* pressure     = new scalar[_N_s*_N_E];
+    scalar* pressureMono = new scalar[_N_s*_N_E];
+    scalar* pressureLim  = new scalar[_N_s*_N_E];
+    for(int e = 0; e < _N_E; e++){
+      for(int i = 0; i < _N_s; i++){
+	scalar rho  = U[(e*_N_F+0)*_N_s+i];
+	scalar rhou = U[(e*_N_F+1)*_N_s+i];
+	scalar E    = U[(e*_N_F+2)*_N_s+i];
+	if(_multifluid){
+	  scalar gamma=0;
+	  if      (_model==0) gamma=1.0+rho/U[(e*_N_F+3)*_N_s+i];
+	  else if (_model==1) gamma=1.0+1.0/U[(e*_N_F+3)*_N_s+i];
+	  pressure[e*_N_s+i] = (gamma-1.0)*(E - 0.5*rhou*rhou/rho);
+	}
+	else if(_passive){
+	  pressure[e*_N_s+i] = (_gamma0-1)*(E - 0.5*rhou*rhou/rho);
+	}
+      }
+    }
+
+    // Limit pressure
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, pressure, _N_s, 0.0, pressureMono, _N_s);
+    Lcpu_hrl(_N_s, _N_E, 1, _N_G, _boundaryMap, _weight, _V1D, pressureMono, pressureLim);
+
+    // Go from lagrange to monomial representation
+    blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);
+    // Limit the solution according to Liu
+    Lcpu_hrl(_N_s, _N_E, _N_F, _N_G, _boundaryMap, _weight, _V1D, _A, _Alim);
+
+    // My modification:
+    if (_N_s == 2){
+      for(int e = 0; e < _N_E; e++){
+	if (_multifluid){
+	  scalar a0 = _Alim[(e*_N_F+0)*_N_s+0];
+	  scalar a1 = _Alim[(e*_N_F+0)*_N_s+1];
+	  scalar b0 = _Alim[(e*_N_F+1)*_N_s+0];
+	  scalar b1 = _Alim[(e*_N_F+1)*_N_s+1];
+	  scalar g0 = _A[(e*_N_F+2)*_N_s+0];
+	  scalar g1 = _A[(e*_N_F+2)*_N_s+1];
+	  scalar d0 = _Alim[(e*_N_F+3)*_N_s+0];
+	  scalar d1 = _Alim[(e*_N_F+3)*_N_s+1];
+	  if (_model==0){
+	    scalar D1 = 0.5*((d0+d1)/(a0+a1)-(d0-d1)/(a0-a1));
+	    scalar D0 = 0.5*((d0-d1)/(a0-a1)+(d0+d1)/(a0+a1));
+	    d0 = D0; d1 = D1;
+	  }
+	  scalar g1lim = d1/d0*(g0-0.25*((b0+b1)*(b0+b1)/(a0+a1) + (b0-b1)*(b0-b1)/(a0-a1))) + 0.25*((b0+b1)*(b0+b1)/(a0+a1) - (b0-b1)*(b0-b1)/(a0-a1)) + pressureLim[e*_N_s+1]*d0;
+	  scalar g0lim = g0;
+	  _Alim[(e*_N_F+2)*_N_s+1] = g1lim;
+	  _Alim[(e*_N_F+2)*_N_s+0] = g0lim;
+	}
+	else if (_passive){
+	  scalar a0 = _Alim[(e*_N_F+0)*_N_s+0];
+	  scalar a1 = _Alim[(e*_N_F+0)*_N_s+1];
+	  scalar b0 = _Alim[(e*_N_F+1)*_N_s+0];
+	  scalar b1 = _Alim[(e*_N_F+1)*_N_s+1];
+	  scalar g0 = _A[(e*_N_F+2)*_N_s+0];
+	  scalar g1 = _A[(e*_N_F+2)*_N_s+1];
+	  scalar g1lim = 0.25*((b0+b1)*(b0+b1)/(a0+a1) - (b0-b1)*(b0-b1)/(a0-a1)) + pressureLim[e*_N_s+1]*_gamma0;
+	  scalar g0lim = g0;
+	  _Alim[(e*_N_F+2)*_N_s+1] = g1lim;
+	  _Alim[(e*_N_F+2)*_N_s+0] = g0lim;
+	}
+      }
+    }
+
+    if (_N_s == 3){
+      for(int e = 0; e < _N_E; e++){
+	if (_multifluid){
+	  scalar a0 = _Alim[(e*_N_F+0)*_N_s+0];
+	  scalar a1 = _Alim[(e*_N_F+0)*_N_s+1];
+	  scalar a2 = _Alim[(e*_N_F+0)*_N_s+2];
+	  scalar b0 = _Alim[(e*_N_F+1)*_N_s+0];
+	  scalar b1 = _Alim[(e*_N_F+1)*_N_s+1];
+	  scalar b2 = _Alim[(e*_N_F+1)*_N_s+2];
+	  scalar g0 = _A[(e*_N_F+2)*_N_s+0];
+	  scalar g1 = _A[(e*_N_F+2)*_N_s+1];
+	  scalar g2 = _A[(e*_N_F+2)*_N_s+2];
+	  scalar d0 = _Alim[(e*_N_F+3)*_N_s+0];
+	  scalar d1 = _Alim[(e*_N_F+3)*_N_s+1];
+	  scalar d2 = _Alim[(e*_N_F+3)*_N_s+2];
+	  if (_model==0){
+	    scalar D0 = d0/a0;
+	    scalar D1 = 0.5*((d0+d1+0.5*d2)/(a0+a1+0.5*a2) - (d0-d1+0.5*d2)/(a0-a1+0.5*a2));
+	    scalar D2 = (d0+d1+0.5*d2)/(a0+a1+0.5*a2) + (d0-d1+0.5*d2)/(a0-a1+0.5*a2) - 2*D0;
+	    d0 = D0; d1 = D1; d2 = D2;
+	  }
+	  scalar g2lim = (1/(1+1.0/6.0*d2/d0))
+	    *(d2/d0*(g0+1.0/6.0*g2 -0.5*b0*b0/a0)
+	      + 0.5*((b0+b1+0.5*b2)*(b0+b1+0.5*b2)/(a0+a1+0.5*a2) + (b0-b1+0.5*b2)*(b0-b1+0.5*b2)/(a0-a1+0.5*a2) - 2*b0*b0/a0)
+	      + pressureLim[e*_N_s+2]*d0);
+	  scalar g1lim = d1/d0*(g0+1.0/6.0*(g2-g2lim)-0.5*b0*b0/a0)
+	    + 0.25*((b0+b1+0.5*b2)*(b0+b1+0.5*b2)/(a0+a1+0.5*a2) - (b0-b1+0.5*b2)*(b0-b1+0.5*b2)/(a0-a1+0.5*a2))
+	    + pressureLim[e*_N_s+1]*d0;
+	  scalar g0lim = g0 + 1.0/6.0*(g2-g2lim);
+	  _Alim[(e*_N_F+2)*_N_s+0] = g0lim;
+	  _Alim[(e*_N_F+2)*_N_s+1] = g1lim;
+	  _Alim[(e*_N_F+2)*_N_s+2] = g2lim;
+	}
+	else if (_passive){
+	  scalar a0 = _Alim[(e*_N_F+0)*_N_s+0];
+	  scalar a1 = _Alim[(e*_N_F+0)*_N_s+1];
+	  scalar a2 = _Alim[(e*_N_F+0)*_N_s+2];
+	  scalar b0 = _Alim[(e*_N_F+1)*_N_s+0];
+	  scalar b1 = _Alim[(e*_N_F+1)*_N_s+1];
+	  scalar b2 = _Alim[(e*_N_F+1)*_N_s+2];
+	  scalar g0 = _A[(e*_N_F+2)*_N_s+0];
+	  scalar g1 = _A[(e*_N_F+2)*_N_s+1];
+	  scalar g2 = _A[(e*_N_F+2)*_N_s+2];
+	  scalar g2lim = 0.5*((b0+b1+0.5*b2)*(b0+b1+0.5*b2)/(a0+a1+0.5*a2) + (b0-b1+0.5*b2)*(b0-b1+0.5*b2)/(a0-a1+0.5*a2) - 2*b0*b0/a0) + pressureLim[e*_N_s+2]*_gamma0;
+	  scalar g1lim = 0.25*((b0+b1+0.5*b2)*(b0+b1+0.5*b2)/(a0+a1+0.5*a2) - (b0-b1+0.5*b2)*(b0-b1+0.5*b2)/(a0-a1+0.5*a2))
+	    + pressureLim[e*_N_s+1]*_gamma0;
+	  scalar g0lim = g0 + 1.0/6.0*(g2-g2lim);
+	  _Alim[(e*_N_F+2)*_N_s+0] = g0lim;
+	  _Alim[(e*_N_F+2)*_N_s+1] = g1lim;
+	  _Alim[(e*_N_F+2)*_N_s+2] = g2lim;
+	}
+      }
+    }
+
+    // Go back to lagrange representation
+    blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
+
+    delete[] pressure;
+    delete[] pressureMono;
+    delete[] pressureLim;
+	    
+  }
 
   void copyMatrixToPointer(fullMatrix<scalar> &A, scalar* h_A){
   

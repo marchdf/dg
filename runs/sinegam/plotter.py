@@ -77,6 +77,7 @@ for i in range(0,len(pdir)): # loop on element orders
         setp(gca(),xlim=[0.5*dxs[i,:].min(),2*dxs[i,:].max()],ylim=[1e-16,1e-0])
         savefig(pdir[i]+field[j]+'.png',format='png')
         savefig(pdir[i]+field[j]+'.pdf',format='pdf')
+        savefig(pdir[i]+field[j]+'.eps',format='eps')
         cnt = cnt+1
 
 cnt = 0
@@ -111,6 +112,7 @@ for i in range(0,len(pdir)): # loop on element orders
     setp(gca(),xlim=[0.5*dxs[i,:].min(),2*dxs[i,:].max()],ylim=[1e-16,1e-0])
     savefig(pdir[i]+fdir[k]+'_p_g.png',format='png')
     savefig(pdir[i]+fdir[k]+'_p_g.pdf',format='pdf')
+    savefig(pdir[i]+fdir[k]+'_p_g.eps',format='eps')
 
 
 # # make a latex table

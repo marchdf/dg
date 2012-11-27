@@ -111,8 +111,10 @@ int main (int argc, char **argv)
   bool sinegam = false;
   bool expogam = false;
   bool shckint = false;
+  bool multint = false;
   bool sinephi = false;
   bool sodmono = false;
+  bool shckcon = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
   else if (inputs.getInitialCondition()=="contact") contact = true;
@@ -121,8 +123,10 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="sinegam") sinegam = true;
   else if (inputs.getInitialCondition()=="expogam") expogam = true;
   else if (inputs.getInitialCondition()=="shckint") shckint = true;
+  else if (inputs.getInitialCondition()=="multint") multint = true;
   else if (inputs.getInitialCondition()=="sinephi") sinephi = true;
   else if (inputs.getInitialCondition()=="sodmono") sodmono = true;
+  else if (inputs.getInitialCondition()=="shckcon") shckcon = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // setup the boundary condition type
@@ -345,10 +349,12 @@ int main (int argc, char **argv)
     else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
     else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
     else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
+    else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
   }
   else if (passive){
     if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, U);
     if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, U);
+    if (shckcon) init_dg_shckcon_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, U);
   }
 
   if (order0) average_cell_p0(N_s, N_E, N_F, U);
@@ -489,10 +495,12 @@ int main (int argc, char **argv)
     else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
     else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
     else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
+    else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
   }
   else if (passive){
     if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, Uinit);
     if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, Uinit);
+    if (shckcon) init_dg_shckcon_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, Uinit);
   }
   scalar* h_Uinit = new scalar[N_s*N_E*N_F];  makeZero(h_Uinit,N_s*N_E*N_F);
   for(int e = 0; e < N_E; e++){
