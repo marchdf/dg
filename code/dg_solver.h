@@ -176,6 +176,8 @@ class DG_SOLVER
     CUDA_SAFE_CALL(cudaFree(_Q));
 #endif
     delete[] _UgC;
+    delete[] _phiC;
+    delete[] _JC;
     delete[] _I;
     delete[] _weight;
     fclose(consf);
