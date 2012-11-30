@@ -15,13 +15,16 @@ class DG_SOLVER
   int _M_T;
   int _M_s;
   int _M_G;
-  int _boundaryMap;
+  int _M_B;
   int _flux;
   int _model;
   scalar _gamma0;
   int _blas;
   bool _multifluid;
   bool _passive;
+  int* _map;
+  int* _invmap;
+  int* _boundaryMap;
   scalar* _phi     ; 
   scalar* _phi_w   ; 
   scalar* _dphi    ; 
@@ -52,14 +55,16 @@ class DG_SOLVER
   
  public:
   // constructor
- DG_SOLVER(int D, int N_F, int N_E, int N_s, int N_G, int M_T, int M_s, int M_G,
-	   scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* J, scalar* invJac, scalar* weight,
-	   int boundaryMap, int flux, int model, scalar gamma0, int blas, bool multifluid, bool passive) :
-  _D(D), _N_F(N_F), _N_E(N_E), _N_s(N_s), _N_G(N_G), _M_T(M_T), _M_s(M_s), _M_G(M_G),
-    _boundaryMap(boundaryMap), _flux(flux), _model(model), _gamma0(gamma0), _blas(blas), _multifluid(multifluid), _passive(passive) {
+ DG_SOLVER(int D, int N_F, int N_E, int N_s, int N_G, int M_T, int M_s, int M_G, int M_B,
+	   int* map, int* invmap, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* J, scalar* invJac, scalar* weight,
+	   int* boundaryMap, int flux, int model, scalar gamma0, int blas, bool multifluid, bool passive) :
+  _D(D), _N_F(N_F), _N_E(N_E), _N_s(N_s), _N_G(N_G), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B), _flux(flux), _model(model), _gamma0(gamma0), _blas(blas), _multifluid(multifluid), _passive(passive) {
 
 #ifdef USE_CPU
-    
+
+    _map     = new int[M_s*M_T*N_F*2];       
+    _invmap  = new int[N_s*N_E*N_F*2];
+    _boundaryMap  = new int[M_B*2];       
     _phi     = new scalar[N_G*N_s];          makeZero(_phi,N_G*N_s);
     _phi_w   = new scalar[N_G*N_s];          makeZero(_phi_w,N_G*N_s);          
     _dphi    = new scalar[D*N_G*N_s];	     makeZero(_dphi,D*N_G*N_s);	 
@@ -78,7 +83,10 @@ class DG_SOLVER
     _F       = new scalar[N_s*N_E*N_F];      makeZero(_F,N_s*N_E*N_F);	 
     _q       = new scalar[M_G*M_T*N_F*2];    makeZero(_q,M_G*M_T*N_F*2); 
     _Q       = new scalar[N_s*N_E*N_F];      makeZero(_Q,N_s*N_E*N_F);   
-    
+
+    memcpy(_map,    map,    M_s*M_T*N_F*2*sizeof(int));
+    memcpy(_invmap, invmap, N_s*N_E*N_F*2*sizeof(int));
+    memcpy(_boundaryMap, boundaryMap, M_B*2*sizeof(int));
     memcpy(_phi,    phi,    N_G*N_s*sizeof(scalar));
     memcpy(_phi_w,  phi_w,  N_G*N_s*sizeof(scalar));
     memcpy(_dphi,   dphi,   D*N_G*N_s*sizeof(scalar));
@@ -88,6 +96,9 @@ class DG_SOLVER
 	   
 #elif USE_GPU
     // Allocate space on the GPU
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_map,M_s*M_T*N_F*2*sizeof(int)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_invmap,N_s*N_E*N_F*2*sizeof(int)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_boundaryMap,M_B*2*sizeof(int)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_phi,N_G*N_s*sizeof(scalar)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_phi_w,N_G*N_s*sizeof(scalar)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_dphi,D*N_G*N_s*sizeof(scalar)));
@@ -114,6 +125,9 @@ class DG_SOLVER
 
 
     // Send the stuff to the device
+    CUDA_SAFE_CALL(cudaMemcpy(_map,    map,    M_s*M_T*N_F*2*sizeof(int), cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_invmap, invmap, N_s*N_E*N_F*2*sizeof(int), cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_boundaryMap, boundaryMap, M_B*2*sizeof(int), cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_phi, phi, N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_phi_w, phi_w, N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_dphi, dphi, D*N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
@@ -137,6 +151,9 @@ class DG_SOLVER
   // destructor
   ~DG_SOLVER(){
 #ifdef USE_CPU
+    delete[] _map;
+    delete[] _invmap;
+    delete[] _boundaryMap;
     delete[] _phi;
     delete[] _phi_w;
     delete[] _dphi;
@@ -156,6 +173,9 @@ class DG_SOLVER
     delete[] _q;
     delete[] _Q;
 #elif USE_GPU
+    CUDA_SAFE_CALL(cudaFree(_map));
+    CUDA_SAFE_CALL(cudaFree(_invmap));
+    CUDA_SAFE_CALL(cudaFree(_boundaryMap));
     CUDA_SAFE_CALL(cudaFree(_phi));
     CUDA_SAFE_CALL(cudaFree(_phi_w));
     CUDA_SAFE_CALL(cudaFree(_dphi));
@@ -187,8 +207,30 @@ class DG_SOLVER
   void dg_solver(scalar* U, scalar* f_rk){
 
     // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
-    if(_multifluid)   Lcpu_mapToFace_multifluid(_M_s, _M_T, _N_F, _N_s, _boundaryMap, U, _UF);
-    else if(_passive) Lcpu_mapToFace_passive(_M_s, _M_T, _N_F, _N_s, _boundaryMap, U, _UF);
+    Lcpu_mapToFace(_M_s, _M_T, _N_F, _N_s, _map, U, _UF);
+
+    // Apply boundary conditions
+    Lcpu_boundary(_M_s, _N_F, _M_B, _boundaryMap, _UF);
+
+    /* for(int e=0; e<_N_E; e++){ */
+    /*   printf("element %i: ",e); */
+    /*   for(int fc=0; fc<1; fc++){ */
+    /* 	for(int i=0; i<_N_s; i++){ */
+    /* 	  printf("%f ", U[(e*_N_F+fc)*_N_s+i]); */
+    /* 	} */
+    /*   } */
+    /*   printf("\n"); */
+    /* } */
+
+    /* for(int t=0; t<_M_T; t++){ */
+    /*   printf("interface %i: ",t); */
+    /*   for(int fc=0; fc<1; fc++){ */
+    /* 	for(int j=0; j<_M_s; j++){ */
+    /* 	  printf("%f %f", _UF[((t*_N_F+fc)*2+0)*_M_s+j], _UF[((t*_N_F+fc)*2+0)*_M_s+j]); */
+    /* 	} */
+    /*   } */
+    /*   printf("\n"); */
+    /* } */
     
     // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes
     if (_blas==1) {
@@ -217,7 +259,7 @@ class DG_SOLVER
     else Lcpu_gemm_sf(_D, _N_G, _N_s, _N_E, _N_F, _S, _F, _sJ, _fJ, _phi_w, _dphi_w);
       
     // map_q: requires map, Qtcj, Q (might want to do this in the previous step)
-    Lcpu_mapToElement(_N_s, _N_E, _N_F, _Q, _q);
+    Lcpu_mapToElement(_N_s, _N_E, _N_F, _invmap, _Q, _q);
 
     // Make f_rk = S+F+Q
     Lcpu_addSFQ(_N_s, _N_E, _N_F, f_rk, _S, _F, _Q);

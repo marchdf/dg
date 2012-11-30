@@ -9,10 +9,9 @@ extern "C" void Lcpu_equal(int N_s, int N_E, int N_F, scalar* A, scalar* B);
 extern "C" void Lcpu_add(int N_s, int N_E, int N_F, scalar* A, scalar* B, scalar c); // A = A + c*B
 extern "C" void Lcpu_mapToFace_shallow(int M_s, int M_T, int N_F, int* map, scalar* U, scalar* UF);
 extern "C" void Lcpu_mapToFace_mhd(int M_s, int M_T, int N_F, int* map, scalar* U, scalar* UF);
-extern "C" void Lcpu_mapToFace_multifluid(int M_s, int M_T, int N_F, int N_s, int boundaryMap, scalar* U, scalar* UF);
-extern "C" void Lcpu_mapToFace_passive(int M_s, int M_T, int N_F, int N_s, int boundaryMap, scalar* U, scalar* UF);
+extern "C" void Lcpu_mapToFace(int M_s, int M_T, int N_F, int N_s, int* map, scalar* U, scalar* UF);
 extern "C" void Lcpu_boundary(int M_s, int N_F, int M_B, int* boundaryMap, scalar* UF);
-extern "C" void Lcpu_mapToElement(int N_s, int N_E, int N_F, scalar* Q, scalar* q);
+extern "C" void Lcpu_mapToElement(int N_s, int N_E, int N_F, int* invmap, scalar* Q, scalar* q);
 extern "C" void Lcpu_collocationU(int D, int N_G, int N_s, int N_E, int N_F, scalar* Ug, scalar* dUg, scalar* phi, scalar* dphi, scalar* U);
 extern "C" void Lcpu_collocationUF(int M_G, int M_s, int M_T, int N_F, scalar* UgF, scalar* psi, scalar* UF);
 extern "C" void Lcpu_evaluate_sf_shallow(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar H0, scalar G0);

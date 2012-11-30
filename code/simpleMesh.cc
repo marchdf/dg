@@ -251,9 +251,25 @@ void simpleMesh::buildPeriodicSquare(int order, const fullMatrix<scalar> &XYZNod
   delete[] listInterfaces;
 }
 
-void simpleMesh::buildFarfieldSquare()
+void simpleMesh::buildPeriodicLine()
 {
   // Objective: match the interfaces with their periodic partner
+  const std::vector<simpleInterface> &interfaces = getInterfaces();
+
+  // For the line we build with our mesher, the ends are the first two
+  // interfaces
+  _N_B = 2;
+  _boundary = new int[2*_N_B]; // 2 interfaces
+  _boundary[0*2+0] = 0;
+  _boundary[0*2+1] = 1;
+  _boundary[1*2+0] = 1;
+  _boundary[1*2+1] = 0;
+  
+}
+
+void simpleMesh::buildFarfield()
+{
+  // Objective: match the interfaces with their farfield partner
   const std::vector<simpleInterface> &interfaces = getInterfaces();
   
   int N_I = _interfaces.size();       // number of interfaces                     (i index)
@@ -262,7 +278,7 @@ void simpleMesh::buildFarfieldSquare()
   _N_B = 0;                        // number of boundary interfaces (b index)
   for(int i = 0; i < N_I; i++){
     const simpleInterface &face = interfaces[i];
-    if(face.getPhysicalTag()==1){
+    if(face.getElement(1)==NULL){ // if the inferface only has one element
       _N_B++;
     }
   }
@@ -273,7 +289,7 @@ void simpleMesh::buildFarfieldSquare()
   int counter = 0;
   for(int i = 0; i < N_I; i++){
     const simpleInterface &face = interfaces[i];
-    if(face.getPhysicalTag()==1){
+    if(face.getElement(1)==NULL){ // if the inferface only has one element
       int t = i;
       listInterfaces[counter] = t;
       counter++;
@@ -353,7 +369,7 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
       else if (interfaceFound._elements[0] != &el) {
         if (interfaceFound._elements[1] == NULL) {
           interfaceFound._elements[1] = &el;
-          interfaceFound._closureId[1] = j+3;
+          interfaceFound._closureId[1] = j; // WHY?! j+3 in 2D
 	  //	  printf("This has to be 4 times\n");
         }
 	else if (interfaceFound._elements[1] != &el) {

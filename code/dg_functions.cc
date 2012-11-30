@@ -113,10 +113,10 @@ void dg_mappings(const int M_s, const int M_T, const int N_F, const int N_s, con
   for(int k = 0; k < N_s*N_E*N_F*2 ; k++) { invmap[k] = -1;}
 
   for(int t = 0; t < M_T; t++){
-    const simpleInterface &face = interfaces[t];
+    const simpleInterface &face = interfaces[t];    // get the interface
     for(int d = 0; d < 2; d++){
-      const simpleElement *el = face.getElement(d);
-      if(el!=NULL){
+      const simpleElement *el = face.getElement(d); // get the element to the right/left
+      if(el!=NULL){                                 // as long as there is a element to the right/left
   	int id = face.getClosureId(d);
   	const std::vector<int> &cl = closures[id];
 	for(int fc = 0; fc < N_F; fc++){

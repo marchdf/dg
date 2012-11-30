@@ -48,7 +48,8 @@ class simpleMesh {
   }
   void buildNormals(int typeInterface, int typeElement);
   void buildPeriodicSquare(int order, const fullMatrix<scalar> &XYZNodesF, const int D);
-  void buildFarfieldSquare();
+  void buildPeriodicLine();
+  void buildFarfield();
   int getBoundaryNB()  const {return _N_B;}
   int* getBoundaryMap()const {return _boundary;}
 };

@@ -158,13 +158,27 @@ int main (int argc, char **argv)
   const fullMatrix<double> &nodes = m.getNodes();
   const std::vector<simpleElement> &elements = m.getElements(msh_lin);
 
+  m.buildInterfaces(-1, msh_lin);
+  const std::vector<simpleInterface> &interfaces = m.getInterfaces();
+
+  
+  
+  //Build a map: element ID -> element index in order of the U matrix
+  std::map<int,int> ElementMap;
+  for(int e = 0; e < elements.size(); e++){
+    const simpleElement &el = elements[e];
+    //printf("e:%i, id:%i\n", e, el.getId());
+    ElementMap[el.getId()] = e;
+  }  
+  
   ////////////////////////////////////////////////////////////////////////////   
   //
   // Generer les fonctions de formes, get integration points, weights
   //
   ////////////////////////////////////////////////////////////////////////////   
 
-  const polynomialBasis *basis  = polynomialBases::find (msh_lin);  // for the element
+  const polynomialBasis *basis  = polynomialBases::find(msh_lin);  // for the element
+  const std::vector<std::vector<int> > &closures = basis->closures;
   fullMatrix<double> points, weight;
   gaussIntegration::getLine(order*2+1, points, weight);
 
@@ -221,6 +235,34 @@ int main (int argc, char **argv)
       }	  
     }    
   }
+
+  // Faces
+  fullMatrix<scalar> psi(M_G, M_s);
+  fullMatrix<scalar> dpsi(M_G*DF,M_s);
+  if      (D==1){
+    psi(0,0)  = 1;
+    dpsi(0,0) = 0; 
+  }
+  // else if (D==2){
+  //   fullMatrix<scalar> psi(M_G, M_s);
+  //   fullMatrix<double> psiD(M_G, M_s);
+  //   fullMatrix<scalar> dpsi(M_G*DF,M_s);
+  //   basisF->f (pointsF,psiD);
+  //   for(int g = 0; g < M_G; g++){
+  //     for(int j = 0; j < M_s; j++){
+  // 	psi(g,j) = (scalar)psiD(g,j);
+  //     }
+  //   }
+  //   double gradsF[M_s][3];
+  //   for(int g = 0; g < M_G; g++){
+  //     basisF->df(pointsF(g,0),pointsF(g,1),pointsF(g,2),gradsF);
+  //     for(int alpha = 0; alpha < DF; alpha ++){
+  // 	for(int j = 0; j < M_s; j++){
+  // 	  dpsi(g*DF+alpha,j) = (scalar)gradsF[j][alpha];  // see paper for indexing p.6
+  // 	}	  
+  //     }    
+  //   }
+  // }
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -320,16 +362,50 @@ int main (int argc, char **argv)
   }
   XYZG.gemm (phi, XYZNodes);
 
+  // Faces
+  fullMatrix<scalar> XYZNodesF (M_s, M_T*2*D);
+  fullMatrix<scalar> XYZGF (M_G, M_T*2*D);
+  for (int t = 0; t < M_T; t++) {
+    const simpleInterface &face = interfaces[t];
+    for(int d = 0; d < 2; d++){
+      const simpleElement *el = face.getElement(d);
+      if(el!=NULL){
+  	int id = face.getClosureId(d);
+  	const std::vector<int> &cl = closures[id];
+  	for(int j = 0; j < M_s; j++){
+  	  for(int alpha = 0; alpha < D; alpha++){
+  	    XYZNodesF(j,(t*2+d)*D+alpha) = XYZNodes(cl[j],ElementMap[el->getId()]*D+alpha);
+  	  }
+  	}
+      }
+      else if (el==NULL){
+	for(int j = 0; j < M_s; j++){
+  	  for(int alpha = 0; alpha < D; alpha++){
+	    XYZNodesF(j,(t*2+1)*D+alpha) = XYZNodesF(j,(t*2+0)*D+alpha);
+	  }
+	}
+      }
+    }
+  }
+  XYZGF.gemm (psi, XYZNodesF);
+  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Build the boundary map
   //
   //////////////////////////////////////////////////////////////////////////
-
+  if      (periodic) m.buildPeriodicLine();
+  else if (farfield) m.buildFarfield();
+  int* h_boundaryMap = m.getBoundaryMap();
+  int M_B = m.getBoundaryNB();
+  for (int t=0;t<M_B;t++){
+    printf("Boundary map(%i): %i to %i \n",t,h_boundaryMap[t*2+0],h_boundaryMap[t*2+1]);
+  }
   int boundaryMap;
   if (periodic) boundaryMap = M_T-1;
   if (farfield) boundaryMap = 0; 
 
+  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Initialize the unknowns
@@ -394,7 +470,16 @@ int main (int argc, char **argv)
   
   scalar* h_Minv = new scalar[N_s*N_s*N_E];
   dg_inverse_mass_matrix(order, msh_lin, inputs.getElemType(), N_s, N_E, D, XYZNodes, h_Minv);
-  
+
+  //////////////////////////////////////////////////////////////////////////   
+  // 
+  // Build the map
+  //
+  //////////////////////////////////////////////////////////////////////////
+  int* h_map = new int[M_s*M_T*N_F*2];
+  int* h_invmap = new int[N_s*N_E*N_F*2];
+  dg_mappings(M_s, M_T, N_F, N_s, N_E, interfaces, ElementMap, closures, h_map, h_invmap);
+
   //==========================================================================
   //
   //   GPU calculations
@@ -466,9 +551,9 @@ int main (int argc, char **argv)
   int count = 1;
  
   printf("==== Now RK 4 steps =====\n");
-  DG_SOLVER dgsolver = DG_SOLVER(D, N_F, N_E, N_s, N_G, M_T, M_s, M_G,
-  				 h_phi, h_dphi, h_phi_w, h_dphi_w, h_J, h_invJac, h_weight,
-  				 boundaryMap, flux, model, gamma0, blas, multifluid, passive);
+  DG_SOLVER dgsolver = DG_SOLVER(D, N_F, N_E, N_s, N_G, M_T, M_s, M_G, M_B,
+  				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_J, h_invJac, h_weight,
+  				 h_boundaryMap, flux, model, gamma0, blas, multifluid, passive);
   RK rk4 = RK(4);
   rk4.RK_integration(Dt, N_t, output_factor,
   		     D, N_F, N_E, N_s, N_G, M_T, M_s,
@@ -605,7 +690,10 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////   
 
+  delete[] h_boundaryMap;
   delete[] h_Minv;
+  delete[] h_map;
+  delete[] h_invmap;
   delete[] h_phi;
   delete[] h_phi_w;
   delete[] h_dphi;
