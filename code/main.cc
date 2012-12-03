@@ -157,12 +157,10 @@ int main (int argc, char **argv)
   // Get the nodes, elements, interfaces, normals
   const fullMatrix<double> &nodes = m.getNodes();
   const std::vector<simpleElement> &elements = m.getElements(msh_lin);
-
-  m.buildInterfaces(-1, msh_lin);
+  m.buildInterfaces(0, msh_lin);
   const std::vector<simpleInterface> &interfaces = m.getInterfaces();
-
-  
-  
+  m.buildNormals(-1, msh_lin, 1); // D=1
+  const fullMatrix<scalar> &normals = m.getNormals();
   //Build a map: element ID -> element index in order of the U matrix
   std::map<int,int> ElementMap;
   for(int e = 0; e < elements.size(); e++){
@@ -180,8 +178,10 @@ int main (int argc, char **argv)
   const polynomialBasis *basis  = polynomialBases::find(msh_lin);  // for the element
   const std::vector<std::vector<int> > &closures = basis->closures;
   fullMatrix<double> points, weight;
+  fullMatrix<double> pointsF, weightF;
   gaussIntegration::getLine(order*2+1, points, weight);
 
+  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Define some numbers for clarity
@@ -340,7 +340,16 @@ int main (int argc, char **argv)
       }
     }
   }
-  
+
+  // Faces
+  fullMatrix<scalar> psi_w (M_G,M_s);
+  for(int g = 0; g < M_G; g++){
+    for(int j = 0; j < M_s; j++){
+      if   (D==1) psi_w(g,j) = (scalar)psi(g,j);
+      else        psi_w(g,j) = (scalar)psi(g,j)*weightF(g,0);
+    }
+  }
+
   
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -461,6 +470,12 @@ int main (int argc, char **argv)
   fullMatrix<scalar> invJ(N_E,1);         // determinant of the inverse Jacobian
   dg_jacobians_elements(N_G, N_E, D, XYZNodes, dphi, Jac, invJac, J, invJ);
 
+  // Faces
+  fullMatrix<scalar> JacF(M_T*2*D,M_G*DF);
+  fullMatrix<scalar> JF(M_T*2,1);            // determinant of the Jacobian
+  fullMatrix<scalar> invJF(M_T*2,1);         // determinant of the inverse Jacobian
+  dg_jacobians_face(M_T, D, XYZNodesF, dpsi, JacF, JF, invJF);
+ 
   
   //////////////////////////////////////////////////////////////////////////   
   // 
@@ -508,8 +523,12 @@ int main (int argc, char **argv)
   scalar* h_phi_w   = new scalar[N_G*N_s];          makeZero(h_phi_w,N_G*N_s);          
   scalar* h_dphi    = new scalar[D*N_G*N_s];	    makeZero(h_dphi,D*N_G*N_s);	 
   scalar* h_dphi_w  = new scalar[D*N_G*N_s];	    makeZero(h_dphi_w,D*N_G*N_s);
+  scalar* h_psi     = new scalar[M_G*M_s];	    makeZero(h_psi,M_G*M_s);	 
+  scalar* h_psi_w   = new scalar[M_G*M_s];	    makeZero(h_psi_w,M_G*M_s);	 
   scalar* h_J       = new scalar[N_E];              makeZero(h_J,N_E);                                 // not same as J!!
   scalar* h_invJac  = new scalar[N_G*D*N_E*D];      makeZero(h_invJac,N_G*D*N_E*D);                    // not same as invJac!!
+  scalar* h_JF      = new scalar[2*M_T];            makeZero(h_JF, D*M_T);
+  scalar* h_normals = new scalar[D*M_T];	    makeZero(h_normals,D*M_T);	 
   scalar* h_U       = new scalar[N_s*N_E*N_F];	    makeZero(h_U,N_s*N_E*N_F);
 
   // copy from the fullMatrix to the pointer format (column major)
@@ -517,6 +536,8 @@ int main (int argc, char **argv)
   copyMatrixToPointer(phi_w,h_phi_w);
   copyMatrixToPointer(dphi,h_dphi);
   copyMatrixToPointer(dphi_w,h_dphi_w);
+  copyMatrixToPointer(psi,h_psi);
+  copyMatrixToPointer(psi_w,h_psi_w);
   for(int e = 0; e < N_E; e++){
     h_J[e] = J(e,0);
   }
@@ -529,6 +550,12 @@ int main (int argc, char **argv)
       }
     }
   }
+  for(int t = 0; t < M_T; t++){
+    for(int d = 0; d < 2; d++){
+      h_JF[t*2+d] = JF(t*2+d,0);
+    }
+  }
+  copyMatrixToPointer(normals,h_normals);
   for(int e = 0; e < N_E; e++){
     for(int fc = 0; fc < N_F; fc++){
       for(int i = 0; i < N_s; i++){
@@ -552,7 +579,7 @@ int main (int argc, char **argv)
  
   printf("==== Now RK 4 steps =====\n");
   DG_SOLVER dgsolver = DG_SOLVER(D, N_F, N_E, N_s, N_G, M_T, M_s, M_G, M_B,
-  				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_J, h_invJac, h_weight,
+  				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, h_J, h_invJac, h_JF, h_weight, h_normals,
   				 h_boundaryMap, flux, model, gamma0, blas, multifluid, passive);
   RK rk4 = RK(4);
   rk4.RK_integration(Dt, N_t, output_factor,
@@ -698,9 +725,13 @@ int main (int argc, char **argv)
   delete[] h_phi_w;
   delete[] h_dphi;
   delete[] h_dphi_w;
+  delete[] h_psi;
+  delete[] h_psi_w;
   delete[] h_weight;
   delete[] h_J;
+  delete[] h_JF;
   delete[] h_invJac;
+  delete[] h_normals;
   delete[] h_U;
 
   

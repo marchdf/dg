@@ -59,7 +59,7 @@ void simpleMesh::load (const char *fileName)
     printf("invalid file format\n");
 }
 
-void simpleMesh::buildNormals (int typeInterface, int typeElement)
+void simpleMesh::buildNormals (int typeInterface, int typeElement, int D)
 {
   
   //
@@ -75,7 +75,6 @@ void simpleMesh::buildNormals (int typeInterface, int typeElement)
   int N_E = elements.size();          // number of elements                     (e index)
   int N_I = _interfaces.size();       // number of elements                     (i index)
   int N_T = basis.numFaces;           // number of faces per element            (t index)
-  int D   = 2;                        // number of coordinates in ref space     (alpha index)
 
   //
   // Fonctions de formes et derivees evaluee aux noeuds du maillage
@@ -104,8 +103,10 @@ void simpleMesh::buildNormals (int typeInterface, int typeElement)
   //
   // Calculate the normals
   //
-  _normals.resize(2,N_I);
+  _normals.resize(D,N_I);
   _normals.setAll(0.0);
+  double* n = new double[D];
+  
   // Loop on all the interfaces
   for(int i = 0; i < N_I; i++){
 
@@ -116,15 +117,16 @@ void simpleMesh::buildNormals (int typeInterface, int typeElement)
     const simpleElement *el = face.getElement(0);
     int clId = face.getClosureId(0);
     const std::vector<int> &cl = closures[clId];
-    double nx = 0;
-    double ny = 0;
 
+    // Set n to zero
+    for(int alpha = 0; alpha < D; alpha++){ n[alpha] = 0;}
+    
     // get XYZ coordinates of the element
     fullMatrix<double> XYZNodes (N_s, D);
     for (int j = 0; j < N_s; j++) {
       int inode = el->getNode(j);
       for(int alpha = 0; alpha < D; alpha++){
-	XYZNodes(j, alpha) = _nodes(alpha, inode);
+    	XYZNodes(j, alpha) = _nodes(alpha, inode);
       }
     }
 	
@@ -134,25 +136,34 @@ void simpleMesh::buildNormals (int typeInterface, int typeElement)
 
     // Inverse Jacobian matrix 
     fullMatrix<double> invJac(D,N_s*D);
-    for(int k = 0; k < N_s; k++ ){
-      double idet = 1.0/(Jac(0,k*D+0)*Jac(1,k*D+1)-Jac(1,k*D+0)*Jac(0,k*D+1));
-      invJac(0,k*D+0) = idet*Jac(1,k*D+1);
-      invJac(1,k*D+0) = -1.0*idet*Jac(1,k*D+0);
-      invJac(0,k*D+1) = -1.0*idet*Jac(0,k*D+1);
-      invJac(1,k*D+1) = idet*Jac(0,k*D+0);
-    }	    
+    if (D == 1){ for(int k = 0; k < N_s; k++ ){ invJac(0,k) = 1.0/Jac(0,k);}}
+    else if(D==2){
+      for(int k = 0; k < N_s; k++ ){
+    	double idet = 1.0/(Jac(0,k*D+0)*Jac(1,k*D+1)-Jac(1,k*D+0)*Jac(0,k*D+1));
+    	invJac(0,k*D+0) = idet*Jac(1,k*D+1);
+    	invJac(1,k*D+0) = -1.0*idet*Jac(1,k*D+0);
+    	invJac(0,k*D+1) = -1.0*idet*Jac(0,k*D+1);
+    	invJac(1,k*D+1) = idet*Jac(0,k*D+0);
+      }
+    }
 
-    // Loop on the nodes of the interface and calculate the normal
+    // // Loop on the nodes of the interface and calculate the normal
     for(int k = 0; k < cl.size(); k++){
-      nx += invJac(0,cl[k]*D+0)*dphi(cl[k]*D+0,cl[k]) + invJac(1,cl[k]*D+0)*dphi(cl[k]*D+1,cl[k]);
-      ny += invJac(0,cl[k]*D+1)*dphi(cl[k]*D+0,cl[k]) + invJac(1,cl[k]*D+1)*dphi(cl[k]*D+1,cl[k]);
+      for(int alpha = 0; alpha < D; alpha++){
+	for(int a = 0; a < D; a++){ // loop for matrix-matrix mult of invJac and dphi
+	  n[alpha] += invJac(a,cl[k]*D+alpha)*dphi(cl[k]*D+a,cl[k]);
+	}
+      }
     }
 
     // Normalize and store
-    _normals(0,i) = (scalar)nx/sqrt(nx*nx+ny*ny);
-    _normals(1,i) = (scalar)ny/sqrt(nx*nx+ny*ny);
-    //printf("[nx ny] = [%f,%f]\n", _normals(0,i), _normals(1,i));
+    scalar norm2 = 0.0;
+    for(int alpha=0; alpha < D; alpha++){ norm2 += n[alpha]*n[alpha];}
+    for(int alpha=0; alpha < D; alpha++){
+      _normals(alpha,i) = (scalar)n[alpha]/sqrt(norm2);
+    }
   } // end loop on interfaces
+  delete[] n;
 }
 
 
@@ -355,24 +366,24 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
       const std::vector<int> &cl = closures[j];
       for (int k = 0; k < cl.size(); k++) {
         nodes.push_back(el.getNode(cl[k]));
-	//	printf("   node %i\n", nodes[k]);
+  	//	printf("   node %i\n", nodes[k]);
       }
       std::sort(nodes.begin(), nodes.end());
       simpleInterface &interfaceFound = interfacesMap[nodes];
       if (interfaceFound._elements[0] == NULL) {
         interfaceFound._elements[0] = &el;
-	interfaceFound._elements[1] = NULL;
+  	interfaceFound._elements[1] = NULL;
         interfaceFound._closureId[0] = j;
-	interfaceFound._closureId[1] = -1;
-	//	printf("This has to be 8 times\n");
+  	interfaceFound._closureId[1] = -1;
+  	//	printf("This has to be 8 times\n");
       }
       else if (interfaceFound._elements[0] != &el) {
         if (interfaceFound._elements[1] == NULL) {
           interfaceFound._elements[1] = &el;
           interfaceFound._closureId[1] = j; // WHY?! j+3 in 2D
-	  //	  printf("This has to be 4 times\n");
+  	  //	  printf("This has to be 4 times\n");
         }
-	else if (interfaceFound._elements[1] != &el) {
+  	else if (interfaceFound._elements[1] != &el) {
           printf("error in interfaces creation !!!\n");
           exit(1);
         }

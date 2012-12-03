@@ -33,7 +33,9 @@ void dg_jacobians_face(const int M_T, const int D, fullMatrix<scalar> &XYZNodesF
   JacF.gemm(XYZNodesF.transpose(),dpsi.transpose());
   for(int t = 0; t < M_T; t++){
     for(int d = 0; d < 2; d++){
-      scalar det = sqrt(JacF((t*2+d)*D+0,0)* JacF((t*2+d)*D+0,0) +  JacF((t*2+d)*D+1,0) *  JacF((t*2+d)*D+1,0));
+      scalar det = 0.0;
+      for(int alpha = 0; alpha < D; alpha ++){ det += sqrt(JacF((t*2+d)*D+alpha,0)* JacF((t*2+d)*D+alpha,0));}
+      if(D==1) det = 1; // in 1D set JF to 1
       JF(t*2+d,0)    =  det;
       invJF(t*2+d,0) =  1.0/det;
     }

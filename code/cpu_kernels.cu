@@ -669,10 +669,10 @@ arch_global void cpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar
 }
 
 arch_device scalar cpu_fhll_multifluid(scalar UL, scalar SL, scalar FL, scalar UR, scalar SR, scalar FR){
-  return (SR*FL-SL*FR+SL*SR*(UR-UL))/(SR-SL);
+  return (SR*FL-SL*FR+SL*SR*(UR-UL))/fabs(SR-SL);
 }
 //==========================================================================
-arch_global void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, scalar* q, scalar* UgF){
+arch_global void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, scalar* q, scalar* UgF, scalar* normals){
   
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
@@ -682,8 +682,7 @@ arch_global void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, 
     extern __shared__ scalar vap[];
 #endif
 
-    scalar nx = 1;
-    if (t==0){nx=-1;}
+    scalar nx = normals[t];
 
     scalar rhoL= UgF[(t*N_F+0)*2+0];
     scalar rhoR= UgF[(t*N_F+0)*2+1];
@@ -726,9 +725,7 @@ arch_global void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, 
     for (int k = 0; k < 2*sizevap; k++){
       if (maxvap<vap[k]) maxvap = vap[k];
     }
-    scalar SL = MIN(fabs(uL)-aL,fabs(uR)-aR);
-    scalar SR = MAX(fabs(uL)+aR,fabs(uR)+aR);
-    
+   
     //
     // Evaluate the fluxes on the right and left
     //
@@ -766,34 +763,62 @@ arch_global void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, 
       //strictly equiv:
       //q[(t*N_F+3)*2+0] = 0.5*(alphaL-alphaR)*(0.5*(uL+uR)-maxvap); 
       //q[(t*N_F+3)*2+1] = 0.5*(alphaL-alphaR)*(0.5*(uL+uR)+maxvap);
-      
     }
 
     // Non-conservative flux
     else if (flux == 1){
+
+      // Wave estimates
+      scalar SL = 0; scalar SR = 0;
+      int estimate = 0;
+      switch (estimate){
+      case 1:{ // Toro 10.49
+	scalar rhoRoe = sqrt(rhoL*rhoR);
+	scalar uRoe = (sqrt(rhoL)*uL+sqrt(rhoR)*uR)/(sqrt(rhoL)+sqrt(rhoR));
+	scalar HL = (EtL + pL)/rhoL;
+	scalar HR = (EtR + pR)/rhoR;
+	scalar HRoe = (sqrt(rhoL)*HL+sqrt(rhoR)*HR)/(sqrt(rhoL)+sqrt(rhoR));
+	scalar alphaRoe = (sqrt(rhoL)*alphaL+sqrt(rhoR)*alphaR)/(sqrt(rhoL)+sqrt(rhoR));
+	scalar gammaRoe = 1+1.0/alphaRoe;
+	scalar aRoe = sqrt((gammaRoe-1)*(HRoe-0.5*uRoe*uRoe));
+	SL = uRoe*nx-aRoe;
+	SR = uRoe*nx+aRoe;
+	break;}
+      case 2: { // Toro 10.52
+	scalar eta2 = 0.5*sqrt(rhoL*rhoR)/((sqrt(rhoL)+sqrt(rhoR))*(sqrt(rhoL)+sqrt(rhoR)));
+	scalar dbar2 = (sqrt(rhoL)*aL*aL + sqrt(rhoR)*aR*aR)/(sqrt(rhoL)+sqrt(rhoR)) + eta2*(uR-uL)*(uR-uL);
+	scalar ubar = 0.5*(uR+uL);
+	SL = ubar*nx - sqrt(dbar2);
+	SR = ubar*nx + sqrt(dbar2);
+	break;}
+      default: // Toro 10.48
+	SL = MIN((uL*nx-aL),(uR*nx-aR));
+	SR = MAX((uL*nx+aL),(uR*nx+aR));
+      }
+
       scalar pnc1=0, pnc2=0, pnc3=0, pnc4=0;
       scalar vnc4 = -0.5*(uL+uR)*(alphaL-alphaR);
 
       // define the flux
       if (SL > 0){
-	pnc1 = cpu_flux1_multifluid(rhoL,uL);
-	pnc2 = cpu_flux2_multifluid(rhoL,uL,pL);
-	pnc3 = cpu_flux3_multifluid(EtPL,uL);
-	if      (model==0) pnc4 = cpu_flux4_multifluid(rhoL,uL,gammaL);
+	pnc1 = cpu_flux1_multifluid(rhoL,uL)*nx;
+	pnc2 = cpu_flux2_multifluid(rhoL,uL,pL)*nx;
+	pnc3 = cpu_flux3_multifluid(EtPL,uL)*nx;
+	if      (model==0) pnc4 = cpu_flux4_multifluid(rhoL,uL,gammaL)*nx;
 	else if (model==1) pnc4 = -0.5*vnc4;
       }
       else if ((SL < 0)&&(SR > 0)){
-	pnc1 = cpu_fhll_multifluid(rhoL, SL, cpu_flux1_multifluid(rhoL,uL),   rhoR, SR, cpu_flux1_multifluid(rhoR,uR));
-	pnc2 = cpu_fhll_multifluid(  uL, SL, cpu_flux2_multifluid(rhoL,uL,pL),  uR, SR, cpu_flux2_multifluid(rhoR,uR,pR));
-	pnc3 = cpu_fhll_multifluid( EtL, SL, cpu_flux3_multifluid(EtPL,uL),    EtR, SR, cpu_flux3_multifluid(EtPR,uR));
-	if      (model==0) pnc4 = cpu_fhll_multifluid(alphaL, SL, cpu_flux4_multifluid(rhoL,uL,gammaL), alphaR, SR, cpu_flux4_multifluid(rhoR,uR,gammaR));
-	else if (model==1) pnc4 = cpu_fhll_multifluid(alphaL, SL, 0, alphaR, SR, 0) - 0.5*(SR+SL)/(SR-SL)*vnc4;
+	pnc1 = cpu_fhll_multifluid(rhoL, SL, cpu_flux1_multifluid(rhoL,uL)*nx,   rhoR, SR, cpu_flux1_multifluid(rhoR,uR)*nx);
+	pnc2 = cpu_fhll_multifluid(  uL, SL, cpu_flux2_multifluid(rhoL,uL,pL)*nx,  uR, SR, cpu_flux2_multifluid(rhoR,uR,pR)*nx);
+	pnc3 = cpu_fhll_multifluid( EtL, SL, cpu_flux3_multifluid(EtPL,uL)*nx,    EtR, SR, cpu_flux3_multifluid(EtPR,uR)*nx);
+	if      (model==0) pnc4 = cpu_fhll_multifluid(alphaL, SL, cpu_flux4_multifluid(rhoL,uL,gammaL)*nx, alphaR, SR, cpu_flux4_multifluid(rhoR,uR,gammaR)*nx);
+	else if (model==1) pnc4 = cpu_fhll_multifluid(alphaL, SL, 0, alphaR, SR, 0) - 0.5*fabs(SR+SL)/fabs(SR-SL)*vnc4;
       }
       else if (SR < 0){
-	pnc1 = cpu_flux1_multifluid(rhoR,uR);
-	pnc2 = cpu_flux2_multifluid(rhoR,uR,pR);
-	pnc3 = cpu_flux3_multifluid(EtPR,uR);
-	if      (model==0) pnc4 = cpu_flux4_multifluid(rhoR,uR,gammaR);
+	pnc1 = cpu_flux1_multifluid(rhoR,uR)*nx;
+	pnc2 = cpu_flux2_multifluid(rhoR,uR,pR)*nx;
+	pnc3 = cpu_flux3_multifluid(EtPR,uR)*nx;
+	if      (model==0) pnc4 = cpu_flux4_multifluid(rhoR,uR,gammaR)*nx;
 	else if (model==1) pnc4 = 0.5*vnc4;
       }
 
@@ -815,7 +840,7 @@ arch_global void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, 
       //fourth: 
       scalar ncterm = 0;
       qL = -pnc4;
-      if (model==1) ncterm = -0.5*vnc4;
+      if (model==1) ncterm = -0.5*vnc4*nx;
       q[(t*N_F+3)*2+0] = qL  + ncterm; 
       q[(t*N_F+3)*2+1] = -qL + ncterm;
     }
@@ -916,10 +941,10 @@ arch_global void cpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, 
 }
 
 arch_device scalar cpu_fhll_passive(scalar UL, scalar SL, scalar FL, scalar UR, scalar SR, scalar FR){
-  return (SR*FL-SL*FR+SL*SR*(UR-UL))/(SR-SL);
+  return (SR*FL-SL*FR+SL*SR*(UR-UL))/fabs(SR-SL);
 }
 //==========================================================================
-arch_global void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, scalar gamma, scalar* q, scalar* UgF){
+arch_global void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, scalar gamma, scalar* q, scalar* UgF, scalar* normals){
   
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
@@ -929,9 +954,8 @@ arch_global void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, sca
     extern __shared__ scalar vap[];
 #endif
 
-    scalar nx = 1;
-    if (t==0){nx=-1;}
-    
+    scalar nx = normals[t];
+
     scalar rhoL   = UgF[(t*N_F+0)*2+0];
     scalar rhoR   = UgF[(t*N_F+0)*2+1];
     scalar uL     = UgF[(t*N_F+1)*2+0]/rhoL;
@@ -942,18 +966,6 @@ arch_global void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, sca
     scalar phicR  = UgF[(t*N_F+3)*2+1]/rhoR;
     scalar phincL = UgF[(t*N_F+4)*2+0];
     scalar phincR = UgF[(t*N_F+4)*2+1];
-    // if (t==0){
-    //   rhoL   = UgF[(t*N_F+0)*2+1];
-    //   rhoR   = UgF[(t*N_F+0)*2+0];
-    //   uL     = UgF[(t*N_F+1)*2+1]/rhoL;
-    //   uR     = UgF[(t*N_F+1)*2+0]/rhoR;
-    //   EtL    = UgF[(t*N_F+2)*2+1];
-    //   EtR    = UgF[(t*N_F+2)*2+0];
-    //   phicL  = UgF[(t*N_F+3)*2+1]/rhoL;
-    //   phicR  = UgF[(t*N_F+3)*2+0]/rhoR;
-    //   phincL = UgF[(t*N_F+4)*2+1];
-    //   phincR = UgF[(t*N_F+4)*2+0];
-    // }
     scalar pL     = (gamma-1)*(EtL - 0.5*rhoL*uL*uL);
     scalar pR     = (gamma-1)*(EtR - 0.5*rhoR*uR*uR);
     scalar EtPL   = EtL+pL;
@@ -1018,65 +1030,58 @@ arch_global void cpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, sca
 
     // Non-conservative flux
     else if (flux == 1){
-      // Wave estimates from Toro 10.48
-      // You can also use Toro 10.49 or 10.53
-      scalar SL = MIN((fabs(uL)-aL),(fabs(uR)-aR));
-      scalar SR = MAX((fabs(uL)+aL),(fabs(uR)+aR));
+      // Wave estimates
+      scalar SL = 0; scalar SR = 0;
+      int estimate = 0;
+      switch (estimate){
+      case 1:{ // Toro 10.49
+	scalar rhoRoe = sqrt(rhoL*rhoR);
+	scalar uRoe = (sqrt(rhoL)*uL+sqrt(rhoR)*uR)/(sqrt(rhoL)+sqrt(rhoR));
+	scalar HL = (EtL + pL)/rhoL;
+	scalar HR = (EtR + pR)/rhoR;
+	scalar HRoe = (sqrt(rhoL)*HL+sqrt(rhoR)*HR)/(sqrt(rhoL)+sqrt(rhoR));
+	scalar aRoe = sqrt((gamma-1)*(HRoe-0.5*uRoe*uRoe));
+	SL = uRoe*nx-aRoe;
+	SR = uRoe*nx+aRoe;
+	break;}
+      case 2: { // Toro 10.52
+	scalar eta2 = 0.5*sqrt(rhoL*rhoR)/((sqrt(rhoL)+sqrt(rhoR))*(sqrt(rhoL)+sqrt(rhoR)));
+	scalar dbar2 = (sqrt(rhoL)*aL*aL + sqrt(rhoR)*aR*aR)/(sqrt(rhoL)+sqrt(rhoR)) + eta2*(uR-uL)*(uR-uL);
+	scalar ubar = 0.5*(uR+uL);
+	SL = ubar*nx - sqrt(dbar2);
+	SR = ubar*nx + sqrt(dbar2);
+	break;}
+      default: // Toro 10.48
+	SL = MIN((uL*nx-aL),(uR*nx-aR));
+	SR = MAX((uL*nx+aL),(uR*nx+aR));
+      }
 
       scalar pnc1=0, pnc2=0, pnc3=0, pnc4=0, pnc5=0;
       scalar vnc5 = -0.5*(uL+uR)*(phincL-phincR);
 
-
-      if (t==0){
-	// define the flux
-	if (SL > 0){
-	  pnc1 = cpu_flux1_passive(rhoR,uR)*nx;
-	  pnc2 = cpu_flux2_passive(rhoR,uR,pR)*nx;
-	  pnc3 = cpu_flux3_passive(EtPR,uR)*nx;
-	  pnc4 = cpu_flux4_passive(rhoR,uR,phicR)*nx;
-	  pnc5 = -0.5*vnc5;
-	}
-	else if ((SL < 0)&&(SR > 0)){
-	  pnc1 = cpu_fhll_passive( rhoL, SL, cpu_flux1_passive(rhoR,uR)*nx,        rhoR, SR, cpu_flux1_passive(rhoL,uL)*nx);
-	  pnc2 = cpu_fhll_passive(   uL, SL, cpu_flux2_passive(rhoR,uR,pR)*nx,       uR, SR, cpu_flux2_passive(rhoL,uL,pL)*nx);
-	  pnc3 = cpu_fhll_passive(  EtL, SL, cpu_flux3_passive(EtPR,uR)*nx,         EtR, SR, cpu_flux3_passive(EtPL,uL)*nx);
-	  pnc4 = cpu_fhll_passive(phicL, SL, cpu_flux4_passive(rhoR,uR,phicR)*nx, phicR, SR, cpu_flux4_passive(rhoL,uL,phicL)*nx);
-	  pnc5 = cpu_fhll_passive(phincL, SL, 0, phincR, SR, 0) - 0.5*(SR+SL)/(SR-SL)*vnc5;
-	}
-	else if (SR < 0){
-	  pnc1 = cpu_flux1_passive(rhoL,uL)*nx;
-	  pnc2 = cpu_flux2_passive(rhoL,uL,pL)*nx;
-	  pnc3 = cpu_flux3_passive(EtPL,uL)*nx;
-	  pnc4 = cpu_flux4_passive(rhoL,uL,phicL)*nx;
-	  pnc5 = 0.5*vnc5;
-	}
+      // define the flux
+      if (SL > 0){
+	pnc1 = cpu_flux1_passive(rhoL,uL)*nx;
+	pnc2 = cpu_flux2_passive(rhoL,uL,pL)*nx;
+	pnc3 = cpu_flux3_passive(EtPL,uL)*nx;
+	pnc4 = cpu_flux4_passive(rhoL,uL,phicL)*nx;
+	pnc5 = -0.5*vnc5;
+      }
+      else if ((SL < 0)&&(SR > 0)){
+	pnc1 = cpu_fhll_passive( rhoL, SL, cpu_flux1_passive(rhoL,uL)*nx,        rhoR, SR, cpu_flux1_passive(rhoR,uR)*nx);
+	pnc2 = cpu_fhll_passive(   uL, SL, cpu_flux2_passive(rhoL,uL,pL)*nx,       uR, SR, cpu_flux2_passive(rhoR,uR,pR)*nx);
+	pnc3 = cpu_fhll_passive(  EtL, SL, cpu_flux3_passive(EtPL,uL)*nx,         EtR, SR, cpu_flux3_passive(EtPR,uR)*nx);
+	pnc4 = cpu_fhll_passive(phicL, SL, cpu_flux4_passive(rhoL,uL,phicL)*nx, phicR, SR, cpu_flux4_passive(rhoR,uR,phicR)*nx);
+	pnc5 = cpu_fhll_passive(phincL, SL, 0, phincR, SR, 0) - 0.5*fabs(SR+SL)/fabs(SR-SL)*vnc5;
+      }
+      else if (SR < 0){
+	pnc1 = cpu_flux1_passive(rhoR,uR)*nx;
+	pnc2 = cpu_flux2_passive(rhoR,uR,pR)*nx;
+	pnc3 = cpu_flux3_passive(EtPR,uR)*nx;
+	pnc4 = cpu_flux4_passive(rhoR,uR,phicR)*nx;
+	pnc5 = 0.5*vnc5;
       }
 
-      else {
-	// define the flux
-	if (SL > 0){
-	  pnc1 = cpu_flux1_passive(rhoL,uL);
-	  pnc2 = cpu_flux2_passive(rhoL,uL,pL);
-	  pnc3 = cpu_flux3_passive(EtPL,uL);
-	  pnc4 = cpu_flux4_passive(rhoL,uL,phicL);
-	  pnc5 = -0.5*vnc5;
-	}
-	else if ((SL < 0)&&(SR > 0)){
-	  pnc1 = cpu_fhll_passive( rhoL, SL, cpu_flux1_passive(rhoL,uL),        rhoR, SR, cpu_flux1_passive(rhoR,uR));
-	  pnc2 = cpu_fhll_passive(   uL, SL, cpu_flux2_passive(rhoL,uL,pL),       uR, SR, cpu_flux2_passive(rhoR,uR,pR));
-	  pnc3 = cpu_fhll_passive(  EtL, SL, cpu_flux3_passive(EtPL,uL),         EtR, SR, cpu_flux3_passive(EtPR,uR));
-	  pnc4 = cpu_fhll_passive(phicL, SL, cpu_flux4_passive(rhoL,uL,phicL), phicR, SR, cpu_flux4_passive(rhoR,uR,phicR));
-	  pnc5 = cpu_fhll_passive(phincL, SL, 0, phincR, SR, 0) - 0.5*(SR+SL)/(SR-SL)*vnc5;
-	}
-	else if (SR < 0){
-	  pnc1 = cpu_flux1_passive(rhoR,uR);
-	  pnc2 = cpu_flux2_passive(rhoR,uR,pR);
-	  pnc3 = cpu_flux3_passive(EtPR,uR);
-	  pnc4 = cpu_flux4_passive(rhoR,uR,phicR);
-	  pnc5 = 0.5*vnc5;
-	}
-      }
-      
       // first
       scalar qL = -pnc1;
       q[(t*N_F+0)*2+0] = qL;
@@ -1258,20 +1263,23 @@ arch_global void cpu_gemm_sf(int D, int N_G, int N_s, int N_E, int N_F, scalar* 
 }
 
 //==========================================================================
-arch_global void cpu_redistribute_q(int M_G, int M_T, int N_F, scalar* qJ, scalar* q){
+arch_global void cpu_redistribute_q(int M_G, int M_T, int N_F, scalar* qJ, scalar* q, scalar* JF){
 
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
-    for(int fc = 0; fc < N_F; fc++){
+    for(int g = 0; g < M_G; g++){
+      for(int fc = 0; fc < N_F; fc++){
 #elif USE_GPU
       int t = blockIdx.x;
+      int g= threadIdx.x;
       int fc= threadIdx.y;
 #endif
 
-      qJ[(t*N_F+fc)*2+0] = q[(t*N_F+fc)*2+0];
-      qJ[(t*N_F+fc)*2+1] = q[(t*N_F+fc)*2+1];
+      qJ[((t*N_F+fc)*2+0)*M_G+g] = q[((t*N_F+fc)*2+0)*M_G+g]*JF[t*2+0];
+      qJ[((t*N_F+fc)*2+1)*M_G+g] = q[((t*N_F+fc)*2+1)*M_G+g]*JF[t*2+0];
   
 #ifdef USE_CPU
+      }
     }
   }
 #endif
@@ -1825,25 +1833,25 @@ void Lcpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scal
 }
 
 extern "C" 
-void Lcpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, scalar* q, scalar* UgF){
+void Lcpu_evaluate_q_multifluid(int M_G, int M_T, int N_F, int flux, int model, scalar* q, scalar* UgF, scalar* normals){
 
 #ifdef USE_GPU
   dim3 dimBlock(1,1,1);
   dim3 dimGrid(M_T,1);
 #endif
 
-  cpu_evaluate_q_multifluid arch_args_array(4*(4+4)*sizeof(scalar)) (M_G, M_T, N_F, flux, model, q, UgF);
+  cpu_evaluate_q_multifluid arch_args_array(4*(4+4)*sizeof(scalar)) (M_G, M_T, N_F, flux, model, q, UgF, normals);
 }
 
 extern "C" 
-void Lcpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, scalar gamma, scalar* q, scalar* UgF){
+void Lcpu_evaluate_q_passive(int M_G, int M_T, int N_F, int flux, scalar gamma, scalar* q, scalar* UgF, scalar* normals){
 
 #ifdef USE_GPU
   dim3 dimBlock(1,1,1);
   dim3 dimGrid(M_T,1);
 #endif
 
-  cpu_evaluate_q_passive arch_args_array(3*(4+3)*sizeof(scalar)) (M_G, M_T, N_F, flux, gamma, q, UgF);
+  cpu_evaluate_q_passive arch_args_array(3*(4+3)*sizeof(scalar)) (M_G, M_T, N_F, flux, gamma, q, UgF, normals);
 }
 
 extern "C" 
@@ -1868,14 +1876,14 @@ void Lcpu_gemm_sf(int D, int N_G, int N_s, int N_E, int N_F, scalar* S, scalar* 
 }
 
 extern "C"
-void Lcpu_redistribute_q(int M_G, int M_T, int N_F, scalar* qJ, scalar* q){
+void Lcpu_redistribute_q(int M_G, int M_T, int N_F, scalar* qJ, scalar* q, scalar* JF){
 
 #ifdef USE_GPU
   dim3 dimBlock(M_G,N_F,1);
   dim3 dimGrid(M_T,1);
 #endif
 
-  cpu_redistribute_q arch_args (M_G, M_T, N_F, qJ, q);
+  cpu_redistribute_q arch_args (M_G, M_T, N_F, qJ, q, JF);
 }
 
 extern "C" 
