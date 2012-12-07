@@ -76,21 +76,12 @@ class Limiting
   // destructor
   ~Limiting(){
     if(_method!=0){
-#ifdef USE_CPU
-      if(_Lag2Mono) delete[] _Lag2Mono;
-      if(_Mono2Lag) delete[] _Mono2Lag;
-      if(_V1D)      delete[] _V1D;
-      if(_weight)   delete[] _weight;
-      if(_A)        delete[] _A;
-      if(_Alim)     delete[] _Alim;
-#elif USE_GPU
-      if(_Lag2Mono) CUDA_SAFE_CALL(cudaFree(_Lag2Mono));
-      if(_Mono2Lag) CUDA_SAFE_CALL(cudaFree(_Mono2Lag));
-      if(_V1D)      CUDA_SAFE_CALL(cudaFree(_V1D));
-      if(_weight)   CUDA_SAFE_CALL(cudaFree(_weight));
-      if(_A)        CUDA_SAFE_CALL(cudaFree(_A));
-      if(_Alim)     CUDA_SAFE_CALL(cudaFree(_Alim));
-#endif      
+      if(_Lag2Mono) del(_Lag2Mono);
+      if(_Mono2Lag) del(_Mono2Lag);
+      if(_V1D)      del(_V1D);
+      if(_weight)   del(_weight);
+      if(_A)        del(_A);
+      if(_Alim)     del(_Alim);
     }	      
   }
   

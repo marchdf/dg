@@ -4,6 +4,8 @@
 #ifndef DG_SOLVER_H
 #define DG_SOLVER_H
 
+#include <physics.h>
+
 class DG_SOLVER
 {
  private:
@@ -17,11 +19,7 @@ class DG_SOLVER
   int _M_G;
   int _M_B;
   int _flux;
-  int _model;
   scalar _gamma0;
-  int _blas;
-  bool _multifluid;
-  bool _passive;
   int* _map;
   int* _invmap;
   int* _boundaryMap;
@@ -63,8 +61,8 @@ class DG_SOLVER
   // constructor
  DG_SOLVER(int D, int N_F, int N_E, int N_s, int N_G, int M_T, int M_s, int M_G, int M_B,
 	   int* map, int* invmap, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* psi, scalar* psi_w, scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals,
-	   int* boundaryMap, int flux, int model, scalar gamma0, int blas, bool multifluid, bool passive) :
-  _D(D), _N_F(N_F), _N_E(N_E), _N_s(N_s), _N_G(N_G), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B), _flux(flux), _model(model), _gamma0(gamma0), _blas(blas), _multifluid(multifluid), _passive(passive) {
+	   int* boundaryMap, int flux, scalar gamma0) :
+  _D(D), _N_F(N_F), _N_E(N_E), _N_s(N_s), _N_G(N_G), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B), _flux(flux), _gamma0(gamma0) {
 
 #ifdef USE_CPU
 
@@ -176,63 +174,33 @@ class DG_SOLVER
 
   // destructor
   ~DG_SOLVER(){
-#ifdef USE_CPU
-    delete[] _map;
-    delete[] _invmap;
-    delete[] _boundaryMap;
-    delete[] _phi;
-    delete[] _phi_w;
-    delete[] _dphi;
-    delete[] _dphi_w;
-    delete[] _psi;
-    delete[] _psi_w;
-    delete[] _J;
-    delete[] _invJac;
-    delete[] _JF;
-    delete[] _normals;
-    delete[] _UF;
-    delete[] _Uinteg;
-    delete[] _dUinteg;
-    delete[] _UintegF;
-    delete[] _s;
-    delete[] _sJ;
-    delete[] _S;
-    delete[] _f;
-    delete[] _fJ;
-    delete[] _F;
-    delete[] _q;
-    delete[] _qJ;
-    delete[] _Qtcj;
-    delete[] _Q;
-#elif USE_GPU
-    CUDA_SAFE_CALL(cudaFree(_map));
-    CUDA_SAFE_CALL(cudaFree(_invmap));
-    CUDA_SAFE_CALL(cudaFree(_boundaryMap));
-    CUDA_SAFE_CALL(cudaFree(_phi));
-    CUDA_SAFE_CALL(cudaFree(_phi_w));
-    CUDA_SAFE_CALL(cudaFree(_dphi));
-    CUDA_SAFE_CALL(cudaFree(_dphi_w));
-    CUDA_SAFE_CALL(cudaFree(_psi));
-    CUDA_SAFE_CALL(cudaFree(_psi_w));
-    CUDA_SAFE_CALL(cudaFree(_J));
-    CUDA_SAFE_CALL(cudaFree(_invJac));
-    CUDA_SAFE_CALL(cudaFree(_JF));
-    CUDA_SAFE_CALL(cudaFree(_normals));
-    CUDA_SAFE_CALL(cudaFree(_UF));
-    CUDA_SAFE_CALL(cudaFree(_Uinteg));
-    CUDA_SAFE_CALL(cudaFree(_dUinteg));
-    CUDA_SAFE_CALL(cudaFree(_UintegF));
-    CUDA_SAFE_CALL(cudaFree(_s));
-    CUDA_SAFE_CALL(cudaFree(_sJ));
-    CUDA_SAFE_CALL(cudaFree(_S));
-    CUDA_SAFE_CALL(cudaFree(_f));
-    CUDA_SAFE_CALL(cudaFree(_fJ));
-    CUDA_SAFE_CALL(cudaFree(_F));
-    CUDA_SAFE_CALL(cudaFree(_q));
-    CUDA_SAFE_CALL(cudaFree(_qJ));
-    CUDA_SAFE_CALL(cudaFree(_Qtcj));
-    CUDA_SAFE_CALL(cudaFree(_Q));
-#endif
+    del(_map);
+    del(_invmap);
+    del(_boundaryMap);
+    del(_phi);
+    del(_phi_w);
+    del(_dphi);
+    del(_dphi_w);
+    del(_psi);
+    del(_psi_w);
+    del(_J);
+    del(_invJac);
+    del(_JF);
+    del(_normals);
+    del(_UF);
+    del(_Uinteg);
+    del(_dUinteg);
+    del(_UintegF);
+    del(_s);
+    del(_sJ);
+    del(_S);
+    del(_f);
+    del(_fJ);
+    del(_F);
+    del(_q);
+    del(_qJ);
+    del(_Qtcj);
+    del(_Q);
     delete[] _UgC;
     delete[] _phiC;
     delete[] _JC;
@@ -251,38 +219,49 @@ class DG_SOLVER
     Lcpu_boundary(_M_s, _N_F, _M_B, _boundaryMap, _UF);
 
     // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes
-    if (_blas==1) {
-      blasGemm('N','N', _N_G   , _N_E*_N_F, _N_s, 1, _phi,  _N_G   , U, _N_s, 0.0, _Uinteg, _N_G);
-      blasGemm('N','N', _N_G*_D, _N_E*_N_F, _N_s, 1, _dphi, _N_G*_D, U, _N_s, 0.0, _dUinteg, _N_G*_D);}
-    else Lcpu_collocationU(_D, _N_G, _N_s, _N_E, _N_F, _Uinteg, _dUinteg, _phi, _dphi, U);
+#ifdef HAVE_BLAS
+    blasGemm('N','N', _N_G   , _N_E*_N_F, _N_s, 1, _phi,  _N_G   , U, _N_s, 0.0, _Uinteg, _N_G);
+    blasGemm('N','N', _N_G*_D, _N_E*_N_F, _N_s, 1, _dphi, _N_G*_D, U, _N_s, 0.0, _dUinteg, _N_G*_D);
+#else
+    Lcpu_collocationU(_D, _N_G, _N_s, _N_E, _N_F, _Uinteg, _dUinteg, _phi, _dphi, U);
+#endif
     
     // collocationUF: requires psi, UF, UintegF and some sizes
-    if (_blas==1){blasGemm('N','N', _M_G, _M_T*_N_F*2, _M_s, 1, _psi, _M_G, _UF, _M_s, 0.0, _UintegF, _M_G);}  
-    else Lcpu_collocationUF(_M_G, _M_s, _M_T, _N_F, _UintegF, _psi, _UF);
-      
-    // evaluate_sf: requires Uinteg, (dUintegR), H0, G0, s,f
-    if(_multifluid) Lcpu_evaluate_sf_multifluid(_D, _N_G, _N_E, _N_F, _model, _s, _f, _Uinteg, _dUinteg, _invJac);
-    if(_passive)    Lcpu_evaluate_sf_passive(_D, _N_G, _N_E, _N_F, _gamma0, _s, _f, _Uinteg, _dUinteg, _invJac);
-      
-    // evaluate_q: requires UintegF, normals, q, H0, G0
-    if(_multifluid) Lcpu_evaluate_q_multifluid(_M_G, _M_T, _N_F, _flux, _model, _q, _UintegF, _normals);
-    if(_passive)    Lcpu_evaluate_q_passive(_M_G, _M_T, _N_F, _flux, _gamma0, _q, _UintegF, _normals);
-      
+#ifdef HAVE_BLAS
+    blasGemm('N','N', _M_G, _M_T*_N_F*2, _M_s, 1, _psi, _M_G, _UF, _M_s, 0.0, _UintegF, _M_G);
+#else
+    Lcpu_collocationUF(_M_G, _M_s, _M_T, _N_F, _UintegF, _psi, _UF);
+#endif
+
+    // 1D problem
+    if(_D==1){
+      // evaluate_sf: requires Uinteg, (dUintegR), H0, G0, s,f
+      Levaluate_sf_1D(_D, _N_G, _N_E, _N_F, _gamma0,  _s, _f, _Uinteg, _dUinteg, _invJac);
+
+      // evaluate_q: requires UintegF, normals, q, H0, G0
+      Levaluate_q_1D(_M_G, _M_T, _N_F, _flux, _gamma0, _q, _UintegF, _normals);
+    }
+    
     // redistribute_sf: requires J, invJac, s, f, phi_w, dphi_w, sJ, fJ, S, F
     Lcpu_redistribute_sf(_D, _N_G, _N_E, _N_F, _sJ, _fJ, _s, _f, _J, _invJac);
       
     // matrix-matrix multiply for sf
-    if (_blas==1)  {
-      blasGemm('T','N', _N_s, _N_E*_N_F, _N_G   , 1, _phi_w , _N_G   , _sJ, _N_G  , 0.0, _S, _N_s);
-      blasGemm('T','N', _N_s, _N_E*_N_F, _N_G*_D, 1, _dphi_w, _N_G*_D, _fJ, _N_G*_D, 0.0, _F, _N_s);}
-    else Lcpu_gemm_sf(_D, _N_G, _N_s, _N_E, _N_F, _S, _F, _sJ, _fJ, _phi_w, _dphi_w);
+#ifdef HAVE_BLAS
+    blasGemm('T','N', _N_s, _N_E*_N_F, _N_G   , 1, _phi_w , _N_G   , _sJ, _N_G  , 0.0, _S, _N_s);
+    blasGemm('T','N', _N_s, _N_E*_N_F, _N_G*_D, 1, _dphi_w, _N_G*_D, _fJ, _N_G*_D, 0.0, _F, _N_s);
+#else
+    Lcpu_gemm_sf(_D, _N_G, _N_s, _N_E, _N_F, _S, _F, _sJ, _fJ, _phi_w, _dphi_w);
+#endif
 
     // redistribute_q: requires JF, q, qJ, psi_w, Qtcj,
     Lcpu_redistribute_q(_M_G, _M_T, _N_F, _qJ, _q, _JF);
     
     // matrix-matrix multiply for q
-    if (_blas==1) {blasGemm('T','N', _M_s, _M_T*_N_F*2, _M_G, 1, _psi_w , _M_G, _qJ, _M_G, 0.0, _Qtcj, _M_s);}
-    else Lcpu_gemm_q(_M_G, _M_s, _M_T, _N_F, _Qtcj, _qJ, _psi_w);
+#ifdef HAVE_BLAS
+    blasGemm('T','N', _M_s, _M_T*_N_F*2, _M_G, 1, _psi_w , _M_G, _qJ, _M_G, 0.0, _Qtcj, _M_s);
+#else
+    Lcpu_gemm_q(_M_G, _M_s, _M_T, _N_F, _Qtcj, _qJ, _psi_w);
+#endif
     
     // map_q: requires map, Qtcj, Q (might want to do this in the previous step)
     Lcpu_mapToElement(_N_s, _N_E, _N_F, _invmap, _Q, _Qtcj);
@@ -297,8 +276,12 @@ class DG_SOLVER
   void conservation(scalar* U, double time){
 
     // Collocate the solution to the integration points
+#ifdef HAVE_BLAS
     hostblasGemm('N','N', _N_G, _N_E*_N_F, _N_s, 1, _phiC, _N_G, U, _N_s, 0.0, _UgC, _N_G);
-
+#else
+    printf("Need BLAS library to calculate conservation.\n")
+#endif
+    
     // Take the cell average of the solution
     makeZero(_I, _N_F);
     for(int fc = 0; fc < _N_F; fc++){

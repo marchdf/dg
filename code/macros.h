@@ -11,12 +11,14 @@
 #define arch_args
 #define arch_args_array(x) 
 #define arch(x)      h_ ## x
+#define del(x)       delete[] x
 #elif USE_GPU
 #define arch_global __global__
 #define arch_device __device__
 #define arch_args   <<<dimGrid,dimBlock>>>
 #define arch_args_array(x)   <<<dimGrid,dimBlock,x>>>
 #define arch(x)      d_ ## x
+#define del(x)       CUDA_SAFE_CALL(cudaFree(x));
 #endif
 
 // 

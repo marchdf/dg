@@ -48,9 +48,9 @@ class RK
 		      int D, int N_F, int N_E, int N_s, int N_G, int M_T, int M_s,
 		      scalar* h_Minv, 
 		      scalar* h_U,
-		      Limiting &Limiter, int blas, bool order0, DG_SOLVER &dgsolver, bool multifluid, bool passive, int model,
+		      Limiting &Limiter, bool order0, DG_SOLVER &dgsolver,
 		      scalar gamma0,
-		      int msh_lin, simpleMesh &m){
+		      int elem_type, simpleMesh &m){
 
     // Initialize some vars
     double T = 0;
@@ -83,6 +83,10 @@ class RK
     CUDA_SAFE_CALL(cudaMemcpy(_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar), cudaMemcpyHostToDevice));
 #endif
 
+    // print the initial condition to the file
+    printf("Initial condition written to output file.\n");
+    print_dg(N_s, N_E, N_F, gamma0, h_U, m, elem_type, 0, 0, 0);
+
     // Output conservation of the fields
     dgsolver.conservation(h_U,0.0); 
     
@@ -90,15 +94,21 @@ class RK
     for (int n = 1; n <= N_t; n++){
 
       // Us = U
-      if (blas==1) {blasCopy(N_F*N_s*N_E, arch(U), 1, _Us, 1);}
-      else Lcpu_equal(N_s, N_E, N_F, _Us, arch(U));
-
+#ifdef HAVE_BLAS
+      blasCopy(N_F*N_s*N_E, arch(U), 1, _Us, 1);
+#else
+      Lcpu_equal(N_s, N_E, N_F, _Us, arch(U));
+#endif
       for(int k = 0; k < _order; k++){
 	// Ustar = Us + beta*DU
-	if (blas==1) {blasCopy(N_F*N_s*N_E, _Us, 1, _Ustar, 1);}
-	else Lcpu_equal(N_s, N_E, N_F, _Ustar, _Us); // make Ustar = Us;
-	if (blas==1) {blasAxpy(N_s*N_F*N_E, _beta[k], _DU, 1, _Ustar, 1);}
-	else Lcpu_add(N_s, N_E, N_F, _Ustar, _DU, _beta[k]);// do Ustar.add(DU,beta[k]);
+#ifdef HAVE_BLAS
+	blasCopy(N_F*N_s*N_E, _Us, 1, _Ustar, 1);
+	blasAxpy(N_s*N_F*N_E, _beta[k], _DU, 1, _Ustar, 1);
+#else
+	Lcpu_equal(N_s, N_E, N_F, _Ustar, _Us); // make Ustar = Us;
+	Lcpu_add(N_s, N_E, N_F, _Ustar, _DU, _beta[k]);// do Ustar.add(DU,beta[k]);
+#endif
+
 	Tstar = T + _beta[k]*Dt;
 
 	//Limit the solution if you so want to do so
@@ -118,8 +128,11 @@ class RK
 	if (order0){Laverage_cell_p0(N_s, N_E, N_F, _DU);}
 
 	// U = U + gamma*DU
-	if (blas==1) {blasAxpy(N_s*N_F*N_E, _gamma[k], _DU, 1, arch(U), 1);}
-	else Lcpu_add(N_s, N_E, N_F, arch(U), _DU, _gamma[k]); // do U.add(DU,gamma[k])
+#ifdef HAVE_BLAS
+	blasAxpy(N_s*N_F*N_E, _gamma[k], _DU, 1, arch(U), 1);
+#else
+	Lcpu_add(N_s, N_E, N_F, arch(U), _DU, _gamma[k]); // do U.add(DU,gamma[k])
+#endif
 
       }// end loop on k
       
@@ -137,10 +150,9 @@ class RK
 #ifdef  USE_GPU
 	CUDA_SAFE_CALL(cudaMemcpy(h_U, d_U, N_s*N_F*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
 #endif
-		     
+     
 	printf("Solution written to output file at step %i and time %f.\n",n,n*Dt);
-	if(multifluid)print_dg_multifluid(N_s, N_E, N_F, model, h_U, m, msh_lin, count, n*Dt, 1,-1);
-	if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, h_U, m, msh_lin, count, n*Dt, 1,-1);
+	print_dg(N_s, N_E, N_F, gamma0, h_U, m, elem_type, count, n*Dt, 1);
 	count++;
 
 	// Output conservation of the fields
@@ -151,19 +163,13 @@ class RK
 
 
     // Free some stuff
-#ifdef USE_CPU
-    delete[] _Us;
-    delete[] _Ustar;
-    delete[] _DU;
-    delete[] _f;
-    delete[] _Minv;
-#elif USE_GPU
+    del(_Us);
+    del(_Ustar);
+    del(_DU);
+    del(_f);
+    del(_Minv);
+#ifdef USE_GPU
     CUDA_SAFE_CALL(cudaFree(d_U));
-    CUDA_SAFE_CALL(cudaFree(_Us));
-    CUDA_SAFE_CALL(cudaFree(_Ustar));
-    CUDA_SAFE_CALL(cudaFree(_DU));
-    CUDA_SAFE_CALL(cudaFree(_f));
-    CUDA_SAFE_CALL(cudaFree(_Minv));
 #endif
   }; //end main RK function
 

@@ -25,7 +25,7 @@ class simpleInterface {
   inline int getPhysicalTag() const {return _physicalTag;}
   inline const simpleElement *getElement(int i) const {return _elements[i];}
   inline int getClosureId(int i) const {return _closureId[i];}
-  static void BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterface> &interfaces, int tagInterface, int tagElement);
+  static void BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterface> &interfaces, int tagInterface, int tagElement, int nsides);
   simpleInterface(int physicalTag = 0);
 };
 
@@ -43,8 +43,8 @@ class simpleMesh {
   inline const fullMatrix<scalar> & getNormals () const {return _normals;}
   void load (const char *fileName);
   void writeSolution (const fullMatrix<scalar> &solution, int type, const char *filename, const char *name, int step, double time, int append) const;
-  inline void buildInterfaces(int typeInterface, int typeElement) {
-    simpleInterface::BuildInterfaces(*this, _interfaces, typeInterface, typeElement);
+  inline void buildInterfaces(int typeInterface, int typeElement, int nsides) {
+    simpleInterface::BuildInterfaces(*this, _interfaces, typeInterface, typeElement, nsides);
   }
   void buildNormals(int typeInterface, int typeElement, int D);
   void buildPeriodicSquare(int order, const fullMatrix<scalar> &XYZNodesF, const int D);

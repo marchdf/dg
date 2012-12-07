@@ -5,6 +5,7 @@
 class deck {
 
  private:
+  int _dims;
   bool _blas;
   std::string _timeMeth;
   double _Dt;
@@ -23,6 +24,7 @@ class deck {
   std::string _bc;
   
  public:
+  inline int getDims() {return _dims;}
   inline bool getBlas() {return _blas;}
   inline std::string getTimeMeth() { return _timeMeth;}
   inline double getTimeStep() {return _Dt;}

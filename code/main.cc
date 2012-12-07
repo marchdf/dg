@@ -28,18 +28,18 @@
 //
 void copyMatrixToPointer(fullMatrix<scalar> &A, scalar* h_A);
 void copyMatrixToPointer(const fullMatrix<scalar> &A, scalar* h_A);
-void get_element_types(const int order, int &msh_lin){
-  if      (order==0)  { msh_lin = MSH_LIN_2;  }
-  else if (order==1)  { msh_lin = MSH_LIN_2;  }
-  else if (order==2)  { msh_lin = MSH_LIN_3;  }
-  else if (order==3)  { msh_lin = MSH_LIN_4;  }
-  else if (order==4)  { msh_lin = MSH_LIN_5;  }
-  else if (order==5)  { msh_lin = MSH_LIN_6;  }
-  else if (order==6)  { msh_lin = MSH_LIN_7;  }
-  else if (order==7)  { msh_lin = MSH_LIN_8;  }
-  else if (order==8)  { msh_lin = MSH_LIN_9;  }
-  else if (order==9)  { msh_lin = MSH_LIN_10; }
-  else if (order==10) { msh_lin = MSH_LIN_11; }
+void get_element_types(const int order, int &msh_qua, int &msh_tri, int &msh_lin){
+  if      (order==0)  {msh_qua = MSH_QUA_4;    msh_tri = MSH_TRI_3;    msh_lin = MSH_LIN_2;  }
+  else if (order==1)  {msh_qua = MSH_QUA_4;    msh_tri = MSH_TRI_3;    msh_lin = MSH_LIN_2;  }
+  else if (order==2)  {msh_qua = MSH_QUA_9;    msh_tri = MSH_TRI_6;    msh_lin = MSH_LIN_3;  }
+  else if (order==3)  {msh_qua = MSH_QUA_16;   msh_tri = MSH_TRI_10;   msh_lin = MSH_LIN_4;  }
+  else if (order==4)  {msh_qua = MSH_QUA_25;   msh_tri = MSH_TRI_15;   msh_lin = MSH_LIN_5;  }
+  else if (order==5)  {msh_qua = MSH_QUA_36;   msh_tri = MSH_TRI_21;   msh_lin = MSH_LIN_6;  }
+  else if (order==6)  {msh_qua = MSH_QUA_49;   msh_tri = MSH_TRI_28;   msh_lin = MSH_LIN_7;  }
+  else if (order==7)  {msh_qua = MSH_QUA_64;   msh_tri = MSH_TRI_36;   msh_lin = MSH_LIN_8;  }
+  else if (order==8)  {msh_qua = MSH_QUA_81;   msh_tri = MSH_TRI_45;   msh_lin = MSH_LIN_9;  }
+  else if (order==9)  {msh_qua = MSH_QUA_100;  msh_tri = MSH_TRI_55;   msh_lin = MSH_LIN_10; }
+  else if (order==10) {msh_qua = MSH_QUA_121;  msh_tri = MSH_TRI_66;   msh_lin = MSH_LIN_11; }
   else {printf("Invalid order number.");}
 }
 void average_cell_p0(const int N_s, const int N_E, const int N_F, fullMatrix<scalar> &U);
@@ -67,7 +67,13 @@ int main (int argc, char **argv)
   deck inputs;  
   inputs.readDeck(deckfile.c_str());
 
+  // number of coordinates in elem ref space(alpha index)
+  int D = inputs.getDims(); printf("%i-dimensional problem\n",D);
+  
+  // Get the blas option
   bool blas = inputs.getBlas(); if (blas==1) printf("Using BLAS\n");
+
+  // Get the method order
   int order = inputs.getOrder();
   bool order0 = false; if (order==0) {order0 = true; order = 1;}
 
@@ -146,20 +152,28 @@ int main (int argc, char **argv)
 
   ////////////////////////////////////////////////////////////////////////////
   //
-  // Load a 2D mesh, node coordinates, elements, interfaces, normals
+  // Load the mesh, node coordinates, elements, interfaces, normals
   //
   ////////////////////////////////////////////////////////////////////////////   
   simpleMesh m;
   m.load(fileName.c_str());
+  int elem_type;
+  int msh_qua;
+  int msh_tri;
   int msh_lin;
-  get_element_types(order, msh_lin);
-  
+  int nsides; // this offsets j in buildInterfaces function
+  get_element_types(order, msh_qua, msh_tri, msh_lin);
+  if     (inputs.getElemType() == "lin"){elem_type = msh_lin; nsides = 0;}
+  else if(inputs.getElemType() == "tri"){elem_type = msh_tri; nsides = 3;}
+  else if(inputs.getElemType() == "qua"){elem_type = msh_qua; nsides = 3;} // No idea yet
+  else printf("Invalid element type in deck");
+    
   // Get the nodes, elements, interfaces, normals
   const fullMatrix<double> &nodes = m.getNodes();
-  const std::vector<simpleElement> &elements = m.getElements(msh_lin);
-  m.buildInterfaces(0, msh_lin);
+  const std::vector<simpleElement> &elements = m.getElements(elem_type);
+  m.buildInterfaces(0, elem_type,nsides);
   const std::vector<simpleInterface> &interfaces = m.getInterfaces();
-  m.buildNormals(-1, msh_lin, 1); // D=1
+  m.buildNormals(-1, elem_type, 1); // D=1
   const fullMatrix<scalar> &normals = m.getNormals();
   //Build a map: element ID -> element index in order of the U matrix
   std::map<int,int> ElementMap;
@@ -175,13 +189,21 @@ int main (int argc, char **argv)
   //
   ////////////////////////////////////////////////////////////////////////////   
 
-  const polynomialBasis *basis  = polynomialBases::find(msh_lin);  // for the element
+  // Elements
+  const polynomialBasis *basis  = polynomialBases::find(elem_type);  // for the element
   const std::vector<std::vector<int> > &closures = basis->closures;
   fullMatrix<double> points, weight;
-  fullMatrix<double> pointsF, weightF;
-  gaussIntegration::getLine(order*2+1, points, weight);
+  if     (inputs.getElemType() == "lin") gaussIntegration::getLine(order*2+1, points, weight);
+  else if(inputs.getElemType() == "tri") gaussIntegration::getTriangle(order*2+1, points, weight);
+  else if(inputs.getElemType() == "qua") gaussIntegration::getQuad(order*2+1, points, weight);
 
-  
+  // Faces
+  const polynomialBasis *basisF; // for the edges
+  if(D==2){basisF = polynomialBases::find (msh_lin);}
+  fullMatrix<double> pointsF, weightF;
+  if     (D==1){pointsF.resize(1,3); weightF.resize(1,1); weightF(0,0)=1;}
+  else if(D==2){gaussIntegration::getLine(order*2+1, pointsF, weightF);}
+
   //////////////////////////////////////////////////////////////////////////   
   //
   // Define some numbers for clarity
@@ -192,12 +214,12 @@ int main (int argc, char **argv)
   int M_s = 1;                        // number of nodes on a face              (j index)
   int N_T = basis->numFaces;          // number of faces per element            
   int N_E = elements.size();          // number of elements                     (e index)
-  int M_T = N_E+1;                    // number of faces                        (t index)
+  int M_T = interfaces.size();        // number of faces                        (t index)
   int N   = N_E*N_s;                  // number of dof for a DG
   int N_G = points.size1();           // number of integration points           (g index)
-  int M_G = 1;                        // number of integration points on a face (g index)
-  int D   = 1;                        // number of coordinates in elem ref space(alpha index)
+  int M_G = pointsF.size1();          // number of integration points on a face (g index)
   int DF  = 1;                        // number of coordinates in face ref space(alpha index)
+  if ((D==1)||(D==2)) DF = 1; // DF=1 in 1D to avoid allocation problems
   int N_F = inputs.getNumFields();    // number of unknown fields               (h, u_x, u_y with fc index)
 
   if(order0) printf("order %i\n",0); else printf("order %i\n",order);
@@ -239,30 +261,25 @@ int main (int argc, char **argv)
   // Faces
   fullMatrix<scalar> psi(M_G, M_s);
   fullMatrix<scalar> dpsi(M_G*DF,M_s);
-  if      (D==1){
-    psi(0,0)  = 1;
-    dpsi(0,0) = 0; 
+  if      (D==1){ psi(0,0)  = 1; dpsi(0,0) = 0;}
+  else if (D==2){
+    fullMatrix<double> psiD(M_G, M_s);
+    basisF->f (pointsF,psiD);
+    for(int g = 0; g < M_G; g++){
+      for(int j = 0; j < M_s; j++){
+  	psi(g,j) = (scalar)psiD(g,j);
+      }
+    }
+    double gradsF[M_s][3];
+    for(int g = 0; g < M_G; g++){
+      basisF->df(pointsF(g,0),pointsF(g,1),pointsF(g,2),gradsF);
+      for(int alpha = 0; alpha < DF; alpha ++){
+  	for(int j = 0; j < M_s; j++){
+  	  dpsi(g*DF+alpha,j) = (scalar)gradsF[j][alpha];  // see paper for indexing p.6
+  	}	  
+      }    
+    }
   }
-  // else if (D==2){
-  //   fullMatrix<scalar> psi(M_G, M_s);
-  //   fullMatrix<double> psiD(M_G, M_s);
-  //   fullMatrix<scalar> dpsi(M_G*DF,M_s);
-  //   basisF->f (pointsF,psiD);
-  //   for(int g = 0; g < M_G; g++){
-  //     for(int j = 0; j < M_s; j++){
-  // 	psi(g,j) = (scalar)psiD(g,j);
-  //     }
-  //   }
-  //   double gradsF[M_s][3];
-  //   for(int g = 0; g < M_G; g++){
-  //     basisF->df(pointsF(g,0),pointsF(g,1),pointsF(g,2),gradsF);
-  //     for(int alpha = 0; alpha < DF; alpha ++){
-  // 	for(int j = 0; j < M_s; j++){
-  // 	  dpsi(g*DF+alpha,j) = (scalar)gradsF[j][alpha];  // see paper for indexing p.6
-  // 	}	  
-  //     }    
-  //   }
-  // }
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -345,8 +362,7 @@ int main (int argc, char **argv)
   fullMatrix<scalar> psi_w (M_G,M_s);
   for(int g = 0; g < M_G; g++){
     for(int j = 0; j < M_s; j++){
-      if   (D==1) psi_w(g,j) = (scalar)psi(g,j);
-      else        psi_w(g,j) = (scalar)psi(g,j)*weightF(g,0);
+      psi_w(g,j) = (scalar)psi(g,j)*weightF(g,0);
     }
   }
 
@@ -444,10 +460,6 @@ int main (int argc, char **argv)
 
   if (order0) average_cell_p0(N_s, N_E, N_F, U);
   
-  // print the initial condition to the file
-  printf("Initial condition written to output file.\n");
-  if(multifluid)print_dg_multifluid(N_s, N_E, N_F, model, U, m, msh_lin, 0, 0, 0,-1);
-  if(passive)   print_dg_passive(N_s, N_E, N_F, gamma0, U, m, msh_lin, 0, 0, 0,-1);
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -484,8 +496,9 @@ int main (int argc, char **argv)
   //////////////////////////////////////////////////////////////////////////
   
   scalar* h_Minv = new scalar[N_s*N_s*N_E];
-  dg_inverse_mass_matrix(order, msh_lin, inputs.getElemType(), N_s, N_E, D, XYZNodes, h_Minv);
+  dg_inverse_mass_matrix(order, elem_type, inputs.getElemType(), N_s, N_E, D, XYZNodes, h_Minv);
 
+  
   //////////////////////////////////////////////////////////////////////////   
   // 
   // Build the map
@@ -495,6 +508,7 @@ int main (int argc, char **argv)
   int* h_invmap = new int[N_s*N_E*N_F*2];
   dg_mappings(M_s, M_T, N_F, N_s, N_E, interfaces, ElementMap, closures, h_map, h_invmap);
 
+  
   //==========================================================================
   //
   //   GPU calculations
@@ -580,14 +594,14 @@ int main (int argc, char **argv)
   printf("==== Now RK 4 steps =====\n");
   DG_SOLVER dgsolver = DG_SOLVER(D, N_F, N_E, N_s, N_G, M_T, M_s, M_G, M_B,
   				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, h_J, h_invJac, h_JF, h_weight, h_normals,
-  				 h_boundaryMap, flux, model, gamma0, blas, multifluid, passive);
+  				 h_boundaryMap, flux, gamma0);
   RK rk4 = RK(4);
   rk4.RK_integration(Dt, N_t, output_factor,
   		     D, N_F, N_E, N_s, N_G, M_T, M_s,
   		     h_Minv, 
   		     h_U,
-  		     Limiter, blas, order0, dgsolver, multifluid, passive, model, gamma0,
-  		     msh_lin, m);
+  		     Limiter, order0, dgsolver, gamma0,
+  		     elem_type, m);
 
   //////////////////////////////////////////////////////////////////////////   
   //

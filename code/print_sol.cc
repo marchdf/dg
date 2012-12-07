@@ -134,7 +134,7 @@ void print_dg_mhd(const int N_s, const int N_E, const int N_F, scalar* U, const 
 //===========================================
 // Output multifluid solutions
 //===========================================
-void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int model, const fullMatrix<scalar> &U, const simpleMesh m, const int msh_lin, const int step, const double time, const int append, const int all){
+void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int model, const fullMatrix<scalar> &U, const simpleMesh m, const int elem_type, const int step, const double time, const int append, const int all){
 
  
   fullMatrix<scalar> Rho;
@@ -171,14 +171,14 @@ void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int 
     }
   }
   // print to the output file
-  if((all==-1)||(all==0)) m.writeSolution(Rho, msh_lin,"rho.pos", "Rho", step, time, append);
-  if((all==-1)||(all==1)) m.writeSolution(Ux,  msh_lin, "ux.pos",  "Ux", step, time, append);
-  if((all==-1)||(all==2)) m.writeSolution(Et,  msh_lin, "et.pos",  "Et", step, time, append);
-  if((all==-1)||(all==3)) m.writeSolution( G,  msh_lin,  "g.pos",   "G", step, time, append);
-  if((all==-1)||(all==4)) m.writeSolution( P,  msh_lin,  "p.pos",   "P", step, time, append);
+  if((all==-1)||(all==0)) m.writeSolution(Rho, elem_type,"rho.pos", "Rho", step, time, append);
+  if((all==-1)||(all==1)) m.writeSolution(Ux,  elem_type, "ux.pos",  "Ux", step, time, append);
+  if((all==-1)||(all==2)) m.writeSolution(Et,  elem_type, "et.pos",  "Et", step, time, append);
+  if((all==-1)||(all==3)) m.writeSolution( G,  elem_type,  "g.pos",   "G", step, time, append);
+  if((all==-1)||(all==4)) m.writeSolution( P,  elem_type,  "p.pos",   "P", step, time, append);
 }
 
-void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int model, scalar* U, const simpleMesh m, const int msh_lin, const int step, const double time, const int append, const int all){
+void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int model, scalar* U, const simpleMesh m, const int elem_type, const int step, const double time, const int append, const int all){
 
   fullMatrix<scalar> Rho;
   fullMatrix<scalar> Ux ;
@@ -214,11 +214,11 @@ void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int 
     }
   }
   // print to the output file
-  if((all==-1)||(all==0)) m.writeSolution(Rho, msh_lin,"rho.pos", "Rho", step, time, append);
-  if((all==-1)||(all==1)) m.writeSolution(Ux,  msh_lin, "ux.pos",  "Ux", step, time, append);
-  if((all==-1)||(all==2)) m.writeSolution(Et,  msh_lin, "et.pos",  "Et", step, time, append);
-  if((all==-1)||(all==3)) m.writeSolution( G,  msh_lin,  "g.pos",   "G", step, time, append);
-  if((all==-1)||(all==4)) m.writeSolution( P,  msh_lin,  "p.pos",   "P", step, time, append);
+  if((all==-1)||(all==0)) m.writeSolution(Rho, elem_type,"rho.pos", "Rho", step, time, append);
+  if((all==-1)||(all==1)) m.writeSolution(Ux,  elem_type, "ux.pos",  "Ux", step, time, append);
+  if((all==-1)||(all==2)) m.writeSolution(Et,  elem_type, "et.pos",  "Et", step, time, append);
+  if((all==-1)||(all==3)) m.writeSolution( G,  elem_type,  "g.pos",   "G", step, time, append);
+  if((all==-1)||(all==4)) m.writeSolution( P,  elem_type,  "p.pos",   "P", step, time, append);
 
   // std::string rhoF = "rho.txt"; 
   // FILE *f = fopen(rhoF.c_str(),"w");
@@ -232,7 +232,7 @@ void print_dg_multifluid(const int N_s, const int N_E, const int N_F, const int 
   
 }
 
-void print_dg_multifluid_err(const int N_s, const int N_E, const int N_F, const int model, scalar* U, const simpleMesh m, const int msh_lin, const int all){
+void print_dg_multifluid_err(const int N_s, const int N_E, const int N_F, const int model, scalar* U, const simpleMesh m, const int elem_type, const int all){
 
   fullMatrix<scalar> Rho;
   fullMatrix<scalar> Ux ;
@@ -266,18 +266,18 @@ void print_dg_multifluid_err(const int N_s, const int N_E, const int N_F, const 
     }
   }
   // print to the output file
-  if((all==-1)||(all==0)) m.writeSolution(  Rho,  msh_lin,  "rho_err.pos",  "ErrRho", 0, 0, 0);
-  if((all==-1)||(all==1)) m.writeSolution(   Ux,  msh_lin,   "ux_err.pos",   "ErrUx", 0, 0, 0);
-  if((all==-1)||(all==2)) m.writeSolution(   Et,  msh_lin,   "et_err.pos",   "ErrEt", 0, 0, 0);
-  if((all==-1)||(all==3)) m.writeSolution(    G,  msh_lin,    "g_err.pos",    "ErrG", 0, 0, 0);
-  if((all==-1)||(all==5)) m.writeSolution(    P,  msh_lin,    "p_err.pos",    "ErrP", 0, 0, 0);
+  if((all==-1)||(all==0)) m.writeSolution(  Rho,  elem_type,  "rho_err.pos",  "ErrRho", 0, 0, 0);
+  if((all==-1)||(all==1)) m.writeSolution(   Ux,  elem_type,   "ux_err.pos",   "ErrUx", 0, 0, 0);
+  if((all==-1)||(all==2)) m.writeSolution(   Et,  elem_type,   "et_err.pos",   "ErrEt", 0, 0, 0);
+  if((all==-1)||(all==3)) m.writeSolution(    G,  elem_type,    "g_err.pos",    "ErrG", 0, 0, 0);
+  if((all==-1)||(all==5)) m.writeSolution(    P,  elem_type,    "p_err.pos",    "ErrP", 0, 0, 0);
 }
 
 
 //===========================================
 // Output passive solutions
 //===========================================
-void print_dg_passive(const int N_s, const int N_E, const int N_F, scalar gamma, const fullMatrix<scalar> &U, const simpleMesh m, const int msh_lin, const int step, const double time, const int append, const int all){
+void print_dg_passive(const int N_s, const int N_E, const int N_F, scalar gamma, const fullMatrix<scalar> &U, const simpleMesh m, const int elem_type, const int step, const double time, const int append, const int all){
 
  
   fullMatrix<scalar> Rho;
@@ -315,15 +315,15 @@ void print_dg_passive(const int N_s, const int N_E, const int N_F, scalar gamma,
     }
   }
   // print to the output file
-  if((all==-1)||(all==0)) m.writeSolution(Rho  , msh_lin,   "rho.pos",  "Rho", step, time, append);
-  if((all==-1)||(all==1)) m.writeSolution(Ux   ,  msh_lin,   "ux.pos",   "Ux", step, time, append);
-  if((all==-1)||(all==2)) m.writeSolution(Et   ,  msh_lin,   "et.pos",   "Et", step, time, append);
-  if((all==-1)||(all==3)) m.writeSolution(PhiC ,  msh_lin, "phic.pos", "PhiC", step, time, append);
-  if((all==-1)||(all==4)) m.writeSolution(PhiNC,  msh_lin,"phinc.pos","PhiNC", step, time, append);
-  if((all==-1)||(all==5)) m.writeSolution( P   ,  msh_lin,    "p.pos",    "P", step, time, append);
+  if((all==-1)||(all==0)) m.writeSolution(Rho  , elem_type,   "rho.pos",  "Rho", step, time, append);
+  if((all==-1)||(all==1)) m.writeSolution(Ux   ,  elem_type,   "ux.pos",   "Ux", step, time, append);
+  if((all==-1)||(all==2)) m.writeSolution(Et   ,  elem_type,   "et.pos",   "Et", step, time, append);
+  if((all==-1)||(all==3)) m.writeSolution(PhiC ,  elem_type, "phic.pos", "PhiC", step, time, append);
+  if((all==-1)||(all==4)) m.writeSolution(PhiNC,  elem_type,"phinc.pos","PhiNC", step, time, append);
+  if((all==-1)||(all==5)) m.writeSolution( P   ,  elem_type,    "p.pos",    "P", step, time, append);
 }
 
-void print_dg_passive(const int N_s, const int N_E, const int N_F, scalar gamma, scalar* U, const simpleMesh m, const int msh_lin, const int step, const double time, const int append, const int all){
+void print_dg_passive(const int N_s, const int N_E, const int N_F, scalar gamma, scalar* U, const simpleMesh m, const int elem_type, const int step, const double time, const int append, const int all){
 
   fullMatrix<scalar> Rho;
   fullMatrix<scalar> Ux ;
@@ -360,15 +360,15 @@ void print_dg_passive(const int N_s, const int N_E, const int N_F, scalar gamma,
     }
   }
   // print to the output file
-  if((all==-1)||(all==0)) m.writeSolution(  Rho,  msh_lin,  "rho.pos",  "Rho", step, time, append);
-  if((all==-1)||(all==1)) m.writeSolution(   Ux,  msh_lin,   "ux.pos",   "Ux", step, time, append);
-  if((all==-1)||(all==2)) m.writeSolution(   Et,  msh_lin,   "et.pos",   "Et", step, time, append);
-  if((all==-1)||(all==3)) m.writeSolution( PhiC,  msh_lin, "phic.pos", "PhiC", step, time, append);
-  if((all==-1)||(all==4)) m.writeSolution(PhiNC,  msh_lin,"phinc.pos","PhiNC", step, time, append);
-  if((all==-1)||(all==5)) m.writeSolution(    P,  msh_lin,    "p.pos",    "P", step, time, append);
+  if((all==-1)||(all==0)) m.writeSolution(  Rho,  elem_type,  "rho.pos",  "Rho", step, time, append);
+  if((all==-1)||(all==1)) m.writeSolution(   Ux,  elem_type,   "ux.pos",   "Ux", step, time, append);
+  if((all==-1)||(all==2)) m.writeSolution(   Et,  elem_type,   "et.pos",   "Et", step, time, append);
+  if((all==-1)||(all==3)) m.writeSolution( PhiC,  elem_type, "phic.pos", "PhiC", step, time, append);
+  if((all==-1)||(all==4)) m.writeSolution(PhiNC,  elem_type,"phinc.pos","PhiNC", step, time, append);
+  if((all==-1)||(all==5)) m.writeSolution(    P,  elem_type,    "p.pos",    "P", step, time, append);
 }
 
-void print_dg_passive_err(const int N_s, const int N_E, const int N_F, scalar gamma, scalar* U, const simpleMesh m, const int msh_lin, const int all){
+void print_dg_passive_err(const int N_s, const int N_E, const int N_F, scalar gamma, scalar* U, const simpleMesh m, const int elem_type, const int all){
 
   fullMatrix<scalar> Rho;
   fullMatrix<scalar> Ux ;
@@ -405,10 +405,70 @@ void print_dg_passive_err(const int N_s, const int N_E, const int N_F, scalar ga
     }
   }
   // print to the output file
-  if((all==-1)||(all==0)) m.writeSolution(  Rho,  msh_lin,  "rho_err.pos",  "ErrRho", 0, 0, 0);
-  if((all==-1)||(all==1)) m.writeSolution(   Ux,  msh_lin,   "ux_err.pos",   "ErrUx", 0, 0, 0);
-  if((all==-1)||(all==2)) m.writeSolution(   Et,  msh_lin,   "et_err.pos",   "ErrEt", 0, 0, 0);
-  if((all==-1)||(all==3)) m.writeSolution( PhiC,  msh_lin, "phic_err.pos", "ErrPhiC", 0, 0, 0);
-  if((all==-1)||(all==4)) m.writeSolution(PhiNC,  msh_lin,"phinc_err.pos","ErrPhiNC", 0, 0, 0);
-  if((all==-1)||(all==5)) m.writeSolution(    P,  msh_lin,    "p_err.pos",    "ErrP", 0, 0, 0);
+  if((all==-1)||(all==0)) m.writeSolution(  Rho,  elem_type,  "rho_err.pos",  "ErrRho", 0, 0, 0);
+  if((all==-1)||(all==1)) m.writeSolution(   Ux,  elem_type,   "ux_err.pos",   "ErrUx", 0, 0, 0);
+  if((all==-1)||(all==2)) m.writeSolution(   Et,  elem_type,   "et_err.pos",   "ErrEt", 0, 0, 0);
+  if((all==-1)||(all==3)) m.writeSolution( PhiC,  elem_type, "phic_err.pos", "ErrPhiC", 0, 0, 0);
+  if((all==-1)||(all==4)) m.writeSolution(PhiNC,  elem_type,"phinc_err.pos","ErrPhiNC", 0, 0, 0);
+  if((all==-1)||(all==5)) m.writeSolution(    P,  elem_type,    "p_err.pos",    "ErrP", 0, 0, 0);
+}
+
+//===========================================
+// Output generic solutions
+//===========================================
+void print_dg(const int N_s, const int N_E, const int N_F, scalar gamma, scalar* U, const simpleMesh m, const int elem_type, const int step, const double time, const int append){
+
+  fullMatrix<scalar> Rho(N_s, N_E);
+  fullMatrix<scalar> Ux(N_s, N_E);
+  fullMatrix<scalar> Et(N_s, N_E);
+  fullMatrix<scalar> P(N_s, N_E);
+#ifdef PASSIVE
+  fullMatrix<scalar> PhiC(N_s, N_E)  ;
+  fullMatrix<scalar> PhiNC(N_s, N_E)  ;
+#elif  MULTIFLUID  
+  fullMatrix<scalar> G(N_s, N_E)  ;
+#endif
+
+  // separate the fields
+  scalar rho = 0;
+  for (int e = 0; e < N_E; e++){
+    for (int i = 0; i < N_s; i++){
+
+      // Check for NaN error
+      rho = U[(e*N_F+0)*N_s+i];
+      if(rho != rho){
+	printf("NaN error. Code crashed... bummer.\n");
+	exit(1);
+      }
+
+      Rho(i,e) = rho;
+      Ux (i,e) = U[(e*N_F+1)*N_s+i]/rho;
+      Et (i,e) = U[(e*N_F+2)*N_s+i];
+#ifdef PASSIVE
+      PhiC  (i,e) = U[(e*N_F+3)*N_s+i]/rho;
+      PhiNC (i,e) = U[(e*N_F+4)*N_s+i];
+      P     (i,e) = (gamma-1)*(Et(i,e) - 0.5*U[(e*N_F+1)*N_s+i]*U[(e*N_F+1)*N_s+i]/rho);
+#elif MULTIFLUID
+#ifdef GAMCONS
+      G  (i,e) = 1+rho/U[(e*N_F+3)*N_s+i];
+#elif  GAMNCON
+      G  (i,e) = 1+1.0/U[(e*N_F+3)*N_s+i];
+#endif
+      P  (i,e) = (G(i,e)-1)*(Et(i,e) - 0.5*U[(e*N_F+1)*N_s+i]*U[(e*N_F+1)*N_s+i]/rho);
+#endif
+    }
+  }
+
+  // print to the output file
+  m.writeSolution(  Rho,  elem_type,  "rho.pos",  "Rho", step, time, append);
+  m.writeSolution(   Ux,  elem_type,   "ux.pos",   "Ux", step, time, append);
+  m.writeSolution(   Et,  elem_type,   "et.pos",   "Et", step, time, append);
+#ifdef PASSIVE
+  m.writeSolution( PhiC,  elem_type, "phic.pos", "PhiC", step, time, append);
+  m.writeSolution(PhiNC,  elem_type,"phinc.pos","PhiNC", step, time, append);
+  m.writeSolution(    P,  elem_type,    "p.pos",    "P", step, time, append);
+#elif MULTIFLUID
+  m.writeSolution( G,  elem_type,  "g.pos",   "G", step, time, append);
+  m.writeSolution( P,  elem_type,  "p.pos",   "P", step, time, append);
+#endif
 }

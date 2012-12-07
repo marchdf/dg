@@ -14,6 +14,10 @@ void deck::readDeck(const char *fileName)
   }
   std::string line;
   getline(input,line);
+  if (line!="#Dimensions")
+    printf("Invalid file format (at dimensions)\n");
+  input>>_dims;
+  getline(input,line); getline(input,line);
   if (line!="#Options")
     printf("Invalid file format (at options)\n");
   getline(input,line);

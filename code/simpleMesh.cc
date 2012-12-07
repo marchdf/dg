@@ -328,7 +328,7 @@ simpleInterface::simpleInterface(int physicalTag)
 }
 
 
-void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterface> &interfaces, int typeInterface, int typeElement)
+void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterface> &interfaces, int typeInterface, int typeElement, int nsides)
 {
   std::map<std::vector<int>, simpleInterface> interfacesMap;
   // pre-existing interfaces
@@ -380,7 +380,7 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
       else if (interfaceFound._elements[0] != &el) {
         if (interfaceFound._elements[1] == NULL) {
           interfaceFound._elements[1] = &el;
-          interfaceFound._closureId[1] = j; // WHY?! j+3 in 2D
+          interfaceFound._closureId[1] = j+nsides; // WHY?! j+3 in 2D (triangle)
   	  //	  printf("This has to be 4 times\n");
         }
   	else if (interfaceFound._elements[1] != &el) {
