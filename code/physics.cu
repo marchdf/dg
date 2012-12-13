@@ -52,10 +52,10 @@ arch_global void evaluate_sf_1D(int D, int N_G, int N_E, int N_F, scalar gamma, 
       f[((e*N_F+2)*N_G+g)*D+0] = flux3(EtplusP,u);
 
 #ifdef PASSIVE
-	s[(e*N_F+3)*N_G+g] = 0;
-	s[(e*N_F+4)*N_G+g] = -u*dUg[(e*N_F+4)*N_G+g]*invJac[e*N_G+g];// = -u*dphincdx;
-	f[((e*N_F+3)*N_G+g)*D+0] = flux4(rho,u,Ug[(e*N_F+3)*N_G+g]/rho); // rho*u*phic
-	f[((e*N_F+4)*N_G+g)*D+0] = 0;
+      s[(e*N_F+3)*N_G+g] = 0;
+      s[(e*N_F+4)*N_G+g] = -u*dUg[(e*N_F+4)*N_G+g]*invJac[e*N_G+g];// = -u*dphincdx;
+      f[((e*N_F+3)*N_G+g)*D+0] = flux4(rho,u,Ug[(e*N_F+3)*N_G+g]/rho); // rho*u*phic
+      f[((e*N_F+4)*N_G+g)*D+0] = 0;
 #elif MULTIFLUID
 #ifdef GAMCONS
       s[(e*N_F+3)*N_G+g] = 0;
@@ -148,7 +148,7 @@ arch_global void evaluate_q_1D(int M_G, int M_T, int N_F, scalar gamma, scalar* 
 #ifdef RUS
     //first: fx = rho*u; 
     scalar qL = -0.5*((flux1(rhoL,uL) + flux1(rhoR,uR))*nx
-			-maxvap*(rhoR-rhoL));
+		      -maxvap*(rhoR-rhoL));
     q[(t*N_F+0)*2+0] = qL;
     q[(t*N_F+0)*2+1] = -qL;
       
@@ -188,7 +188,6 @@ arch_global void evaluate_q_1D(int M_G, int M_T, int N_F, scalar gamma, scalar* 
     q[(t*N_F+3)*2+0] = qL + ncterm; 
     q[(t*N_F+3)*2+1] = -qL+ ncterm;
 #endif
-    }
 
     // Non-conservative flux
 #elif HLL
