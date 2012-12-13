@@ -158,22 +158,23 @@ int main (int argc, char **argv)
   simpleMesh m;
   m.load(fileName.c_str());
   int elem_type;
+  int face_type;
   int msh_qua;
   int msh_tri;
   int msh_lin;
   int nsides; // this offsets j in buildInterfaces function
   get_element_types(order, msh_qua, msh_tri, msh_lin);
-  if     (inputs.getElemType() == "lin"){elem_type = msh_lin; nsides = 0;}
-  else if(inputs.getElemType() == "tri"){elem_type = msh_tri; nsides = 3;}
-  else if(inputs.getElemType() == "qua"){elem_type = msh_qua; nsides = 3;} // No idea yet
+  if     (inputs.getElemType() == "lin"){face_type = 0      , elem_type = msh_lin; nsides = 0;}
+  else if(inputs.getElemType() == "tri"){face_type = msh_lin, elem_type = msh_tri; nsides = 3;}
+  else if(inputs.getElemType() == "qua"){face_type = msh_lin, elem_type = msh_qua; nsides = 3;} // No idea yet
   else printf("Invalid element type in deck");
     
   // Get the nodes, elements, interfaces, normals
   const fullMatrix<double> &nodes = m.getNodes();
   const std::vector<simpleElement> &elements = m.getElements(elem_type);
-  m.buildInterfaces(0, elem_type,nsides);
+  m.buildInterfaces(face_type, elem_type,nsides);
   const std::vector<simpleInterface> &interfaces = m.getInterfaces();
-  m.buildNormals(-1, elem_type, 1); // D=1
+  m.buildNormals(face_type, elem_type, D);
   const fullMatrix<scalar> &normals = m.getNormals();
   //Build a map: element ID -> element index in order of the U matrix
   std::map<int,int> ElementMap;
@@ -199,10 +200,15 @@ int main (int argc, char **argv)
 
   // Faces
   const polynomialBasis *basisF; // for the edges
-  if(D==2){basisF = polynomialBases::find (msh_lin);}
+#ifdef TWOD
+  basisF = polynomialBases::find (msh_lin);
+#endif
   fullMatrix<double> pointsF, weightF;
-  if     (D==1){pointsF.resize(1,3); weightF.resize(1,1); weightF(0,0)=1;}
-  else if(D==2){gaussIntegration::getLine(order*2+1, pointsF, weightF);}
+#ifdef ONED
+  pointsF.resize(1,3); weightF.resize(1,1); weightF(0,0)=1;
+#elif TWOD
+  gaussIntegration::getLine(order*2+1, pointsF, weightF);
+#endif
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -259,8 +265,9 @@ int main (int argc, char **argv)
   // Faces
   fullMatrix<scalar> psi(M_G, M_s);
   fullMatrix<scalar> dpsi(M_G*DF,M_s);
-  if      (D==1){ psi(0,0)  = 1; dpsi(0,0) = 0;}
-  else if (D==2){
+#ifdef ONED
+  psi(0,0)  = 1; dpsi(0,0) = 0;
+#elif TWOD
     fullMatrix<double> psiD(M_G, M_s);
     basisF->f (pointsF,psiD);
     for(int g = 0; g < M_G; g++){
@@ -277,7 +284,7 @@ int main (int argc, char **argv)
   	}	  
       }    
     }
-  }
+#endif
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -286,18 +293,18 @@ int main (int argc, char **argv)
   //////////////////////////////////////////////////////////////////////////
   fullMatrix<scalar> points1D(N_G,1); for(int g=0; g<N_G; g++) {points1D(g,0) = points(g,0);}
   fullMatrix<scalar> phiinv(N_s,N_G);
-  phi.invert(phiinv);
+  //phi.invert(phiinv);
   fullMatrix<scalar> monoV1D;
   fullMatrix<scalar> monoV1Dinv;
-  monovandermonde1d(order, points1D, monoV1D);
-  monoV1D.invert(monoV1Dinv);
+  //monovandermonde1d(order, points1D, monoV1D);
+  //monoV1D.invert(monoV1Dinv);
 
   // Go from lagrange to monomial basis 
   fullMatrix<scalar> Lag2Mono(N_s,N_s);
   fullMatrix<scalar> Mono2Lag(N_s,N_s);
-  Lag2Mono.gemm(monoV1Dinv, phi);   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
-  Lag2Mono.invert(Mono2Lag);
-  //Mono2Lag.gemm(phiinv,monoV1D);
+  //Lag2Mono.gemm(monoV1Dinv, phi);   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
+  //Lag2Mono.invert(Mono2Lag);
+  // //Mono2Lag.gemm(phiinv,monoV1D);
   
 
   // //////////////////////////////////////////////////////////////////////////   
@@ -421,13 +428,6 @@ int main (int argc, char **argv)
   else if (farfield) m.buildFarfield();
   int* h_boundaryMap = m.getBoundaryMap();
   int M_B = m.getBoundaryNB();
-  for (int t=0;t<M_B;t++){
-    printf("Boundary map(%i): %i to %i \n",t,h_boundaryMap[t*2+0],h_boundaryMap[t*2+1]);
-  }
-  int boundaryMap;
-  if (periodic) boundaryMap = M_T-1;
-  if (farfield) boundaryMap = 0; 
-
   
   //////////////////////////////////////////////////////////////////////////   
   //

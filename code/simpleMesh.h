@@ -46,7 +46,7 @@ class simpleMesh {
   inline void buildInterfaces(int typeInterface, int typeElement, int nsides) {
     simpleInterface::BuildInterfaces(*this, _interfaces, typeInterface, typeElement, nsides);
   }
-  void buildNormals(int typeInterface, int typeElement, int D);
+  void buildNormals(int typeInterface, int typeElement, const int D);
   void buildPeriodicSquare(int order, const fullMatrix<scalar> &XYZNodesF, const int D);
   void buildPeriodicLine();
   void buildFarfield();

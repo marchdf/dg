@@ -6,7 +6,11 @@ void dg_jac_elements_fast(const int N_G, const int N_E, const int D, fullMatrix<
   scalar det = 0.0;
   
   for(int e = 0; e < N_E; e++){
-    det = sqrt(Jac(e,0)*Jac(e,0));    //Jac(e*D+0,0)*Jac(e*D+1,1)-Jac(e*D+1,0)*Jac(e*D+0,1);
+#ifdef ONED
+    det = sqrt(Jac(e,0)*Jac(e,0));
+#elif TWOD
+    det = Jac(e*D+0,0)*Jac(e*D+1,1)-Jac(e*D+1,0)*Jac(e*D+0,1);
+#endif
     J(e,0) =  fabs(det);
   }
 }
@@ -17,12 +21,22 @@ void dg_jacobians_elements(const int N_G, const int N_E, const int D, fullMatrix
   scalar det = 0.0;
   
   for(int e = 0; e < N_E; e++){
-    det = sqrt(Jac(e,0)*Jac(e,0));    //Jac(e*D+0,0)*Jac(e*D+1,1)-Jac(e*D+1,0)*Jac(e*D+0,1);
+#ifdef ONED
+    det = sqrt(Jac(e,0)*Jac(e,0));   
+#elif TWOD
+    det = Jac(e*D+0,0)*Jac(e*D+1,1)-Jac(e*D+1,0)*Jac(e*D+0,1);
+#endif
     J(e,0)    =  fabs(det);
     invJ(e,0) =  fabs(1.0/det);
     for(int g = 0; g < N_G; g++){
-      //printf("Jac of e:%i and g:%i = %f\n",e,g,Jac(e,g));
+#ifdef ONED
       invJac(e,g) =  1.0/Jac(e,g);
+#elif TWOD
+      invJac(e*D+0,g*D+0) =  1.0/det*Jac(e*D+1,g*D+1);
+      invJac(e*D+1,g*D+0) = -1.0/det*Jac(e*D+1,g*D+0);
+      invJac(e*D+0,g*D+1) = -1.0/det*Jac(e*D+0,g*D+1);
+      invJac(e*D+1,g*D+1) =  1.0/det*Jac(e*D+0,g*D+0);
+#endif
     }
   }
 }
@@ -34,8 +48,11 @@ void dg_jacobians_face(const int M_T, const int D, fullMatrix<scalar> &XYZNodesF
   for(int t = 0; t < M_T; t++){
     for(int d = 0; d < 2; d++){
       scalar det = 0.0;
+#ifdef ONED
+      det = 1; // in 1D set JF to 1
+#else
       for(int alpha = 0; alpha < D; alpha ++){ det += sqrt(JacF((t*2+d)*D+alpha,0)* JacF((t*2+d)*D+alpha,0));}
-      if(D==1) det = 1; // in 1D set JF to 1
+#endif
       JF(t*2+d,0)    =  det;
       invJF(t*2+d,0) =  1.0/det;
     }
@@ -47,7 +64,9 @@ void dg_inverse_mass_matrix(const int order, const int elem_type, const std::str
 
   const polynomialBasis *basis  = polynomialBases::find (elem_type);  // for the element
   fullMatrix<double> points, weight;
-  if(getElemType == "lin") gaussIntegration::getLine(order*2+1, points, weight);
+  if     (getElemType == "tri") gaussIntegration::getTriangle(order*2+1, points, weight); //order*2+1 because you are integrating phi*phi
+  else if(getElemType == "qua") gaussIntegration::getQuad(order*2+1, points, weight);
+  else if(getElemType == "lin") gaussIntegration::getLine(order*2+1, points, weight);
 
   // Number of integration points           (g index)
   int N_G = points.size1();    

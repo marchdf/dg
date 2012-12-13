@@ -136,16 +136,17 @@ void simpleMesh::buildNormals (int typeInterface, int typeElement, int D)
 
     // Inverse Jacobian matrix 
     fullMatrix<double> invJac(D,N_s*D);
-    if (D == 1){ for(int k = 0; k < N_s; k++ ){ invJac(0,k) = 1.0/Jac(0,k);}}
-    else if(D==2){
-      for(int k = 0; k < N_s; k++ ){
-    	double idet = 1.0/(Jac(0,k*D+0)*Jac(1,k*D+1)-Jac(1,k*D+0)*Jac(0,k*D+1));
-    	invJac(0,k*D+0) = idet*Jac(1,k*D+1);
-    	invJac(1,k*D+0) = -1.0*idet*Jac(1,k*D+0);
-    	invJac(0,k*D+1) = -1.0*idet*Jac(0,k*D+1);
-    	invJac(1,k*D+1) = idet*Jac(0,k*D+0);
-      }
+#ifdef ONED
+    for(int k = 0; k < N_s; k++ ){ invJac(0,k) = 1.0/Jac(0,k);}
+#elif TWOD
+    for(int k = 0; k < N_s; k++ ){
+      double idet = 1.0/(Jac(0,k*D+0)*Jac(1,k*D+1)-Jac(1,k*D+0)*Jac(0,k*D+1));
+      invJac(0,k*D+0) = idet*Jac(1,k*D+1);
+      invJac(1,k*D+0) = -1.0*idet*Jac(1,k*D+0);
+      invJac(0,k*D+1) = -1.0*idet*Jac(0,k*D+1);
+      invJac(1,k*D+1) = idet*Jac(0,k*D+0);
     }
+#endif
 
     // // Loop on the nodes of the interface and calculate the normal
     for(int k = 0; k < cl.size(); k++){
