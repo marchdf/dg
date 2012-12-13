@@ -74,7 +74,7 @@ arch_global void evaluate_sf_1D(int D, int N_G, int N_E, int N_F, scalar gamma, 
 
 
 //==========================================================================
-arch_global void evaluate_q_1D(int M_G, int M_T, int N_F, int flux, scalar gamma, scalar* q, scalar* UgF, scalar* normals){
+arch_global void evaluate_q_1D(int M_G, int M_T, int N_F, scalar gamma, scalar* q, scalar* UgF, scalar* normals){
   
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
@@ -144,178 +144,60 @@ arch_global void evaluate_q_1D(int M_G, int M_T, int N_F, int flux, scalar gamma
     // Evaluate the fluxes on the right and left
     //
 
-    // Local Lax-Freidrichs flux
-    if (flux == 0){
-      //first: fx = rho*u; 
-      scalar qL = -0.5*((flux1(rhoL,uL) + flux1(rhoR,uR))*nx
+    // Rusanov flux
+#ifdef RUS
+    //first: fx = rho*u; 
+    scalar qL = -0.5*((flux1(rhoL,uL) + flux1(rhoR,uR))*nx
 			-maxvap*(rhoR-rhoL));
-      q[(t*N_F+0)*2+0] = qL;
-      q[(t*N_F+0)*2+1] = -qL;
+    q[(t*N_F+0)*2+0] = qL;
+    q[(t*N_F+0)*2+1] = -qL;
       
-      //second: fx = rho*u*u+Bx*Bx+Pbar; 
-      qL = -0.5*((flux2(rhoL,uL,pL)  + flux2(rhoR,uR,pR))*nx
-		 -maxvap*(rhoR*uR-rhoL*uL));
-      q[(t*N_F+1)*2+0] = qL;
-      q[(t*N_F+1)*2+1] = -qL;
+    //second: fx = rho*u*u+Bx*Bx+Pbar; 
+    qL = -0.5*((flux2(rhoL,uL,pL)  + flux2(rhoR,uR,pR))*nx
+	       -maxvap*(rhoR*uR-rhoL*uL));
+    q[(t*N_F+1)*2+0] = qL;
+    q[(t*N_F+1)*2+1] = -qL;
 
-      //third: fx = EtplusP*u; 
-      qL = -0.5*((flux3(EtPL,uL) + flux3(EtPR,uR))*nx
-		 -maxvap*(EtR-EtL));
-      q[(t*N_F+2)*2+0] = qL; 
-      q[(t*N_F+2)*2+1] = -qL;
+    //third: fx = EtplusP*u; 
+    qL = -0.5*((flux3(EtPL,uL) + flux3(EtPR,uR))*nx
+	       -maxvap*(EtR-EtL));
+    q[(t*N_F+2)*2+0] = qL; 
+    q[(t*N_F+2)*2+1] = -qL;
 
-      scalar ncterm = 0;
+    scalar ncterm = 0;
 #ifdef PASSIVE
-      //fourth: fx = rho*u*phi
-      qL = -0.5*((flux4(rhoL,uL,phicL) + flux4(rhoR,uR,phicR))*nx
-		 -maxvap*(rhoR*phicR-rhoL*phicL));
-      q[(t*N_F+3)*2+0] = qL; 
-      q[(t*N_F+3)*2+1] = -qL;
+    //fourth: fx = rho*u*phi
+    qL = -0.5*((flux4(rhoL,uL,phicL) + flux4(rhoR,uR,phicR))*nx
+	       -maxvap*(rhoR*phicR-rhoL*phicL));
+    q[(t*N_F+3)*2+0] = qL; 
+    q[(t*N_F+3)*2+1] = -qL;
 	
-      //fifth:
-      qL = -0.5*(-maxvap*(phincR-phincL));
-      ncterm = 0.5*0.5*(uL+uR)*(phincL-phincR)*nx;
-      q[(t*N_F+4)*2+0] = qL + ncterm; 
-      q[(t*N_F+4)*2+1] = -qL+ ncterm;
+    //fifth:
+    qL = -0.5*(-maxvap*(phincR-phincL));
+    ncterm = 0.5*0.5*(uL+uR)*(phincL-phincR)*nx;
+    q[(t*N_F+4)*2+0] = qL + ncterm; 
+    q[(t*N_F+4)*2+1] = -qL+ ncterm;
 #elif MULTIFLUID
 #ifdef GAMCONS
-      qL = -0.5*((flux4(rhoL,uL,alphaL) + flux4(rhoR,uR,alphaR))*nx
-		 -maxvap*(rhoR*alphaR-rhoL*alphaL));
+    qL = -0.5*((flux4(rhoL,uL,alphaL) + flux4(rhoR,uR,alphaR))*nx
+	       -maxvap*(rhoR*alphaR-rhoL*alphaL));
 #elif  GAMNCON
-      qL = -0.5*(-maxvap*(alphaR-alphaL));
-      ncterm = -0.5*0.5*(uL+uR)*(alphaR-alphaL)*nx;
+    qL = -0.5*(-maxvap*(alphaR-alphaL));
+    ncterm = -0.5*0.5*(uL+uR)*(alphaR-alphaL)*nx;
 #endif
-      q[(t*N_F+3)*2+0] = qL + ncterm; 
-      q[(t*N_F+3)*2+1] = -qL+ ncterm;
+    q[(t*N_F+3)*2+0] = qL + ncterm; 
+    q[(t*N_F+3)*2+1] = -qL+ ncterm;
 #endif
     }
-    
+
     // Non-conservative flux
-    else if (flux == 1){
+#elif HLL
 
-      // Wave estimates
-      scalar SL = 0; scalar SR = 0;
-      int estimate = 0;
-      switch (estimate){
-      case 1:{ // Toro 10.49
-	scalar rhoRoe = sqrt(rhoL*rhoR);
-	scalar uRoe = (sqrt(rhoL)*uL+sqrt(rhoR)*uR)/(sqrt(rhoL)+sqrt(rhoR));
-	scalar HL = (EtL + pL)/rhoL;
-	scalar HR = (EtR + pR)/rhoR;
-	scalar HRoe = (sqrt(rhoL)*HL+sqrt(rhoR)*HR)/(sqrt(rhoL)+sqrt(rhoR));
-	scalar alphaRoe = (sqrt(rhoL)*alphaL+sqrt(rhoR)*alphaR)/(sqrt(rhoL)+sqrt(rhoR));
-	scalar gammaRoe = 1+1.0/alphaRoe;
-	scalar aRoe = sqrt((gammaRoe-1)*(HRoe-0.5*uRoe*uRoe));
-	SL = uRoe*nx-aRoe;
-	SR = uRoe*nx+aRoe;
-	break;}
-      case 2: { // Toro 10.52
-	scalar eta2 = 0.5*sqrt(rhoL*rhoR)/((sqrt(rhoL)+sqrt(rhoR))*(sqrt(rhoL)+sqrt(rhoR)));
-	scalar dbar2 = (sqrt(rhoL)*aL*aL + sqrt(rhoR)*aR*aR)/(sqrt(rhoL)+sqrt(rhoR)) + eta2*(uR-uL)*(uR-uL);
-	scalar ubar = 0.5*(uR+uL);
-	SL = ubar*nx - sqrt(dbar2);
-	SR = ubar*nx + sqrt(dbar2);
-	break;}
-      default: // Toro 10.48
-	SL = MIN((uL*nx-aL),(uR*nx-aR));
-	SR = MAX((uL*nx+aL),(uR*nx+aR));
-      }
-
-      scalar pnc1=0, pnc2=0, pnc3=0, pnc4=0, pnc5=0;
-      scalar vnc = 0;
-#ifdef PASSIVE
-      vnc = -0.5*(uL+uR)*(phincL-phincR);
-#elif MULTIFLUID
-      vnc = -0.5*(uL+uR)*(alphaL-alphaR);
-#endif
-
-      // define the flux
-      if (SL > 0){
-	pnc1 = flux1(rhoL,uL)*nx;
-	pnc2 = flux2(rhoL,uL,pL)*nx;
-	pnc3 = flux3(EtPL,uL)*nx;
-#ifdef PASSIVE
-	pnc4 = flux4(rhoL,uL,phicL)*nx;
-	pnc5 = -0.5*vnc;
-#elif MULTIFLUID
-#ifdef GAMCONS
-	pnc4 = flux4(rhoL,uL,alphaL)*nx;
-#elif  GAMNCON
-	pnc4 = -0.5*vnc;
-#endif
-#endif
-      }
-      else if ((SL < 0)&&(SR > 0)){
-	pnc1 = fhll(rhoL, SL, flux1(rhoL,uL)*nx,   rhoR, SR, flux1(rhoR,uR)*nx);
-	pnc2 = fhll(  uL, SL, flux2(rhoL,uL,pL)*nx,  uR, SR, flux2(rhoR,uR,pR)*nx);
-	pnc3 = fhll( EtL, SL, flux3(EtPL,uL)*nx,    EtR, SR, flux3(EtPR,uR)*nx);
-#ifdef PASSIVE
-	pnc4 = fhll(phicL, SL, flux4(rhoL,uL,phicL)*nx, phicR, SR, flux4(rhoR,uR,phicR)*nx);
-	pnc5 = fhll(phincL, SL, 0, phincR, SR, 0) - 0.5*fabs(SR+SL)/fabs(SR-SL)*vnc;
-#elif MULTIFLUID
-#ifdef GAMCONS
-	pnc4 = fhll(alphaL, SL, flux4(rhoL,uL,alphaL)*nx, alphaR, SR, flux4(rhoR,uR,alphaR)*nx);
-#elif  GAMNCON
-	pnc4 = fhll(alphaL, SL, 0, alphaR, SR, 0) - 0.5*fabs(SR+SL)/fabs(SR-SL)*vnc;
-#endif
-#endif
-      }
-      else if (SR < 0){
-	pnc1 = flux1(rhoR,uR)*nx;
-	pnc2 = flux2(rhoR,uR,pR)*nx;
-	pnc3 = flux3(EtPR,uR)*nx;
-#ifdef PASSIVE
-	pnc4 = flux4(rhoR,uR,phicR)*nx;
-	pnc5 = 0.5*vnc;
-#elif MULTIFLUID
-#ifdef GAMCONS
-	pnc4 = flux4(rhoR,uR,alphaR)*nx;
-#elif  GAMNCON
-	pnc4 = 0.5*vnc;
-#endif
-#endif
-      }
-
-      // first
-      scalar qL = -pnc1;
-      q[(t*N_F+0)*2+0] = qL;
-      q[(t*N_F+0)*2+1] = -qL;
-      
-      //second: fx = rho*u*u+Bx*Bx+Pbar; 
-      qL = -pnc2;
-      q[(t*N_F+1)*2+0] = qL;
-      q[(t*N_F+1)*2+1] = -qL;
-
-      //third: fx = EtplusP*u; 
-      qL = -pnc3;
-      q[(t*N_F+2)*2+0] = qL; 
-      q[(t*N_F+2)*2+1] = -qL;
-
-      scalar ncterm = 0;
-#ifdef PASSIVE
-      //fourth: fx = rho*u*phic
-      qL = -pnc4;
-      q[(t*N_F+3)*2+0] = qL;
-      q[(t*N_F+3)*2+1] = -qL;
-      
-      //fifth:
-      qL = -pnc5;
-      ncterm = - 0.5*vnc*nx;
-      q[(t*N_F+4)*2+0] = qL  + ncterm; 
-      q[(t*N_F+4)*2+1] = -qL + ncterm;
-#elif MULTIFLUID
-#ifdef GAMNCON
-      ncterm = -0.5*vnc*nx;
-#endif
-      qL = -pnc4;
-      q[(t*N_F+3)*2+0] = qL  + ncterm; 
-      q[(t*N_F+3)*2+1] = -qL + ncterm;
-#endif
-
-    }
-
-    // Non-conservative Roe flux
-    else if (flux == 2){
+    // Wave estimates
+    scalar SL = 0; scalar SR = 0;
+    int estimate = 0;
+    switch (estimate){
+    case 1:{ // Toro 10.49
       scalar rhoRoe = sqrt(rhoL*rhoR);
       scalar uRoe = (sqrt(rhoL)*uL+sqrt(rhoR)*uR)/(sqrt(rhoL)+sqrt(rhoR));
       scalar HL = (EtL + pL)/rhoL;
@@ -324,100 +206,216 @@ arch_global void evaluate_q_1D(int M_G, int M_T, int N_F, int flux, scalar gamma
       scalar alphaRoe = (sqrt(rhoL)*alphaL+sqrt(rhoR)*alphaR)/(sqrt(rhoL)+sqrt(rhoR));
       scalar gammaRoe = 1+1.0/alphaRoe;
       scalar aRoe = sqrt((gammaRoe-1)*(HRoe-0.5*uRoe*uRoe));
-      scalar iL = pL*alphaL;
-      scalar iR = pR*alphaR;
-      scalar iRoe = (sqrt(rhoL)*iL+sqrt(rhoR)*iR)/(sqrt(rhoL)+sqrt(rhoR));
-      scalar DpRoe= (gammaRoe-1)*(gammaRoe-1)*(alphaRoe*(iR-iL) - iRoe*(alphaR-alphaL));
-      scalar pRoe = (gammaRoe-1)*iRoe;
-
-      // Roe eigenvalues
-      vap[2*sizevap+0] = uRoe-aRoe;
-      vap[2*sizevap+1] = uRoe;
-      vap[2*sizevap+2] = uRoe+aRoe;
-      vap[2*sizevap+3] = uRoe;
-
-      // Roe waves strengths
-      vap[3*sizevap+1] = (rhoR-rhoL) - DpRoe/(aRoe*aRoe);
-      vap[3*sizevap+2] = (DpRoe + rhoRoe*aRoe*(uR-uL))/(2*aRoe*aRoe);
-      vap[3*sizevap+0] = (DpRoe - rhoRoe*aRoe*(uR-uL))/(2*aRoe*aRoe);
-      vap[3*sizevap+3] = alphaR-alphaL;
-      // aiRoe[1]= (gamma-1)/(aRoe*aRoe)*((rhoR-rhoL)*(HRoe-uRoe*uRoe)+uRoe*(rhoR*uR-rhoL*uL)-(EtR-EtL));
-      // aiRoe[0]=1/(2*aRoe)*((rhoR-rhoL)*(uRoe+aRoe)-(rhoR*uR-rhoL*uL)-aRoe*aiRoe[1]);
-      // aiRoe[2]=(rhoR-rhoL)-(aiRoe[0]+aiRoe[1]);
-
-      // Roe eigenvectors
-      vap[(4+0)*sizevap+0] = 1;
-      vap[(4+0)*sizevap+1] = uRoe-aRoe;
-      vap[(4+0)*sizevap+2] = HRoe-uRoe*aRoe;
-      vap[(4+0)*sizevap+3] = 0;
-
-      vap[(4+1)*sizevap+0] = 1;
-      vap[(4+1)*sizevap+1] = uRoe;
-      vap[(4+1)*sizevap+2] = 0.5*uRoe*uRoe;
-      vap[(4+1)*sizevap+3] = 0;
-
-      vap[(4+2)*sizevap+0] = 1;
-      vap[(4+2)*sizevap+1] = uRoe+aRoe;
-      vap[(4+2)*sizevap+2] = HRoe+uRoe*aRoe;
-      vap[(4+2)*sizevap+3] = 0;
-      
-      vap[(4+3)*sizevap+0] = 0;
-      vap[(4+3)*sizevap+1] = 0;
-      vap[(4+3)*sizevap+2] = pRoe;
-      vap[(4+3)*sizevap+3] = 1;
-
-      //first: fx = rho*u;
-      // if      (uRoe>0)  qL = flux1(rhoL,uL) + aiRoe[0]*vapRoe[0]*vep[0*3+0];
-      // else if (uRoe<=0) qL = flux1(rhoR,uR) - aiRoe[2]*vapRoe[2]*vep[2*3+0];
-      scalar qL = 0;
-      qL = 0.5*(flux1(rhoL,uL) + flux1(rhoR,uR))*nx;
-      for(int k=0;k<4;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+0];
-      q[(t*N_F+0)*2+0] = -qL;
-      q[(t*N_F+0)*2+1] = qL;
-      
-      //second: fx = rho*u*u+Bx*Bx+Pbar; 
-      // if      (uRoe>0)  qL = flux2(rhoL,uL,pL) + aiRoe[0]*vapRoe[0]*vep[0*3+1];
-      // else if (uRoe<=0) qL = flux2(rhoR,uR,pR) - aiRoe[2]*vapRoe[2]*vep[2*3+1];
-      qL = 0.5*(flux2(rhoL,uL,pL)  + flux2(rhoR,uR,pR))*nx;
-      for(int k=0;k<4;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+1];
-      q[(t*N_F+1)*2+0] = -qL;
-      q[(t*N_F+1)*2+1] = qL;
-
-      //third: fx = EtplusP*u; 
-      // if      (uRoe>0)  qL = flux3(EtPL,uL) + aiRoe[0]*vapRoe[0]*vep[0*3+2];
-      // else if (uRoe<=0) qL = flux3(EtPR,uR) - aiRoe[2]*vapRoe[2]*vep[2*3+2];
-      qL = 0.5*(flux3(EtPL,uL) + flux3(EtPR,uR))*nx;
-      for(int k=0;k<4;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+2];
-      q[(t*N_F+2)*2+0] = -qL; 
-      q[(t*N_F+2)*2+1] = qL;
-
-      scalar ncterm = 0;
+      SL = uRoe*nx-aRoe;
+      SR = uRoe*nx+aRoe;
+      break;}
+    case 2: { // Toro 10.52
+      scalar eta2 = 0.5*sqrt(rhoL*rhoR)/((sqrt(rhoL)+sqrt(rhoR))*(sqrt(rhoL)+sqrt(rhoR)));
+      scalar dbar2 = (sqrt(rhoL)*aL*aL + sqrt(rhoR)*aR*aR)/(sqrt(rhoL)+sqrt(rhoR)) + eta2*(uR-uL)*(uR-uL);
+      scalar ubar = 0.5*(uR+uL);
+      SL = ubar*nx - sqrt(dbar2);
+      SR = ubar*nx + sqrt(dbar2);
+      break;}
+    default: // Toro 10.48
+      SL = MIN((uL*nx-aL),(uR*nx-aR));
+      SR = MAX((uL*nx+aL),(uR*nx+aR));
+    }
+    
+    scalar pnc1=0, pnc2=0, pnc3=0, pnc4=0, pnc5=0;
+    scalar vnc = 0;
 #ifdef PASSIVE
-      //fourth: fx = rho*u*phic
-      // if      (uRoe>0)  qL = flux4(rhoL,uL,phicL) + aiRoe[0]*vapRoe[0]*vep[0*3+1];
-      // else if (uRoe<=0) qL = flux4(rhoR,uR,phicR) - aiRoe[2]*vapRoe[2]*vep[2*3+1];
-      qL = 0.5*(flux4(rhoL,uL,phicL) + flux4(rhoR,uR,phicR))*nx;
-      for(int k=0;k<3;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+0];
-      q[(t*N_F+3)*2+0] = -qL; 
-      q[(t*N_F+3)*2+1] = qL;
-      
-      //fifth:
-      qL = 0.0;
-      for(int k=0;k<3;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+0];
-      q[(t*N_F+4)*2+0] = -qL - 0.5*uRoe*(phincR-phincL)*nx;
-      q[(t*N_F+4)*2+1] = qL  - 0.5*uRoe*(phincR-phincL)*nx;
+    vnc = -0.5*(uL+uR)*(phincL-phincR);
+#elif MULTIFLUID
+    vnc = -0.5*(uL+uR)*(alphaL-alphaR);
+#endif
+
+    // define the flux
+    if (SL > 0){
+      pnc1 = flux1(rhoL,uL)*nx;
+      pnc2 = flux2(rhoL,uL,pL)*nx;
+      pnc3 = flux3(EtPL,uL)*nx;
+#ifdef PASSIVE
+      pnc4 = flux4(rhoL,uL,phicL)*nx;
+      pnc5 = -0.5*vnc;
 #elif MULTIFLUID
 #ifdef GAMCONS
-      qL = 0.5*(flux4(rhoL,uL,alphaL) + flux4(rhoR,uR,alphaR))*nx;
+      pnc4 = flux4(rhoL,uL,alphaL)*nx;
 #elif  GAMNCON
-      qL = 0;
-      ncterm = -0.5*uRoe*(alphaR-alphaL)*nx;
+      pnc4 = -0.5*vnc;
 #endif
-      for(int k=0;k<4;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+3];
-      q[(t*N_F+3)*2+0] = -qL + ncterm;
-      q[(t*N_F+3)*2+1] = qL  + ncterm;
 #endif
     }
+    else if ((SL < 0)&&(SR > 0)){
+      pnc1 = fhll(rhoL, SL, flux1(rhoL,uL)*nx,   rhoR, SR, flux1(rhoR,uR)*nx);
+      pnc2 = fhll(  uL, SL, flux2(rhoL,uL,pL)*nx,  uR, SR, flux2(rhoR,uR,pR)*nx);
+      pnc3 = fhll( EtL, SL, flux3(EtPL,uL)*nx,    EtR, SR, flux3(EtPR,uR)*nx);
+#ifdef PASSIVE
+      pnc4 = fhll(phicL, SL, flux4(rhoL,uL,phicL)*nx, phicR, SR, flux4(rhoR,uR,phicR)*nx);
+      pnc5 = fhll(phincL, SL, 0, phincR, SR, 0) - 0.5*fabs(SR+SL)/fabs(SR-SL)*vnc;
+#elif MULTIFLUID
+#ifdef GAMCONS
+      pnc4 = fhll(alphaL, SL, flux4(rhoL,uL,alphaL)*nx, alphaR, SR, flux4(rhoR,uR,alphaR)*nx);
+#elif  GAMNCON
+      pnc4 = fhll(alphaL, SL, 0, alphaR, SR, 0) - 0.5*fabs(SR+SL)/fabs(SR-SL)*vnc;
+#endif
+#endif
+    }
+    else if (SR < 0){
+      pnc1 = flux1(rhoR,uR)*nx;
+      pnc2 = flux2(rhoR,uR,pR)*nx;
+      pnc3 = flux3(EtPR,uR)*nx;
+#ifdef PASSIVE
+      pnc4 = flux4(rhoR,uR,phicR)*nx;
+      pnc5 = 0.5*vnc;
+#elif MULTIFLUID
+#ifdef GAMCONS
+      pnc4 = flux4(rhoR,uR,alphaR)*nx;
+#elif  GAMNCON
+      pnc4 = 0.5*vnc;
+#endif
+#endif
+    }
+
+    // first
+    scalar qL = -pnc1;
+    q[(t*N_F+0)*2+0] = qL;
+    q[(t*N_F+0)*2+1] = -qL;
+    
+    //second: fx = rho*u*u+Bx*Bx+Pbar; 
+    qL = -pnc2;
+    q[(t*N_F+1)*2+0] = qL;
+    q[(t*N_F+1)*2+1] = -qL;
+    
+    //third: fx = EtplusP*u; 
+    qL = -pnc3;
+    q[(t*N_F+2)*2+0] = qL; 
+    q[(t*N_F+2)*2+1] = -qL;
+      
+    scalar ncterm = 0;
+#ifdef PASSIVE
+    //fourth: fx = rho*u*phic
+    qL = -pnc4;
+    q[(t*N_F+3)*2+0] = qL;
+    q[(t*N_F+3)*2+1] = -qL;
+      
+    //fifth:
+    qL = -pnc5;
+    ncterm = - 0.5*vnc*nx;
+    q[(t*N_F+4)*2+0] = qL  + ncterm; 
+    q[(t*N_F+4)*2+1] = -qL + ncterm;
+#elif MULTIFLUID
+#ifdef GAMNCON
+    ncterm = -0.5*vnc*nx;
+#endif
+    qL = -pnc4;
+    q[(t*N_F+3)*2+0] = qL  + ncterm; 
+    q[(t*N_F+3)*2+1] = -qL + ncterm;
+#endif
+
+    // Non-conservative Roe flux
+#elif ROE
+    scalar rhoRoe = sqrt(rhoL*rhoR);
+    scalar uRoe = (sqrt(rhoL)*uL+sqrt(rhoR)*uR)/(sqrt(rhoL)+sqrt(rhoR));
+    scalar HL = (EtL + pL)/rhoL;
+    scalar HR = (EtR + pR)/rhoR;
+    scalar HRoe = (sqrt(rhoL)*HL+sqrt(rhoR)*HR)/(sqrt(rhoL)+sqrt(rhoR));
+    scalar alphaRoe = (sqrt(rhoL)*alphaL+sqrt(rhoR)*alphaR)/(sqrt(rhoL)+sqrt(rhoR));
+    scalar gammaRoe = 1+1.0/alphaRoe;
+    scalar aRoe = sqrt((gammaRoe-1)*(HRoe-0.5*uRoe*uRoe));
+    scalar iL = pL*alphaL;
+    scalar iR = pR*alphaR;
+    scalar iRoe = (sqrt(rhoL)*iL+sqrt(rhoR)*iR)/(sqrt(rhoL)+sqrt(rhoR));
+    scalar DpRoe= (gammaRoe-1)*(gammaRoe-1)*(alphaRoe*(iR-iL) - iRoe*(alphaR-alphaL));
+    scalar pRoe = (gammaRoe-1)*iRoe;
+
+    // Roe eigenvalues
+    vap[2*sizevap+0] = uRoe-aRoe;
+    vap[2*sizevap+1] = uRoe;
+    vap[2*sizevap+2] = uRoe+aRoe;
+    vap[2*sizevap+3] = uRoe;
+
+    // Roe waves strengths
+    vap[3*sizevap+1] = (rhoR-rhoL) - DpRoe/(aRoe*aRoe);
+    vap[3*sizevap+2] = (DpRoe + rhoRoe*aRoe*(uR-uL))/(2*aRoe*aRoe);
+    vap[3*sizevap+0] = (DpRoe - rhoRoe*aRoe*(uR-uL))/(2*aRoe*aRoe);
+    vap[3*sizevap+3] = alphaR-alphaL;
+    // aiRoe[1]= (gamma-1)/(aRoe*aRoe)*((rhoR-rhoL)*(HRoe-uRoe*uRoe)+uRoe*(rhoR*uR-rhoL*uL)-(EtR-EtL));
+    // aiRoe[0]=1/(2*aRoe)*((rhoR-rhoL)*(uRoe+aRoe)-(rhoR*uR-rhoL*uL)-aRoe*aiRoe[1]);
+    // aiRoe[2]=(rhoR-rhoL)-(aiRoe[0]+aiRoe[1]);
+
+    // Roe eigenvectors
+    vap[(4+0)*sizevap+0] = 1;
+    vap[(4+0)*sizevap+1] = uRoe-aRoe;
+    vap[(4+0)*sizevap+2] = HRoe-uRoe*aRoe;
+    vap[(4+0)*sizevap+3] = 0;
+
+    vap[(4+1)*sizevap+0] = 1;
+    vap[(4+1)*sizevap+1] = uRoe;
+    vap[(4+1)*sizevap+2] = 0.5*uRoe*uRoe;
+    vap[(4+1)*sizevap+3] = 0;
+
+    vap[(4+2)*sizevap+0] = 1;
+    vap[(4+2)*sizevap+1] = uRoe+aRoe;
+    vap[(4+2)*sizevap+2] = HRoe+uRoe*aRoe;
+    vap[(4+2)*sizevap+3] = 0;
+      
+    vap[(4+3)*sizevap+0] = 0;
+    vap[(4+3)*sizevap+1] = 0;
+    vap[(4+3)*sizevap+2] = pRoe;
+    vap[(4+3)*sizevap+3] = 1;
+
+    //first: fx = rho*u;
+    // if      (uRoe>0)  qL = flux1(rhoL,uL) + aiRoe[0]*vapRoe[0]*vep[0*3+0];
+    // else if (uRoe<=0) qL = flux1(rhoR,uR) - aiRoe[2]*vapRoe[2]*vep[2*3+0];
+    scalar qL = 0;
+    qL = 0.5*(flux1(rhoL,uL) + flux1(rhoR,uR))*nx;
+    for(int k=0;k<4;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+0];
+    q[(t*N_F+0)*2+0] = -qL;
+    q[(t*N_F+0)*2+1] = qL;
+      
+    //second: fx = rho*u*u+Bx*Bx+Pbar; 
+    // if      (uRoe>0)  qL = flux2(rhoL,uL,pL) + aiRoe[0]*vapRoe[0]*vep[0*3+1];
+    // else if (uRoe<=0) qL = flux2(rhoR,uR,pR) - aiRoe[2]*vapRoe[2]*vep[2*3+1];
+    qL = 0.5*(flux2(rhoL,uL,pL)  + flux2(rhoR,uR,pR))*nx;
+    for(int k=0;k<4;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+1];
+    q[(t*N_F+1)*2+0] = -qL;
+    q[(t*N_F+1)*2+1] = qL;
+
+    //third: fx = EtplusP*u; 
+    // if      (uRoe>0)  qL = flux3(EtPL,uL) + aiRoe[0]*vapRoe[0]*vep[0*3+2];
+    // else if (uRoe<=0) qL = flux3(EtPR,uR) - aiRoe[2]*vapRoe[2]*vep[2*3+2];
+    qL = 0.5*(flux3(EtPL,uL) + flux3(EtPR,uR))*nx;
+    for(int k=0;k<4;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+2];
+    q[(t*N_F+2)*2+0] = -qL; 
+    q[(t*N_F+2)*2+1] = qL;
+
+    scalar ncterm = 0;
+#ifdef PASSIVE
+    //fourth: fx = rho*u*phic
+    // if      (uRoe>0)  qL = flux4(rhoL,uL,phicL) + aiRoe[0]*vapRoe[0]*vep[0*3+1];
+    // else if (uRoe<=0) qL = flux4(rhoR,uR,phicR) - aiRoe[2]*vapRoe[2]*vep[2*3+1];
+    qL = 0.5*(flux4(rhoL,uL,phicL) + flux4(rhoR,uR,phicR))*nx;
+    for(int k=0;k<3;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+0];
+    q[(t*N_F+3)*2+0] = -qL; 
+    q[(t*N_F+3)*2+1] = qL;
+      
+    //fifth:
+    qL = 0.0;
+    for(int k=0;k<3;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+0];
+    q[(t*N_F+4)*2+0] = -qL - 0.5*uRoe*(phincR-phincL)*nx;
+    q[(t*N_F+4)*2+1] = qL  - 0.5*uRoe*(phincR-phincL)*nx;
+#elif MULTIFLUID
+#ifdef GAMCONS
+    qL = 0.5*(flux4(rhoL,uL,alphaL) + flux4(rhoR,uR,alphaR))*nx;
+#elif  GAMNCON
+    qL = 0;
+    ncterm = -0.5*uRoe*(alphaR-alphaL)*nx;
+#endif
+    for(int k=0;k<4;k++) qL += -0.5*vap[3*sizevap+k]*fabs(vap[2*sizevap+k])*vap[(4+k)*sizevap+3];
+    q[(t*N_F+3)*2+0] = -qL + ncterm;
+    q[(t*N_F+3)*2+1] = qL  + ncterm;
+#endif
+#endif // end flux ifs'
 
 #ifdef USE_CPU
     delete[] vap;
@@ -443,14 +441,14 @@ void Levaluate_sf_1D(int D, int N_G, int N_E, int N_F, scalar gamma, scalar* s, 
 }
 
 extern "C" 
-void Levaluate_q_1D(int M_G, int M_T, int N_F, int flux, scalar gamma, scalar* q, scalar* UgF, scalar* normals){
+void Levaluate_q_1D(int M_G, int M_T, int N_F, scalar gamma, scalar* q, scalar* UgF, scalar* normals){
 
 #ifdef USE_GPU
   dim3 dimBlock(1,1,1);
   dim3 dimGrid(M_T,1);
 #endif
 
-  evaluate_q_1D arch_args_array(4*(4+4)*sizeof(scalar)) (M_G, M_T, N_F, flux, gamma, q, UgF, normals);
+  evaluate_q_1D arch_args_array(4*(4+4)*sizeof(scalar)) (M_G, M_T, N_F, gamma, q, UgF, normals);
 }
 
 

@@ -23,6 +23,7 @@
 #include <limiting.h>
 #include <dg_solver.h>
 
+
 //
 // Function prototypes
 //
@@ -67,40 +68,40 @@ int main (int argc, char **argv)
   deck inputs;  
   inputs.readDeck(deckfile.c_str());
 
-  // number of coordinates in elem ref space(alpha index)
-  int D = inputs.getDims(); printf("%i-dimensional problem\n",D);
+#ifdef ONED
+  int D = 1;   // number of coordinates in elem ref space(alpha index)
+  int DF  = 1; // number of coordinates in face ref space(alpha index)
+               // DF=1 in 1D to avoid allocation problems
+#elif TWOD
+  int D = 2;
+  int DF = 1;
+#elif THREED
+  int D = 3;
+  int DF = 2;
+#endif
+  printf("%i-dimensional problem\n",D);
   
   // Get the blas option
-  bool blas = inputs.getBlas(); if (blas==1) printf("Using BLAS\n");
+#ifdef HAVE_BLAS
+  printf("Using BLAS\n");
+#endif
 
   // Get the method order
   int order = inputs.getOrder();
   bool order0 = false; if (order==0) {order0 = true; order = 1;}
 
   // Get the flux
-  int  flux;
-  if      (inputs.getFlux()=="llf") {flux = 0; printf("Using LLF\n");}
-  else if (inputs.getFlux()=="ncf") {flux = 1; printf("Using NCF\n");}
-  else if (inputs.getFlux()=="roe") {flux = 2; printf("Using ROE\n");}
-  else{ printf("Invalid flux setup. Correct the deck.\n");}
+#ifdef RUS
+  printf("Using RUSANOV\n");
+#elif HLL
+  printf("Using HLL\n");
+#elif ROE
+  printf("Using ROE\n");
+#endif
   
   // Get the mesh
   std::string fileName = inputs.getMeshfile();
   
-  // Setup the problem type
-  bool multifluid = false;
-  bool passive = false;
-  if      (inputs.getProblem() == "multifluid")   multifluid = true;
-  else if (inputs.getProblem() == "passive")      passive = true;
-  else{ printf("Invalid problem setup. Correct the deck.\n");}
-
-  // Setup the model
-  int model = 0;
-  if      (inputs.getModel() == "gammamod")   model = 0;
-  else if (inputs.getModel() == "invgamma")   model = 1;
-  else if (passive) model = 0;
-  else{ printf("Invalid model setup. Correct the deck.\n");}
-
   // Setup the limiting
   int limiterMethod = 0;
   if      (inputs.getLimiter() == "hrl")   {limiterMethod = 1; printf("Using HR limiting\n");}
@@ -141,7 +142,6 @@ int main (int argc, char **argv)
   if      (inputs.getBoundaryCondition()=="periodic") periodic = true;
   else if (inputs.getBoundaryCondition()=="farfield") farfield = true;
   else{ printf("Invalid boundary condition setup. Correct the deck.\n");}    
-
 
   //==========================================================================
   //
@@ -218,8 +218,6 @@ int main (int argc, char **argv)
   int N   = N_E*N_s;                  // number of dof for a DG
   int N_G = points.size1();           // number of integration points           (g index)
   int M_G = pointsF.size1();          // number of integration points on a face (g index)
-  int DF  = 1;                        // number of coordinates in face ref space(alpha index)
-  if ((D==1)||(D==2)) DF = 1; // DF=1 in 1D to avoid allocation problems
   int N_F = inputs.getNumFields();    // number of unknown fields               (h, u_x, u_y with fc index)
 
   if(order0) printf("order %i\n",0); else printf("order %i\n",order);
@@ -441,22 +439,21 @@ int main (int argc, char **argv)
   fullMatrix<scalar> Us(N_s, N_E*N_F);
   fullMatrix<scalar> Ustar(N_s, N_E*N_F);
   scalar gamma0 = 0;
-  if(multifluid){
-    if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
-    else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
-    else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
-    else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
-    else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
-    else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
-    else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
-    else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
-    else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, model, XYZNodes, U);
-  }
-  else if (passive){
+#ifdef MULTIFLUID
+    if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+    else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+    else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+    else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+    else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+    else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+    else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+    else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+    else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+#elif PASSIVE
     if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, U);
     if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, U);
     if (shckcon) init_dg_shckcon_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, U);
-  }
+#endif
 
   if (order0) average_cell_p0(N_s, N_E, N_F, U);
   
@@ -467,7 +464,7 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
   scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++) h_weight[g] = (scalar)weight(g,0);  
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, boundaryMap, multifluid, passive, model, gamma0, Lag2Mono, Mono2Lag, monoV1D, h_weight);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, boundaryMap, gamma0, Lag2Mono, Mono2Lag, monoV1D, h_weight);
   
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -594,7 +591,7 @@ int main (int argc, char **argv)
   printf("==== Now RK 4 steps =====\n");
   DG_SOLVER dgsolver = DG_SOLVER(D, N_F, N_E, N_s, N_G, M_T, M_s, M_G, M_B,
   				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, h_J, h_invJac, h_JF, h_weight, h_normals,
-  				 h_boundaryMap, flux, gamma0);
+  				 h_boundaryMap, gamma0);
   RK rk4 = RK(4);
   rk4.RK_integration(Dt, N_t, output_factor,
   		     D, N_F, N_E, N_s, N_G, M_T, M_s,
@@ -611,22 +608,21 @@ int main (int argc, char **argv)
 
   // Initial condition
   fullMatrix<scalar> Uinit(N_s, N_E*N_F);
-  if(multifluid){
-    if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
-    else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
-    else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
-    else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
-    else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
-    else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
-    else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
-    else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
-    else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, model, XYZNodes, Uinit);
-  }
-  else if (passive){
+#ifdef MULTIFLUID
+    if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+    else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+    else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+    else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+    else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+    else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+    else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+    else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+    else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+#elif PASSIVE
     if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, Uinit);
     if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, Uinit);
     if (shckcon) init_dg_shckcon_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, Uinit);
-  }
+#endif
   scalar* h_Uinit = new scalar[N_s*N_E*N_F];  makeZero(h_Uinit,N_s*N_E*N_F);
   for(int e = 0; e < N_E; e++){
     for(int fc = 0; fc < N_F; fc++){
@@ -639,28 +635,29 @@ int main (int argc, char **argv)
       // velocity
       h_Uinit[(e*N_F+1)*N_s+i] = h_Uinit[(e*N_F+1)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; 
       h_U    [(e*N_F+1)*N_s+i] = h_U    [(e*N_F+1)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
-      if      (multifluid){
-	// gamma: get everything in terms of 1/(gamma-1)
-	if      (model==0){
-	  h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i];
-	  h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];}
-	else if (model==1){
-	  h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i];
-	  h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i];}
-	// pressure = (gamma-1)*(E-0.5 rho*v*v)
-	h_Uinit[(e*N_F+2)*N_s+i] = 1.0/h_Uinit[(e*N_F+3)*N_s+i]*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
-	h_U    [(e*N_F+2)*N_s+i] = 1.0/h_U    [(e*N_F+3)*N_s+i]*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
-      }
-      else if (passive){
-	// pressure = (gamma-1)*(E-0.5 rho*v*v)
-	h_Uinit[(e*N_F+2)*N_s+i] = (gamma0-1)*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
-	h_U    [(e*N_F+2)*N_s+i] = (gamma0-1)*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
-	// conservative phi
-	h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; 
-	h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
-      }
+#ifdef MULTIFLUID
+      // gamma: get everything in terms of 1/(gamma-1)
+#ifdef GAMCONS
+      h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i];
+      h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
+#elif GAMNCON
+      h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i];
+      h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i];
+#endif
+      // pressure = (gamma-1)*(E-0.5 rho*v*v)
+      h_Uinit[(e*N_F+2)*N_s+i] = 1.0/h_Uinit[(e*N_F+3)*N_s+i]*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
+      h_U    [(e*N_F+2)*N_s+i] = 1.0/h_U    [(e*N_F+3)*N_s+i]*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
+#elif PASSIVE
+      // pressure = (gamma-1)*(E-0.5 rho*v*v)
+      h_Uinit[(e*N_F+2)*N_s+i] = (gamma0-1)*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
+      h_U    [(e*N_F+2)*N_s+i] = (gamma0-1)*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
+      // conservative phi
+      h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; 
+      h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
+#endif
     }
   }
+
     
   // Collocate the solution to the integration points
   scalar* h_Uinitg = new scalar[N_G*N_E*N_F];  makeZero(h_Uinitg,N_G*N_E*N_F);

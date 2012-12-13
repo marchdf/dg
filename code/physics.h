@@ -6,7 +6,7 @@
 
 // Generic
 extern "C" void Levaluate_sf_1D(int D, int N_G, int N_E, int N_F, scalar gamma, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac);
-extern "C" void Levaluate_q_1D(int M_G, int M_T, int N_F, int flux, scalar gamma, scalar* q, scalar* UgF, scalar* normals);
+extern "C" void Levaluate_q_1D(int M_G, int M_T, int N_F, scalar gamma, scalar* q, scalar* UgF, scalar* normals);
 
 
 // Possibly broken:

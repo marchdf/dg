@@ -5,38 +5,27 @@
 class deck {
 
  private:
-  int _dims;
-  bool _blas;
   std::string _timeMeth;
   double _Dt;
   int _nt;
   int _ofactor;
-  std::string _spatialMeth;
   int _order;
   std::string _flux;
   std::string _meshfile;
   std::string _elemType;
-  std::string _problem;
-  std::string _model;
   std::string _limiter;
   int _nf;
   std::string _ic;
   std::string _bc;
   
  public:
-  inline int getDims() {return _dims;}
-  inline bool getBlas() {return _blas;}
   inline std::string getTimeMeth() { return _timeMeth;}
   inline double getTimeStep() {return _Dt;}
   inline int getNumberStep() {return _nt;}
   inline int getOutputFactor() {return _ofactor;}
-  inline std::string getSpatialMeth() { return _spatialMeth;}
   inline int getOrder() {return _order;}
-  inline std::string getFlux() { return _flux;}
   inline std::string getMeshfile() { return _meshfile;}
   inline std::string getElemType() { return _elemType;}
-  inline std::string getProblem() { return _problem;}
-  inline std::string getModel() { return _model;}
   inline std::string getLimiter() { return _limiter;}
   inline int getNumFields() {return _nf;}
   inline std::string getInitialCondition() { return _ic;}

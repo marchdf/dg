@@ -1,13 +1,14 @@
 # defaults
 ARCH=USE_CPU
 PREC=USE_DOUBLE
+DIMS=ONED
 PROB=MULTIFLUID
 GAMM=GAMNCON
+FLUX=ROE
 
 # configuration
 directories       := . quadratures
 BINNAME           := dg1d
-
 
 # flags
 CUDA_INSTALL_PATH := /usr/local/cuda
@@ -21,8 +22,8 @@ LIBS              := $(LIBS) -L$(CUDA_INSTALL_PATH)/lib64 -L$(CUDA_SDK_PATH)/lib
 LDFLAGS           := $(LDFLAGS) -lcudart -lcublas 
 endif
 CFLAGS 	          := -03
-CPPFLAGS          := -I. -DHAVE_BLAS -DHAVE_LAPACK -w -ansi -D$(ARCH) -D$(PREC) -D$(PROB) -D$(GAMM)
-CUFLAGS	          := --ptxas-options=-v -D$(ARCH) -D$(PREC) -D$(PROB) -D$(GAMM)
+CPPFLAGS          := -I. -DHAVE_BLAS -DHAVE_LAPACK -w -ansi -D$(ARCH) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS)
+CUFLAGS	          := --ptxas-options=-v -D$(ARCH) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS) 
 ifeq ($(PREC),USE_DOUBLE)
 CUFLAGS	          := $(CUFLAGS) -arch sm_13
 endif
