@@ -196,7 +196,7 @@ arch_global void cpu_boundary(int M_s, int N_F, int M_B, int* boundaryMap, scala
 }
 
 //==========================================================================
-arch_global void cpu_mapToElement(int N_s, int N_E, int N_F, int* invmap, scalar* Q, scalar* q){
+arch_global void cpu_mapToElement(int N_s, int N_E, int N_F, int* invmap, scalar* Q, scalar* Qtcj){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -212,7 +212,7 @@ arch_global void cpu_mapToElement(int N_s, int N_E, int N_F, int* invmap, scalar
 	for(int k = 0; k < 2; k++){
 	  idx = invmap[((e*N_F+fc)*2+k)*N_s+i];
 	  if(idx != -1){
-	    sol += q[idx];
+	    sol += Qtcj[idx];
 	  }
 	}
 	Q[(e*N_F+fc)*N_s+i] = sol;
@@ -387,7 +387,7 @@ arch_global void cpu_redistribute_q(int M_G, int M_T, int N_F, scalar* qJ, scala
 #endif
 
       qJ[((t*N_F+fc)*2+0)*M_G+g] = q[((t*N_F+fc)*2+0)*M_G+g]*JF[t*2+0];
-      qJ[((t*N_F+fc)*2+1)*M_G+g] = q[((t*N_F+fc)*2+1)*M_G+g]*JF[t*2+0];
+      qJ[((t*N_F+fc)*2+1)*M_G+g] = q[((t*N_F+fc)*2+1)*M_G+g]*JF[t*2+1];
   
 #ifdef USE_CPU
       }

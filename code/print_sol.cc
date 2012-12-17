@@ -146,7 +146,21 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar gamma, scalar*
 #elif  MULTIFLUID  
   fullMatrix<scalar> G(N_s, N_E)  ;
 #endif
-
+  
+#ifdef ONED
+      int Uxind = 1;
+      int Eind  = 2;
+      int Phicind = 3;
+      int Phincind = 4;
+      int Gind = 3;
+#elif TWOD
+      int Uxind = 1;
+      int Uyind = 2; fullMatrix<scalar> Uy(N_s, N_E);
+      int Eind  = 3;
+      int Phicind = 4;
+      int Phincind = 5;
+      int Gind = 4;
+#endif      
   // separate the fields
   scalar rho = 0;
   for (int e = 0; e < N_E; e++){
@@ -156,23 +170,32 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar gamma, scalar*
       rho = U[(e*N_F+0)*N_s+i];
       if(rho != rho){
 	printf("NaN error. Code crashed... bummer.\n");
-	exit(1);
+	//exit(1);
       }
 
       Rho(i,e) = rho;
-      Ux (i,e) = U[(e*N_F+1)*N_s+i]/rho;
-      Et (i,e) = U[(e*N_F+2)*N_s+i];
+      Ux (i,e) = U[(e*N_F+Uxind)*N_s+i]/rho;
+#ifdef TWOD
+      Uy (i,e) = U[(e*N_F+Uyind)*N_s+i]/rho;
+#endif	
+      Et (i,e) = U[(e*N_F+Eind)*N_s+i];
 #ifdef PASSIVE
-      PhiC  (i,e) = U[(e*N_F+3)*N_s+i]/rho;
-      PhiNC (i,e) = U[(e*N_F+4)*N_s+i];
-      P     (i,e) = (gamma-1)*(Et(i,e) - 0.5*U[(e*N_F+1)*N_s+i]*U[(e*N_F+1)*N_s+i]/rho);
+      PhiC  (i,e) = U[(e*N_F+Phicind)*N_s+i]/rho;
+      PhiNC (i,e) = U[(e*N_F+Phincind)*N_s+i];
+      P     (i,e) = (gamma-1)*(Et(i,e) - 0.5*U[(e*N_F+Uxind)*N_s+i]*U[(e*N_F+Uxind)*N_s+i]/rho);
+#ifdef TWOD
+      P     (i,e) = P(i,e) - (gamma-1)*0.5*U[(e*N_F+Uyind)*N_s+i]*U[(e*N_F+Uyind)*N_s+i]/rho;
+#endif
 #elif MULTIFLUID
 #ifdef GAMCONS
-      G  (i,e) = 1+rho/U[(e*N_F+3)*N_s+i];
+      G  (i,e) = 1+rho/U[(e*N_F+Gind)*N_s+i];
 #elif  GAMNCON
-      G  (i,e) = 1+1.0/U[(e*N_F+3)*N_s+i];
+      G  (i,e) = 1+1.0/U[(e*N_F+Gind)*N_s+i];
 #endif
-      P  (i,e) = (G(i,e)-1)*(Et(i,e) - 0.5*U[(e*N_F+1)*N_s+i]*U[(e*N_F+1)*N_s+i]/rho);
+      P  (i,e) = (G(i,e)-1)*(Et(i,e) - 0.5*U[(e*N_F+Uxind)*N_s+i]*U[(e*N_F+Uxind)*N_s+i]/rho);
+#ifdef TWOD
+      P  (i,e) = P(i,e) - (G(i,e)-1)*0.5*U[(e*N_F+Uyind)*N_s+i]*U[(e*N_F+Uyind)*N_s+i]/rho;
+#endif
 #endif
     }
   }
@@ -180,6 +203,9 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar gamma, scalar*
   // print to the output file
   m.writeSolution(  Rho,  elem_type,  "rho.pos",  "Rho", step, time, append);
   m.writeSolution(   Ux,  elem_type,   "ux.pos",   "Ux", step, time, append);
+#ifdef TWOD
+  m.writeSolution(   Uy,  elem_type,   "uy.pos",   "Uy", step, time, append);
+#endif
   m.writeSolution(   Et,  elem_type,   "et.pos",   "Et", step, time, append);
 #ifdef PASSIVE
   m.writeSolution( PhiC,  elem_type, "phic.pos", "PhiC", step, time, append);

@@ -88,7 +88,7 @@ class RK
     print_dg(N_s, N_E, N_F, gamma0, h_U, m, elem_type, 0, 0, 0);
 
     // Output conservation of the fields
-    dgsolver.conservation(h_U,0.0); 
+    dgsolver.conservation(h_U,0.0);
     
     // Time integration
     for (int n = 1; n <= N_t; n++){

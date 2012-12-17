@@ -70,8 +70,7 @@ int main (int argc, char **argv)
 
 #ifdef ONED
   int D = 1;   // number of coordinates in elem ref space(alpha index)
-  int DF  = 1; // number of coordinates in face ref space(alpha index)
-               // DF=1 in 1D to avoid allocation problems
+  int DF  = 1; // number of coordinates in face ref space(alpha index)                // DF=1 in 1D to avoid allocation problems
 #elif TWOD
   int D = 2;
   int DF = 1;
@@ -121,7 +120,6 @@ int main (int argc, char **argv)
   bool multint = false;
   bool sinephi = false;
   bool sodmono = false;
-  bool shckcon = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
   else if (inputs.getInitialCondition()=="contact") contact = true;
@@ -133,7 +131,6 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="multint") multint = true;
   else if (inputs.getInitialCondition()=="sinephi") sinephi = true;
   else if (inputs.getInitialCondition()=="sodmono") sodmono = true;
-  else if (inputs.getInitialCondition()=="shckcon") shckcon = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // setup the boundary condition type
@@ -218,6 +215,11 @@ int main (int argc, char **argv)
 
   int N_s = elements[0].getNbNodes(); // number of nodes on an element          (i index)
   int M_s = 1;                        // number of nodes on a face              (j index)
+#ifdef ONED
+  M_s = 1;
+#elif TWOD
+  M_s = order + 1;
+#endif
   int N_T = basis->numFaces;          // number of faces per element            
   int N_E = elements.size();          // number of elements                     (e index)
   int M_T = interfaces.size();        // number of faces                        (t index)
@@ -268,22 +270,22 @@ int main (int argc, char **argv)
 #ifdef ONED
   psi(0,0)  = 1; dpsi(0,0) = 0;
 #elif TWOD
-    fullMatrix<double> psiD(M_G, M_s);
-    basisF->f (pointsF,psiD);
-    for(int g = 0; g < M_G; g++){
+  fullMatrix<double> psiD(M_G, M_s);
+  basisF->f (pointsF,psiD);
+  for(int g = 0; g < M_G; g++){
+    for(int j = 0; j < M_s; j++){
+      psi(g,j) = (scalar)psiD(g,j);
+    }
+  }
+  double gradsF[M_s][3];
+  for(int g = 0; g < M_G; g++){
+    basisF->df(pointsF(g,0),pointsF(g,1),pointsF(g,2),gradsF);
+    for(int alpha = 0; alpha < DF; alpha ++){
       for(int j = 0; j < M_s; j++){
-  	psi(g,j) = (scalar)psiD(g,j);
-      }
-    }
-    double gradsF[M_s][3];
-    for(int g = 0; g < M_G; g++){
-      basisF->df(pointsF(g,0),pointsF(g,1),pointsF(g,2),gradsF);
-      for(int alpha = 0; alpha < DF; alpha ++){
-  	for(int j = 0; j < M_s; j++){
-  	  dpsi(g*DF+alpha,j) = (scalar)gradsF[j][alpha];  // see paper for indexing p.6
-  	}	  
-      }    
-    }
+	dpsi(g*DF+alpha,j) = (scalar)gradsF[j][alpha];  // see paper for indexing p.6
+      }	  
+    }    
+  }
 #endif
 
   //////////////////////////////////////////////////////////////////////////   
@@ -371,7 +373,6 @@ int main (int argc, char **argv)
     }
   }
 
-  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Get XYZ coordinates at integration points of each elements and interface
@@ -424,8 +425,15 @@ int main (int argc, char **argv)
   // Build the boundary map
   //
   //////////////////////////////////////////////////////////////////////////
-  if      (periodic) m.buildPeriodicLine();
-  else if (farfield) m.buildFarfield();
+  int boundaryMap = 0;
+  if      (periodic){ boundaryMap = N_E;
+#ifdef ONED
+    m.buildPeriodicLine();
+#elif TWOD
+    m.buildPeriodicSquare(order, XYZNodesF, D);
+#endif
+  }
+  else if (farfield){ m.buildFarfield();     boundaryMap = 0;}
   int* h_boundaryMap = m.getBoundaryMap();
   int M_B = m.getBoundaryNB();
   
@@ -442,6 +450,7 @@ int main (int argc, char **argv)
 #ifdef MULTIFLUID
     if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
     else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+    else if(sodmono) init_dg_sodmono_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
     else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
     else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
     else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
@@ -452,7 +461,6 @@ int main (int argc, char **argv)
 #elif PASSIVE
     if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, U);
     if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, U);
-    if (shckcon) init_dg_shckcon_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, U);
 #endif
 
   if (order0) average_cell_p0(N_s, N_E, N_F, U);
@@ -478,13 +486,12 @@ int main (int argc, char **argv)
   fullMatrix<scalar> J(N_E,1);            // determinant of the Jacobian
   fullMatrix<scalar> invJ(N_E,1);         // determinant of the inverse Jacobian
   dg_jacobians_elements(N_G, N_E, D, XYZNodes, dphi, Jac, invJac, J, invJ);
-
+  
   // Faces
   fullMatrix<scalar> JacF(M_T*2*D,M_G*DF);
   fullMatrix<scalar> JF(M_T*2,1);            // determinant of the Jacobian
   fullMatrix<scalar> invJF(M_T*2,1);         // determinant of the inverse Jacobian
   dg_jacobians_face(M_T, D, XYZNodesF, dpsi, JacF, JF, invJF);
- 
   
   //////////////////////////////////////////////////////////////////////////   
   // 
@@ -495,7 +502,6 @@ int main (int argc, char **argv)
   scalar* h_Minv = new scalar[N_s*N_s*N_E];
   dg_inverse_mass_matrix(order, elem_type, inputs.getElemType(), N_s, N_E, D, XYZNodes, h_Minv);
 
-  
   //////////////////////////////////////////////////////////////////////////   
   // 
   // Build the map
@@ -504,7 +510,6 @@ int main (int argc, char **argv)
   int* h_map = new int[M_s*M_T*N_F*2];
   int* h_invmap = new int[N_s*N_E*N_F*2];
   dg_mappings(M_s, M_T, N_F, N_s, N_E, interfaces, ElementMap, closures, h_map, h_invmap);
-
   
   //==========================================================================
   //
@@ -621,7 +626,6 @@ int main (int argc, char **argv)
 #elif PASSIVE
     if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, Uinit);
     if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, Uinit);
-    if (shckcon) init_dg_shckcon_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, Uinit);
 #endif
   scalar* h_Uinit = new scalar[N_s*N_E*N_F];  makeZero(h_Uinit,N_s*N_E*N_F);
   for(int e = 0; e < N_E; e++){

@@ -106,7 +106,7 @@ class DG_SOLVER
     memcpy(_invJac, invJac, N_G*D*N_E*D*sizeof(scalar));
     memcpy(_JF, JF,         2*M_T*sizeof(scalar));
     memcpy(_normals,normals,D*M_T*sizeof(scalar));
-    
+
 #elif USE_GPU
     // Allocate space on the GPU
     CUDA_SAFE_CALL(cudaMalloc((void**) &_map,M_s*M_T*N_F*2*sizeof(int)));
@@ -238,6 +238,10 @@ class DG_SOLVER
     
     // evaluate_q: requires UintegF, normals, q, H0, G0
     Levaluate_q_1D(_M_G, _M_T, _N_F, _gamma0, _q, _UintegF, _normals);
+
+#elif TWOD
+    Levaluate_sf_2D(_D, _N_G, _N_E, _N_F, _gamma0,  _s, _f, _Uinteg, _dUinteg, _invJac);
+    //Levaluate_q_2D(_M_G, _M_T, _N_F, _gamma0, _q, _UintegF, _normals); 
 #endif
     
     // redistribute_sf: requires J, invJac, s, f, phi_w, dphi_w, sJ, fJ, S, F

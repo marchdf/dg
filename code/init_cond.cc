@@ -22,7 +22,7 @@ void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, con
 
   if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 8.\n",N_F);
   
-  // Initial conditions (see CFD2 project 1)
+  // Initial conditions (see CFD2 project 1, Sreenivas)
 
   scalar a = 0;
   scalar u = 0;
@@ -81,10 +81,57 @@ void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, con
   }
 }
 
+void buildLRstates_multifluid(scalar rhoL, scalar uL, scalar EtL, scalar gammaL, scalar rhoR, scalar uR, scalar EtR, scalar gammaR, const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+
+  scalar* L = new scalar[N_F];
+  scalar* R = new scalar[N_F];
+
+#ifdef ONED
+  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
+  L[0] = rhoL;            R[0] = rhoR; 
+  L[1] = rhoL*uL;         R[1] = rhoR*uR; 
+  L[2] = EtL;             R[2] = EtR;   
+#ifdef GAMCONS
+  L[3] = rhoL/(gammaL-1); R[3] = rhoR/(gammaR-1);
+#elif GAMNCON
+  L[3] = 1.0/(gammaL-1);  R[3] = 1.0/(gammaR-1);
+#endif
+#elif TWOD
+  if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
+  scalar vL = 0;          scalar vR = 0;
+  EtL  = EtL+ 0.5*rhoL*vL*vL;
+  EtR  = EtR+ 0.5*rhoR*vR*vR;
+  L[0] = rhoL;            R[0] = rhoR; 
+  L[1] = rhoL*uL;         R[1] = rhoR*uR; 
+  L[2] = rhoL*vL;         R[2] = rhoL*vL; 
+  L[3] = EtL;             R[3] = EtR; 
+#ifdef GAMCONS
+  L[4] = rhoL/(gammaL-1); R[4] = rhoR/(gammaR-1);
+#elif GAMNCON
+  L[4] = 1.0/(gammaL-1);  R[4] = 1.0/(gammaR-1);
+#endif
+  
+#endif
+  
+  for(int e = 0; e < N_E; e++){
+    scalar x = XYZNodes(0,e*D+0);
+    for(int i = 0; i < N_s; i++){
+      if (x<1E-8){
+	for(int k = 0; k < N_F; k++) U(i,e*N_F+k) = L[k];
+      }
+      else if (x>=1E-8){
+	for(int k = 0; k < N_F; k++) U(i,e*N_F+k) = R[k];
+      }
+    }
+  }
+
+  delete[] L;
+  delete[] R;
+
+}
+
 void init_dg_sodtube_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
-  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
-  
   // Initial conditions
   // U = (  rho, rho ux, rho uy, rho uz,   Bx, By, Bz,    E,   ee)
   //   = (    1,      0,      0,      0,   0,  0,  0, 1.78,  0.5)  for (x<0)
@@ -105,37 +152,37 @@ void init_dg_sodtube_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar gammaR= 1.6;
   scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
   
-  for(int e = 0; e < N_E; e++){
-    scalar x = XYZNodes(0,e*D+0);
-    for(int i = 0; i < N_s; i++){
-      if (x<1E-8){
-	U(i,e*N_F+0) = rhoL;
-	U(i,e*N_F+1) = rhoL*uL;
-	U(i,e*N_F+2) = EtL ;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = (scalar)rhoL/(gammaL-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = (scalar)1.0/(gammaL-1);
-#endif
-      }
-      else if (x>=1E-8){
-	U(i,e*N_F+0) = rhoR;
-	U(i,e*N_F+1) = rhoR*uR;
-	U(i,e*N_F+2) = EtR ;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = (scalar)rhoR/(gammaR-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = (scalar)1.0/(gammaR-1);
-#endif
-      }
-    }
-  }
+  buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, N_F, D, XYZNodes, U);
 }
+
+void init_dg_sodmono_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+
+  // Initial conditions
+  // U = (  rho, rho ux, rho uy, rho uz,   Bx, By, Bz,    E,   ee)
+  //   = (    1,      0,      0,      0,   0,  0,  0, 1.78,  0.5)  for (x<0)
+  //   = (0.125,      0,      0,      0,   0,  0,  0, 0.88, 0.05)  for (x>=0)
+  // gamma = 1.4
+
+  // Left state
+  scalar rhoL = 1;
+  scalar uL   = 0;
+  scalar pL   = 1.0;
+  scalar gammaL= 1.4;
+  scalar EtL  = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
+    
+  // Right state
+  scalar rhoR = 0.125;
+  scalar uR   = 0;
+  scalar pR   = 0.1;
+  scalar gammaR= 1.4;
+  scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
+  
+  buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, N_F, D, XYZNodes, U);
+}
+
 
 void init_dg_contact_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
-  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
-  
   // Left state
   scalar rhoL  = 1.0;
   scalar uL    = 1.0;
@@ -149,37 +196,12 @@ void init_dg_contact_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar gammaR = 1.4;
   scalar pR     = 1.0;
   scalar EtR    = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
-  
-  for(int e = 0; e < N_E; e++){
-    scalar x = XYZNodes(0,e*D+0);
-    for(int i = 0; i < N_s; i++){
-      if (x<1E-8){
-	U(i,e*N_F+0) = rhoL;
-	U(i,e*N_F+1) = rhoL*uL;
-	U(i,e*N_F+2) = EtL ;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = (scalar)rhoL/(gammaL-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = (scalar)1.0/(gammaL-1);
-#endif
-      }
-      else if (x>=1E-8){
-	U(i,e*N_F+0) = rhoR;
-	U(i,e*N_F+1) = rhoR*uR;
-	U(i,e*N_F+2) = EtR ;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = (scalar)rhoR/(gammaR-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = (scalar)1.0/(gammaR-1);
-#endif
-      }
-    }
-  }
+
+  buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, N_F, D, XYZNodes, U);
+
 }
 
 void init_dg_rhotact_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
-  
-  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
   
   // Left state
   scalar rhoL  = 1.0;
@@ -194,39 +216,13 @@ void init_dg_rhotact_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar gammaR = 1.4;
   scalar pR     = 1.0;
   scalar EtR    = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
-  
-  for(int e = 0; e < N_E; e++){
-    scalar x = XYZNodes(0,e*D+0);
-    for(int i = 0; i < N_s; i++){
-      if (x<1E-8){
-	U(i,e*N_F+0) = rhoL;
-	U(i,e*N_F+1) = rhoL*uL;
-	U(i,e*N_F+2) = EtL ;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = (scalar)rhoL/(gammaL-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = (scalar)1.0/(gammaL-1);
-#endif
-      }
-      else if (x>=1E-8){
-	U(i,e*N_F+0) = rhoR;
-	U(i,e*N_F+1) = rhoR*uR;
-	U(i,e*N_F+2) = EtR ;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = (scalar)rhoR/(gammaR-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = (scalar)1.0/(gammaR-1);
-#endif
-      }
-    }
-  }
+
+  buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, N_F, D, XYZNodes, U);
 }
 
 
 void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
-  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
-  
   // Left state
   scalar rhoL  = 1.0;
   scalar uL    = 1.0;
@@ -240,37 +236,12 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar gammaR = 1.6;
   scalar pR     = 1.0;
   scalar EtR    = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
+
+  buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, N_F, D, XYZNodes, U);
   
-  for(int e = 0; e < N_E; e++){
-    scalar x = XYZNodes(0,e*D+0);
-    for(int i = 0; i < N_s; i++){
-      if (x<1E-8){
-	U(i,e*N_F+0) = rhoL;
-	U(i,e*N_F+1) = rhoL*uL;
-	U(i,e*N_F+2) = EtL ;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = (scalar)rhoL/(gammaL-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = (scalar)1.0/(gammaL-1);
-#endif
-      }
-      else if (x>=1E-8){
-	U(i,e*N_F+0) = rhoR;
-	U(i,e*N_F+1) = rhoR*uR;
-	U(i,e*N_F+2) = EtR ;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = (scalar)rhoR/(gammaR-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = (scalar)1.0/(gammaR-1);
-#endif
-      }
-    }
-  }
 }
 
 void init_dg_sinegam_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
-
-  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
 
   scalar rho     = 1.0;
   scalar u       = 1.0;
@@ -280,23 +251,42 @@ void init_dg_sinegam_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar Agam    = 0.20; // amplitude of the perturbation on gamma
   scalar Arho    = 0.20; // amplitude of the perturbation on rho
   scalar p       = 1.0;
-  scalar Et      = 1.0/(gamma0+sinegam-1.0)*p + 0.5*(rho+sinerho)*u*u;
   
+  scalar* Q = new scalar[N_F];
+
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
       sinegam = Agam*sin(M_PI*x);
       sinerho = Arho*sin(4*M_PI*x);
-      U(i,e*N_F+0) = rho+sinerho;
-      U(i,e*N_F+1) = (rho+sinerho)*u;
-      U(i,e*N_F+2) = 1.0/(gamma0+sinegam-1.0)*p + 0.5*(rho+sinerho)*u*u;
+#ifdef ONED
+      if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
+      Q[0] = rho+sinerho;
+      Q[1] = (rho+sinerho)*u;
+      Q[2] = 1.0/(gamma0+sinegam-1.0)*p + 0.5*(rho+sinerho)*u*u;
 #ifdef GAMCONS
-      U(i,e*N_F+3) = (scalar)(rho+sinerho)/(gamma0+sinegam-1);
+      Q[3] = (scalar)(rho+sinerho)/(gamma0+sinegam-1);
 #elif GAMNCON
-      U(i,e*N_F+3) = (scalar)1.0/(gamma0+sinegam-1);
+      Q[3] = (scalar)1.0/(gamma0+sinegam-1);
 #endif
+#elif TWOD
+      if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
+      scalar v = 0;
+      Q[0] = rho+sinerho;
+      Q[1] = (rho+sinerho)*u;
+      Q[2] = (rho+sinerho)*v;
+      Q[3] = 1.0/(gamma0+sinegam-1.0)*p + 0.5*(rho+sinerho)*(u*u+v*v);
+#ifdef GAMCONS
+      Q[4] = (scalar)(rho+sinerho)/(gamma0+sinegam-1);
+#elif GAMNCON
+      Q[4] = (scalar)1.0/(gamma0+sinegam-1);
+#endif
+#endif
+      for(int k = 0; k < N_F; k++) U(i,e*N_F+k) = Q[k];
     }
   }
+
+  delete[] Q;
 }
              
 void init_dg_expogam_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
@@ -309,29 +299,45 @@ void init_dg_expogam_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar expogam = 0.0;  // exp perturbation on gamma
   scalar A       = 0.10; // amplitude of the perturbation
   scalar p       = 1.0;
-  scalar Et      = 1.0/(gamma0+expogam-1.0)*p + 0.5*rho*u*u;
+
+  scalar* Q = new scalar[N_F];
   
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
       expogam = A*exp(-x*x/(0.2*0.2));
-      U(i,e*N_F+0) = rho;
-      U(i,e*N_F+1) = rho*u;
-      U(i,e*N_F+2) = 1.0/(gamma0+expogam-1.0)*p + 0.5*rho*u*u;
+#ifdef ONED
+      if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
+      Q[0] = rho;
+      Q[1] = rho*u;
+      Q[2] = 1.0/(gamma0+expogam-1.0)*p + 0.5*rho*u*u;
 #ifdef GAMCONS
-      U(i,e*N_F+3) = (scalar)rho/(gamma0+expogam-1);
+      Q[3] = (scalar)rho/(gamma0+expogam-1);
 #elif GAMNCON
-      U(i,e*N_F+3) = (scalar)1.0/(gamma0+expogam-1);
+      Q[3] = (scalar)1.0/(gamma0+expogam-1);
 #endif
+#elif TWOD
+      if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
+      scalar v = 0;
+      Q[0] = rho;
+      Q[1] = rho*u;
+      Q[2] = rho*v;
+      Q[3] = 1.0/(gamma0+expogam-1.0)*p + 0.5*rho*(u*u+v*v);
+#ifdef GAMCONS
+      Q[4] = (scalar)rho/(gamma0+expogam-1);
+#elif GAMNCON
+      Q[4] = (scalar)1.0/(gamma0+expogam-1);
+#endif
+#endif
+      for(int k = 0; k < N_F; k++) U(i,e*N_F+k) = Q[k];
     }
   }
+
+  delete[] Q;
 }
 
 void init_dg_shckint_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
-  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
-
-     
   // Pre-shock state (material 1)
   scalar rho02   = 0.1;
   scalar u02     =-2.0;
@@ -352,54 +358,57 @@ void init_dg_shckint_multifluid(const int N_s, const int N_E, const int N_F, con
   //scalar Ms = 9;   // Shock Mach number
   scalar Ms     = M02+sqrt((gamma02+1)/(2.0*gamma02)*100.0 + (gamma02-1)/(2.0*gamma02));   // Shock Mach number (with ratio)
   printf("Ms=%f\n",Ms);
-  scalar S      = Ms*c02;  // shock speed
+  scalar s      = Ms*c02;  // shock speed
   scalar rho4   = rho02*(gamma02+1) * (M02-Ms)*(M02-Ms)/((gamma02-1) * (M02-Ms)*(M02-Ms) + 2);
   scalar p4     = p02  *(2*gamma02*(M02-Ms)*(M02-Ms) - (gamma02-1))/(gamma02+1);
-  scalar u4     = (1 - rho02/rho4)*S + u02*rho02/rho4;
+  scalar u4     = (1 - rho02/rho4)*s + u02*rho02/rho4;
   scalar gamma4 = gamma02;
   scalar Et4    = 1.0/(gamma4-1.0)*p4 + 0.5*rho4*u4*u4;
 
+  int N_S = 3; // number of states
+  fullMatrix<scalar> xS(N_S+1,1); // state boundaries
+  xS(0,0) = -1000; xS(1,0) = -0.8; xS(2,0) = -0.2; xS(3,0) = 1000;
+  fullMatrix<scalar> S(N_F,N_S); // holds the states
+  
+#ifdef ONED
+  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
+  S(0,0) = rho4;            S(0,1) = rho02;             S(0,2) = rho01;
+  S(1,0) = rho4*u4;         S(1,1) = rho02*u02;         S(1,2) = rho01*u01;
+  S(2,0) = Et4;             S(2,1) = Et02;              S(2,2) = Et01; 
+#ifdef GAMCONS
+  S(3,0) = rho4/(gamma4-1); S(3,1) = rho02/(gamma02-1); S(3,2) = rho01/(gamma01-1); 
+#elif GAMNCON
+  S(3,0) = 1.0/(gamma4-1);  S(3,1) = 1.0/(gamma02-1);   S(3,2) = 1.0/(gamma01-1); 
+#endif
+#elif TWOD
+  if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
+  scalar v4 = 0;            scalar v02 = 0;             scalar v01 = 0;
+  Et4  = 1.0/(gamma4-1.0)*p4 + 0.5*rho4*(u4*u4+v4*v4);
+  Et02  = 1.0/(gamma02-1.0)*p02 + 0.5*rho02*(u02*u02+v02*v02);
+  Et01  = 1.0/(gamma01-1.0)*p01 + 0.5*rho01*(u01*u01+v01*v01);
+  S(0,0) = rho4;            S(0,1) = rho02;             S(0,2) = rho01;
+  S(1,0) = rho4*u4;         S(1,1) = rho02*u02;         S(1,2) = rho01*u01;
+  S(2,0) = rho4*v4;         S(2,1) = rho02*v02;         S(2,2) = rho01*v01;
+  S(3,0) = Et4;             S(3,1) = Et02;              S(3,2) = Et01; 
+#ifdef GAMCONS
+  S(4,0) = rho4/(gamma4-1); S(4,1) = rho02/(gamma02-1); S(4,2) = rho01/(gamma01-1); 
+#elif GAMNCON
+  S(4,0) = 1.0/(gamma4-1);  S(4,1) = 1.0/(gamma02-1);   S(4,2) = 1.0/(gamma01-1); 
+#endif
+#endif
+
+  int ind = 0; // index for the state we use
   for(int e = 0; e < N_E; e++){
     scalar x = XYZNodes(0,e*D+0);
     for(int i = 0; i < N_s; i++){
-      if ((-1<=x)&&(x<-0.8)){
-	U(i,e*N_F+0) = rho4;
-	U(i,e*N_F+1) = rho4*u4;
-	U(i,e*N_F+2) = Et4;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = (scalar)rho4/(gamma4-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = (scalar)1.0/(gamma4-1);
-#endif
-      }
-      else if ((-0.8<=x)&&(x<-0.2)){
-	U(i,e*N_F+0) = rho02;
-	U(i,e*N_F+1) = rho02*u02;
-	U(i,e*N_F+2) = Et02 ;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = (scalar)rho02/(gamma02-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = (scalar)1.0/(gamma02-1);
-#endif
-      }
-      else if ((-0.2<=x)&&(x<1)){
-	U(i,e*N_F+0) = rho01;
-	U(i,e*N_F+1) = rho01*u01;
-	U(i,e*N_F+2) = Et01 ;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = (scalar)rho01/(gamma01-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = (scalar)1.0/(gamma01-1);
-#endif
-      }
+      for(int b = 0; b < N_S; b++) if ((xS(b,0) <= x) && (x < xS(b+1,0)))  ind = b;
+      for(int k = 0; k < N_F; k++) U(i,e*N_F+k) = S(k,ind);
     }
   }
 }
 
 void init_dg_multint_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
-  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
-     
   // Pre-shock state (material 1)
   scalar rho02   = 0.1;
   scalar u02     =-2.0;
@@ -426,63 +435,57 @@ void init_dg_multint_multifluid(const int N_s, const int N_E, const int N_F, con
   // Post-shock state (material 1) (see p 101 Toro)
   //scalar Ms = 9;   // Shock Mach number
   scalar Ms     = M02+sqrt((gamma02+1)/(2.0*gamma02)*100.0 + (gamma02-1)/(2.0*gamma02));   // Shock Mach number (with ratio)
-  scalar S      = Ms*c02;  // shock speed
+  scalar s      = Ms*c02;  // shock speed
   scalar rho4   = rho02*(gamma02+1) * (M02-Ms)*(M02-Ms)/((gamma02-1) * (M02-Ms)*(M02-Ms) + 2);
   scalar p4     = p02  *(2*gamma02*(M02-Ms)*(M02-Ms) - (gamma02-1))/(gamma02+1);
-  scalar u4     = (1 - rho02/rho4)*S + u02*rho02/rho4;
+  scalar u4     = (1 - rho02/rho4)*s + u02*rho02/rho4;
   scalar gamma4 = gamma02;
   scalar Et4    = 1.0/(gamma4-1.0)*p4 + 0.5*rho4*u4*u4;
 
+  int N_S = 4; // number of states
+  fullMatrix<scalar> xS(N_S+1,1); // state boundaries
+  xS(0,0) = -1000; xS(1,0) = -0.8; xS(2,0) = -0.2; xS(3,0) = 0.3; xS(4,0) = 1000;
+  fullMatrix<scalar> S(N_F,N_S); // holds the states
+  
+#ifdef ONED
+  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
+  S(0,0) = rho4;            S(0,1) = rho02;             S(0,2) = rho01;             S(0,3) = rho01;		   
+  S(1,0) = rho4*u4;         S(1,1) = rho02*u02;         S(1,2) = rho01*u01;	    S(1,3) = rho01*u01;	   
+  S(2,0) = Et4;             S(2,1) = Et02;              S(2,2) = Et01; 		    S(2,3) = Et01; 		   
+#ifdef GAMCONS									                               
+  S(3,0) = rho4/(gamma4-1); S(3,1) = rho02/(gamma02-1); S(3,2) = rho01/(gamma01-1); S(3,3) = rho01/(gamma01-1);
+#elif GAMNCON									                               
+  S(3,0) = 1.0/(gamma4-1);  S(3,1) = 1.0/(gamma02-1);   S(3,2) = 1.0/(gamma01-1);   S(3,3) = 1.0/(gamma01-1);  
+#endif
+#elif TWOD
+  if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
+  scalar v4 = 0;            scalar v02 = 0;             scalar v01 = 0;             scalar v03 = 0;
+  Et4  = 1.0/(gamma4-1.0)*p4 + 0.5*rho4*(u4*u4+v4*v4);
+  Et02  = 1.0/(gamma02-1.0)*p02 + 0.5*rho02*(u02*u02+v02*v02);
+  Et01  = 1.0/(gamma01-1.0)*p01 + 0.5*rho01*(u01*u01+v01*v01);
+  Et03  = 1.0/(gamma03-1.0)*p03 + 0.5*rho03*(u03*u03+v03*v03);
+  S(0,0) = rho4;            S(0,1) = rho02;             S(0,2) = rho01;             S(0,3) = rho03;		    
+  S(1,0) = rho4*u4;         S(1,1) = rho02*u02;         S(1,2) = rho01*u01;	    S(1,3) = rho03*u03;	    
+  S(2,0) = rho4*v4;         S(2,1) = rho02*v02;         S(2,2) = rho01*v01;	    S(2,3) = rho03*v03;	    
+  S(3,0) = Et4;             S(3,1) = Et02;              S(3,2) = Et01; 		    S(3,3) = Et03; 		    
+#ifdef GAMCONS									                                
+  S(4,0) = rho4/(gamma4-1); S(4,1) = rho02/(gamma02-1); S(4,2) = rho01/(gamma01-1); S(4,3) = rho03/(gamma03-1); 
+#elif GAMNCON									                                
+  S(4,0) = 1.0/(gamma4-1);  S(4,1) = 1.0/(gamma02-1);   S(4,2) = 1.0/(gamma01-1);   S(4,3) = 1.0/(gamma03-1);   
+#endif
+#endif
+
+  int ind = 0; // index for the state we use
   for(int e = 0; e < N_E; e++){
     scalar x = XYZNodes(0,e*D+0);
     for(int i = 0; i < N_s; i++){
-      if ((-1<=x)&&(x<-0.8)){
-	U(i,e*N_F+0) = rho4;
-	U(i,e*N_F+1) = rho4*u4;
-	U(i,e*N_F+2) = Et4;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = (scalar)rho4/(gamma4-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = (scalar)1.0/(gamma4-1);
-#endif
-      }
-      else if ((-0.8<=x)&&(x<-0.2)){
-	U(i,e*N_F+0) = rho02;
-	U(i,e*N_F+1) = rho02*u02;
-	U(i,e*N_F+2) = Et02 ;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = (scalar)rho02/(gamma02-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = (scalar)1.0/(gamma02-1);
-#endif
-      }
-      else if ((-0.2<=x)&&(x<0.3)){
-	U(i,e*N_F+0) = rho01;
-	U(i,e*N_F+1) = rho01*u01;
-	U(i,e*N_F+2) = Et01 ;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = (scalar)rho01/(gamma01-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = (scalar)1.0/(gamma01-1);
-#endif
-      }
-      else if ((0.3<=x)&&(x<1)){
-	U(i,e*N_F+0) = rho03;
-	U(i,e*N_F+1) = rho03*u03;
-	U(i,e*N_F+2) = Et03 ;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = (scalar)rho03/(gamma03-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = (scalar)1.0/(gamma03-1);
-#endif
-      }
+      for(int b = 0; b < N_S; b++) if ((xS(b,0) <= x) && (x < xS(b+1,0)))  ind = b;
+      for(int k = 0; k < N_F; k++) U(i,e*N_F+k) = S(k,ind);
     }
   }
 }
 
 void init_dg_sinephi_passive(const int N_s, const int N_E, const int N_F, const int D, scalar &gamma, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
-
-  if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
 
   scalar rho     = 1.0;
   scalar u       = 1.0;
@@ -494,25 +497,44 @@ void init_dg_sinephi_passive(const int N_s, const int N_E, const int N_F, const 
   scalar Arho    = 0.2; // amplitude of the perturbation
   scalar p       = 1.0;
   scalar Et      = 1.0/(gamma-1.0)*p + 0.5*rho*u*u;
+
+  int N_S = 1; // number of states
+  fullMatrix<scalar> xS(N_S+1,1); // state boundaries
+  xS(0,0) = -1000; xS(1,0) = 1000;
+  fullMatrix<scalar> S(N_F,N_S); // holds the states
   
+  int ind = 0; // index for the state we use
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
+      for(int b = 0; b < N_S; b++) if ((xS(b,0) <= x) && (x < xS(b+1,0)))  ind = b;
       if ((x<-1)||(x>1)) {sinephi = 0; sinerho=0;}
       else               {sinephi = Aphi*sin(M_PI*x); sinerho = Arho*sin(4*M_PI*x);}
-      U(i,e*N_F+0) = (rho+sinerho);
-      U(i,e*N_F+1) = (rho+sinerho)*u;
-      U(i,e*N_F+2) = 1.0/(gamma-1.0)*p + 0.5*(rho+sinerho)*u*u;
-      U(i,e*N_F+3) = (rho+sinerho)*(phi+sinephi);
-      U(i,e*N_F+4) = phi+sinephi;
+#ifdef ONED
+      if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
+      S(0,0) = (rho+sinerho);
+      S(1,0) = (rho+sinerho)*u;
+      S(2,0) = 1.0/(gamma-1.0)*p + 0.5*(rho+sinerho)*u*u;
+      S(3,0) = (rho+sinerho)*(phi+sinephi);
+      S(4,0) = phi+sinephi;
+#elif TWOD
+      if (N_F!=6) printf("You are setting up the wrong problem. N_F =%i != 6.\n",N_F);
+      scalar v = 0;            
+      S(0,0) = (rho+sinerho);
+      S(1,0) = (rho+sinerho)*u;
+      S(2,0) = (rho+sinerho)*v;
+      S(3,0) = 1.0/(gamma-1.0)*p + 0.5*(rho+sinerho)*(u*u+v*v);
+      S(4,0) = (rho+sinerho)*(phi+sinephi);
+      S(5,0) = phi+sinephi;
+#endif
+      for(int k = 0; k < N_F; k++) U(i,e*N_F+k) = S(k,ind);
     }
   }
 }
 
+
 void init_dg_sodmono_passive(const int N_s, const int N_E, const int N_F, const int D, scalar &gamma, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
-  if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
- 
   gamma = 1.4;
   // Left state
   scalar rhoL = 1;
@@ -526,81 +548,40 @@ void init_dg_sodmono_passive(const int N_s, const int N_E, const int N_F, const 
   scalar pR   = 0.1;
   scalar EtR  = 1.0/(gamma-1.0)*pR + 0.5*rhoR*uR*uR;
   
-  for(int e = 0; e < N_E; e++){
-    scalar x = XYZNodes(0,e*D+0);
-    for(int i = 0; i < N_s; i++){
-      if (x<1E-8){
-	U(i,e*N_F+0) = rhoL;
-	U(i,e*N_F+1) = rhoL*uL;
-	U(i,e*N_F+2) = EtL ;
-      }
-      else if (x>=1E-8){
-	U(i,e*N_F+0) = rhoR;
-	U(i,e*N_F+1) = rhoR*uR;
-	U(i,e*N_F+2) = EtR ;
-      }
-      U(i,e*N_F+3) = 0;
-      U(i,e*N_F+4) = 0;
-    }
-  }
-}
+  int N_S = 2; // number of states
+  fullMatrix<scalar> xS(N_S+1,1); // state boundaries
+  xS(0,0) = -1000; xS(1,0) = 1E-8; xS(2,0) = 1000;
+  fullMatrix<scalar> S(N_F,N_S); // holds the states
 
-void init_dg_shckcon_passive(const int N_s, const int N_E, const int N_F, const int D, scalar &gamma, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
-
+#ifdef ONED
   if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
+  S(0,0) = rhoL;    S(0,0) = rhoR;   
+  S(1,0) = rhoL*uL; S(1,0) = rhoR*uR;
+  S(2,0) = EtL;	    S(2,0) = EtR;	   
+  S(3,0) = 0.0;	    S(3,0) = 0.0;	   
+  S(4,0) = 0.0;     S(4,0) = 0.0;    
+#elif TWOD
+  if (N_F!=6) printf("You are setting up the wrong problem. N_F =%i != 6.\n",N_F);
+  scalar vL = 0;    scalar vR = 0;       
+  EtL  = 1.0/(gamma-1.0)*pL + 0.5*rhoL*(uL*uL+vL*vL);
+  EtR  = 1.0/(gamma-1.0)*pR + 0.5*rhoR*(uR*uR+vR*vR);
+  S(0,0) = rhoL;    S(0,0) = rhoR;   
+  S(1,0) = rhoL*uL; S(0,0) = rhoR*uR;   
+  S(2,0) = rhoL*vL; S(1,0) = rhoR*vR;
+  S(3,0) = EtL;	    S(2,0) = EtR;	   
+  S(4,0) = 0.0;	    S(3,0) = 0.0;	   
+  S(5,0) = 0.0;	    S(4,0) = 0.0;    
+#endif
 
-  // To answer prob 2 HW6 AERO574
-  
-  gamma = 1.4;
-  scalar r = 10;
-  scalar vf= 10;
-  
-  // pre-shock state (density 1)
-  scalar rho0 = 1;
-  scalar u0   = 0;
-  scalar p0   = 1.0;
-  scalar Et0  = 1.0/(gamma-1.0)*p0 + 0.5*rho0*u0*u0;
-  scalar c0 = sqrt(gamma*p0/rho0);
-  scalar M0 = u0/c0;
-  
-  // pre-shock state (density 2)
-  scalar rho2 = r*rho0;
-  scalar u2   = 0;
-  scalar p2   = p0;
-  scalar Et2  = 1.0/(gamma-1.0)*p2 + 0.5*rho2*u2*u2;
-
-  // post-shock state (density 1) hypersonic shock
-  scalar Ms     = M0+sqrt((gamma+1)/(2.0*gamma)*100.0 + (gamma-1)/(2.0*gamma));   // Shock Mach number (with ratio)
-  scalar S      = Ms*c0;  // shock speed
-  scalar rho1   = rho0*(gamma+1) * (M0-Ms)*(M0-Ms)/((gamma-1) * (M0-Ms)*(M0-Ms) + 2);
-  scalar p1     = p0  *(2*gamma*(M0-Ms)*(M0-Ms) - (gamma-1))/(gamma+1);
-  scalar u1     = (1 - rho0/rho1)*S + u0*rho0/rho1;
-  scalar Et1  = 1.0/(gamma-1.0)*p1 + 0.5*rho1*u1*u1;
-  
+  int ind = 0; // index for the state we use
   for(int e = 0; e < N_E; e++){
     scalar x = XYZNodes(0,e*D+0);
     for(int i = 0; i < N_s; i++){
-      if ((x>=-1)&&(x<-0.3)){
-	U(i,e*N_F+0) = rho1;
-	U(i,e*N_F+1) = rho1*u1;
-	U(i,e*N_F+2) = Et1 ;
-      }
-      else if ((x>=-0.3)&&(x<0.2)){
-	U(i,e*N_F+0) = rho0;
-	U(i,e*N_F+1) = rho0*u0;
-	U(i,e*N_F+2) = Et0 ;
-      }
-      else if (x>=0.2){
-	U(i,e*N_F+0) = rho2;
-	U(i,e*N_F+1) = rho2*u2;
-	U(i,e*N_F+2) = Et2 ;
-      }
-      U(i,e*N_F+3) = 0;
-      U(i,e*N_F+4) = 0;
+      for(int b = 0; b < N_S; b++) if ((xS(b,0) <= x) && (x < xS(b+1,0)))  ind = b;
+      for(int k = 0; k < N_F; k++) U(i,e*N_F+k) = S(k,ind);
     }
   }
 }
-
 
 void init_dg_euler1D_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
 
@@ -1217,3 +1198,4 @@ void init_dg_mhdroto_mhd(const int N_s, const int N_E, const int N_F, const int 
     }
   }
 }
+

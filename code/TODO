@@ -1,10 +1,13 @@
 - Clean the print solution function. Inefficient to build a matrix to output it...
 - Output in the .txt format that gmsh can generate too
 - make GAMMA determined at compile time (limiter, physics, printsol, initcond)
-- rework initial conditions
+- clean initial conditions
 - Add CFL condition
+- clean output functions 
+- clean if conditions on dimensions
 
 FOR GOING TO 2D:
-- 2D physics functions
-- 2D limiter 
-- Change of basis is disabled
+- 2D physics functions: RUS (vap thing), ROE, and HLL left to do
+- 2D limiter (boundary condition thing...)
+- Change of basis
+

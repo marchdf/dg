@@ -50,11 +50,11 @@ void dg_jacobians_face(const int M_T, const int D, fullMatrix<scalar> &XYZNodesF
       scalar det = 0.0;
 #ifdef ONED
       det = 1; // in 1D set JF to 1
-#else
-      for(int alpha = 0; alpha < D; alpha ++){ det += sqrt(JacF((t*2+d)*D+alpha,0)* JacF((t*2+d)*D+alpha,0));}
+#elif TWOD
+      for(int alpha = 0; alpha < D; alpha ++){ det += JacF((t*2+d)*D+alpha,0)* JacF((t*2+d)*D+alpha,0);}
 #endif
-      JF(t*2+d,0)    =  det;
-      invJF(t*2+d,0) =  1.0/det;
+      JF(t*2+d,0)    =  sqrt(det);
+      invJF(t*2+d,0) =  1.0/sqrt(det);
     }
   }
 }
