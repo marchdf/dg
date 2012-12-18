@@ -170,7 +170,7 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar gamma, scalar*
       rho = U[(e*N_F+0)*N_s+i];
       if(rho != rho){
 	printf("NaN error. Code crashed... bummer.\n");
-	//exit(1);
+	exit(1);
       }
 
       Rho(i,e) = rho;

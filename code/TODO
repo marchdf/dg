@@ -5,9 +5,12 @@
 - Add CFL condition
 - clean output functions 
 - clean if conditions on dimensions
+- clean Riemann solvers
+- entropy fix for Roe (http://www.cfdbooks.com/cfdcodes/oned_euler_fluxes_v4.f90)
 
 FOR GOING TO 2D:
-- 2D physics functions: RUS (vap thing), ROE, and HLL left to do
+- 2D physics functions: ROE left to do (http://www.cfdbooks.com/cfdcodes/twod_euler_fluxes_v2.f90)
 - 2D limiter (boundary condition thing...)
-- Change of basis
+- Change of basis for 2D
+- I think my boundary conditions don't work... (independent x-y conditions?)
 

@@ -519,7 +519,7 @@ void init_dg_sinephi_passive(const int N_s, const int N_E, const int N_F, const 
       S(4,0) = phi+sinephi;
 #elif TWOD
       if (N_F!=6) printf("You are setting up the wrong problem. N_F =%i != 6.\n",N_F);
-      scalar v = 0;            
+      scalar v = 1;            
       S(0,0) = (rho+sinerho);
       S(1,0) = (rho+sinerho)*u;
       S(2,0) = (rho+sinerho)*v;

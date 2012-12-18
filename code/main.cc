@@ -295,17 +295,23 @@ int main (int argc, char **argv)
   //////////////////////////////////////////////////////////////////////////
   fullMatrix<scalar> points1D(N_G,1); for(int g=0; g<N_G; g++) {points1D(g,0) = points(g,0);}
   fullMatrix<scalar> phiinv(N_s,N_G);
-  //phi.invert(phiinv);
+#ifdef ONED
+  phi.invert(phiinv);
+#endif
   fullMatrix<scalar> monoV1D;
   fullMatrix<scalar> monoV1Dinv;
-  //monovandermonde1d(order, points1D, monoV1D);
-  //monoV1D.invert(monoV1Dinv);
+#ifdef ONED
+  monovandermonde1d(order, points1D, monoV1D);
+  monoV1D.invert(monoV1Dinv);
+#endif
 
   // Go from lagrange to monomial basis 
   fullMatrix<scalar> Lag2Mono(N_s,N_s);
   fullMatrix<scalar> Mono2Lag(N_s,N_s);
-  //Lag2Mono.gemm(monoV1Dinv, phi);   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
-  //Lag2Mono.invert(Mono2Lag);
+#ifdef ONED
+  Lag2Mono.gemm(monoV1Dinv, phi);   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
+  Lag2Mono.invert(Mono2Lag);
+#endif
   // //Mono2Lag.gemm(phiinv,monoV1D);
   
 
