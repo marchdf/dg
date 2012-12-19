@@ -1,10 +1,10 @@
-#ifndef ONED_PASSIVE_FLUXES_H
-#define ONED_PASSIVE_FLUXES_H
+#ifndef ONED_MULTIFLUID_FLUXES_H
+#define ONED_MULTIFLUID_FLUXES_H
 #include <scalar_def.h>
 #include <math.h>
 #include <macros.h>
-#include <constants.h>
 #include <basic_fluxes.h>
+
 
 //*****************************************************************************
 //* --- Rusanov's Flux Function ---
@@ -13,24 +13,29 @@
 //* Obstacles, J. Comput. Math. Phys. USSR, 1, pp. 267-279, 1961.
 //*
 //*****************************************************************************
-arch_device scalar oned_passive_rusanov(scalar* uL,scalar* uR, scalar* n,scalar* F, scalar* ncterm){
+arch_device scalar oned_multifluid_rusanov(scalar* uL,scalar* uR, scalar* n,scalar* F, scalar* ncterm){
 
   scalar nx = n[0];
+
   scalar rhoL  = uL[0];
   scalar rhoR  = uR[0];
   scalar vxL   = uL[1]/uL[0];
   scalar vxR   = uR[1]/uR[0];
   scalar EtL   = uL[2];
   scalar EtR   = uR[2];
-  scalar phicL = uL[3]/uL[0];
-  scalar phicR = uR[3]/uR[0];
-  scalar phincL= uL[4];
-  scalar phincR= uR[4];
-  scalar gamma = constants::GLOBAL_GAMMA;
-  scalar pL = (gamma-1)*(EtL - 0.5*rhoL*vxL*vxL);
-  scalar pR = (gamma-1)*(EtR - 0.5*rhoR*vxR*vxR);
-  scalar aL = sqrt((gamma*pL)/rhoL);
-  scalar aR = sqrt((gamma*pR)/rhoR);
+#ifdef GAMCONS
+  scalar alphaL = uL[3]/uL[0];
+  scalar alphaR = uR[3]/uR[0];
+#elif  GAMNCON
+  scalar alphaL = uL[3];
+  scalar alphaR = uR[3];
+#endif
+  scalar gammaL = 1.0+1.0/alphaL;
+  scalar gammaR = 1.0+1.0/alphaR;
+  scalar pL = (gammaL-1)*(EtL - 0.5*rhoL*vxL*vxL);
+  scalar pR = (gammaR-1)*(EtR - 0.5*rhoR*vxR*vxR);
+  scalar aL = sqrt((gammaL*pL)/rhoL);
+  scalar aR = sqrt((gammaR*pR)/rhoR);
 
   // Find the maximum eigenvalue
   scalar maxvap = MAX(fabs(vxL)+aL, fabs(vxR)+aR);
@@ -47,13 +52,14 @@ arch_device scalar oned_passive_rusanov(scalar* uL,scalar* uR, scalar* n,scalar*
   F[2] = 0.5*((flux_ab(EtL+pL,vxL) + flux_ab(EtR+pR,vxR))*nx
 	      -maxvap*(EtR-EtL));
 
-  //fourth: fx = rho*u*phi
-  F[3] = 0.5*((flux_abc(rhoL,vxL,phicL) + flux_abc(rhoR,vxR,phicR))*nx
-	      -maxvap*(rhoR*phicR-rhoL*phicL));
-	
-  //fifth:
-  F[4] = 0.5*(-maxvap*(phincR-phincL));
-  ncterm[4] = 0.5*0.5*(vxL+vxR)*(phincL-phincR)*nx;
+  //fourth 
+#ifdef GAMCONS
+  F[3] = 0.5*((flux_abc(rhoL,vxL,alphaL) + flux_abc(rhoR,vxR,alphaR))*nx
+	       -maxvap*(rhoR*alphaR-rhoL*alphaL));
+#elif  GAMNCON
+  F[3] = 0.5*(-maxvap*(alphaR-alphaL));
+  ncterm[3] = -0.5*0.5*(vxL+vxR)*(alphaR-alphaL)*nx;
+#endif
 
 } // end Rusanov function
 
@@ -77,7 +83,7 @@ arch_device scalar oned_passive_rusanov(scalar* uL,scalar* uR, scalar* n,scalar*
 //* Numerical Analysis, 25(2), pp. 294-318, 1988.
 //*
 //*****************************************************************************
-arch_device scalar oned_passive_hll(scalar* uL,scalar* uR, scalar* n,scalar* F, scalar* ncterm){
+arch_device scalar oned_multifluid_hll(scalar* uL,scalar* uR, scalar* n,scalar* F, scalar* ncterm){
 
   scalar nx = n[0];
 
@@ -87,16 +93,20 @@ arch_device scalar oned_passive_hll(scalar* uL,scalar* uR, scalar* n,scalar* F, 
   scalar vxR   = uR[1]/uR[0];
   scalar EtL   = uL[2];
   scalar EtR   = uR[2];
-  scalar phicL = uL[3]/uL[0];
-  scalar phicR = uR[3]/uR[0];
-  scalar phincL= uL[4];
-  scalar phincR= uR[4];
-  scalar gamma = constants::GLOBAL_GAMMA;
-  scalar pL = (gamma-1)*(EtL - 0.5*rhoL*vxL*vxL);
-  scalar pR = (gamma-1)*(EtR - 0.5*rhoR*vxR*vxR);
-  scalar aL = sqrt((gamma*pL)/rhoL);
-  scalar aR = sqrt((gamma*pR)/rhoR);
-
+#ifdef GAMCONS
+  scalar alphaL = uL[3]/uL[0];
+  scalar alphaR = uR[3]/uR[0];
+#elif  GAMNCON
+  scalar alphaL = uL[3];
+  scalar alphaR = uR[3];
+#endif
+  scalar gammaL = 1.0+1.0/alphaL;
+  scalar gammaR = 1.0+1.0/alphaR;
+  scalar pL = (gammaL-1)*(EtL - 0.5*rhoL*vxL*vxL);
+  scalar pR = (gammaR-1)*(EtR - 0.5*rhoR*vxR*vxR);
+  scalar aL = sqrt((gammaL*pL)/rhoL);
+  scalar aR = sqrt((gammaR*pR)/rhoR);
+  
   // Wave estimates
   scalar SL = 0;
   scalar SR = 0;
@@ -108,7 +118,9 @@ arch_device scalar oned_passive_hll(scalar* uL,scalar* uR, scalar* n,scalar* F, 
     scalar HL       = (EtL + pL)/rhoL;
     scalar HR       = (EtR + pR)/rhoR;
     scalar HRoe     = (HL+RT*HR)/(1+RT);
-    scalar aRoe = sqrt((gamma-1)*(HRoe-0.5*uRoe*uRoe));
+    scalar alphaRoe = (alphaL+RT*alphaR)/(1+RT);
+    scalar gammaRoe = 1+1.0/alphaRoe;
+    scalar aRoe = sqrt((gammaRoe-1)*(HRoe-0.5*uRoe*uRoe));
     SL = uRoe*nx-aRoe;
     SR = uRoe*nx+aRoe;
     break;}
@@ -125,32 +137,46 @@ arch_device scalar oned_passive_hll(scalar* uL,scalar* uR, scalar* n,scalar* F, 
   }
 
   // Non-conservative terms (see paper by Rhebergen)
-  scalar vnc    = -0.5*    (vxL*nx+vxR*nx)*(phincL-phincR);
-  scalar vncabs = -0.5*fabs(vxL*nx+vxR*nx)*(phincL-phincR);
+  scalar vnc    = -0.5*    (vxL*nx+vxR*nx)*(alphaL-alphaR);
+  scalar vncabs = -0.5*fabs(vxL*nx+vxR*nx)*(alphaL-alphaR);
 
   // define the flux
   if (SL > 0){
     F[0] = flux_ab(rhoL,vxL)*nx;
     F[1] = flux_ab2pc(rhoL,vxL,pL)*nx;
     F[2] = flux_ab(EtL+pL,vxL)*nx;
-    F[3] = flux_abc(rhoL,vxL,phicL)*nx;
-    F[4] = -0.5*vncabs;
+#ifdef GAMCONS
+    F[3] = flux_abc(rhoL,vxL,alphaL)*nx;
+#elif  GAMNCON
+    F[3] = -0.5*vncabs;
+#endif
   }
   else if ((SL < 0)&&(SR > 0)){
     F[0] = fhll(rhoL, SL, flux_ab(rhoL,vxL)*nx,   rhoR, SR, flux_ab(rhoR,vxR)*nx);
     F[1] = fhll(  vxL, SL, flux_ab2pc(rhoL,vxL,pL)*nx,  vxR, SR, flux_ab2pc(rhoR,vxR,pR)*nx);
     F[2] = fhll( EtL, SL, flux_ab(EtL+pL,vxL)*nx,    EtR, SR, flux_ab(EtR+pR,vxR)*nx);
-    F[3] = fhll(phicL, SL, flux_abc(rhoL,vxL,phicL)*nx, phicR, SR, flux_abc(rhoR,vxR,phicR)*nx);
-    F[4] = fhll(phincL, SL, 0, phincR, SR, 0) - 0.5*fabs(SR+SL)/fabs(SR-SL)*vncabs;
+#ifdef GAMCONS
+    F[3] = fhll(alphaL, SL, flux_abc(rhoL,vxL,alphaL)*nx, alphaR, SR, flux_abc(rhoR,vxR,alphaR)*nx);
+#elif  GAMNCON
+    F[3] = fhll(alphaL, SL, 0, alphaR, SR, 0) - 0.5*fabs(SR+SL)/fabs(SR-SL)*vncabs;
+#endif
   }
   else if (SR < 0){
     F[0] = flux_ab(rhoR,vxR)*nx;
     F[1] = flux_ab2pc(rhoR,vxR,pR)*nx;
     F[2] = flux_ab(EtR+pR,vxR)*nx;
-    F[3] = flux_abc(rhoR,vxR,phicR)*nx;
-    F[4] = 0.5*vncabs;
+#ifdef GAMCONS
+    F[3] = flux_abc(rhoR,vxR,alphaR)*nx;
+#elif  GAMNCON
+    F[3] = 0.5*vncabs;
+#endif
   }
-  ncterm[4] = 0.5*0.5*(vxL+vxR)*(phincL-phincR)*nx;
+
+#ifdef GAMNCON
+  ncterm[3] = -0.5*vnc;
+#endif
+
+
 
 } // end HLL function
 
@@ -162,62 +188,61 @@ arch_device scalar oned_passive_hll(scalar* uL,scalar* uR, scalar* n,scalar* F, 
 //* Schemes, Journal of Computational Physics, 43, pp. 357-372.
 //*
 //*****************************************************************************
-arch_device scalar oned_passive_roe(scalar* uL,scalar* uR, scalar* n,scalar* F, scalar* ncterm){
+arch_device scalar oned_multifluid_roe(scalar* uL,scalar* uR, scalar* n,scalar* F, scalar* ncterm){
 
   scalar nx = n[0];
 
-  scalar rhoL  = uL[0];
+scalar rhoL  = uL[0];
   scalar rhoR  = uR[0];
   scalar vxL   = uL[1]/uL[0];
   scalar vxR   = uR[1]/uR[0];
   scalar EtL   = uL[2];
   scalar EtR   = uR[2];
-  scalar phicL = uL[3]/uL[0];
-  scalar phicR = uR[3]/uR[0];
-  scalar phincL= uL[4];
-  scalar phincR= uR[4];
-  scalar gamma = constants::GLOBAL_GAMMA;
-  scalar pL = (gamma-1)*(EtL - 0.5*rhoL*vxL*vxL);
-  scalar pR = (gamma-1)*(EtR - 0.5*rhoR*vxR*vxR);
-  scalar aL = sqrt((gamma*pL)/rhoL);
-  scalar aR = sqrt((gamma*pR)/rhoR);
-  scalar HL = (EtL + pL)/rhoL;
-  scalar HR = (EtR + pR)/rhoR;
+#ifdef GAMCONS
+  scalar alphaL = uL[3]/uL[0];
+  scalar alphaR = uR[3]/uR[0];
+#elif  GAMNCON
+  scalar alphaL = uL[3];
+  scalar alphaR = uR[3];
+#endif
+  scalar gammaL = 1.0+1.0/alphaL;
+  scalar gammaR = 1.0+1.0/alphaR;
+  scalar pL = (gammaL-1)*(EtL - 0.5*rhoL*vxL*vxL);
+  scalar pR = (gammaR-1)*(EtR - 0.5*rhoR*vxR*vxR);
+  scalar aL = sqrt((gammaL*pL)/rhoL);
+  scalar aR = sqrt((gammaR*pR)/rhoR);
 
   // Compute Roe averages
   scalar RT     = sqrt(rhoR/rhoL);
   scalar rhoRoe = RT*rhoL;
-  scalar uRoe   = (vxL+RT*vxR)/(1+RT);//(sqrt(rhoL)*uL+sqrt(rhoR)*uR)/(sqrt(rhoL)+sqrt(rhoR));
-  scalar HRoe   = (HL+RT*HR)/(1+RT);//(sqrt(rhoL)*HL+sqrt(rhoR)*HR)/(sqrt(rhoL)+sqrt(rhoR));
-  scalar aRoe = sqrt((gamma-1)*(HRoe-0.5*uRoe*uRoe));
-  scalar DpRoe= pR - pL;
-  
-  // For multifluid
-  /* scalar RT     = sqrt(rhoL/rhoR); */
-  /* scalar rhoRoe = RT*rhoL; */
-  /* scalar uRoe   = (vxL+RT*vxR)/(1+RT);//(sqrt(rhoL)*uL+sqrt(rhoR)*uR)/(sqrt(rhoL)+sqrt(rhoR)); */
-  /* scalar HRoe   = (HL+RT*HR)/(1+RT);//(sqrt(rhoL)*HL+sqrt(rhoR)*HR)/(sqrt(rhoL)+sqrt(rhoR)); */
-  /* scalar alphaRoe = (alphaL+RT*alphaR)/(1+RT);//(sqrt(rhoL)*alphaL+sqrt(rhoR)*alphaR)/(sqrt(rhoL)+sqrt(rhoR)); */
-  /* scalar gammaRoe = 1+1.0/alphaRoe; */
-  /* scalar aRoe = sqrt((gammaRoe-1)*(HRoe-0.5*uRoe*uRoe)); */
-  /* scalar iRoe = (iL+RT*iR)/(1+RT);//(sqrt(rhoL)*iL+sqrt(rhoR)*iR)/(sqrt(rhoL)+sqrt(rhoR)); */
-  /* scalar DpRoe= (gammaRoe-1)*(gammaRoe-1)*(alphaRoe*(iR-iL) - iRoe*(alphaR-alphaL)); */
-  /* scalar pRoe = (gammaRoe-1)*iRoe; */
-
+  scalar uRoe     = (vxL+RT*vxR)/(1+RT);
+  scalar HL       = (EtL + pL)/rhoL;
+  scalar HR       = (EtR + pR)/rhoR;
+  scalar HRoe     = (HL+RT*HR)/(1+RT);
+  scalar alphaRoe = (alphaL+RT*alphaR)/(1+RT);
+  scalar gammaRoe = 1+1.0/alphaRoe;
+  scalar aRoe = sqrt((gammaRoe-1)*(HRoe-0.5*uRoe*uRoe));
+  scalar iL = pL*alphaL;
+  scalar iR = pR*alphaR;
+  scalar iRoe = (sqrt(rhoL)*iL+sqrt(rhoR)*iR)/(sqrt(rhoL)+sqrt(rhoR));
+  scalar DpRoe= (gammaRoe-1)*(gammaRoe-1)*(alphaRoe*(iR-iL) - iRoe*(alphaR-alphaL));
+  scalar pRoe = (gammaRoe-1)*iRoe;
 
   // Roe waves strengths
-  int sizevap = 3;
+  int sizevap = 4;
   scalar* dV = new scalar[sizevap];
   dV[0] = (DpRoe - rhoRoe*aRoe*(vxR-vxL))/(2*aRoe*aRoe);
   dV[1] = (rhoR-rhoL) - DpRoe/(aRoe*aRoe);
   dV[2] = (DpRoe + rhoRoe*aRoe*(vxR-vxL))/(2*aRoe*aRoe);
-
+  dV[3] = alphaR-alphaL;
+  
   // Absolute value of Roe eigenvalues
   scalar* ws = new scalar[sizevap];
   ws[0] = fabs(uRoe-aRoe);
   ws[1] = fabs(uRoe);
   ws[2] = fabs(uRoe+aRoe);
-
+  ws[3] = fabs(uRoe);
+  
   // Entropy fix
 
 
@@ -226,14 +251,22 @@ arch_device scalar oned_passive_roe(scalar* uL,scalar* uR, scalar* n,scalar* F, 
   R[0*sizevap+0] = 1;
   R[0*sizevap+1] = uRoe-aRoe;
   R[0*sizevap+2] = HRoe-uRoe*aRoe;
+  R[0*sizevap+3] = 0;
 
   R[1*sizevap+0] = 1;
   R[1*sizevap+1] = uRoe;
   R[1*sizevap+2] = 0.5*uRoe*uRoe;
+  R[1*sizevap+3] = 0;
 
   R[2*sizevap+0] = 1;
   R[2*sizevap+1] = uRoe+aRoe;
   R[2*sizevap+2] = HRoe+uRoe*aRoe;
+  R[2*sizevap+3] = 0;
+
+  R[3*sizevap+0] = 0;
+  R[3*sizevap+1] = 0;
+  R[3*sizevap+2] = pRoe;
+  R[3*sizevap+3] = 1;  
 
   // first: fx = rho*u
   F[0] = 0.5*(flux_ab(rhoL,vxL) + flux_ab(rhoR,vxR))*nx;
@@ -247,14 +280,14 @@ arch_device scalar oned_passive_roe(scalar* uL,scalar* uR, scalar* n,scalar* F, 
   F[2] = 0.5*(flux_ab(EtL+pL,vxL) + flux_ab(EtR+pR,vxR))*nx;
   for(int k=0;k<sizevap;k++) F[2] += -0.5*ws[k]*dV[k]*R[k*sizevap+2];
 
-  //fourth: fx = rho*u*phic
-  F[3] = 0.5*(flux_abc(rhoL,vxL,phicL) + flux_abc(rhoR,vxR,phicR))*nx;
-  for(int k=0;k<sizevap;k++) F[3] += -0.5*ws[k]*dV[k]*R[k*sizevap+0];
-      
-  //fifth:
-  F[4] = 0.0;
-  for(int k=0;k<sizevap;k++) F[4] += -0.5*ws[k]*dV[k]*R[k*sizevap+0];
-  ncterm[4] = -0.5*uRoe*(phincR-phincL)*nx;
+  //fourth 
+#ifdef GAMCONS
+  F[3] = 0.5*(flux_abc(rhoL,vxL,alphaL) + flux_abc(rhoR,vxR,alphaR))*nx;
+#elif  GAMNCON
+  F[3] = 0;
+  ncterm[3] = -0.5*uRoe*(alphaR-alphaL)*nx;
+#endif
+  for(int k=0;k<sizevap;k++) F[3] += -0.5*ws[k]*dV[k]*R[k*sizevap+3];
 
   // Free some pointers
   delete[] dV;

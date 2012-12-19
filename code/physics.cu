@@ -1,6 +1,7 @@
 #include <physics.h>
 #include <basic_fluxes.h>
 #include <oned_passive_fluxes.h>
+#include <oned_multifluid_fluxes.h>
 
 //==========================================================================
 //
@@ -925,11 +926,11 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 #elif MULTIFLUID
 
 #ifdef RUS
-      //oned_multifluid_rusanov(uL,uR,n,F);
+      oned_multifluid_rusanov(uL,uR,n,F,ncterm);
 #elif HLL
-      //oned_multifluid_hll(uL,uR,n,F);
+      oned_multifluid_hll(uL,uR,n,F,ncterm);
 #elif ROE
-      //oned_multifluid_roe(uL,uR,n,F);
+      oned_multifluid_roe(uL,uR,n,F,ncterm);
 #endif // flux if
 
 #endif // physics if
