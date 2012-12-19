@@ -7,6 +7,7 @@
 - clean if conditions on dimensions
 - clean Riemann solvers
 - entropy fix for Roe (http://www.cfdbooks.com/cfdcodes/oned_euler_fluxes_v4.f90)
+- clean the flux functions so that the spacing is the same.
 
 FOR GOING TO 2D:
 - 2D physics functions: ROE left to do (http://www.cfdbooks.com/cfdcodes/twod_euler_fluxes_v2.f90)

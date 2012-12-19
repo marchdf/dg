@@ -241,7 +241,7 @@ class DG_SOLVER
 
 #elif TWOD
     Levaluate_sf_2D(_D, _N_G, _N_E, _N_F, _gamma0,  _s, _f, _Uinteg, _dUinteg, _invJac);
-    Levaluate_q_2D(_M_G, _M_T, _N_F, _gamma0, _q, _UintegF, _normals); 
+    //Levaluate_q_2D(_M_G, _M_T, _N_F, _gamma0, _q, _UintegF, _normals); 
 #endif
 
     Levaluate_q(_M_G, _M_T, _N_F, _D, _q, _UintegF, _normals); 

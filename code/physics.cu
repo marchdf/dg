@@ -1,7 +1,9 @@
 #include <physics.h>
 #include <basic_fluxes.h>
 #include <oned_passive_fluxes.h>
+#include <twod_passive_fluxes.h>
 #include <oned_multifluid_fluxes.h>
+#include <twod_multifluid_fluxes.h>
 
 //==========================================================================
 //
@@ -903,8 +905,8 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 
       // Initialize these variables
       for(int fc = 0; fc < N_F; fc++){
-	uL[fc] = UgF[(t*N_F+fc)*2+0];
-	uR[fc] = UgF[(t*N_F+fc)*2+1];
+	uL[fc] = UgF[((t*N_F+fc)*2+0)*M_G+g];
+	uR[fc] = UgF[((t*N_F+fc)*2+1)*M_G+g];
 	F[fc]  = 0;
 	ncterm[fc] = 0;
       }
@@ -940,21 +942,21 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 #ifdef PASSIVE
 
 #ifdef RUS
-      //twod_passive_rusanov(uL,uR,n,F);
+      twod_passive_rusanov(uL,uR,n,F,ncterm);
 #elif HLL
-      //twod_passive_hll(uL,uR,n,F);
+      twod_passive_hll(uL,uR,n,F,ncterm);
 #elif ROE
-      //twod_passive_roe(uL,uR,n,F);
+      twod_passive_roe(uL,uR,n,F,ncterm);
 #endif // flux if
 
 #elif MULTIFLUID
 
 #ifdef RUS
-      //twod_multifluid_rusanov(uL,uR,n,F);
+      twod_multifluid_rusanov(uL,uR,n,F,ncterm);
 #elif HLL
-      //twod_multifluid_hll(uL,uR,n,F);
+      //twod_multifluid_hll(uL,uR,n,F,ncterm);
 #elif ROE
-      //twod_multifluid_roe(uL,uR,n,F);
+      //twod_multifluid_roe(uL,uR,n,F,ncterm);
 #endif // flux if
 
 #endif // physics if

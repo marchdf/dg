@@ -191,19 +191,6 @@ arch_device scalar oned_passive_roe(scalar* uL,scalar* uR, scalar* n,scalar* F, 
   scalar HRoe   = (HL+RT*HR)/(1+RT);//(sqrt(rhoL)*HL+sqrt(rhoR)*HR)/(sqrt(rhoL)+sqrt(rhoR));
   scalar aRoe = sqrt((gamma-1)*(HRoe-0.5*uRoe*uRoe));
   scalar DpRoe= pR - pL;
-  
-  // For multifluid
-  /* scalar RT     = sqrt(rhoL/rhoR); */
-  /* scalar rhoRoe = RT*rhoL; */
-  /* scalar uRoe   = (vxL+RT*vxR)/(1+RT);//(sqrt(rhoL)*uL+sqrt(rhoR)*uR)/(sqrt(rhoL)+sqrt(rhoR)); */
-  /* scalar HRoe   = (HL+RT*HR)/(1+RT);//(sqrt(rhoL)*HL+sqrt(rhoR)*HR)/(sqrt(rhoL)+sqrt(rhoR)); */
-  /* scalar alphaRoe = (alphaL+RT*alphaR)/(1+RT);//(sqrt(rhoL)*alphaL+sqrt(rhoR)*alphaR)/(sqrt(rhoL)+sqrt(rhoR)); */
-  /* scalar gammaRoe = 1+1.0/alphaRoe; */
-  /* scalar aRoe = sqrt((gammaRoe-1)*(HRoe-0.5*uRoe*uRoe)); */
-  /* scalar iRoe = (iL+RT*iR)/(1+RT);//(sqrt(rhoL)*iL+sqrt(rhoR)*iR)/(sqrt(rhoL)+sqrt(rhoR)); */
-  /* scalar DpRoe= (gammaRoe-1)*(gammaRoe-1)*(alphaRoe*(iR-iL) - iRoe*(alphaR-alphaL)); */
-  /* scalar pRoe = (gammaRoe-1)*iRoe; */
-
 
   // Roe waves strengths
   int sizevap = 3;
