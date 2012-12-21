@@ -49,7 +49,6 @@ class RK
 		      scalar* h_Minv, 
 		      scalar* h_U,
 		      Limiting &Limiter, bool order0, DG_SOLVER &dgsolver,
-		      scalar gamma0,
 		      int elem_type, simpleMesh &m){
 
     // Initialize some vars
@@ -85,7 +84,7 @@ class RK
 
     // print the initial condition to the file
     printf("Initial condition written to output file.\n");
-    print_dg(N_s, N_E, N_F, gamma0, h_U, m, elem_type, 0, 0, 0);
+    print_dg(N_s, N_E, N_F, h_U, m, elem_type, 0, 0, 0);
 
     // Output conservation of the fields
     dgsolver.conservation(h_U,0.0);
@@ -152,7 +151,7 @@ class RK
 #endif
      
 	printf("Solution written to output file at step %i and time %f.\n",n,n*Dt);
-	print_dg(N_s, N_E, N_F, gamma0, h_U, m, elem_type, count, n*Dt, 1);
+	print_dg(N_s, N_E, N_F, h_U, m, elem_type, count, n*Dt, 1);
 	count++;
 
 	// Output conservation of the fields

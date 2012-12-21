@@ -485,11 +485,11 @@ void init_dg_multint_multifluid(const int N_s, const int N_E, const int N_F, con
   }
 }
 
-void init_dg_sinephi_passive(const int N_s, const int N_E, const int N_F, const int D, scalar &gamma, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_sinephi_passive(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   scalar rho     = 1.0;
   scalar u       = 1.0;
-  gamma          = 1.4;
+  scalar gamma = constants::GLOBAL_GAMMA;
   scalar phi     = 0.0;
   scalar sinephi = 0.0; // sine perturbation on phi
   scalar sinerho = 0.0; // sine perturbation on rho
@@ -533,9 +533,9 @@ void init_dg_sinephi_passive(const int N_s, const int N_E, const int N_F, const 
 }
 
 
-void init_dg_sodmono_passive(const int N_s, const int N_E, const int N_F, const int D, scalar &gamma, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_sodmono_passive(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
-  gamma = 1.4;
+  scalar gamma = constants::GLOBAL_GAMMA;
   // Left state
   scalar rhoL = 1;
   scalar uL   = 0;

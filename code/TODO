@@ -8,9 +8,11 @@
 - clean Riemann solvers
 - entropy fix for Roe (http://www.cfdbooks.com/cfdcodes/oned_euler_fluxes_v4.f90)
 - clean the flux functions so that the spacing is the same.
+- eval_sf make specific
+
 
 FOR GOING TO 2D:
-- 2D physics functions: multifluid ROE and passive/mf HLL
+- 2D physics functions: passive/multifluid HLL
 - 2D limiter (boundary condition thing...)
 - Change of basis for 2D
 - I think my boundary conditions don't work... (independent x-y conditions?)

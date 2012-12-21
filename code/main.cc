@@ -452,7 +452,6 @@ int main (int argc, char **argv)
   fullMatrix<scalar> U(N_s, N_E*N_F);
   fullMatrix<scalar> Us(N_s, N_E*N_F);
   fullMatrix<scalar> Ustar(N_s, N_E*N_F);
-  scalar gamma0 = 0;
 #ifdef MULTIFLUID
     if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
     else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
@@ -465,8 +464,8 @@ int main (int argc, char **argv)
     else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
     else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
 #elif PASSIVE
-    if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, U);
-    if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, U);
+    if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, U);
+    if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, U);
 #endif
 
   if (order0) average_cell_p0(N_s, N_E, N_F, U);
@@ -478,7 +477,7 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
   scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++) h_weight[g] = (scalar)weight(g,0);  
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, boundaryMap, gamma0, Lag2Mono, Mono2Lag, monoV1D, h_weight);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, boundaryMap, Lag2Mono, Mono2Lag, monoV1D, h_weight);
   
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -602,13 +601,13 @@ int main (int argc, char **argv)
   printf("==== Now RK 4 steps =====\n");
   DG_SOLVER dgsolver = DG_SOLVER(D, N_F, N_E, N_s, N_G, M_T, M_s, M_G, M_B,
   				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, h_J, h_invJac, h_JF, h_weight, h_normals,
-  				 h_boundaryMap, gamma0);
+  				 h_boundaryMap);
   RK rk4 = RK(4);
   rk4.RK_integration(Dt, N_t, output_factor,
   		     D, N_F, N_E, N_s, N_G, M_T, M_s,
   		     h_Minv, 
   		     h_U,
-  		     Limiter, order0, dgsolver, gamma0,
+  		     Limiter, order0, dgsolver,
   		     elem_type, m);
 
   //////////////////////////////////////////////////////////////////////////   
@@ -630,8 +629,8 @@ int main (int argc, char **argv)
     else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
     else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
 #elif PASSIVE
-    if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, Uinit);
-    if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, gamma0, XYZNodes, Uinit);
+    if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
+    if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
 #endif
   scalar* h_Uinit = new scalar[N_s*N_E*N_F];  makeZero(h_Uinit,N_s*N_E*N_F);
   for(int e = 0; e < N_E; e++){
@@ -659,8 +658,9 @@ int main (int argc, char **argv)
       h_U    [(e*N_F+2)*N_s+i] = 1.0/h_U    [(e*N_F+3)*N_s+i]*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
 #elif PASSIVE
       // pressure = (gamma-1)*(E-0.5 rho*v*v)
-      h_Uinit[(e*N_F+2)*N_s+i] = (gamma0-1)*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
-      h_U    [(e*N_F+2)*N_s+i] = (gamma0-1)*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
+      scalar gamma = constants::GLOBAL_GAMMA;
+      h_Uinit[(e*N_F+2)*N_s+i] = (gamma-1)*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
+      h_U    [(e*N_F+2)*N_s+i] = (gamma-1)*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
       // conservative phi
       h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; 
       h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];

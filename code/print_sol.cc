@@ -134,13 +134,14 @@ void print_dg_mhd(const int N_s, const int N_E, const int N_F, scalar* U, const 
 //===========================================
 // Output generic solutions
 //===========================================
-void print_dg(const int N_s, const int N_E, const int N_F, scalar gamma, scalar* U, const simpleMesh m, const int elem_type, const int step, const double time, const int append){
+void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simpleMesh m, const int elem_type, const int step, const double time, const int append){
 
   fullMatrix<scalar> Rho(N_s, N_E);
   fullMatrix<scalar> Ux(N_s, N_E);
   fullMatrix<scalar> Et(N_s, N_E);
   fullMatrix<scalar> P(N_s, N_E);
 #ifdef PASSIVE
+  scalar gamma = constants::GLOBAL_GAMMA;
   fullMatrix<scalar> PhiC(N_s, N_E)  ;
   fullMatrix<scalar> PhiNC(N_s, N_E)  ;
 #elif  MULTIFLUID  

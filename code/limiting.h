@@ -2,6 +2,7 @@
 #define LIMITING_H
 
 #include <misc.h>
+#include <constants.h>
 
 class Limiting
 {
@@ -18,14 +19,13 @@ class Limiting
   int     _N_F;
   int     _N_G;
   int     _boundaryMap;
-  scalar  _gamma0;
   
  public:
   // constructor
  Limiting(int method) : _method(method){}
   
- Limiting(int method, int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar gamma0, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, fullMatrix<scalar> &V1D, scalar* weight)
-   : _method(method), _N_s(N_s), _N_E(N_E), _N_F(N_F), _N_G(N_G), _boundaryMap(boundaryMap), _gamma0(gamma0){
+ Limiting(int method, int N_s, int N_E, int N_F, int N_G, int boundaryMap, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, fullMatrix<scalar> &V1D, scalar* weight)
+   : _method(method), _N_s(N_s), _N_E(N_E), _N_F(N_F), _N_G(N_G), _boundaryMap(boundaryMap){
     switch (_method){
     case 1:
     case 2:
@@ -112,16 +112,15 @@ class Limiting
 	scalar rhou = U[(e*_N_F+1)*_N_s+i];
 	scalar E    = U[(e*_N_F+2)*_N_s+i];
 #ifdef MULTIFLUID
-	scalar gamma=0;
 #ifdef GAMCONS
-	gamma=1.0+rho/U[(e*_N_F+3)*_N_s+i];
+	scalar gamma=1.0+rho/U[(e*_N_F+3)*_N_s+i];
 #elif GAMNCON
-	gamma=1.0+1.0/U[(e*_N_F+3)*_N_s+i];
+	scalar gamma=1.0+1.0/U[(e*_N_F+3)*_N_s+i];
 #endif
-	pressure[e*_N_s+i] = (gamma-1.0)*(E - 0.5*rhou*rhou/rho);
 #elif PASSIVE
-	pressure[e*_N_s+i] = (_gamma0-1)*(E - 0.5*rhou*rhou/rho);
+	scalar gamma = constants::GLOBAL_GAMMA;
 #endif
+	pressure[e*_N_s+i] = (gamma-1)*(E - 0.5*rhou*rhou/rho);
       }
     }
 
@@ -162,7 +161,8 @@ class Limiting
 	  scalar b1 = _Alim[(e*_N_F+1)*_N_s+1];
 	  scalar g0 = _A[(e*_N_F+2)*_N_s+0];
 	  scalar g1 = _A[(e*_N_F+2)*_N_s+1];
-	  scalar g1lim = 0.25*((b0+b1)*(b0+b1)/(a0+a1) - (b0-b1)*(b0-b1)/(a0-a1)) + pressureLim[e*_N_s+1]*_gamma0;
+	  scalar gamma = constants::GLOBAL_GAMMA;
+	  scalar g1lim = 0.25*((b0+b1)*(b0+b1)/(a0+a1) - (b0-b1)*(b0-b1)/(a0-a1)) + pressureLim[e*_N_s+1]*gamma;
 	  scalar g0lim = g0;
 	  _Alim[(e*_N_F+2)*_N_s+1] = g1lim;
 	  _Alim[(e*_N_F+2)*_N_s+0] = g0lim;
@@ -212,9 +212,10 @@ class Limiting
 	scalar g0 = _A[(e*_N_F+2)*_N_s+0];
 	scalar g1 = _A[(e*_N_F+2)*_N_s+1];
 	scalar g2 = _A[(e*_N_F+2)*_N_s+2];
-	scalar g2lim = 0.5*((b0+b1+0.5*b2)*(b0+b1+0.5*b2)/(a0+a1+0.5*a2) + (b0-b1+0.5*b2)*(b0-b1+0.5*b2)/(a0-a1+0.5*a2) - 2*b0*b0/a0) + pressureLim[e*_N_s+2]*_gamma0;
+	scalar gamma = constants::GLOBAL_GAMMA;
+	scalar g2lim = 0.5*((b0+b1+0.5*b2)*(b0+b1+0.5*b2)/(a0+a1+0.5*a2) + (b0-b1+0.5*b2)*(b0-b1+0.5*b2)/(a0-a1+0.5*a2) - 2*b0*b0/a0) + pressureLim[e*_N_s+2]*gamma;
 	scalar g1lim = 0.25*((b0+b1+0.5*b2)*(b0+b1+0.5*b2)/(a0+a1+0.5*a2) - (b0-b1+0.5*b2)*(b0-b1+0.5*b2)/(a0-a1+0.5*a2))
-	  + pressureLim[e*_N_s+1]*_gamma0;
+	  + pressureLim[e*_N_s+1]*gamma;
 	scalar g0lim = g0 + 1.0/6.0*(g2-g2lim);
 	_Alim[(e*_N_F+2)*_N_s+0] = g0lim;
 	_Alim[(e*_N_F+2)*_N_s+1] = g1lim;
@@ -248,16 +249,15 @@ class Limiting
 	scalar E    = U[(e*_N_F+2)*_N_s+i];
 	u[e*_N_s+i] = rhou/rho;
 #ifdef MULTIFLUID
-	scalar gamma=0;
 #ifdef GAMCONS
-	gamma=1.0+rho/U[(e*_N_F+3)*_N_s+i];
+	scalar gamma=1.0+rho/U[(e*_N_F+3)*_N_s+i];
 #elif GAMNCON
-	gamma=1.0+1.0/U[(e*_N_F+3)*_N_s+i];
+	scalar gamma=1.0+1.0/U[(e*_N_F+3)*_N_s+i];
+#endif
+#elif PASSIVE
+	scalar gamma = constants::GLOBAL_GAMMA;
 #endif
 	pressure[e*_N_s+i] = (gamma-1.0)*(E - 0.5*rhou*rhou/rho);
-#elif PASSIVE
-	pressure[e*_N_s+i] = (_gamma0-1)*(E - 0.5*rhou*rhou/rho);
-#endif
       }
     }
 
@@ -317,7 +317,8 @@ class Limiting
 	_Alim[(e*_N_F+1)*_N_s+0] = b0lim;
 
 	// Energy (like MYL)
-	scalar g1lim = 0.25*((b0lim+b1lim)*(b0lim+b1lim)/(a0lim+a1lim) - (b0lim-b1lim)*(b0lim-b1lim)/(a0lim-a1lim)) + pressureLim[e*_N_s+1]*_gamma0;
+	scalar gamma = constants::GLOBAL_GAMMA;
+	scalar g1lim = 0.25*((b0lim+b1lim)*(b0lim+b1lim)/(a0lim+a1lim) - (b0lim-b1lim)*(b0lim-b1lim)/(a0lim-a1lim)) + pressureLim[e*_N_s+1]*gamma;
 	scalar g0lim = g0;
 	_Alim[(e*_N_F+2)*_N_s+1] = g1lim;
 	_Alim[(e*_N_F+2)*_N_s+0] = g0lim;
@@ -387,8 +388,9 @@ class Limiting
 	_Alim[(e*_N_F+1)*_N_s+2] = b2lim;
 
 	// Energy (like MYL)
-	scalar g2lim = 0.5*((b0lim+b1lim+0.5*b2lim)*(b0lim+b1lim+0.5*b2lim)/(a0lim+a1lim+0.5*a2lim) + (b0lim-b1lim+0.5*b2lim)*(b0lim-b1lim+0.5*b2lim)/(a0lim-a1lim+0.5*a2lim) - 2*b0lim*b0lim/a0lim)+ pressureLim[e*_N_s+2]*_gamma0;
-	scalar g1lim =  0.25*((b0lim+b1lim+0.5*b2lim)*(b0lim+b1lim+0.5*b2lim)/(a0lim+a1lim+0.5*a2lim) - (b0lim-b1lim+0.5*b2lim)*(b0lim-b1lim+0.5*b2lim)/(a0lim-a1lim+0.5*a2lim)) + pressureLim[e*_N_s+1]*_gamma0;
+	scalar gamma = constants::GLOBAL_GAMMA;
+	scalar g2lim = 0.5*((b0lim+b1lim+0.5*b2lim)*(b0lim+b1lim+0.5*b2lim)/(a0lim+a1lim+0.5*a2lim) + (b0lim-b1lim+0.5*b2lim)*(b0lim-b1lim+0.5*b2lim)/(a0lim-a1lim+0.5*a2lim) - 2*b0lim*b0lim/a0lim)+ pressureLim[e*_N_s+2]*gamma;
+	scalar g1lim =  0.25*((b0lim+b1lim+0.5*b2lim)*(b0lim+b1lim+0.5*b2lim)/(a0lim+a1lim+0.5*a2lim) - (b0lim-b1lim+0.5*b2lim)*(b0lim-b1lim+0.5*b2lim)/(a0lim-a1lim+0.5*a2lim)) + pressureLim[e*_N_s+1]*gamma;
 	scalar g0lim = g0 + 1.0/6.0*(g2-g2lim);
 	_Alim[(e*_N_F+2)*_N_s+0] = g0lim;
 	_Alim[(e*_N_F+2)*_N_s+1] = g1lim;

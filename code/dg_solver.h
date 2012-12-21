@@ -18,7 +18,6 @@ class DG_SOLVER
   int _M_s;
   int _M_G;
   int _M_B;
-  scalar _gamma0;
   int* _map;
   int* _invmap;
   int* _boundaryMap;
@@ -59,9 +58,8 @@ class DG_SOLVER
  public:
   // constructor
  DG_SOLVER(int D, int N_F, int N_E, int N_s, int N_G, int M_T, int M_s, int M_G, int M_B,
-	   int* map, int* invmap, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* psi, scalar* psi_w, scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals,
-	   int* boundaryMap, scalar gamma0) :
-  _D(D), _N_F(N_F), _N_E(N_E), _N_s(N_s), _N_G(N_G), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B), _gamma0(gamma0) {
+	   int* map, int* invmap, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* psi, scalar* psi_w, scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals, int* boundaryMap) :
+  _D(D), _N_F(N_F), _N_E(N_E), _N_s(N_s), _N_G(N_G), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B) {
 
 #ifdef USE_CPU
 
@@ -234,13 +232,13 @@ class DG_SOLVER
 
 #ifdef ONED  
     // evaluate_sf: requires Uinteg, (dUintegR), H0, G0, s,f
-    Levaluate_sf_1D(_D, _N_G, _N_E, _N_F, _gamma0,  _s, _f, _Uinteg, _dUinteg, _invJac);
+    Levaluate_sf_1D(_D, _N_G, _N_E, _N_F,  _s, _f, _Uinteg, _dUinteg, _invJac);
     
     // evaluate_q: requires UintegF, normals, q, H0, G0
     //Levaluate_q_1D(_M_G, _M_T, _N_F, _gamma0, _q, _UintegF, _normals);
 
 #elif TWOD
-    Levaluate_sf_2D(_D, _N_G, _N_E, _N_F, _gamma0,  _s, _f, _Uinteg, _dUinteg, _invJac);
+    Levaluate_sf_2D(_D, _N_G, _N_E, _N_F,  _s, _f, _Uinteg, _dUinteg, _invJac);
     //Levaluate_q_2D(_M_G, _M_T, _N_F, _gamma0, _q, _UintegF, _normals); 
 #endif
 

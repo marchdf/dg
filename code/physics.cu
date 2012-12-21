@@ -12,7 +12,7 @@
 //==========================================================================
 
 //==========================================================================
-arch_global void evaluate_sf_1D(int D, int N_G, int N_E, int N_F, scalar gamma, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
+arch_global void evaluate_sf_1D(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -27,10 +27,12 @@ arch_global void evaluate_sf_1D(int D, int N_G, int N_E, int N_F, scalar gamma, 
       scalar Et    = Ug[(e*N_F+2)*N_G+g];
 #ifdef MULTIFLUID
 #ifdef GAMCONS
-      gamma=1+rho/Ug[(e*N_F+3)*N_G+g];
+      scalar gamma=1+rho/Ug[(e*N_F+3)*N_G+g];
 #elif  GAMNCON
-      gamma=1+1.0/Ug[(e*N_F+3)*N_G+g];
+      scalar gamma=1+1.0/Ug[(e*N_F+3)*N_G+g];
 #endif
+#elif PASSIVE
+      scalar gamma = constants::GLOBAL_GAMMA;
 #endif
       scalar p = (gamma-1)*(Et - 0.5*rho*u*u);
       scalar EtplusP = Et + p;
@@ -67,7 +69,7 @@ arch_global void evaluate_sf_1D(int D, int N_G, int N_E, int N_F, scalar gamma, 
 }
 
 //==========================================================================
-arch_global void evaluate_sf_2D(int D, int N_G, int N_E, int N_F, scalar gamma, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
+arch_global void evaluate_sf_2D(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -84,10 +86,12 @@ arch_global void evaluate_sf_2D(int D, int N_G, int N_E, int N_F, scalar gamma, 
       scalar vdotv = u*u+v*v;
 #ifdef MULTIFLUID
 #ifdef GAMCONS
-      gamma=1+rho/Ug[(e*N_F+4)*N_G+g];
+      scalar gamma=1+rho/Ug[(e*N_F+4)*N_G+g];
 #elif  GAMNCON
-      gamma=1+1.0/Ug[(e*N_F+4)*N_G+g];
+      scalar gamma=1+1.0/Ug[(e*N_F+4)*N_G+g];
 #endif
+#elif PASSIVE
+      scalar gamma = constants::GLOBAL_GAMMA;
 #endif
       scalar p = (gamma-1)*(Et - 0.5*rho*vdotv);
       scalar EtplusP = Et + p;
@@ -992,14 +996,14 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 //
 //==========================================================================
 extern "C" 
-void Levaluate_sf_1D(int D, int N_G, int N_E, int N_F, scalar gamma, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
+void Levaluate_sf_1D(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
 
 #ifdef USE_GPU
   dim3 dimBlock(N_G,1,1);
   dim3 dimGrid(N_E,1);
 #endif
 
-  evaluate_sf_1D arch_args (D, N_G, N_E, N_F, gamma, s, f, Ug, dUg, invJac);
+  evaluate_sf_1D arch_args (D, N_G, N_E, N_F, s, f, Ug, dUg, invJac);
 }
 
 extern "C" 
@@ -1014,14 +1018,14 @@ void Levaluate_q_1D(int M_G, int M_T, int N_F, scalar gamma, scalar* q, scalar* 
 }
 
 extern "C" 
-void Levaluate_sf_2D(int D, int N_G, int N_E, int N_F, scalar gamma, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
+void Levaluate_sf_2D(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
 
 #ifdef USE_GPU
   dim3 dimBlock(N_G,1,1);
   dim3 dimGrid(N_E,1);
 #endif
 
-  evaluate_sf_2D arch_args (D, N_G, N_E, N_F, gamma, s, f, Ug, dUg, invJac);
+  evaluate_sf_2D arch_args (D, N_G, N_E, N_F, s, f, Ug, dUg, invJac);
 }
 
 extern "C" 
