@@ -954,9 +954,9 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 #ifdef RUS
       twod_multifluid_rusanov(uL,uR,n,F,ncterm);
 #elif HLL
-      //twod_multifluid_hll(uL,uR,n,F,ncterm);
+      twod_multifluid_hll(uL,uR,n,F,ncterm);
 #elif ROE
-      //twod_multifluid_roe(uL,uR,n,F,ncterm);
+      twod_multifluid_roe(uL,uR,n,F,ncterm);
 #endif // flux if
 
 #endif // physics if

@@ -10,7 +10,7 @@
 - clean the flux functions so that the spacing is the same.
 
 FOR GOING TO 2D:
-- 2D physics functions: ROE left to do (http://www.cfdbooks.com/cfdcodes/twod_euler_fluxes_v2.f90)
+- 2D physics functions: multifluid ROE and passive/mf HLL
 - 2D limiter (boundary condition thing...)
 - Change of basis for 2D
 - I think my boundary conditions don't work... (independent x-y conditions?)
