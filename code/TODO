@@ -1,19 +1,34 @@
-- Clean the print solution function. Inefficient to build a matrix to output it...
-- Output in the .txt format that gmsh can generate too
-- make GAMMA determined at compile time (limiter, physics, printsol, initcond)
-- clean initial conditions
-- Add CFL condition
-- clean output functions 
-- clean if conditions on dimensions
-- clean Riemann solvers
-- entropy fix for Roe (http://www.cfdbooks.com/cfdcodes/oned_euler_fluxes_v4.f90)
-- clean the flux functions so that the spacing is the same.
-- eval_sf make specific
+OUTPUT
+  - Inefficient to build a matrix to output it...
+  - Add capability to output in the .txt format that gmsh can generate too
+  - Clean output functions: unmerge them would be smart I think (same rational as for the flux functions)
 
+INITIAL CONDITIONS
+  - Clean initial conditions
+  - Design some generic ICs that can be made in the deck (maybe a LR state thing for now)
 
-FOR GOING TO 2D:
-- 2D physics functions: passive/multifluid HLL
-- 2D limiter (boundary condition thing...)
-- Change of basis for 2D
-- I think my boundary conditions don't work... (independent x-y conditions?)
+OTHER
+  - Add CFL condition
+  - Clean if conditions on dimensions: they are all over the place. Can they be reduced?
+  - Create some 2D benchmarks? 
 
+RIEMANN SOLVERS
+  - Optimize Riemann solvers. I think they are inefficient. Also, make the 1D closer to the 2D implementation
+  - Add an entropy fix for Roe (http://www.cfdbooks.com/cfdcodes/oned_euler_fluxes_v4.f90)
+  - add HLLC
+  
+LIMITING
+  - Need to pass a vector containing the neighbors of a given element
+  - Need to make monoV2D matrix/Change of basis
+
+PARALLEL
+  - Make GPU capable on nyx and home machine (mostly going to be in the vectors of the flux functions)
+  - Make MPI capable on nyx and home machine
+
+2D PHYSICS
+  - passive/multifluid HLL
+  - boundary conditions: do they work? are they correct? combine farfield et periodic?
+
+NYX
+  - Can my code compile and run on nyx?
+	

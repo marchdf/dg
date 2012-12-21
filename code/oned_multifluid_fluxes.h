@@ -113,16 +113,16 @@ arch_device scalar oned_multifluid_hll(scalar* uL,scalar* uR, scalar* n,scalar* 
   int estimate = 0;
   switch (estimate){
   case 1:{ // Toro 10.49
-    scalar RT       = sqrt(rhoR/rhoL);
-    scalar uRoe     = (vxL+RT*vxR)/(1+RT);
-    scalar HL       = (EtL + pL)/rhoL;
-    scalar HR       = (EtR + pR)/rhoR;
-    scalar HRoe     = (HL+RT*HR)/(1+RT);
-    scalar alphaRoe = (alphaL+RT*alphaR)/(1+RT);
-    scalar gammaRoe = 1+1.0/alphaRoe;
-    scalar aRoe = sqrt((gammaRoe-1)*(HRoe-0.5*uRoe*uRoe));
-    SL = uRoe*nx-aRoe;
-    SR = uRoe*nx+aRoe;
+    scalar RT    = sqrt(rhoR/rhoL);
+    scalar v     = (vxL+RT*vxR)/(1+RT);
+    scalar HL    = (EtL + pL)/rhoL;
+    scalar HR    = (EtR + pR)/rhoR;
+    scalar H     = (HL+RT*HR)/(1+RT);
+    scalar alpha = (alphaL+RT*alphaR)/(1+RT);
+    scalar gamma = 1+1.0/alpha;
+    scalar a     = sqrt((gamma-1)*(H-0.5*v*v));
+    SL = v*nx-a;
+    SR = v*nx+a;
     break;}
   case 2: { // Toro 10.52
     scalar eta2 = 0.5*sqrt(rhoL*rhoR)/((sqrt(rhoL)+sqrt(rhoR))*(sqrt(rhoL)+sqrt(rhoR)));
@@ -176,8 +176,6 @@ arch_device scalar oned_multifluid_hll(scalar* uL,scalar* uR, scalar* n,scalar* 
   ncterm[3] = -0.5*vnc;
 #endif
 
-
-
 } // end HLL function
 
 
@@ -192,7 +190,7 @@ arch_device scalar oned_multifluid_roe(scalar* uL,scalar* uR, scalar* n,scalar* 
 
   scalar nx = n[0];
 
-scalar rhoL  = uL[0];
+  scalar rhoL  = uL[0];
   scalar rhoR  = uR[0];
   scalar vxL   = uL[1]/uL[0];
   scalar vxR   = uR[1]/uR[0];
@@ -213,59 +211,65 @@ scalar rhoL  = uL[0];
   scalar aR = sqrt((gammaR*pR)/rhoR);
 
   // Compute Roe averages
-  scalar RT     = sqrt(rhoR/rhoL);
-  scalar rhoRoe = RT*rhoL;
-  scalar uRoe     = (vxL+RT*vxR)/(1+RT);
-  scalar HL       = (EtL + pL)/rhoL;
-  scalar HR       = (EtR + pR)/rhoR;
-  scalar HRoe     = (HL+RT*HR)/(1+RT);
-  scalar alphaRoe = (alphaL+RT*alphaR)/(1+RT);
-  scalar gammaRoe = 1+1.0/alphaRoe;
-  scalar aRoe = sqrt((gammaRoe-1)*(HRoe-0.5*uRoe*uRoe));
-  scalar iL = pL*alphaL;
-  scalar iR = pR*alphaR;
-  scalar iRoe = (sqrt(rhoL)*iL+sqrt(rhoR)*iR)/(sqrt(rhoL)+sqrt(rhoR));
-  scalar DpRoe= (gammaRoe-1)*(gammaRoe-1)*(alphaRoe*(iR-iL) - iRoe*(alphaR-alphaL));
-  scalar pRoe = (gammaRoe-1)*iRoe;
+  scalar RT    = sqrt(rhoR/rhoL);
+  scalar rho   = RT*rhoL;
+  scalar v     = (vxL+RT*vxR)/(1+RT);
+  scalar HL    = (EtL + pL)/rhoL;
+  scalar HR    = (EtR + pR)/rhoR;
+  scalar H     = (HL+RT*HR)/(1+RT);
+  scalar alpha = (alphaL+RT*alphaR)/(1+RT);
+  scalar gamma = 1+1.0/alpha;
+  scalar a     = sqrt((gamma-1)*(H-0.5*v*v));
+  scalar iL    = pL*alphaL;
+  scalar iR    = pR*alphaR;
+  scalar i     = (sqrt(rhoL)*iL+sqrt(rhoR)*iR)/(sqrt(rhoL)+sqrt(rhoR));
+  scalar Dp    = (gamma-1)*(gamma-1)*(alpha*(iR-iL) - i*(alphaR-alphaL));
+  scalar p     = (gamma-1)*i;
 
   // Roe waves strengths
   int sizevap = 4;
   scalar* dV = new scalar[sizevap];
-  dV[0] = (DpRoe - rhoRoe*aRoe*(vxR-vxL))/(2*aRoe*aRoe);
-  dV[1] = (rhoR-rhoL) - DpRoe/(aRoe*aRoe);
-  dV[2] = (DpRoe + rhoRoe*aRoe*(vxR-vxL))/(2*aRoe*aRoe);
+  dV[0] = (Dp - rho*a*(vxR-vxL))/(2*a*a);
+  dV[1] = (rhoR-rhoL) - Dp/(a*a);
+  dV[2] = (Dp + rho*a*(vxR-vxL))/(2*a*a);
   dV[3] = alphaR-alphaL;
   
   // Absolute value of Roe eigenvalues
   scalar* ws = new scalar[sizevap];
-  ws[0] = fabs(uRoe-aRoe);
-  ws[1] = fabs(uRoe);
-  ws[2] = fabs(uRoe+aRoe);
-  ws[3] = fabs(uRoe);
+  ws[0] = fabs(v-a);
+  ws[1] = fabs(v);
+  ws[2] = fabs(v+a);
+  ws[3] = fabs(v);
   
-  // Entropy fix
-
+  // Entropy fix from http://www.cfdbooks.com/cfdcodes/oned_euler_fluxes_v4.f90
+  // Modified wave speeds for nonlinear fields (to remove expansion shocks).
+  // There are various ways to implement an entropy fix. This is just one
+  // example.
+  /* scalar Da = MAX(0.0, 4*((vxR-aR)-(vxL-aL))); */
+  /* if(ws[0] < 0.5*Da) ws[0] = ws[0]*ws[0]/Da + 0.25*Da; */
+  /* Da = MAX(0.0, 4*((vxR+aR)-(vxL+aL))); */
+  /* if(ws[2] < 0.5*Da) ws[2] = ws[2]*ws[2]/Da + 0.25*Da; */
 
   // Roe Right eigenvectors
   scalar* R = new scalar[sizevap*sizevap];
   R[0*sizevap+0] = 1;
-  R[0*sizevap+1] = uRoe-aRoe;
-  R[0*sizevap+2] = HRoe-uRoe*aRoe;
+  R[0*sizevap+1] = v-a;
+  R[0*sizevap+2] = H-v*a;
   R[0*sizevap+3] = 0;
 
   R[1*sizevap+0] = 1;
-  R[1*sizevap+1] = uRoe;
-  R[1*sizevap+2] = 0.5*uRoe*uRoe;
+  R[1*sizevap+1] = v;
+  R[1*sizevap+2] = 0.5*v*v;
   R[1*sizevap+3] = 0;
 
   R[2*sizevap+0] = 1;
-  R[2*sizevap+1] = uRoe+aRoe;
-  R[2*sizevap+2] = HRoe+uRoe*aRoe;
+  R[2*sizevap+1] = v+a;
+  R[2*sizevap+2] = H+v*a;
   R[2*sizevap+3] = 0;
 
   R[3*sizevap+0] = 0;
   R[3*sizevap+1] = 0;
-  R[3*sizevap+2] = pRoe;
+  R[3*sizevap+2] = p;
   R[3*sizevap+3] = 1;  
 
   // first: fx = rho*u
@@ -285,7 +289,7 @@ scalar rhoL  = uL[0];
   F[3] = 0.5*(flux_abc(rhoL,vxL,alphaL) + flux_abc(rhoR,vxR,alphaR))*nx;
 #elif  GAMNCON
   F[3] = 0;
-  ncterm[3] = -0.5*uRoe*(alphaR-alphaL)*nx;
+  ncterm[3] = -0.5*v*(alphaR-alphaL)*nx;
 #endif
   for(int k=0;k<sizevap;k++) F[3] += -0.5*ws[k]*dV[k]*R[k*sizevap+3];
 

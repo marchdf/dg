@@ -103,14 +103,14 @@ arch_device scalar oned_passive_hll(scalar* uL,scalar* uR, scalar* n,scalar* F, 
   int estimate = 0;
   switch (estimate){
   case 1:{ // Toro 10.49
-    scalar RT       = sqrt(rhoR/rhoL);
-    scalar uRoe     = (vxL+RT*vxR)/(1+RT);
-    scalar HL       = (EtL + pL)/rhoL;
-    scalar HR       = (EtR + pR)/rhoR;
-    scalar HRoe     = (HL+RT*HR)/(1+RT);
-    scalar aRoe = sqrt((gamma-1)*(HRoe-0.5*uRoe*uRoe));
-    SL = uRoe*nx-aRoe;
-    SR = uRoe*nx+aRoe;
+    scalar RT = sqrt(rhoR/rhoL);
+    scalar v  = (vxL+RT*vxR)/(1+RT);
+    scalar HL = (EtL + pL)/rhoL;
+    scalar HR = (EtR + pR)/rhoR;
+    scalar H  = (HL+RT*HR)/(1+RT);
+    scalar a  = sqrt((gamma-1)*(H-0.5*v*v));
+    SL = v*nx-a;
+    SR = v*nx+a;
     break;}
   case 2: { // Toro 10.52
     scalar eta2 = 0.5*sqrt(rhoL*rhoR)/((sqrt(rhoL)+sqrt(rhoR))*(sqrt(rhoL)+sqrt(rhoR)));
@@ -185,42 +185,48 @@ arch_device scalar oned_passive_roe(scalar* uL,scalar* uR, scalar* n,scalar* F, 
   scalar HR = (EtR + pR)/rhoR;
 
   // Compute Roe averages
-  scalar RT     = sqrt(rhoR/rhoL);
-  scalar rhoRoe = RT*rhoL;
-  scalar uRoe   = (vxL+RT*vxR)/(1+RT);//(sqrt(rhoL)*uL+sqrt(rhoR)*uR)/(sqrt(rhoL)+sqrt(rhoR));
-  scalar HRoe   = (HL+RT*HR)/(1+RT);//(sqrt(rhoL)*HL+sqrt(rhoR)*HR)/(sqrt(rhoL)+sqrt(rhoR));
-  scalar aRoe = sqrt((gamma-1)*(HRoe-0.5*uRoe*uRoe));
-  scalar DpRoe= pR - pL;
+  scalar RT  = sqrt(rhoR/rhoL);
+  scalar rho = RT*rhoL;
+  scalar v   = (vxL+RT*vxR)/(1+RT);//(sqrt(rhoL)*uL+sqrt(rhoR)*uR)/(sqrt(rhoL)+sqrt(rhoR));
+  scalar H   = (HL+RT*HR)/(1+RT);//(sqrt(rhoL)*HL+sqrt(rhoR)*HR)/(sqrt(rhoL)+sqrt(rhoR));
+  scalar a   = sqrt((gamma-1)*(H-0.5*v*v));
+  scalar Dp  = pR - pL;
 
   // Roe waves strengths
   int sizevap = 3;
   scalar* dV = new scalar[sizevap];
-  dV[0] = (DpRoe - rhoRoe*aRoe*(vxR-vxL))/(2*aRoe*aRoe);
-  dV[1] = (rhoR-rhoL) - DpRoe/(aRoe*aRoe);
-  dV[2] = (DpRoe + rhoRoe*aRoe*(vxR-vxL))/(2*aRoe*aRoe);
+  dV[0] = (Dp - rho*a*(vxR-vxL))/(2*a*a);
+  dV[1] = (rhoR-rhoL) - Dp/(a*a);
+  dV[2] = (Dp + rho*a*(vxR-vxL))/(2*a*a);
 
   // Absolute value of Roe eigenvalues
   scalar* ws = new scalar[sizevap];
-  ws[0] = fabs(uRoe-aRoe);
-  ws[1] = fabs(uRoe);
-  ws[2] = fabs(uRoe+aRoe);
+  ws[0] = fabs(v-a);
+  ws[1] = fabs(v);
+  ws[2] = fabs(v+a);
 
-  // Entropy fix
+  // Entropy fix from http://www.cfdbooks.com/cfdcodes/oned_euler_fluxes_v4.f90
+  // Modified wave speeds for nonlinear fields (to remove expansion shocks).
+  // There are various ways to implement an entropy fix. This is just one
+  // example.
+  /* scalar Da = MAX(0.0, 4*((vxR-aR)-(vxL-aL))); */
+  /* if(ws[0] < 0.5*Da) ws[0] = ws[0]*ws[0]/Da + 0.25*Da; */
+  /* Da = MAX(0.0, 4*((vxR+aR)-(vxL+aL))); */
+  /* if(ws[2] < 0.5*Da) ws[2] = ws[2]*ws[2]/Da + 0.25*Da; */
 
-
-  // Roe Right eigenvectors
+  //  Right Roe eigenvectors
   scalar* R = new scalar[sizevap*sizevap];
   R[0*sizevap+0] = 1;
-  R[0*sizevap+1] = uRoe-aRoe;
-  R[0*sizevap+2] = HRoe-uRoe*aRoe;
+  R[0*sizevap+1] = v-a;
+  R[0*sizevap+2] = H-v*a;
 
   R[1*sizevap+0] = 1;
-  R[1*sizevap+1] = uRoe;
-  R[1*sizevap+2] = 0.5*uRoe*uRoe;
+  R[1*sizevap+1] = v;
+  R[1*sizevap+2] = 0.5*v*v;
 
   R[2*sizevap+0] = 1;
-  R[2*sizevap+1] = uRoe+aRoe;
-  R[2*sizevap+2] = HRoe+uRoe*aRoe;
+  R[2*sizevap+1] = v+a;
+  R[2*sizevap+2] = H+v*a;
 
   // first: fx = rho*u
   F[0] = 0.5*(flux_ab(rhoL,vxL) + flux_ab(rhoR,vxR))*nx;
@@ -241,7 +247,7 @@ arch_device scalar oned_passive_roe(scalar* uL,scalar* uR, scalar* n,scalar* F, 
   //fifth:
   F[4] = 0.0;
   for(int k=0;k<sizevap;k++) F[4] += -0.5*ws[k]*dV[k]*R[k*sizevap+0];
-  ncterm[4] = -0.5*uRoe*(phincR-phincL)*nx;
+  ncterm[4] = -0.5*v*(phincR-phincL)*nx;
 
   // Free some pointers
   delete[] dV;

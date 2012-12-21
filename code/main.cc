@@ -163,7 +163,7 @@ int main (int argc, char **argv)
   get_element_types(order, msh_qua, msh_tri, msh_lin);
   if     (inputs.getElemType() == "lin"){face_type = 0      , elem_type = msh_lin; nsides = 0;}
   else if(inputs.getElemType() == "tri"){face_type = msh_lin, elem_type = msh_tri; nsides = 3;}
-  else if(inputs.getElemType() == "qua"){face_type = msh_lin, elem_type = msh_qua; nsides = 3;} // No idea yet
+  else if(inputs.getElemType() == "qua"){face_type = msh_lin, elem_type = msh_qua; nsides = 4;} // No idea yet
   else printf("Invalid element type in deck");
     
   // Get the nodes, elements, interfaces, normals

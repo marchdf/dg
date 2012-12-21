@@ -12,6 +12,179 @@
 //==========================================================================
 
 //==========================================================================
+arch_global void evaluate_sf(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
+
+#ifdef USE_CPU
+  for(int e = 0; e < N_E; e++){
+    for(int g = 0; g < N_G; g++){
+#elif USE_GPU
+      int e = blockIdx.x;
+      int g = threadIdx.x;
+#endif
+
+
+      //====================================================================
+      //
+      // 1D problem
+      //
+      //====================================================================
+#ifdef ONED
+#ifdef PASSIVE //===========================================================
+      scalar rho   = Ug[(e*N_F+0)*N_G+g];   
+      scalar u     = Ug[(e*N_F+1)*N_G+g]/rho;  // (rho u / rho) = u
+      scalar Et    = Ug[(e*N_F+2)*N_G+g];
+      scalar gamma = constants::GLOBAL_GAMMA;
+      scalar p = (gamma-1)*(Et - 0.5*rho*u*u);
+
+      // Source term
+      s[(e*N_F+0)*N_G+g] = 0;
+      s[(e*N_F+1)*N_G+g] = 0;
+      s[(e*N_F+2)*N_G+g] = 0;
+      s[(e*N_F+3)*N_G+g] = 0;
+      s[(e*N_F+4)*N_G+g] = -u*dUg[(e*N_F+4)*N_G+g]*invJac[e*N_G+g];// = -u*dphincdx;
+
+      // Flux derive par rapport a x
+      f[((e*N_F+0)*N_G+g)*D+0] = flux_ab(rho,u);       
+      f[((e*N_F+1)*N_G+g)*D+0] = flux_ab2pc(rho,u,p);
+      f[((e*N_F+2)*N_G+g)*D+0] = flux_ab(Et+p,u);
+      f[((e*N_F+3)*N_G+g)*D+0] = flux_abc(rho,u,Ug[(e*N_F+3)*N_G+g]/rho); // rho*u*phic
+      f[((e*N_F+4)*N_G+g)*D+0] = 0;
+
+#elif MULTIFLUID //=========================================================
+      scalar rho   = Ug[(e*N_F+0)*N_G+g];   
+      scalar u     = Ug[(e*N_F+1)*N_G+g]/rho;  // (rho u / rho) = u
+      scalar Et    = Ug[(e*N_F+2)*N_G+g];
+#ifdef GAMCONS
+      scalar gamma=1+rho/Ug[(e*N_F+3)*N_G+g];
+#elif  GAMNCON
+      scalar gamma=1+1.0/Ug[(e*N_F+3)*N_G+g];
+#endif
+      scalar p = (gamma-1)*(Et - 0.5*rho*u*u);
+
+      // Source term
+      s[(e*N_F+0)*N_G+g] = 0;
+      s[(e*N_F+1)*N_G+g] = 0;
+      s[(e*N_F+2)*N_G+g] = 0;
+
+      // Flux derive par rapport a x
+      f[((e*N_F+0)*N_G+g)*D+0] = flux_ab(rho,u);       
+      f[((e*N_F+1)*N_G+g)*D+0] = flux_ab2pc(rho,u,p);
+      f[((e*N_F+2)*N_G+g)*D+0] = flux_ab(Et+p,u);
+
+#ifdef GAMCONS
+      s[(e*N_F+3)*N_G+g] = 0;
+      f[((e*N_F+3)*N_G+g)*D+0] = flux_abc(rho,u,1/(gamma-1));
+#elif  GAMNCON
+      s[(e*N_F+3)*N_G+g] = -u*dUg[(e*N_F+3)*N_G+g]*invJac[e*N_G+g]; // = -u*dalphadx
+      f[((e*N_F+3)*N_G+g)*D+0] = 0;
+#endif
+
+#endif // end ifs on physics
+
+
+      //===================================================================
+      //
+      // 2D problem
+      //
+      //===================================================================
+#elif TWOD
+#ifdef PASSIVE //==========================================================
+      scalar rho   = Ug[(e*N_F+0)*N_G+g];   
+      scalar u     = Ug[(e*N_F+1)*N_G+g]/rho;  // (rho u / rho) = u
+      scalar v     = Ug[(e*N_F+2)*N_G+g]/rho;  // (rho v / rho) = v
+      scalar Et    = Ug[(e*N_F+3)*N_G+g];
+      scalar phic  = Ug[(e*N_F+4)*N_G+g]/rho; 
+      scalar vdotgradphinc = 0; // = -u*dphincdx-v*dphincdy
+      for(int alpha = 0; alpha < D; alpha++){
+	vdotgradphinc += 
+	  -u*dUg[((e*N_F+5)*N_G+g)*D+alpha]*invJac[((e*N_G+g)*D+0)*D+alpha] // dphidx = dphidxi*dxidx + dphideta*detadx
+	  -v*dUg[((e*N_F+5)*N_G+g)*D+alpha]*invJac[((e*N_G+g)*D+1)*D+alpha];// dphidy = dphidxi*dxidy + dphideta*detady
+      }
+      scalar gamma = constants::GLOBAL_GAMMA;
+      scalar p = (gamma-1)*(Et - 0.5*rho*(u*u+v*v));
+
+      // Source term
+      s[(e*N_F+0)*N_G+g] = 0;
+      s[(e*N_F+1)*N_G+g] = 0;
+      s[(e*N_F+2)*N_G+g] = 0;
+      s[(e*N_F+3)*N_G+g] = 0;
+      s[(e*N_F+4)*N_G+g] = 0;
+      s[(e*N_F+5)*N_G+g] = vdotgradphinc;
+      
+      // Flux derive par rapport a x
+      f[((e*N_F+0)*N_G+g)*D+0] = flux_ab(rho,u);      // rho*u     
+      f[((e*N_F+1)*N_G+g)*D+0] = flux_ab2pc(rho,u,p); // rho*u*u + p
+      f[((e*N_F+2)*N_G+g)*D+0] = flux_abc(rho,u,v);   // rho*u*v
+      f[((e*N_F+3)*N_G+g)*D+0] = flux_ab(Et+p,u);  // u(E+p)
+      f[((e*N_F+4)*N_G+g)*D+0] = flux_abc(rho,u,phic);// rho*u*phic
+      f[((e*N_F+5)*N_G+g)*D+0] = 0;
+      
+      // Flux derive par rapport a y
+      f[((e*N_F+0)*N_G+g)*D+1] = flux_ab(rho,v);      // rho*v     
+      f[((e*N_F+1)*N_G+g)*D+1] = flux_abc(rho,u,v);   // rho*u*v
+      f[((e*N_F+2)*N_G+g)*D+1] = flux_ab2pc(rho,v,p); // rho*v*v + p
+      f[((e*N_F+3)*N_G+g)*D+1] = flux_ab(Et+p,v);  // v(E+p)
+      f[((e*N_F+4)*N_G+g)*D+1] = flux_abc(rho,v,phic);// rho*v*phic
+      f[((e*N_F+5)*N_G+g)*D+1] = 0; 
+
+#elif MULTIFLUID //========================================================
+      scalar rho   = Ug[(e*N_F+0)*N_G+g];   
+      scalar u     = Ug[(e*N_F+1)*N_G+g]/rho;  // (rho u / rho) = u
+      scalar v     = Ug[(e*N_F+2)*N_G+g]/rho;  // (rho v / rho) = v
+      scalar Et    = Ug[(e*N_F+3)*N_G+g];
+#ifdef GAMCONS
+      scalar gamma=1+rho/Ug[(e*N_F+4)*N_G+g];
+#elif  GAMNCON
+      scalar gamma=1+1.0/Ug[(e*N_F+4)*N_G+g];
+#endif
+      scalar p = (gamma-1)*(Et - 0.5*rho*(u*u+v*v));
+
+      // Source term
+      s[(e*N_F+0)*N_G+g] = 0;
+      s[(e*N_F+1)*N_G+g] = 0;
+      s[(e*N_F+2)*N_G+g] = 0;
+      s[(e*N_F+3)*N_G+g] = 0;
+
+      // Flux derive par rapport a x
+      f[((e*N_F+0)*N_G+g)*D+0] = flux_ab(rho,u);      // rho*u     
+      f[((e*N_F+1)*N_G+g)*D+0] = flux_ab2pc(rho,u,p); // rho*u*u + p
+      f[((e*N_F+2)*N_G+g)*D+0] = flux_abc(rho,u,v);   // rho*u*v
+      f[((e*N_F+3)*N_G+g)*D+0] = flux_ab(Et+p,u);     // u(E+p)
+
+      // Flux derive par rapport a y
+      f[((e*N_F+0)*N_G+g)*D+1] = flux_ab(rho,v);      // rho*v     
+      f[((e*N_F+1)*N_G+g)*D+1] = flux_abc(rho,u,v);   // rho*u*v
+      f[((e*N_F+2)*N_G+g)*D+1] = flux_ab2pc(rho,v,p); // rho*v*v + p
+      f[((e*N_F+3)*N_G+g)*D+1] = flux_ab(Et+p,v);     // v(E+p)
+
+#ifdef GAMCONS
+      s[(e*N_F+4)*N_G+g] = 0;
+      f[((e*N_F+4)*N_G+g)*D+0] = flux_abc(rho,u,1/(gamma-1));// flux wrt x
+      f[((e*N_F+4)*N_G+g)*D+1] = flux_abc(rho,v,1/(gamma-1));// flux wrt y
+#elif  GAMNCON
+      scalar vdotgradalpha = 0; // = -u*dalphadx-v*dalphady
+      for(int alpha = 0; alpha < D; alpha++){
+	vdotgradalpha += 
+	  -u*dUg[((e*N_F+4)*N_G+g)*D+alpha]*invJac[((e*N_G+g)*D+0)*D+alpha] // dphidx = dphidxi*dxidx + dphideta*detadx
+	  -v*dUg[((e*N_F+4)*N_G+g)*D+alpha]*invJac[((e*N_G+g)*D+1)*D+alpha];// dphidy = dphidxi*dxidy + dphideta*detady
+      }
+      s[(e*N_F+4)*N_G+g] = vdotgradalpha; 
+      f[((e*N_F+4)*N_G+g)*D+0] = 0;// flux wrt x
+      f[((e*N_F+4)*N_G+g)*D+1] = 0;// flux wrt y
+#endif
+
+#endif // end ifs on physics
+
+#endif // end ifs on dimensions
+     
+#ifdef USE_CPU
+    }
+  }
+#endif
+}
+
+
+//==========================================================================
 arch_global void evaluate_sf_1D(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
 
 #ifdef USE_CPU
@@ -1037,6 +1210,17 @@ void Levaluate_q_2D(int M_G, int M_T, int N_F, scalar gamma, scalar* q, scalar* 
 #endif
 
   evaluate_q_2D arch_args_array(M_G*4*(4+4)*sizeof(scalar)) (M_G, M_T, N_F, gamma, q, UgF, normals);
+}
+
+extern "C" 
+void Levaluate_sf(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
+
+#ifdef USE_GPU
+  dim3 dimBlock(N_G,1,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  evaluate_sf arch_args (D, N_G, N_E, N_F, s, f, Ug, dUg, invJac);
 }
 
 extern "C" 

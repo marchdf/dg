@@ -241,8 +241,13 @@ arch_device scalar twod_passive_roe(scalar* uL,scalar* uR, scalar* n,scalar* F, 
   ws[2] = fabs(vn);
   ws[3] = fabs(vn+a);
 
-  /* // Entropy fix */
-
+  // Harten's Entropy Fix JCP(1983), 49, pp357-393:
+  // only for the nonlinear fields.
+  // http://www.cfdbooks.com/cfdcodes/twod_euler_fluxes_v2.f90
+  /* scalar dws0 = 0.2; */
+  /* if(ws[0] < dws0) ws[0] = 0.5 * (ws[0]*ws[0]/dws0+dws0); */
+  /* scalar dws3 = 0.2; */
+  /* if(ws[3] < dws3) ws[3] = 0.5 * (ws[3]*ws[3]/dws3+dws3); */
 
   // Roe Right eigenvectors
   scalar* R = new scalar[sizevap*sizevap];
