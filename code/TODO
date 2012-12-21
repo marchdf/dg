@@ -1,3 +1,8 @@
+I think that the prioritites when I get back are: 
+- Limiting in 2D
+- GPU/MPI capabilities
+- compilation on nyx
+
 OUTPUT
   - Inefficient to build a matrix to output it...
   - Add capability to output in the .txt format that gmsh can generate too
