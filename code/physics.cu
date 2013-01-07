@@ -1062,54 +1062,108 @@ arch_global void evaluate_q_2D(int M_G, int M_T, int N_F, scalar gamma, scalar* 
 //==========================================================================
 arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar* UgF, scalar* normals){
 
-
-  scalar* uL = new scalar[N_F]; // conserved variables
-  scalar* uR = new scalar[N_F]; 
-  scalar* n  = new scalar[D];   // normals
-  scalar* F  = new scalar[N_F];   // fluxes
-  scalar* ncterm = new scalar[N_F];
-  
+ 
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
-    //scalar* vap = new scalar[M_G*2*4*(4+4)];
-    scalar* vap = new scalar[M_G*2*4];
+    scalar* buffer = new scalar[M_G*2*N_F]; // buffer holds F and ncterm (M_G x 2*N_F: [F,ncterm])
     for(int g = 0; g < M_G; g++){
 #elif USE_GPU
       int t = blockIdx.x;
       int g = threadIdx.x;
-      extern __shared__ scalar vap[];
+      extern __shared__ scalar buffer[];
 #endif
 
       // Initialize these variables
-      for(int fc = 0; fc < N_F; fc++){
-	uL[fc] = UgF[((t*N_F+fc)*2+0)*M_G+g];
-	uR[fc] = UgF[((t*N_F+fc)*2+1)*M_G+g];
-	F[fc]  = 0;
-	ncterm[fc] = 0;
-      }
-      for(int alpha = 0; alpha < D; alpha++) n[alpha] = normals[t*D+alpha];
+      int Fidx = g*2*N_F;       // index for start of F
+      int ncidx = g*2*N_F+N_F;  // index for start of ncterm
+      for(int k = 0; k < 2*N_F; k++) buffer[Fidx+k]  = 0;
       
       // Send the data to the Riemann solvers
 #ifdef ONED
 
 #ifdef PASSIVE
-
 #ifdef RUS
-      oned_passive_rusanov(uL,uR,n,F,ncterm);
+      oned_passive_rusanov(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			   UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			   UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			   UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			   UgF[((t*N_F+2)*2+0)*M_G+g],                            // EtL
+			   UgF[((t*N_F+2)*2+1)*M_G+g],                            // EtR
+			   UgF[((t*N_F+3)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // phicL
+			   UgF[((t*N_F+3)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // phicR
+			   UgF[((t*N_F+4)*2+0)*M_G+g],                            // phincL
+			   UgF[((t*N_F+4)*2+1)*M_G+g],                            // phincR
+			   normals[t*D+0],                                        // nx
+			   N_F,
+			   &buffer[Fidx],&buffer[ncidx]);
 #elif HLL
-      oned_passive_hll(uL,uR,n,F,ncterm);
+      oned_passive_hll(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+		       UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+		       UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+		       UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+		       UgF[((t*N_F+2)*2+0)*M_G+g],                            // EtL
+		       UgF[((t*N_F+2)*2+1)*M_G+g],                            // EtR
+		       UgF[((t*N_F+3)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // phicL
+		       UgF[((t*N_F+3)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // phicR
+		       UgF[((t*N_F+4)*2+0)*M_G+g],                            // phincL
+		       UgF[((t*N_F+4)*2+1)*M_G+g],                            // phincR
+		       normals[t*D+0],                                        // nx
+		       N_F,
+		       &buffer[Fidx],&buffer[ncidx]);
 #elif ROE
-      oned_passive_roe(uL,uR,n,F,ncterm);
+      oned_passive_roe(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+		       UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+		       UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+		       UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+		       UgF[((t*N_F+2)*2+0)*M_G+g],                            // EtL
+		       UgF[((t*N_F+2)*2+1)*M_G+g],                            // EtR
+		       UgF[((t*N_F+3)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // phicL
+		       UgF[((t*N_F+3)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // phicR
+		       UgF[((t*N_F+4)*2+0)*M_G+g],                            // phincL
+		       UgF[((t*N_F+4)*2+1)*M_G+g],                            // phincR
+		       normals[t*D+0],                                        // nx
+		       N_F,
+		       &buffer[Fidx],&buffer[ncidx]);
 #endif // flux if
 
 #elif MULTIFLUID
 
 #ifdef RUS
-      oned_multifluid_rusanov(uL,uR,n,F,ncterm);
+      oned_multifluid_rusanov(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			      UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			      UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			      UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			      UgF[((t*N_F+2)*2+0)*M_G+g],                            // EtL
+			      UgF[((t*N_F+2)*2+1)*M_G+g],                            // EtR
+			      UgF[((t*N_F+3)*2+0)*M_G+g],                            // alphaL
+			      UgF[((t*N_F+3)*2+1)*M_G+g],                            // alphaR
+			      normals[t*D+0],                                        // nx
+			      N_F,
+			      &buffer[Fidx],&buffer[ncidx]);
 #elif HLL
-      oned_multifluid_hll(uL,uR,n,F,ncterm);
+      oned_multifluid_hll(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			  UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			  UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			  UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			  UgF[((t*N_F+2)*2+0)*M_G+g],                            // EtL
+			  UgF[((t*N_F+2)*2+1)*M_G+g],                            // EtR
+			  UgF[((t*N_F+3)*2+0)*M_G+g],                            // alphaL
+			  UgF[((t*N_F+3)*2+1)*M_G+g],                            // alphaR
+			  normals[t*D+0],                                        // nx
+			  N_F,
+			  &buffer[Fidx],&buffer[ncidx]);
 #elif ROE
-      oned_multifluid_roe(uL,uR,n,F,ncterm);
+      oned_multifluid_roe(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			  UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			  UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			  UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			  UgF[((t*N_F+2)*2+0)*M_G+g],                            // EtL
+			  UgF[((t*N_F+2)*2+1)*M_G+g],                            // EtR
+			  UgF[((t*N_F+3)*2+0)*M_G+g],                            // alphaL
+			  UgF[((t*N_F+3)*2+1)*M_G+g],                            // alphaR
+			  normals[t*D+0],                                        // nx
+			  N_F,
+			  &buffer[Fidx],&buffer[ncidx]);
 #endif // flux if
 
 #endif // physics if
@@ -1119,21 +1173,105 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 #ifdef PASSIVE
 
 #ifdef RUS
-      twod_passive_rusanov(uL,uR,n,F,ncterm);
+      twod_passive_rusanov(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			   UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			   UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			   UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			   UgF[((t*N_F+2)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vyL
+			   UgF[((t*N_F+2)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vyR
+			   UgF[((t*N_F+3)*2+0)*M_G+g],                            // EtL
+			   UgF[((t*N_F+3)*2+1)*M_G+g],                            // EtR
+			   UgF[((t*N_F+4)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // phicL
+			   UgF[((t*N_F+4)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // phicR
+			   UgF[((t*N_F+5)*2+0)*M_G+g],                            // phincL
+			   UgF[((t*N_F+5)*2+1)*M_G+g],                            // phincR
+			   normals[t*D+0],                                        // nx
+			   normals[t*D+1],                                        // ny
+			   N_F,
+			   &buffer[Fidx],&buffer[ncidx]);
 #elif HLL
-      twod_passive_hll(uL,uR,n,F,ncterm);
+      twod_passive_hll(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+		       UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+		       UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+		       UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+		       UgF[((t*N_F+2)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vyL
+		       UgF[((t*N_F+2)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vyR
+		       UgF[((t*N_F+3)*2+0)*M_G+g],                            // EtL
+		       UgF[((t*N_F+3)*2+1)*M_G+g],                            // EtR
+		       UgF[((t*N_F+4)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // phicL
+		       UgF[((t*N_F+4)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // phicR
+		       UgF[((t*N_F+5)*2+0)*M_G+g],                            // phincL
+		       UgF[((t*N_F+5)*2+1)*M_G+g],                            // phincR
+		       normals[t*D+0],                                        // nx
+		       normals[t*D+1],                                        // ny
+		       N_F,
+		       &buffer[Fidx],&buffer[ncidx]);
 #elif ROE
-      twod_passive_roe(uL,uR,n,F,ncterm);
+      twod_passive_roe(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+		       UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+		       UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+		       UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+		       UgF[((t*N_F+2)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vyL
+		       UgF[((t*N_F+2)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vyR
+		       UgF[((t*N_F+3)*2+0)*M_G+g],                            // EtL
+		       UgF[((t*N_F+3)*2+1)*M_G+g],                            // EtR
+		       UgF[((t*N_F+4)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // phicL
+		       UgF[((t*N_F+4)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // phicR
+		       UgF[((t*N_F+5)*2+0)*M_G+g],                            // phincL
+		       UgF[((t*N_F+5)*2+1)*M_G+g],                            // phincR
+		       normals[t*D+0],                                        // nx
+		       normals[t*D+1],                                        // ny
+		       N_F,
+		       &buffer[Fidx],&buffer[ncidx]);
 #endif // flux if
 
 #elif MULTIFLUID
 
 #ifdef RUS
-      twod_multifluid_rusanov(uL,uR,n,F,ncterm);
+      twod_multifluid_rusanov(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			      UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			      UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			      UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			      UgF[((t*N_F+2)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vyL
+			      UgF[((t*N_F+2)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vyR
+			      UgF[((t*N_F+3)*2+0)*M_G+g],                            // EtL
+			      UgF[((t*N_F+3)*2+1)*M_G+g],                            // EtR
+			      UgF[((t*N_F+4)*2+0)*M_G+g],                            // alphaL
+			      UgF[((t*N_F+4)*2+1)*M_G+g],                            // alphaR
+			      normals[t*D+0],                                        // nx
+			      normals[t*D+1],                                        // ny
+			      N_F,
+			      &buffer[Fidx],&buffer[ncidx]);
 #elif HLL
-      twod_multifluid_hll(uL,uR,n,F,ncterm);
+      twod_multifluid_hll(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			  UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			  UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			  UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			  UgF[((t*N_F+2)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vyL
+			  UgF[((t*N_F+2)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vyR
+			  UgF[((t*N_F+3)*2+0)*M_G+g],                            // EtL
+			  UgF[((t*N_F+3)*2+1)*M_G+g],                            // EtR
+			  UgF[((t*N_F+4)*2+0)*M_G+g],                            // alphaL
+			  UgF[((t*N_F+4)*2+1)*M_G+g],                            // alphaR
+			  normals[t*D+0],                                        // nx
+			  normals[t*D+1],                                        // ny
+			  N_F,
+			  &buffer[Fidx],&buffer[ncidx]);
 #elif ROE
-      twod_multifluid_roe(uL,uR,n,F,ncterm);
+      twod_multifluid_roe(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			  UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			  UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			  UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			  UgF[((t*N_F+2)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vyL
+			  UgF[((t*N_F+2)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vyR
+			  UgF[((t*N_F+3)*2+0)*M_G+g],                            // EtL
+			  UgF[((t*N_F+3)*2+1)*M_G+g],                            // EtR
+			  UgF[((t*N_F+4)*2+0)*M_G+g],                            // alphaL
+			  UgF[((t*N_F+4)*2+1)*M_G+g],                            // alphaR
+			  normals[t*D+0],                                        // nx
+			  normals[t*D+1],                                        // ny
+			  N_F,
+			  &buffer[Fidx],&buffer[ncidx]);
 #endif // flux if
 
 #endif // physics if
@@ -1142,23 +1280,16 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 
       // Apply the fluxes
       for(int fc = 0; fc < N_F; fc++){
-	q[((t*N_F+fc)*2+0)*M_G+g] =-F[fc] + ncterm[fc];
-	q[((t*N_F+fc)*2+1)*M_G+g] = F[fc] + ncterm[fc];
+	q[((t*N_F+fc)*2+0)*M_G+g] =-buffer[Fidx+fc] + buffer[ncidx+fc];
+	q[((t*N_F+fc)*2+1)*M_G+g] = buffer[Fidx+fc] + buffer[ncidx+fc];
       }
-
       
 #ifdef USE_CPU
     } // end loop on g
-    delete[] vap;
+    delete[] buffer;
   } // end loop on t
 #endif
 
-  // Free the vectors
-  delete[] uL;
-  delete[] uR;
-  delete[] n;
-  delete[] F;
-  
 }
 
 
@@ -1231,7 +1362,7 @@ void Levaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar* UgF, scala
   dim3 dimGrid(M_T,1);
 #endif
 
-  evaluate_q arch_args_array(M_G*4*(4+4)*sizeof(scalar)) (M_G, M_T, N_F, D, q, UgF, normals);
+  evaluate_q arch_args_array(M_G*2*N_F*sizeof(scalar)) (M_G, M_T, N_F, D, q, UgF, normals);
 }
 
 

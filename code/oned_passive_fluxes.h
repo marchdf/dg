@@ -13,19 +13,20 @@
 //* Obstacles, J. Comput. Math. Phys. USSR, 1, pp. 267-279, 1961.
 //*
 //*****************************************************************************
-arch_device scalar oned_passive_rusanov(scalar* uL,scalar* uR, scalar* n,scalar* F, scalar* ncterm){
+arch_device void oned_passive_rusanov(scalar rhoL,
+				      scalar rhoR,
+				      scalar vxL,
+				      scalar vxR,
+				      scalar EtL,
+				      scalar EtR,
+				      scalar phicL,
+				      scalar phicR,
+				      scalar phincL,
+				      scalar phincR,
+				      scalar nx,
+				      int N_F,
+				      scalar* F, scalar* ncterm){
 
-  scalar nx = n[0];
-  scalar rhoL  = uL[0];
-  scalar rhoR  = uR[0];
-  scalar vxL   = uL[1]/uL[0];
-  scalar vxR   = uR[1]/uR[0];
-  scalar EtL   = uL[2];
-  scalar EtR   = uR[2];
-  scalar phicL = uL[3]/uL[0];
-  scalar phicR = uR[3]/uR[0];
-  scalar phincL= uL[4];
-  scalar phincR= uR[4];
   scalar gamma = constants::GLOBAL_GAMMA;
   scalar pL = (gamma-1)*(EtL - 0.5*rhoL*vxL*vxL);
   scalar pR = (gamma-1)*(EtR - 0.5*rhoR*vxR*vxR);
@@ -77,20 +78,20 @@ arch_device scalar oned_passive_rusanov(scalar* uL,scalar* uR, scalar* n,scalar*
 //* Numerical Analysis, 25(2), pp. 294-318, 1988.
 //*
 //*****************************************************************************
-arch_device scalar oned_passive_hll(scalar* uL,scalar* uR, scalar* n,scalar* F, scalar* ncterm){
+arch_device void oned_passive_hll(scalar rhoL,
+				  scalar rhoR,
+				  scalar vxL,
+				  scalar vxR,
+				  scalar EtL,
+				  scalar EtR,
+				  scalar phicL,
+				  scalar phicR,
+				  scalar phincL,
+				  scalar phincR,
+				  scalar nx,
+				  int N_F,
+				  scalar* F, scalar* ncterm){
 
-  scalar nx = n[0];
-
-  scalar rhoL  = uL[0];
-  scalar rhoR  = uR[0];
-  scalar vxL   = uL[1]/uL[0];
-  scalar vxR   = uR[1]/uR[0];
-  scalar EtL   = uL[2];
-  scalar EtR   = uR[2];
-  scalar phicL = uL[3]/uL[0];
-  scalar phicR = uR[3]/uR[0];
-  scalar phincL= uL[4];
-  scalar phincR= uR[4];
   scalar gamma = constants::GLOBAL_GAMMA;
   scalar pL = (gamma-1)*(EtL - 0.5*rhoL*vxL*vxL);
   scalar pR = (gamma-1)*(EtR - 0.5*rhoR*vxR*vxR);
@@ -162,20 +163,20 @@ arch_device scalar oned_passive_hll(scalar* uL,scalar* uR, scalar* n,scalar* F, 
 //* Schemes, Journal of Computational Physics, 43, pp. 357-372.
 //*
 //*****************************************************************************
-arch_device scalar oned_passive_roe(scalar* uL,scalar* uR, scalar* n,scalar* F, scalar* ncterm){
+arch_device void oned_passive_roe(scalar rhoL,
+				  scalar rhoR,
+				  scalar vxL,
+				  scalar vxR,
+				  scalar EtL,
+				  scalar EtR,
+				  scalar phicL,
+				  scalar phicR,
+				  scalar phincL,
+				  scalar phincR,
+				  scalar nx,
+				  int N_F,
+				  scalar* F, scalar* ncterm){
 
-  scalar nx = n[0];
-
-  scalar rhoL  = uL[0];
-  scalar rhoR  = uR[0];
-  scalar vxL   = uL[1]/uL[0];
-  scalar vxR   = uR[1]/uR[0];
-  scalar EtL   = uL[2];
-  scalar EtR   = uR[2];
-  scalar phicL = uL[3]/uL[0];
-  scalar phicR = uR[3]/uR[0];
-  scalar phincL= uL[4];
-  scalar phincR= uR[4];
   scalar gamma = constants::GLOBAL_GAMMA;
   scalar pL = (gamma-1)*(EtL - 0.5*rhoL*vxL*vxL);
   scalar pR = (gamma-1)*(EtR - 0.5*rhoR*vxR*vxR);
@@ -193,17 +194,14 @@ arch_device scalar oned_passive_roe(scalar* uL,scalar* uR, scalar* n,scalar* F, 
   scalar Dp  = pR - pL;
 
   // Roe waves strengths
-  int sizevap = 3;
-  scalar* dV = new scalar[sizevap];
-  dV[0] = (Dp - rho*a*(vxR-vxL))/(2*a*a);
-  dV[1] = (rhoR-rhoL) - Dp/(a*a);
-  dV[2] = (Dp + rho*a*(vxR-vxL))/(2*a*a);
+  scalar dV0 = (Dp - rho*a*(vxR-vxL))/(2*a*a);
+  scalar dV1 = (rhoR-rhoL) - Dp/(a*a);
+  scalar dV2 = (Dp + rho*a*(vxR-vxL))/(2*a*a);
 
   // Absolute value of Roe eigenvalues
-  scalar* ws = new scalar[sizevap];
-  ws[0] = fabs(v-a);
-  ws[1] = fabs(v);
-  ws[2] = fabs(v+a);
+  scalar ws0 = fabs(v-a);
+  scalar ws1 = fabs(v);
+  scalar ws2 = fabs(v+a);
 
   // Entropy fix from http://www.cfdbooks.com/cfdcodes/oned_euler_fluxes_v4.f90
   // Modified wave speeds for nonlinear fields (to remove expansion shocks).
@@ -215,45 +213,49 @@ arch_device scalar oned_passive_roe(scalar* uL,scalar* uR, scalar* n,scalar* F, 
   /* if(ws[2] < 0.5*Da) ws[2] = ws[2]*ws[2]/Da + 0.25*Da; */
 
   //  Right Roe eigenvectors
-  scalar* R = new scalar[sizevap*sizevap];
-  R[0*sizevap+0] = 1;
-  R[0*sizevap+1] = v-a;
-  R[0*sizevap+2] = H-v*a;
+  scalar R00 = 1;
+  scalar R01 = v-a;
+  scalar R02 = H-v*a;
 
-  R[1*sizevap+0] = 1;
-  R[1*sizevap+1] = v;
-  R[1*sizevap+2] = 0.5*v*v;
+  scalar R10 = 1;
+  scalar R11 = v;
+  scalar R12 = 0.5*v*v;
 
-  R[2*sizevap+0] = 1;
-  R[2*sizevap+1] = v+a;
-  R[2*sizevap+2] = H+v*a;
+  scalar R20 = 1;
+  scalar R21 = v+a;
+  scalar R22 = H+v*a;
 
   // first: fx = rho*u
-  F[0] = 0.5*(flux_ab(rhoL,vxL) + flux_ab(rhoR,vxR))*nx;
-  for(int k=0;k<sizevap;k++) F[0] += -0.5*ws[k]*dV[k]*R[k*sizevap+0];
+  F[0] = 0.5*(flux_ab(rhoL,vxL) + flux_ab(rhoR,vxR))*nx
+    -0.5*(ws0*dV0*R00+
+	  ws1*dV1*R10+
+	  ws2*dV2*R20);
 
   //second: fx = rho*u*u+Bx*Bx+Pbar; 
-  F[1] = 0.5*(flux_ab2pc(rhoL,vxL,pL)  + flux_ab2pc(rhoR,vxR,pR))*nx;
-  for(int k=0;k<sizevap;k++) F[1] += -0.5*ws[k]*dV[k]*R[k*sizevap+1];
+  F[1] = 0.5*(flux_ab2pc(rhoL,vxL,pL)  + flux_ab2pc(rhoR,vxR,pR))*nx
+    -0.5*(ws0*dV0*R01+
+	  ws1*dV1*R11+
+	  ws2*dV2*R21);
 
   //third: fx = EtplusP*u; 
-  F[2] = 0.5*(flux_ab(EtL+pL,vxL) + flux_ab(EtR+pR,vxR))*nx;
-  for(int k=0;k<sizevap;k++) F[2] += -0.5*ws[k]*dV[k]*R[k*sizevap+2];
+  F[2] = 0.5*(flux_ab(EtL+pL,vxL) + flux_ab(EtR+pR,vxR))*nx
+    -0.5*(ws0*dV0*R02+
+	  ws1*dV1*R12+
+	  ws2*dV2*R22);
 
   //fourth: fx = rho*u*phic
-  F[3] = 0.5*(flux_abc(rhoL,vxL,phicL) + flux_abc(rhoR,vxR,phicR))*nx;
-  for(int k=0;k<sizevap;k++) F[3] += -0.5*ws[k]*dV[k]*R[k*sizevap+0];
+  F[3] = 0.5*(flux_abc(rhoL,vxL,phicL) + flux_abc(rhoR,vxR,phicR))*nx
+    -0.5*(ws0*dV0*R00+
+	  ws1*dV1*R10+
+	  ws2*dV2*R20);
       
   //fifth:
-  F[4] = 0.0;
-  for(int k=0;k<sizevap;k++) F[4] += -0.5*ws[k]*dV[k]*R[k*sizevap+0];
+  F[4] = 0.0
+    -0.5*(ws0*dV0*R00+
+	  ws1*dV1*R10+
+	  ws2*dV2*R20);
   ncterm[4] = -0.5*v*(phincR-phincL)*nx;
 
-  // Free some pointers
-  delete[] dV;
-  delete[] ws;
-  delete[] R;
-  
 } // end Roe function
 
 #endif

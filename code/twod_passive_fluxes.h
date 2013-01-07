@@ -14,24 +14,25 @@
 //* Obstacles, J. Comput. Math. Phys. USSR, 1, pp. 267-279, 1961.
 //*
 //*****************************************************************************
-arch_device scalar twod_passive_rusanov(scalar* uL,scalar* uR, scalar* n,scalar* F, scalar* ncterm){
+arch_device void twod_passive_rusanov(scalar rhoL,
+				      scalar rhoR,
+				      scalar vxL,
+				      scalar vxR,
+				      scalar vyL,
+				      scalar vyR,
+				      scalar EtL,
+				      scalar EtR,
+				      scalar phicL,
+				      scalar phicR,
+				      scalar phincL,
+				      scalar phincR,
+				      scalar nx,
+				      scalar ny,
+				      int N_F,
+				      scalar* F, scalar* ncterm){
 
-  scalar nx = n[0];
-  scalar ny = n[1];
-  scalar rhoL  = uL[0];
-  scalar rhoR  = uR[0];
-  scalar vxL   = uL[1]/uL[0];
-  scalar vxR   = uR[1]/uR[0];
-  scalar vyL   = uL[2]/uL[0];
-  scalar vyR   = uR[2]/uR[0];
   scalar vnL = vxL*nx+vyL*ny;
   scalar vnR = vxR*nx+vyR*ny;
-  scalar EtL   = uL[3];
-  scalar EtR   = uR[3];
-  scalar phicL = uL[4]/uL[0];
-  scalar phicR = uR[4]/uR[0];
-  scalar phincL= uL[5];
-  scalar phincR= uR[5];
   scalar gamma = constants::GLOBAL_GAMMA;
   scalar pL = (gamma-1)*(EtL - 0.5*rhoL*(vxL*vxL+vyL*vyL));
   scalar pR = (gamma-1)*(EtR - 0.5*rhoR*(vxR*vxR+vyR*vyR));
@@ -89,24 +90,25 @@ arch_device scalar twod_passive_rusanov(scalar* uL,scalar* uR, scalar* n,scalar*
 //* Numerical Analysis, 25(2), pp. 294-318, 1988.
 //*
 //*****************************************************************************
-arch_device scalar twod_passive_hll(scalar* uL,scalar* uR, scalar* n,scalar* F, scalar* ncterm){
+arch_device void twod_passive_hll(scalar rhoL,
+				  scalar rhoR,
+				  scalar vxL,
+				  scalar vxR,
+				  scalar vyL,
+				  scalar vyR,
+				  scalar EtL,
+				  scalar EtR,
+				  scalar phicL,
+				  scalar phicR,
+				  scalar phincL,
+				  scalar phincR,
+				  scalar nx,
+				  scalar ny,
+				  int N_F,
+				  scalar* F, scalar* ncterm){
 
-  scalar nx = n[0];
-  scalar ny = n[1];
-  scalar rhoL  = uL[0];
-  scalar rhoR  = uR[0];
-  scalar vxL   = uL[1]/uL[0];
-  scalar vxR   = uR[1]/uR[0];
-  scalar vyL   = uL[2]/uL[0];
-  scalar vyR   = uR[2]/uR[0];
   scalar vnL = vxL*nx+vyL*ny;
   scalar vnR = vxR*nx+vyR*ny;
-  scalar EtL   = uL[3];
-  scalar EtR   = uR[3];
-  scalar phicL = uL[4]/uL[0];
-  scalar phicR = uR[4]/uR[0];
-  scalar phincL= uL[5];
-  scalar phincR= uR[5];
   scalar gamma = constants::GLOBAL_GAMMA;
   scalar pL = (gamma-1)*(EtL - 0.5*rhoL*(vxL*vxL+vyL*vyL));
   scalar pR = (gamma-1)*(EtR - 0.5*rhoR*(vxR*vxR+vyR*vyR));
@@ -182,28 +184,29 @@ arch_device scalar twod_passive_hll(scalar* uL,scalar* uR, scalar* n,scalar* F, 
 //* Schemes, Journal of Computational Physics, 43, pp. 357-372.
 //*
 //*****************************************************************************
-arch_device scalar twod_passive_roe(scalar* uL,scalar* uR, scalar* n,scalar* F, scalar* ncterm){
+arch_device void twod_passive_roe(scalar rhoL,
+				  scalar rhoR,
+				  scalar vxL,
+				  scalar vxR,
+				  scalar vyL,
+				  scalar vyR,
+				  scalar EtL,
+				  scalar EtR,
+				  scalar phicL,
+				  scalar phicR,
+				  scalar phincL,
+				  scalar phincR,
+				  scalar nx,
+				  scalar ny,
+				  int N_F,
+				  scalar* F, scalar* ncterm){
 
-  scalar nx = n[0];
-  scalar ny = n[1];
   scalar tx = -ny;
   scalar ty =  nx;
-  scalar rhoL  = uL[0];
-  scalar rhoR  = uR[0];
-  scalar vxL   = uL[1]/uL[0];
-  scalar vxR   = uR[1]/uR[0];
-  scalar vyL   = uL[2]/uL[0];
-  scalar vyR   = uR[2]/uR[0];
   scalar vnL   = vxL*nx+vyL*ny;
   scalar vnR   = vxR*nx+vyR*ny;
   scalar vtL   = vxL*tx+vyL*ty;
   scalar vtR   = vxR*tx+vyR*ty;
-  scalar EtL   = uL[3];
-  scalar EtR   = uR[3];
-  scalar phicL = uL[4]/uL[0];
-  scalar phicR = uR[4]/uR[0];
-  scalar phincL= uL[5];
-  scalar phincR= uR[5];
   scalar gamma = constants::GLOBAL_GAMMA;
   scalar pL = (gamma-1)*(EtL - 0.5*rhoL*(vxL*vxL+vyL*vyL));
   scalar pR = (gamma-1)*(EtR - 0.5*rhoR*(vxR*vxR+vyR*vyR));
@@ -227,19 +230,16 @@ arch_device scalar twod_passive_roe(scalar* uL,scalar* uR, scalar* n,scalar* F, 
   scalar dp   = pR - pL;
   scalar dvn =  vnR - vnL;
   scalar dvt =  vtR - vtL;
-  int sizevap = 4;
-  scalar* dV = new scalar[sizevap];
-  dV[0] = (dp - rho*a*dvn )/(2*a*a);
-  dV[1] = rho*dvt/a;
-  dV[2] = drho - dp/(a*a);
-  dV[3] = (dp + rho*a*dvn )/(2*a*a);
+  scalar dV0 = (dp - rho*a*dvn )/(2*a*a);
+  scalar dV1 = rho*dvt/a;
+  scalar dV2 = drho - dp/(a*a);
+  scalar dV3 = (dp + rho*a*dvn )/(2*a*a);
 
   // Absolute value of Roe eigenvalues
-  scalar* ws = new scalar[sizevap];
-  ws[0] = fabs(vn-a);
-  ws[1] = fabs(vn);
-  ws[2] = fabs(vn);
-  ws[3] = fabs(vn+a);
+  scalar ws0 = fabs(vn-a);
+  scalar ws1 = fabs(vn);
+  scalar ws2 = fabs(vn);
+  scalar ws3 = fabs(vn+a);
 
   // Harten's Entropy Fix JCP(1983), 49, pp357-393:
   // only for the nonlinear fields.
@@ -250,57 +250,71 @@ arch_device scalar twod_passive_roe(scalar* uL,scalar* uR, scalar* n,scalar* F, 
   /* if(ws[3] < dws3) ws[3] = 0.5 * (ws[3]*ws[3]/dws3+dws3); */
 
   // Roe Right eigenvectors
-  scalar* R = new scalar[sizevap*sizevap];
-  R[0*sizevap+0] = 1;
-  R[0*sizevap+1] = vx - a*nx;
-  R[0*sizevap+2] = vy - a*ny;
-  R[0*sizevap+3] = H - vn*a;
+  scalar R00 = 1;
+  scalar R01 = vx - a*nx;
+  scalar R02 = vy - a*ny;
+  scalar R03 = H - vn*a;
 
-  R[1*sizevap+0] = 0;
-  R[1*sizevap+1] = a*tx;
-  R[1*sizevap+2] = a*ty;
-  R[1*sizevap+3] = vt*a;
+  scalar R10 = 0;
+  scalar R11 = a*tx;
+  scalar R12 = a*ty;
+  scalar R13 = vt*a;
 
-  R[2*sizevap+0] = 1;
-  R[2*sizevap+1] = vx;
-  R[2*sizevap+2] = vy;
-  R[2*sizevap+3] = 0.5*(vx*vx+vy*vy);
+  scalar R20 = 1;
+  scalar R21 = vx;
+  scalar R22 = vy;
+  scalar R23 = 0.5*(vx*vx+vy*vy);
 
-  R[3*sizevap+0] = 1;
-  R[3*sizevap+1] = vx + a*nx;
-  R[3*sizevap+2] = vy + a*ny;
-  R[3*sizevap+3] = H + vn*a;
+  scalar R30 = 1;
+  scalar R31 = vx + a*nx;
+  scalar R32 = vy + a*ny;
+  scalar R33 = H + vn*a;
 
   //first: fx = rho*u; fy = rho*v
-  F[0] = 0.5*(flux_ab(rhoL,vnL) + flux_ab(rhoR,vnR));
-  for(int k=0;k<sizevap;k++) F[0] += -0.5*ws[k]*dV[k]*R[k*sizevap+0];
+  F[0] = 0.5*(flux_ab(rhoL,vnL) + flux_ab(rhoR,vnR))
+    -0.5*(ws0*dV0*R00+
+	  ws1*dV1*R10+
+	  ws2*dV2*R20+
+	  ws3*dV3*R30);
 
   //second: fx = rho*u*u+p; fy = rho*u*v
-  F[1] = 0.5*(flux_apb(rhoL*vnL*vxL,pL*nx)  + flux_apb(rhoR*vnR*vxR,pR*nx));
-  for(int k=0;k<sizevap;k++) F[1] += -0.5*ws[k]*dV[k]*R[k*sizevap+1];
+  F[1] = 0.5*(flux_apb(rhoL*vnL*vxL,pL*nx)  + flux_apb(rhoR*vnR*vxR,pR*nx))
+    -0.5*(ws0*dV0*R01+
+	  ws1*dV1*R11+
+	  ws2*dV2*R21+
+	  ws3*dV3*R31);
 
   //third: fx = rho*u*v; fy = rho*v*v+p
-  F[2] = 0.5*(flux_apb(rhoL*vnL*vyL,pL*ny)  + flux_apb(rhoR*vnR*vyR,pR*ny));
-  for(int k=0;k<sizevap;k++) F[2] += -0.5*ws[k]*dV[k]*R[k*sizevap+2];
+  F[2] = 0.5*(flux_apb(rhoL*vnL*vyL,pL*ny)  + flux_apb(rhoR*vnR*vyR,pR*ny))
+    -0.5*(ws0*dV0*R02+
+	  ws1*dV1*R12+
+	  ws2*dV2*R22+
+	  ws3*dV3*R32);
  
   //fourth: fx = rho*u*H; fy = rho*v*H;
-  F[3] = 0.5*(flux_abc(rhoL,vnL,HL)+flux_abc(rhoR,vnR,HR));
-  for(int k=0;k<sizevap;k++) F[3] += -0.5*ws[k]*dV[k]*R[k*sizevap+3];
+  F[3] = 0.5*(flux_abc(rhoL,vnL,HL)+flux_abc(rhoR,vnR,HR))
+    -0.5*(ws0*dV0*R03+
+	  ws1*dV1*R13+
+	  ws2*dV2*R23+
+	  ws3*dV3*R33);
   
   //fifth: fx = rho*u*phi
-  F[4] = 0.5*(flux_abc(rhoL,vnL,phicL) + flux_abc(rhoR,vnR,phicR));
-  for(int k=0;k<sizevap;k++) F[4] += -0.5*ws[k]*dV[k]*R[k*sizevap+0];
+  F[4] = 0.5*(flux_abc(rhoL,vnL,phicL) + flux_abc(rhoR,vnR,phicR))
+    -0.5*(ws0*dV0*R00+
+	  ws1*dV1*R10+
+	  ws2*dV2*R20+
+	  ws3*dV3*R30);
   
   //sixth:
-  F[5] = 0.0;
-  for(int k=0;k<sizevap;k++) F[5] += -0.5*ws[k]*dV[k]*R[k*sizevap+0];
+  F[5] = -0.5*(ws0*dV0*R00+
+		    ws1*dV1*R10+
+		    ws2*dV2*R20+
+		    ws3*dV3*R30);
   ncterm[5] = 0.5*vn*(phincL-phincR);
 
-  // Free some pointers
-  delete[] dV;
-  delete[] ws;
-  delete[] R;
-  
 } // end Roe function
 
 #endif 
+
+/*  LocalWords:  ifndef
+ */

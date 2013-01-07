@@ -13,22 +13,21 @@
 //* Obstacles, J. Comput. Math. Phys. USSR, 1, pp. 267-279, 1961.
 //*
 //*****************************************************************************
-arch_device scalar oned_multifluid_rusanov(scalar* uL,scalar* uR, scalar* n,scalar* F, scalar* ncterm){
+arch_device void oned_multifluid_rusanov(scalar rhoL,
+					 scalar rhoR,
+					 scalar vxL,
+					 scalar vxR,
+					 scalar EtL,
+					 scalar EtR,
+					 scalar alphaL,
+					 scalar alphaR,
+					 scalar nx,
+					 int N_F,
+					 scalar* F, scalar* ncterm){
 
-  scalar nx = n[0];
-
-  scalar rhoL  = uL[0];
-  scalar rhoR  = uR[0];
-  scalar vxL   = uL[1]/uL[0];
-  scalar vxR   = uR[1]/uR[0];
-  scalar EtL   = uL[2];
-  scalar EtR   = uR[2];
 #ifdef GAMCONS
-  scalar alphaL = uL[3]/uL[0];
-  scalar alphaR = uR[3]/uR[0];
-#elif  GAMNCON
-  scalar alphaL = uL[3];
-  scalar alphaR = uR[3];
+  alphaL = alphaL/rhoL;
+  alphaR = alphaR/rhoR;
 #endif
   scalar gammaL = 1.0+1.0/alphaL;
   scalar gammaR = 1.0+1.0/alphaR;
@@ -83,22 +82,20 @@ arch_device scalar oned_multifluid_rusanov(scalar* uL,scalar* uR, scalar* n,scal
 //* Numerical Analysis, 25(2), pp. 294-318, 1988.
 //*
 //*****************************************************************************
-arch_device scalar oned_multifluid_hll(scalar* uL,scalar* uR, scalar* n,scalar* F, scalar* ncterm){
-
-  scalar nx = n[0];
-
-  scalar rhoL  = uL[0];
-  scalar rhoR  = uR[0];
-  scalar vxL   = uL[1]/uL[0];
-  scalar vxR   = uR[1]/uR[0];
-  scalar EtL   = uL[2];
-  scalar EtR   = uR[2];
+arch_device void oned_multifluid_hll(scalar rhoL,
+				     scalar rhoR,
+				     scalar vxL,
+				     scalar vxR,
+				     scalar EtL,
+				     scalar EtR,
+				     scalar alphaL,
+				     scalar alphaR,
+				     scalar nx,
+				     int N_F,
+				     scalar* F, scalar* ncterm){
 #ifdef GAMCONS
-  scalar alphaL = uL[3]/uL[0];
-  scalar alphaR = uR[3]/uR[0];
-#elif  GAMNCON
-  scalar alphaL = uL[3];
-  scalar alphaR = uR[3];
+  alphaL = alphaL/rhoL;
+  alphaR = alphaR/rhoR;
 #endif
   scalar gammaL = 1.0+1.0/alphaL;
   scalar gammaR = 1.0+1.0/alphaR;
@@ -186,22 +183,21 @@ arch_device scalar oned_multifluid_hll(scalar* uL,scalar* uR, scalar* n,scalar* 
 //* Schemes, Journal of Computational Physics, 43, pp. 357-372.
 //*
 //*****************************************************************************
-arch_device scalar oned_multifluid_roe(scalar* uL,scalar* uR, scalar* n,scalar* F, scalar* ncterm){
+arch_device void oned_multifluid_roe(scalar rhoL,
+				     scalar rhoR,
+				     scalar vxL,
+				     scalar vxR,
+				     scalar EtL,
+				     scalar EtR,
+				     scalar alphaL,
+				     scalar alphaR,
+				     scalar nx,
+				     int N_F,
+				     scalar* F, scalar* ncterm){
 
-  scalar nx = n[0];
-
-  scalar rhoL  = uL[0];
-  scalar rhoR  = uR[0];
-  scalar vxL   = uL[1]/uL[0];
-  scalar vxR   = uR[1]/uR[0];
-  scalar EtL   = uL[2];
-  scalar EtR   = uR[2];
 #ifdef GAMCONS
-  scalar alphaL = uL[3]/uL[0];
-  scalar alphaR = uR[3]/uR[0];
-#elif  GAMNCON
-  scalar alphaL = uL[3];
-  scalar alphaR = uR[3];
+  alphaL = alphaL/rhoL;
+  alphaR = alphaR/rhoR;
 #endif
   scalar gammaL = 1.0+1.0/alphaL;
   scalar gammaR = 1.0+1.0/alphaR;
@@ -227,19 +223,16 @@ arch_device scalar oned_multifluid_roe(scalar* uL,scalar* uR, scalar* n,scalar* 
   scalar p     = (gamma-1)*i;
 
   // Roe waves strengths
-  int sizevap = 4;
-  scalar* dV = new scalar[sizevap];
-  dV[0] = (Dp - rho*a*(vxR-vxL))/(2*a*a);
-  dV[1] = (rhoR-rhoL) - Dp/(a*a);
-  dV[2] = (Dp + rho*a*(vxR-vxL))/(2*a*a);
-  dV[3] = alphaR-alphaL;
+  scalar dV0 = (Dp - rho*a*(vxR-vxL))/(2*a*a);
+  scalar dV1 = (rhoR-rhoL) - Dp/(a*a);
+  scalar dV2 = (Dp + rho*a*(vxR-vxL))/(2*a*a);
+  scalar dV3 = alphaR-alphaL;
   
   // Absolute value of Roe eigenvalues
-  scalar* ws = new scalar[sizevap];
-  ws[0] = fabs(v-a);
-  ws[1] = fabs(v);
-  ws[2] = fabs(v+a);
-  ws[3] = fabs(v);
+  scalar ws0 = fabs(v-a);
+  scalar ws1 = fabs(v);
+  scalar ws2 = fabs(v+a);
+  scalar ws3 = fabs(v);
   
   // Entropy fix from http://www.cfdbooks.com/cfdcodes/oned_euler_fluxes_v4.f90
   // Modified wave speeds for nonlinear fields (to remove expansion shocks).
@@ -251,38 +244,46 @@ arch_device scalar oned_multifluid_roe(scalar* uL,scalar* uR, scalar* n,scalar* 
   /* if(ws[2] < 0.5*Da) ws[2] = ws[2]*ws[2]/Da + 0.25*Da; */
 
   // Roe Right eigenvectors
-  scalar* R = new scalar[sizevap*sizevap];
-  R[0*sizevap+0] = 1;
-  R[0*sizevap+1] = v-a;
-  R[0*sizevap+2] = H-v*a;
-  R[0*sizevap+3] = 0;
+  scalar R00 = 1;
+  scalar R01 = v-a;
+  scalar R02 = H-v*a;
+  scalar R03 = 0;
 
-  R[1*sizevap+0] = 1;
-  R[1*sizevap+1] = v;
-  R[1*sizevap+2] = 0.5*v*v;
-  R[1*sizevap+3] = 0;
+  scalar R10 = 1;
+  scalar R11 = v;
+  scalar R12 = 0.5*v*v;
+  scalar R13 = 0;
 
-  R[2*sizevap+0] = 1;
-  R[2*sizevap+1] = v+a;
-  R[2*sizevap+2] = H+v*a;
-  R[2*sizevap+3] = 0;
+  scalar R20 = 1;
+  scalar R21 = v+a;
+  scalar R22 = H+v*a;
+  scalar R23 = 0;
 
-  R[3*sizevap+0] = 0;
-  R[3*sizevap+1] = 0;
-  R[3*sizevap+2] = p;
-  R[3*sizevap+3] = 1;  
+  scalar R30 = 0;
+  scalar R31 = 0;
+  scalar R32 = p;
+  scalar R33 = 1;  
 
   // first: fx = rho*u
-  F[0] = 0.5*(flux_ab(rhoL,vxL) + flux_ab(rhoR,vxR))*nx;
-  for(int k=0;k<sizevap;k++) F[0] += -0.5*ws[k]*dV[k]*R[k*sizevap+0];
+  F[0] = 0.5*(flux_ab(rhoL,vxL) + flux_ab(rhoR,vxR))*nx
+    -0.5*(ws0*dV0*R00+
+	  ws1*dV1*R10+
+	  ws2*dV2*R20+
+	  ws3*dV3*R30);
 
   //second: fx = rho*u*u+Bx*Bx+Pbar; 
-  F[1] = 0.5*(flux_ab2pc(rhoL,vxL,pL)  + flux_ab2pc(rhoR,vxR,pR))*nx;
-  for(int k=0;k<sizevap;k++) F[1] += -0.5*ws[k]*dV[k]*R[k*sizevap+1];
+  F[1] = 0.5*(flux_ab2pc(rhoL,vxL,pL)  + flux_ab2pc(rhoR,vxR,pR))*nx
+    -0.5*(ws0*dV0*R01+
+	  ws1*dV1*R11+
+	  ws2*dV2*R21+
+	  ws3*dV3*R31);
 
   //third: fx = EtplusP*u; 
-  F[2] = 0.5*(flux_ab(EtL+pL,vxL) + flux_ab(EtR+pR,vxR))*nx;
-  for(int k=0;k<sizevap;k++) F[2] += -0.5*ws[k]*dV[k]*R[k*sizevap+2];
+  F[2] = 0.5*(flux_ab(EtL+pL,vxL) + flux_ab(EtR+pR,vxR))*nx
+    -0.5*(ws0*dV0*R02+
+	  ws1*dV1*R12+
+	  ws2*dV2*R22+
+	  ws3*dV3*R32);
 
   //fourth 
 #ifdef GAMCONS
@@ -291,13 +292,11 @@ arch_device scalar oned_multifluid_roe(scalar* uL,scalar* uR, scalar* n,scalar* 
   F[3] = 0;
   ncterm[3] = -0.5*v*(alphaR-alphaL)*nx;
 #endif
-  for(int k=0;k<sizevap;k++) F[3] += -0.5*ws[k]*dV[k]*R[k*sizevap+3];
+  F[3] += -0.5*(ws0*dV0*R03+
+		     ws1*dV1*R13+
+		     ws2*dV2*R23+
+		     ws3*dV3*R33);
 
-  // Free some pointers
-  delete[] dV;
-  delete[] ws;
-  delete[] R;
-  
 } // end Roe function
 
 #endif

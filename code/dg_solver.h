@@ -136,8 +136,8 @@ class DG_SOLVER
     CUDA_SAFE_CALL(cudaMalloc((void**) &_F,N_s*N_E*N_F*sizeof(scalar)));
     
     CUDA_SAFE_CALL(cudaMalloc((void**) &_q,M_G*M_T*N_F*2*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_qJ,M_G*M_T*N_F*2*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_Qtcj,M_s*M_T*N_F*2*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_qJ,M_G*M_T*N_F*2*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_Qtcj,M_s*M_T*N_F*2*sizeof(scalar)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_Q,N_s*N_E*N_F*sizeof(scalar)));
 
 
@@ -154,7 +154,7 @@ class DG_SOLVER
     CUDA_SAFE_CALL(cudaMemcpy(_J, J, N_E*sizeof(scalar), cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_invJac, invJac, N_G*D*N_E*D*sizeof(scalar), cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_JF, JF, M_T*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_normals,normals,D*M_T*sizeof(scalar), cudaMemcpyHostToDevice);
+    CUDA_SAFE_CALL(cudaMemcpy(_normals,normals,D*M_T*sizeof(scalar), cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemset(_Q, (scalar)0.0, N_E*N_F*N_s*sizeof(scalar)));
 
 #endif
@@ -228,18 +228,6 @@ class DG_SOLVER
     blasGemm('N','N', _M_G, _M_T*_N_F*2, _M_s, 1, _psi, _M_G, _UF, _M_s, 0.0, _UintegF, _M_G);
 #else
     Lcpu_collocationUF(_M_G, _M_s, _M_T, _N_F, _UintegF, _psi, _UF);
-#endif
-
-#ifdef ONED  
-    // evaluate_sf: requires Uinteg, (dUintegR), H0, G0, s,f
-    //Levaluate_sf_1D(_D, _N_G, _N_E, _N_F,  _s, _f, _Uinteg, _dUinteg, _invJac);
-    
-    // evaluate_q: requires UintegF, normals, q, H0, G0
-    //Levaluate_q_1D(_M_G, _M_T, _N_F, _gamma0, _q, _UintegF, _normals);
-
-#elif TWOD
-    //Levaluate_sf_2D(_D, _N_G, _N_E, _N_F,  _s, _f, _Uinteg, _dUinteg, _invJac);
-    //Levaluate_q_2D(_M_G, _M_T, _N_F, _gamma0, _q, _UintegF, _normals); 
 #endif
 
     Levaluate_sf(_D, _N_G, _N_E, _N_F,  _s, _f, _Uinteg, _dUinteg, _invJac);
