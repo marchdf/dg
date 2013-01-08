@@ -1061,7 +1061,6 @@ arch_global void evaluate_q_2D(int M_G, int M_T, int N_F, scalar gamma, scalar* 
 
 //==========================================================================
 arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar* UgF, scalar* normals){
-
  
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
@@ -1292,8 +1291,310 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 
 }
 
+//==========================================================================
+arch_global void pressure(int N_s, int N_E, int N_F, scalar* U, scalar* p){
 
-      
+#ifdef USE_CPU
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+#elif USE_GPU
+      int e = blockIdx.x;
+      int i = threadIdx.x;
+#endif
+         
+      // Get the pressure field
+      scalar rho  = U[(e*N_F+0)*N_s+i];
+      scalar rhou = U[(e*N_F+1)*N_s+i];
+      scalar E    = U[(e*N_F+2)*N_s+i];
+#ifdef MULTIFLUID
+#ifdef GAMCONS
+      scalar gamma=1.0+rho/U[(e*N_F+3)*N_s+i];
+#elif GAMNCON
+      scalar gamma=1.0+1.0/U[(e*N_F+3)*N_s+i];
+#endif
+#elif PASSIVE
+      scalar gamma = constants::GLOBAL_GAMMA;
+#endif
+      p[e*N_s+i] = (gamma-1)*(E - 0.5*rhou*rhou/rho);
+
+#ifdef USE_CPU
+    }
+  }
+#endif
+}
+
+//==========================================================================
+arch_global void pressure_u(int N_s, int N_E, int N_F, scalar* U, scalar* p, scalar* u){
+
+#ifdef USE_CPU
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+#elif USE_GPU
+      int e = blockIdx.x;
+      int i = threadIdx.x;
+#endif
+         
+      // Get the pressure field
+      scalar rho  = U[(e*N_F+0)*N_s+i];
+      scalar rhou = U[(e*N_F+1)*N_s+i];
+      scalar E    = U[(e*N_F+2)*N_s+i];
+      u[e*N_s+i] = rhou/rho;
+#ifdef MULTIFLUID
+#ifdef GAMCONS
+      scalar gamma=1.0+rho/U[(e*N_F+3)*N_s+i];
+#elif GAMNCON
+      scalar gamma=1.0+1.0/U[(e*N_F+3)*N_s+i];
+#endif
+#elif PASSIVE
+      scalar gamma = constants::GLOBAL_GAMMA;
+#endif
+      p[e*N_s+i] = (gamma-1)*(E - 0.5*rhou*rhou/rho);
+
+#ifdef USE_CPU
+    }
+  }
+#endif
+}
+
+
+//==========================================================================
+arch_global void limmodif(int N_s, int N_E, int N_F, scalar* A, scalar* plim, scalar* Alim){
+
+#ifdef USE_CPU
+  for(int e = 0; e < N_E; e++){
+#elif USE_GPU
+    int e = blockIdx.x;
+#endif
+
+    // My modification:
+    if (N_s == 2){
+#ifdef MULTIFLUID
+      scalar a0 = Alim[(e*N_F+0)*N_s+0];
+      scalar a1 = Alim[(e*N_F+0)*N_s+1];
+      scalar b0 = Alim[(e*N_F+1)*N_s+0];
+      scalar b1 = Alim[(e*N_F+1)*N_s+1];
+      scalar g0 = A[(e*N_F+2)*N_s+0];
+      scalar g1 = A[(e*N_F+2)*N_s+1];
+      scalar d0 = Alim[(e*N_F+3)*N_s+0];
+      scalar d1 = Alim[(e*N_F+3)*N_s+1];
+#ifdef GAMCONS
+      scalar D1 = 0.5*((d0+d1)/(a0+a1)-(d0-d1)/(a0-a1));
+      scalar D0 = 0.5*((d0-d1)/(a0-a1)+(d0+d1)/(a0+a1));
+      d0 = D0; d1 = D1;
+#endif
+      scalar g1lim = d1/d0*(g0-0.25*((b0+b1)*(b0+b1)/(a0+a1) + (b0-b1)*(b0-b1)/(a0-a1))) + 0.25*((b0+b1)*(b0+b1)/(a0+a1) - (b0-b1)*(b0-b1)/(a0-a1)) + plim[e*N_s+1]*d0;
+      scalar g0lim = g0;
+      Alim[(e*N_F+2)*N_s+1] = g1lim;
+      Alim[(e*N_F+2)*N_s+0] = g0lim;
+#elif PASSIVE
+      scalar a0 = Alim[(e*N_F+0)*N_s+0];
+      scalar a1 = Alim[(e*N_F+0)*N_s+1];
+      scalar b0 = Alim[(e*N_F+1)*N_s+0];
+      scalar b1 = Alim[(e*N_F+1)*N_s+1];
+      scalar g0 = A[(e*N_F+2)*N_s+0];
+      scalar g1 = A[(e*N_F+2)*N_s+1];
+      scalar gamma = constants::GLOBAL_GAMMA;
+      scalar g1lim = 0.25*((b0+b1)*(b0+b1)/(a0+a1) - (b0-b1)*(b0-b1)/(a0-a1)) + plim[e*N_s+1]*gamma;
+      scalar g0lim = g0;
+      Alim[(e*N_F+2)*N_s+1] = g1lim;
+      Alim[(e*N_F+2)*N_s+0] = g0lim;
+#endif
+    }
+
+    if (N_s == 3){
+#ifdef MULTIFLUID
+      scalar a0 = Alim[(e*N_F+0)*N_s+0];
+      scalar a1 = Alim[(e*N_F+0)*N_s+1];
+      scalar a2 = Alim[(e*N_F+0)*N_s+2];
+      scalar b0 = Alim[(e*N_F+1)*N_s+0];
+      scalar b1 = Alim[(e*N_F+1)*N_s+1];
+      scalar b2 = Alim[(e*N_F+1)*N_s+2];
+      scalar g0 = A[(e*N_F+2)*N_s+0];
+      scalar g1 = A[(e*N_F+2)*N_s+1];
+      scalar g2 = A[(e*N_F+2)*N_s+2];
+      scalar d0 = Alim[(e*N_F+3)*N_s+0];
+      scalar d1 = Alim[(e*N_F+3)*N_s+1];
+      scalar d2 = Alim[(e*N_F+3)*N_s+2];
+#ifdef GAMCONS
+      scalar D0 = d0/a0;
+      scalar D1 = 0.5*((d0+d1+0.5*d2)/(a0+a1+0.5*a2) - (d0-d1+0.5*d2)/(a0-a1+0.5*a2));
+      scalar D2 = (d0+d1+0.5*d2)/(a0+a1+0.5*a2) + (d0-d1+0.5*d2)/(a0-a1+0.5*a2) - 2*D0;
+      d0 = D0; d1 = D1; d2 = D2;
+#endif
+      scalar g2lim = (1/(1+1.0/6.0*d2/d0))
+	*(d2/d0*(g0+1.0/6.0*g2 -0.5*b0*b0/a0)
+	  + 0.5*((b0+b1+0.5*b2)*(b0+b1+0.5*b2)/(a0+a1+0.5*a2) + (b0-b1+0.5*b2)*(b0-b1+0.5*b2)/(a0-a1+0.5*a2) - 2*b0*b0/a0)
+	  + plim[e*N_s+2]*d0);
+      scalar g1lim = d1/d0*(g0+1.0/6.0*(g2-g2lim)-0.5*b0*b0/a0)
+	+ 0.25*((b0+b1+0.5*b2)*(b0+b1+0.5*b2)/(a0+a1+0.5*a2) - (b0-b1+0.5*b2)*(b0-b1+0.5*b2)/(a0-a1+0.5*a2))
+	+ plim[e*N_s+1]*d0;
+      scalar g0lim = g0 + 1.0/6.0*(g2-g2lim);
+      Alim[(e*N_F+2)*N_s+0] = g0lim;
+      Alim[(e*N_F+2)*N_s+1] = g1lim;
+      Alim[(e*N_F+2)*N_s+2] = g2lim;
+#elif PASSIVE
+      scalar a0 = Alim[(e*N_F+0)*N_s+0];
+      scalar a1 = Alim[(e*N_F+0)*N_s+1];
+      scalar a2 = Alim[(e*N_F+0)*N_s+2];
+      scalar b0 = Alim[(e*N_F+1)*N_s+0];
+      scalar b1 = Alim[(e*N_F+1)*N_s+1];
+      scalar b2 = Alim[(e*N_F+1)*N_s+2];
+      scalar g0 = A[(e*N_F+2)*N_s+0];
+      scalar g1 = A[(e*N_F+2)*N_s+1];
+      scalar g2 = A[(e*N_F+2)*N_s+2];
+      scalar gamma = constants::GLOBAL_GAMMA;
+      scalar g2lim = 0.5*((b0+b1+0.5*b2)*(b0+b1+0.5*b2)/(a0+a1+0.5*a2) + (b0-b1+0.5*b2)*(b0-b1+0.5*b2)/(a0-a1+0.5*a2) - 2*b0*b0/a0) + plim[e*N_s+2]*gamma;
+      scalar g1lim = 0.25*((b0+b1+0.5*b2)*(b0+b1+0.5*b2)/(a0+a1+0.5*a2) - (b0-b1+0.5*b2)*(b0-b1+0.5*b2)/(a0-a1+0.5*a2))
+	+ plim[e*N_s+1]*gamma;
+      scalar g0lim = g0 + 1.0/6.0*(g2-g2lim);
+      Alim[(e*N_F+2)*N_s+0] = g0lim;
+      Alim[(e*N_F+2)*N_s+1] = g1lim;
+      Alim[(e*N_F+2)*N_s+2] = g2lim;
+#endif
+    }
+
+#ifdef USE_CPU
+  }
+#endif
+}
+
+//==========================================================================
+arch_global void limmodif2(int N_s, int N_E, int N_F, scalar* A, scalar* plim, scalar* ulim, scalar* Alim){
+
+#ifdef USE_CPU
+  for(int e = 0; e < N_E; e++){
+#elif USE_GPU
+    int e = blockIdx.x;
+#endif
+
+    // M2 modification:
+    if (N_s == 2){
+#ifdef MULTIFLUID
+      scalar a0lim = Alim[(e*N_F+0)*N_s+0];
+      scalar a1lim = Alim[(e*N_F+0)*N_s+1];
+      scalar d0lim = Alim[(e*N_F+3)*N_s+0];
+      scalar d1lim = Alim[(e*N_F+3)*N_s+1];
+      scalar b0 = A[(e*N_F+1)*N_s+0];
+      scalar b1 = A[(e*N_F+1)*N_s+1];
+      scalar g0 = A[(e*N_F+2)*N_s+0];
+      scalar g1 = A[(e*N_F+2)*N_s+1];
+
+      // Momentum (to avoid u oscillations)
+      scalar b0lim = b0;
+      scalar b1lim = b0lim/a0lim*a1lim + ulim[e*N_s+1]*a0lim;
+      Alim[(e*N_F+1)*N_s+1] = b1lim;
+      Alim[(e*N_F+1)*N_s+0] = b0lim;
+	  
+      // Energy (like MYL)
+#ifdef GAMCONS
+      scalar D1lim = 0.5*((d0lim+d1lim)/(a0lim+a1lim)-(d0lim-d1lim)/(a0lim-a1lim));
+      scalar D0lim = 0.5*((d0lim-d1lim)/(a0lim-a1lim)+(d0lim+d1lim)/(a0lim+a1lim));
+      d0lim = D0lim; d1lim = D1lim;
+#endif
+      scalar g1lim = d1lim/d0lim*(g0-0.25*((b0lim+b1lim)*(b0lim+b1lim)/(a0lim+a1lim) + (b0lim-b1lim)*(b0lim-b1lim)/(a0lim-a1lim))) + 0.25*((b0lim+b1lim)*(b0lim+b1lim)/(a0lim+a1lim) - (b0lim-b1lim)*(b0lim-b1lim)/(a0lim-a1lim)) + plim[e*N_s+1]*d0lim;
+      scalar g0lim = g0;
+      Alim[(e*N_F+2)*N_s+1] = g1lim;
+      Alim[(e*N_F+2)*N_s+0] = g0lim;
+#elif PASSIVE
+      scalar a0lim = Alim[(e*N_F+0)*N_s+0];
+      scalar a1lim = Alim[(e*N_F+0)*N_s+1];
+      scalar b0 = A[(e*N_F+1)*N_s+0];
+      scalar b1 = A[(e*N_F+1)*N_s+1];
+      scalar g0 = A[(e*N_F+2)*N_s+0];
+      scalar g1 = A[(e*N_F+2)*N_s+1];
+
+      // Momentum (to avoid u oscillations)
+      scalar b0lim = b0;
+      scalar b1lim = b0lim/a0lim*a1lim + ulim[e*N_s+1]*a0lim;
+      Alim[(e*N_F+1)*N_s+1] = b1lim;
+      Alim[(e*N_F+1)*N_s+0] = b0lim;
+
+      // Energy (like MYL)
+      scalar gamma = constants::GLOBAL_GAMMA;
+      scalar g1lim = 0.25*((b0lim+b1lim)*(b0lim+b1lim)/(a0lim+a1lim) - (b0lim-b1lim)*(b0lim-b1lim)/(a0lim-a1lim)) + plim[e*N_s+1]*gamma;
+      scalar g0lim = g0;
+      Alim[(e*N_F+2)*N_s+1] = g1lim;
+      Alim[(e*N_F+2)*N_s+0] = g0lim;
+#endif
+    }
+
+    if (N_s == 3){
+#ifdef MULTIFLUID
+      scalar a0lim = Alim[(e*N_F+0)*N_s+0];
+      scalar a1lim = Alim[(e*N_F+0)*N_s+1];
+      scalar a2lim = Alim[(e*N_F+0)*N_s+2];
+      scalar d0lim = Alim[(e*N_F+3)*N_s+0];
+      scalar d1lim = Alim[(e*N_F+3)*N_s+1];
+      scalar d2lim = Alim[(e*N_F+3)*N_s+2];
+      scalar b0 = A[(e*N_F+1)*N_s+0];
+      scalar b1 = A[(e*N_F+1)*N_s+1];
+      scalar b2 = A[(e*N_F+1)*N_s+2];
+      scalar g0 = A[(e*N_F+2)*N_s+0];
+      scalar g1 = A[(e*N_F+2)*N_s+1];
+      scalar g2 = A[(e*N_F+2)*N_s+2];
+
+      // Momentum (to avoid u oscillations)
+      scalar b2lim = (1/(1+1.0/6.0*a2lim/a0lim))*((b0+1.0/6.0*b2)/a0lim*a2lim + ulim[e*N_s+2]*a0lim);
+      scalar b0lim = b0 + 1.0/6.0*(b2-b2lim);
+      scalar b1lim = b0lim/a0lim*a1lim + ulim[e*N_s+1]*a0lim;
+      Alim[(e*N_F+1)*N_s+0] = b0lim;
+      Alim[(e*N_F+1)*N_s+1] = b1lim;
+      Alim[(e*N_F+1)*N_s+2] = b2lim;
+
+      // Energy (like MYL)
+#ifdef GAMCONS
+      scalar D0lim = d0lim/a0lim;
+      scalar D1lim = 0.5*((d0lim+d1lim+0.5*d2lim)/(a0lim+a1lim+0.5*a2lim) - (d0lim-d1lim+0.5*d2lim)/(a0lim-a1lim+0.5*a2lim));
+      scalar D2lim = (d0lim+d1lim+0.5*d2lim)/(a0lim+a1lim+0.5*a2lim) + (d0lim-d1lim+0.5*d2lim)/(a0lim-a1lim+0.5*a2lim) - 2*D0lim;
+      d0lim = D0lim; d1lim = D1lim; d2lim = D2lim;
+#endif
+      scalar g2lim = (1/(1+1.0/6.0*d2lim/d0lim))
+	*(d2lim/d0lim*(g0+1.0/6.0*g2 -0.5*b0lim*b0lim/a0lim)
+	  + 0.5*((b0lim+b1lim+0.5*b2lim)*(b0lim+b1lim+0.5*b2lim)/(a0lim+a1lim+0.5*a2lim) + (b0lim-b1lim+0.5*b2lim)*(b0lim-b1lim+0.5*b2lim)/(a0lim-a1lim+0.5*a2lim) - 2*b0lim*b0lim/a0lim)
+	  + plim[e*N_s+2]*d0lim);
+      scalar g1lim = d1lim/d0lim*(g0+1.0/6.0*(g2-g2lim)-0.5*b0lim*b0lim/a0lim)
+	+ 0.25*((b0lim+b1lim+0.5*b2lim)*(b0lim+b1lim+0.5*b2lim)/(a0lim+a1lim+0.5*a2lim) - (b0lim-b1lim+0.5*b2lim)*(b0lim-b1lim+0.5*b2lim)/(a0lim-a1lim+0.5*a2lim))
+	+ plim[e*N_s+1]*d0lim;
+      scalar g0lim = g0 + 1.0/6.0*(g2-g2lim);
+      Alim[(e*N_F+2)*N_s+0] = g0lim;
+      Alim[(e*N_F+2)*N_s+1] = g1lim;
+      Alim[(e*N_F+2)*N_s+2] = g2lim;
+#elif PASSIVE
+      scalar a0lim = Alim[(e*N_F+0)*N_s+0];
+      scalar a1lim = Alim[(e*N_F+0)*N_s+1];
+      scalar a2lim = Alim[(e*N_F+0)*N_s+2];
+      scalar b0 = A[(e*N_F+1)*N_s+0];
+      scalar b1 = A[(e*N_F+1)*N_s+1];
+      scalar b2 = A[(e*N_F+1)*N_s+2];
+      scalar g0 = A[(e*N_F+2)*N_s+0];
+      scalar g1 = A[(e*N_F+2)*N_s+1];
+      scalar g2 = A[(e*N_F+2)*N_s+2];
+
+      // Momentum (to avoid u oscillations)
+      scalar b2lim = (1/(1+1.0/6.0*a2lim/a0lim))*((b0+1.0/6.0*b2)/a0lim*a2lim + ulim[e*N_s+2]*a0lim);
+      scalar b0lim = b0 + 1.0/6.0*(b2-b2lim);
+      scalar b1lim = b0lim/a0lim*a1lim + ulim[e*N_s+1]*a0lim;
+      Alim[(e*N_F+1)*N_s+0] = b0lim;
+      Alim[(e*N_F+1)*N_s+1] = b1lim;
+      Alim[(e*N_F+1)*N_s+2] = b2lim;
+
+      // Energy (like MYL)
+      scalar gamma = constants::GLOBAL_GAMMA;
+      scalar g2lim = 0.5*((b0lim+b1lim+0.5*b2lim)*(b0lim+b1lim+0.5*b2lim)/(a0lim+a1lim+0.5*a2lim) + (b0lim-b1lim+0.5*b2lim)*(b0lim-b1lim+0.5*b2lim)/(a0lim-a1lim+0.5*a2lim) - 2*b0lim*b0lim/a0lim)+ plim[e*N_s+2]*gamma;
+      scalar g1lim =  0.25*((b0lim+b1lim+0.5*b2lim)*(b0lim+b1lim+0.5*b2lim)/(a0lim+a1lim+0.5*a2lim) - (b0lim-b1lim+0.5*b2lim)*(b0lim-b1lim+0.5*b2lim)/(a0lim-a1lim+0.5*a2lim)) + plim[e*N_s+1]*gamma;
+      scalar g0lim = g0 + 1.0/6.0*(g2-g2lim);
+      Alim[(e*N_F+2)*N_s+0] = g0lim;
+      Alim[(e*N_F+2)*N_s+1] = g1lim;
+      Alim[(e*N_F+2)*N_s+2] = g2lim;
+#endif
+    }
+
+#ifdef USE_CPU
+  }
+#endif
+}
+
+
 //==========================================================================
 //
 //  Host C functions
@@ -1363,6 +1664,47 @@ void Levaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar* UgF, scala
 #endif
 
   evaluate_q arch_args_array(M_G*2*N_F*sizeof(scalar)) (M_G, M_T, N_F, D, q, UgF, normals);
+}
+
+extern "C"
+void Lpressure(int N_s, int N_E, int N_F, scalar* U, scalar* p){
+#ifdef USE_GPU
+  dim3 dimBlock(N_s,1,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  pressure arch_args (N_s, N_E, N_F, U, p);
+}
+
+extern "C"
+void Lpressure_u(int N_s, int N_E, int N_F, scalar* U, scalar* p, scalar* u){
+#ifdef USE_GPU
+  dim3 dimBlock(N_s,1,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  pressure_u arch_args (N_s, N_E, N_F, U, p, u);
+}
+
+
+extern "C"
+void Llimmodif(int N_s, int N_E, int N_F, scalar* A, scalar* plim, scalar* Alim){
+#ifdef USE_GPU
+  dim3 dimBlock(1,N_F,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  limmodif arch_args (N_s, N_E, N_F, A, plim, Alim);
+}
+
+extern "C"
+void Llimmodif2(int N_s, int N_E, int N_F, scalar* A, scalar* plim, scalar* ulim, scalar* Alim){
+#ifdef USE_GPU
+  dim3 dimBlock(1,N_F,1);
+  dim3 dimGrid(N_E,1);
+#endif
+
+  limmodif2 arch_args (N_s, N_E, N_F, A, plim, ulim, Alim);
 }
 
 

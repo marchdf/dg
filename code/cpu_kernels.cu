@@ -928,6 +928,7 @@ void Lcpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weigh
   cpu_hrl arch_args_array(N_F*2*sizeof(scalar)) (N_s, N_E, N_F, N_G, boundaryMap, weight, V, A, Alim);
 }
 
+
 //==========================================================================
 //
 //  Limiter functions

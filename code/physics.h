@@ -14,6 +14,11 @@ extern "C" void Levaluate_q_2D(int M_G, int M_T, int N_F, scalar gamma, scalar* 
 extern "C" void Levaluate_sf(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac);
 extern "C" void Levaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar* UgF, scalar* normals);
 
+extern "C" void Lpressure(int N_s, int N_E, int N_F, scalar* U, scalar* p);
+extern "C" void Lpressure_u(int N_s, int N_E, int N_F, scalar* U, scalar* p, scalar* u);
+extern "C" void Llimmodif(int N_s, int N_E, int N_F, scalar* A, scalar* plim, scalar* Alim);
+extern "C" void Llimmodif2(int N_s, int N_E, int N_F, scalar* A, scalar* plim, scalar* ulim, scalar* Alim);
+
 
 // Possibly broken:
 extern "C" void Lcpu_evaluate_sf_shallow(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar H0, scalar G0);

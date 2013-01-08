@@ -25,4 +25,5 @@ extern "C" void Lcpu_Prim2Cons(int N_s, int N_E, int N_F, scalar* U, bool multif
 extern "C" void Lcpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0);
 extern "C" void Lcpu_Half2Cons(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0);
 extern "C" void Lcpu_Cons2Half(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0);
+
 #endif

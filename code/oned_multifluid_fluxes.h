@@ -134,6 +134,7 @@ arch_device void oned_multifluid_hll(scalar rhoL,
   }
 
   // Non-conservative terms (see paper by Rhebergen)
+  scalar vnc    = -0.5*    (vxL*nx+vxR*nx)*(alphaL-alphaR);
   scalar vncabs = -0.5*fabs(vxL*nx+vxR*nx)*(alphaL-alphaR);
 
   // define the flux
