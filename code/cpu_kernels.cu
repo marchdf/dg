@@ -182,8 +182,8 @@ arch_global void cpu_boundary(int M_s, int N_F, int M_B, int* boundaryMap, scala
 #elif USE_GPU
 	int t1 = boundaryMap[blockIdx.x*2+0];
 	int t2 = boundaryMap[blockIdx.x*2+1];
-	int j = threadIdx.x;
-	int fc= threadIdx.y;
+	int j  = threadIdx.x;
+	int fc = threadIdx.y;
 #endif
 
 	UF[((t1*N_F+fc)*2+1)*M_s+j] = UF[((t2*N_F+fc)*2+0)*M_s+j];
@@ -204,7 +204,7 @@ arch_global void cpu_mapToElement(int N_s, int N_E, int N_F, int* invmap, scalar
       for(int fc = 0; fc < N_F; fc++){
 #elif USE_GPU
 	int e = blockIdx.x;
-	int i= threadIdx.x;
+	int i = threadIdx.x;
 	int fc= threadIdx.y;
 #endif
 	int idx = 0;
@@ -216,9 +216,6 @@ arch_global void cpu_mapToElement(int N_s, int N_E, int N_F, int* invmap, scalar
 	  }
 	}
 	Q[(e*N_F+fc)*N_s+i] = sol;
-
-	//Q[(e*N_F+fc)*N_s+0] = q[(e*N_F+fc)*2+1];
-	//Q[(e*N_F+fc)*N_s+1] = q[((e+1)*N_F+fc)*2+0];
 
 #ifdef USE_CPU
       }
@@ -290,14 +287,6 @@ arch_global void cpu_collocationUF(int M_G, int M_s, int M_T, int N_F, scalar* U
   }
 #endif
 }
-
-
-
-
-
-
-
-
 
 
 
@@ -382,7 +371,7 @@ arch_global void cpu_redistribute_q(int M_G, int M_T, int N_F, scalar* qJ, scala
       for(int fc = 0; fc < N_F; fc++){
 #elif USE_GPU
       int t = blockIdx.x;
-      int g= threadIdx.x;
+      int g = threadIdx.x;
       int fc= threadIdx.y;
 #endif
 
@@ -772,7 +761,7 @@ extern "C"
 void Lcpu_mapToFace(int M_s, int M_T, int N_F, int N_s, int* map, scalar* U, scalar* UF){
 
 #ifdef USE_GPU
-  dim3 dimBlock(1,N_F,1);
+  dim3 dimBlock(M_s,N_F,1);
   dim3 dimGrid(M_T,1);
 #endif
 
@@ -794,7 +783,7 @@ extern "C"
 void Lcpu_mapToElement(int N_s, int N_E, int N_F, int* invmap, scalar* Q, scalar* q){
 
 #ifdef USE_GPU
-  dim3 dimBlock(1,N_F,1);
+  dim3 dimBlock(N_s,N_F,1);
   dim3 dimGrid(N_E,1);
 #endif
 

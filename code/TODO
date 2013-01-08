@@ -16,6 +16,8 @@ OTHER
   - Add CFL condition
   - Clean if conditions on dimensions: they are all over the place. Can they be reduced?
   - Create some 2D benchmarks? 
+  - Remove cpu_ in the function names (not necessary now)
+  - Boundary conditions for farfield are a little strange?
 
 RIEMANN SOLVERS
   - Optimize Riemann solvers. I think they are inefficient. Also, make the 1D closer to the 2D implementation

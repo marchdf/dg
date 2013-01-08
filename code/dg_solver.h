@@ -91,72 +91,85 @@ class DG_SOLVER
     _Qtcj    = new scalar[M_s*M_T*N_F*2];    makeZero(_Qtcj,M_s*M_T*N_F*2); 
     _Q       = new scalar[N_s*N_E*N_F];      makeZero(_Q,N_s*N_E*N_F);   
 
-    memcpy(_map,    map,    M_s*M_T*N_F*2*sizeof(int));
-    memcpy(_invmap, invmap, N_s*N_E*N_F*2*sizeof(int));
+    memcpy(_map        , map        , M_s*M_T*N_F*2*sizeof(int));
+    memcpy(_invmap     , invmap     , N_s*N_E*N_F*2*sizeof(int));
     memcpy(_boundaryMap, boundaryMap, M_B*2*sizeof(int));
-    memcpy(_phi,    phi,    N_G*N_s*sizeof(scalar));
-    memcpy(_phi_w,  phi_w,  N_G*N_s*sizeof(scalar));
-    memcpy(_dphi,   dphi,   D*N_G*N_s*sizeof(scalar));
-    memcpy(_dphi_w, dphi_w, D*N_G*N_s*sizeof(scalar));
-    memcpy(_psi, psi,       M_G*M_s*sizeof(scalar));
-    memcpy(_psi_w, psi_w,   M_G*M_s*sizeof(scalar));
-    memcpy(_J, J,           N_E*sizeof(scalar));
-    memcpy(_invJac, invJac, N_G*D*N_E*D*sizeof(scalar));
-    memcpy(_JF, JF,         2*M_T*sizeof(scalar));
-    memcpy(_normals,normals,D*M_T*sizeof(scalar));
+    memcpy(_phi        , phi        , N_G*N_s*sizeof(scalar));
+    memcpy(_phi_w      , phi_w      , N_G*N_s*sizeof(scalar));
+    memcpy(_dphi       , dphi       , D*N_G*N_s*sizeof(scalar));
+    memcpy(_dphi_w     , dphi_w     , D*N_G*N_s*sizeof(scalar));
+    memcpy(_psi        , psi        , M_G*M_s*sizeof(scalar));
+    memcpy(_psi_w      , psi_w      , M_G*M_s*sizeof(scalar));
+    memcpy(_J          , J          , N_E*sizeof(scalar));
+    memcpy(_invJac     , invJac     , N_G*D*N_E*D*sizeof(scalar));
+    memcpy(_JF         , JF         , 2*M_T*sizeof(scalar));
+    memcpy(_normals    , normals    , D*M_T*sizeof(scalar));
 
 #elif USE_GPU
     // Allocate space on the GPU
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_map,M_s*M_T*N_F*2*sizeof(int)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_invmap,N_s*N_E*N_F*2*sizeof(int)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_boundaryMap,M_B*2*sizeof(int)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_phi,N_G*N_s*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_phi_w,N_G*N_s*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_dphi,D*N_G*N_s*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_dphi_w,D*N_G*N_s*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_psi,M_G*M_s*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_psi_w,M_G*M_s*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_J,N_E*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_invJac,N_G*D*N_E*D*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_JF,2*M_T*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_normals,D*M_T*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_map        , M_s*M_T*N_F*2*sizeof(int)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_invmap     , N_s*N_E*N_F*2*sizeof(int)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_boundaryMap, M_B*2*sizeof(int)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_phi        , N_G*N_s*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_phi_w      , N_G*N_s*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_dphi       , D*N_G*N_s*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_dphi_w     , D*N_G*N_s*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_psi        , M_G*M_s*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_psi_w      , M_G*M_s*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_J          , N_E*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_invJac     , N_G*D*N_E*D*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_JF         , 2*M_T*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_normals    , D*M_T*sizeof(scalar)));
     
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_UF,M_s*M_T*N_F*2*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_UF     , M_s*M_T*N_F*2*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_Uinteg , N_G*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_dUinteg, D*N_G*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_UintegF, M_G*M_T*N_F*2*sizeof(scalar)));
+    
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_s      , N_G*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_sJ     , N_G*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_S      , N_s*N_E*N_F*sizeof(scalar)));
+    
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_f      , D*N_G*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_fJ     , D*N_G*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_F      , N_s*N_E*N_F*sizeof(scalar)));
+    
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_q      , M_G*M_T*N_F*2*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_qJ     , M_G*M_T*N_F*2*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_Qtcj   , M_s*M_T*N_F*2*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_Q      , N_s*N_E*N_F*sizeof(scalar)));  
 
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_Uinteg,N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_dUinteg,D*N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_UintegF,M_G*M_T*N_F*2*sizeof(scalar)));
-    
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_s,N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_sJ,N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_S,N_s*N_E*N_F*sizeof(scalar)));
-    
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_f,D*N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_fJ,D*N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_F,N_s*N_E*N_F*sizeof(scalar)));
-    
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_q,M_G*M_T*N_F*2*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_qJ,M_G*M_T*N_F*2*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_Qtcj,M_s*M_T*N_F*2*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_Q,N_s*N_E*N_F*sizeof(scalar)));
-
+    // Set some stuff to zero
+    CUDA_SAFE_CALL(cudaMemset(_UF     , (scalar)0.0, M_s*M_T*N_F*2*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemset(_Uinteg , (scalar)0.0, N_G*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemset(_dUinteg, (scalar)0.0, D*N_G*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemset(_UintegF, (scalar)0.0, M_G*M_T*N_F*2*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemset(_s      , (scalar)0.0, N_G*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemset(_sJ     , (scalar)0.0, N_G*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemset(_S      , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemset(_f      , (scalar)0.0, D*N_G*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemset(_fJ     , (scalar)0.0, D*N_G*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemset(_F      , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemset(_q      , (scalar)0.0, M_G*M_T*N_F*2*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemset(_qJ     , (scalar)0.0, M_G*M_T*N_F*2*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemset(_Qtcj   , (scalar)0.0, M_s*M_T*N_F*2*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemset(_Q      , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar)));  
 
     // Send the stuff to the device
-    CUDA_SAFE_CALL(cudaMemcpy(_map,    map,    M_s*M_T*N_F*2*sizeof(int), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_invmap, invmap, N_s*N_E*N_F*2*sizeof(int), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_boundaryMap, boundaryMap, M_B*2*sizeof(int), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_phi, phi, N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_phi_w, phi_w, N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_dphi, dphi, D*N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_dphi_w, dphi_w, D*N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_psi, psi, M_G*M_s*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_psi_w, psi_w, M_G*M_s*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_J, J, N_E*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_invJac, invJac, N_G*D*N_E*D*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_JF, JF, M_T*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_normals,normals,D*M_T*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemset(_Q, (scalar)0.0, N_E*N_F*N_s*sizeof(scalar)));
-
+    CUDA_SAFE_CALL(cudaMemcpy(_map        , map        , M_s*M_T*N_F*2*sizeof(int) , cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_invmap     , invmap     , N_s*N_E*N_F*2*sizeof(int) , cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_boundaryMap, boundaryMap, M_B*2*sizeof(int)         , cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_phi        , phi        , N_G*N_s*sizeof(scalar)    , cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_phi_w      , phi_w      , N_G*N_s*sizeof(scalar)    , cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_dphi       , dphi       , D*N_G*N_s*sizeof(scalar)  , cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_dphi_w     , dphi_w     , D*N_G*N_s*sizeof(scalar)  , cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_psi        , psi        , M_G*M_s*sizeof(scalar)    , cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_psi_w      , psi_w      , M_G*M_s*sizeof(scalar)    , cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_J          , J          , N_E*sizeof(scalar)        , cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_invJac     , invJac     , N_G*D*N_E*D*sizeof(scalar), cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_JF         , JF         , 2*M_T*sizeof(scalar)      , cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_normals    , normals    , D*M_T*sizeof(scalar)      , cudaMemcpyHostToDevice));
+    
 #endif
 
     // Initialize some stuff for conservation calculations
@@ -230,8 +243,9 @@ class DG_SOLVER
     Lcpu_collocationUF(_M_G, _M_s, _M_T, _N_F, _UintegF, _psi, _UF);
 #endif
 
+    // Physics
     Levaluate_sf(_D, _N_G, _N_E, _N_F,  _s, _f, _Uinteg, _dUinteg, _invJac);
-    Levaluate_q(_M_G, _M_T, _N_F, _D, _q, _UintegF, _normals); 
+    Levaluate_q(_M_G, _M_T, _N_F, _D, _q, _UintegF, _normals);
     
     // redistribute_sf: requires J, invJac, s, f, phi_w, dphi_w, sJ, fJ, S, F
     Lcpu_redistribute_sf(_D, _N_G, _N_E, _N_F, _sJ, _fJ, _s, _f, _J, _invJac);

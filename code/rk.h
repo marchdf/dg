@@ -70,13 +70,19 @@ class RK
 #elif USE_GPU
     scalar* d_U;
     // Allocate on device
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_U,N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_Us,N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_Ustar,N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_DU,N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_f,N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_Minv,N_s*N_s*N_E*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &d_U   , N_s*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_Us   , N_s*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_Ustar, N_s*N_E*N_F*sizeof(scalar)));  
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_DU   , N_s*N_E*N_F*sizeof(scalar)));     
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_f    , N_s*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_Minv , N_s*N_s*N_E*sizeof(scalar)));
 
+    // Set to zero
+    CUDA_SAFE_CALL(cudaMemset(_Us   , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemset(_Ustar, (scalar)0.0, N_s*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemset(_DU   , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar)));
+    CUDA_SAFE_CALL(cudaMemset(_f    , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar)));
+    
     // Copy info to device
     CUDA_SAFE_CALL(cudaMemcpy(d_U, h_U, N_s*N_E*N_F*sizeof(scalar), cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar), cudaMemcpyHostToDevice));

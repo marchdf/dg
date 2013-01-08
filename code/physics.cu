@@ -1070,10 +1070,10 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 #elif USE_GPU
       int t = blockIdx.x;
       int g = threadIdx.x;
-      extern __shared__ scalar buffer[];
+      extern __shared__ scalar buffer[];    // buffer holds F and ncterm (M_G x 2*N_F: [F,ncterm])
 #endif
 
-      // Initialize these variables
+      // Initialize the buffer
       int Fidx = g*2*N_F;       // index for start of F
       int ncidx = g*2*N_F+N_F;  // index for start of ncterm
       for(int k = 0; k < 2*N_F; k++) buffer[Fidx+k]  = 0;
