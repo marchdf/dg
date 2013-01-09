@@ -160,10 +160,11 @@ int main (int argc, char **argv)
   int msh_tri;
   int msh_lin;
   int nsides; // this offsets j in buildInterfaces function
+  int N_N;    // number of neighbors to an element
   get_element_types(order, msh_qua, msh_tri, msh_lin);
-  if     (inputs.getElemType() == "lin"){face_type = 0      , elem_type = msh_lin; nsides = 0;}
-  else if(inputs.getElemType() == "tri"){face_type = msh_lin, elem_type = msh_tri; nsides = 3;}
-  else if(inputs.getElemType() == "qua"){face_type = msh_lin, elem_type = msh_qua; nsides = 4;} // No idea yet
+  if     (inputs.getElemType() == "lin"){face_type = 0      , elem_type = msh_lin; nsides = 0; N_N = 2;}
+  else if(inputs.getElemType() == "tri"){face_type = msh_lin, elem_type = msh_tri; nsides = 3; N_N = 3;}
+  else if(inputs.getElemType() == "qua"){face_type = msh_lin, elem_type = msh_qua; nsides = 4; N_N = 4;} 
   else printf("Invalid element type in deck");
     
   // Get the nodes, elements, interfaces, normals
@@ -179,8 +180,8 @@ int main (int argc, char **argv)
     const simpleElement &el = elements[e];
     //printf("e:%i, id:%i\n", e, el.getId());
     ElementMap[el.getId()] = e;
-  }  
-  
+  }
+
   ////////////////////////////////////////////////////////////////////////////   
   //
   // Generer les fonctions de formes, get integration points, weights
@@ -442,6 +443,14 @@ int main (int argc, char **argv)
   else if (farfield){ m.buildFarfield();     boundaryMap = 0;}
   int* h_boundaryMap = m.getBoundaryMap();
   int M_B = m.getBoundaryNB();
+
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Build neighbors map (must be done after ElementMap and boundaryMap)
+  //
+  //////////////////////////////////////////////////////////////////////////
+  m.buildNeighbors(N_N, N_E, ElementMap);
+  int* h_neighbors = m.getNeighbors();
   
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -739,6 +748,7 @@ int main (int argc, char **argv)
   //////////////////////////////////////////////////////////////////////////   
 
   delete[] h_boundaryMap;
+  delete[] h_neighbors;
   delete[] h_Minv;
   delete[] h_map;
   delete[] h_invmap;

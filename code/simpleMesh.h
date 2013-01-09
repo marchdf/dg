@@ -3,6 +3,7 @@
 #include <vector>
 #include "fullMatrix.h"
 #include <scalar_def.h>
+#include <map>
 
 class simpleElement {
   std::vector<int> _nodes;
@@ -34,8 +35,9 @@ class simpleMesh {
   std::vector<simpleInterface> _interfaces;
   fullMatrix<double> _nodes;
   fullMatrix<scalar> _normals;
-  int _N_B;
+  int _N_B; // number of boundaries
   int* _boundary;
+  int* _neighbors; // N_N x N_E : element | neighbor1 | neighbor2 | ...
   public:
   inline const std::vector<simpleInterface> & getInterfaces () const {return  _interfaces;}
   inline const std::vector<simpleElement> & getElements (int type) const {return  _elements[type];}
@@ -52,5 +54,7 @@ class simpleMesh {
   void buildFarfield();
   int getBoundaryNB()  const {return _N_B;}
   int* getBoundaryMap()const {return _boundary;}
+  void buildNeighbors(int N_N, int N_E, std::map<int,int> &ElementMap);
+  int* getNeighbors()const {return _neighbors;}
 };
 #endif

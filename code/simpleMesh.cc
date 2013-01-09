@@ -318,6 +318,54 @@ void simpleMesh::buildFarfield()
   delete[] listInterfaces;
 }
 
+void simpleMesh::buildNeighbors(int N_N, int N_E, std::map<int,int> &ElementMap)
+{
+  // Objective: find the neighbors of each element
+  // get _neighbors, a N_N x N_E vector:
+  // | neighbor1 | ...
+  // | neighbor2 | ...
+
+  int N_I = _interfaces.size();       // number of interfaces                   (i index)
+
+  // Allocate neighbors, set to zero
+  _neighbors = new int[N_N*N_E]; for(int k=0; k < N_N*N_E; k++){_neighbors[k]=0;}
+
+  // A neighbor counter for each element, set to zero
+  int* nn = new int[N_E];  for(int k=0; k<N_E; k++){ nn[k]=0;} 
+  
+  // Loop through each interface in the mesh
+  for(int i = 0; i < N_I; i++){
+    const simpleInterface &face = _interfaces[i];  // get the interface
+    const simpleElement *el1 = face.getElement(0); // get the element on one side
+    const simpleElement *el2 = face.getElement(1); // get the element on the other side
+    int el1num = ElementMap[el1->getId()];         // element idx in order of the U matrix
+
+    if(el2!=NULL){
+      int el2num = ElementMap[el2->getId()];
+      //printf("face %2i: el1 = %2i (or %2i) and el2 = %2i (or %2i)\n", i, el1->getId(), el1num, el2->getId(), el2num);
+      _neighbors[el1num*N_N+nn[el1num]] = el2num;
+      _neighbors[el2num*N_N+nn[el2num]] = el1num;
+      nn[el1num]++; // increment the neighbor counter
+      nn[el2num]++; // increment the neighbor counter
+    }
+    else{
+      // Find the current interface in the boundaries
+      // and get the other interface related to this interface
+      int t2 = 0;
+      for(int t = 0; t < _N_B; t++) if (_boundary[t*2+0]==i) t2 = _boundary[t*2+1];
+      const simpleInterface &face2 = _interfaces[t2];  // get that other interface
+      const simpleElement *el3 = face2.getElement(0); // get the element on one side
+      int el3num = ElementMap[el3->getId()];
+      //printf("face %2i: el1 = %2i (or %2i) and el3 = %2i (or %2i)\n", i, el1->getId(), el1num, el3->getId(), el3num);
+      _neighbors[el1num*N_N+nn[el1num]] = el3num;
+      nn[el1num]++; // increment the neighbor counter
+    }
+  }
+  
+  // Free some stuff
+  delete[] nn;
+}
+
 
 simpleInterface::simpleInterface(int physicalTag)
 {

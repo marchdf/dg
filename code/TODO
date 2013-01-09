@@ -12,25 +12,18 @@ INITIAL CONDITIONS
   - Clean initial conditions
   - Design some generic ICs that can be made in the deck (maybe a LR state thing for now)
 
-OTHER
-  - Add CFL condition
-  - Clean if conditions on dimensions: they are all over the place. Can they be reduced?
-  - Create some 2D benchmarks? 
-  - Remove cpu_ in the function names (not necessary now)
-  - Boundary conditions for farfield are a little strange?
-
 RIEMANN SOLVERS
   - Optimize Riemann solvers. I think they are inefficient. Also, make the 1D closer to the 2D implementation
   - Add an entropy fix for Roe (http://www.cfdbooks.com/cfdcodes/oned_euler_fluxes_v4.f90)
   - add HLLC
   
 LIMITING
+  - It's a very ugly implementation right now...
   - Need to pass a vector containing the neighbors of a given element
   - Need to make monoV2D matrix/Change of basis
 
 PARALLEL
-  - Make GPU capable on nyx and home machine (mostly going to be in the vectors of the flux functions)
-  - Make MPI capable on nyx and home machine
+  - Make MPI capable
 
 2D PHYSICS
   - passive/multifluid HLL
@@ -39,3 +32,9 @@ PARALLEL
 NYX
   - Can my code compile and run on nyx?
 	
+OTHER
+  - Add CFL condition
+  - Clean if conditions on dimensions: they are all over the place. Can they be reduced?
+  - Create some 2D benchmarks? 
+  - Remove cpu_ in the function names (not necessary now)
+  - Boundary conditions for farfield are a little strange?
