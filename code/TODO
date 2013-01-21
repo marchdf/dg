@@ -7,6 +7,7 @@ OUTPUT
   - Inefficient to build a matrix to output it...
   - Add capability to output in the .txt format that gmsh can generate too
   - Clean output functions: unmerge them would be smart I think (same rational as for the flux functions)
+  - Make into a class to do this?
 
 INITIAL CONDITIONS
   - Clean initial conditions
@@ -19,8 +20,11 @@ RIEMANN SOLVERS
   
 LIMITING
   - It's a very ugly implementation right now...
-  - Need to pass a vector containing the neighbors of a given element
-  - Need to make monoV2D matrix/Change of basis
+  - I have powersXYZG and V1D, could I combine the two to avoid ifdefs?
+  - code TaylorDerivative (kernel), DerivativeIdx (main.cc), integrateincell (kernel)
+  - ifdefs on dims in HRL, MYL, M2L
+  - move some of these functions to .cc files?
+  - write the cpu_hrl2d function
 
 PARALLEL
   - Make MPI capable

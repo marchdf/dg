@@ -10,6 +10,7 @@ class Limiting
  private:
   scalar* _Lag2Mono;
   scalar* _Mono2Lag;
+  scalar* _powersXYZG;
   scalar* _V1D;
   scalar* _weight; // integration weights
   scalar* _A;      // monomial solution
@@ -26,11 +27,13 @@ class Limiting
   int     _N_F;
   int     _N_G;
   int     _boundaryMap;
+  int*    _neighbors;
   
  public:
   // constructor
  Limiting(int method) : _method(method){}
-  
+
+  // 1D limiting constructor
  Limiting(int method, int N_s, int N_E, int N_F, int N_G, int boundaryMap, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, fullMatrix<scalar> &V1D, scalar* weight)
    : _method(method), _N_s(N_s), _N_E(N_E), _N_F(N_F), _N_G(N_G), _boundaryMap(boundaryMap){
     switch (_method){
@@ -75,7 +78,7 @@ class Limiting
       printf("No limiting.\n");
       _method = 0;
     }
-
+    
     // For case specific stuff:
     switch (_method){
     case 2:{
@@ -109,19 +112,120 @@ class Limiting
       }
       break;
     }
+  } // end 1D constructor
+
+  // 2D limiting constructor
+ Limiting(int method, int N_s, int N_E, int N_F, int N_G, int* neighbors, fullMatrix<scalar> Lag2Mono, fullMatrix<scalar> Mono2Lag, scalar* powersXYZG, scalar* weight)
+   : _method(method), _N_s(N_s), _N_E(N_E), _N_F(N_F), _N_G(N_G){
+    switch (_method){
+    case 1:
+    case 2:
+    case 3:{
+#ifdef USE_CPU
+      // Allocate
+      _Lag2Mono   = new scalar[_N_s*_N_s*_N_E];
+      _Mono2Lag   = new scalar[_N_s*_N_s*_N_E];
+      _powersXYZG = new scalar[_N_s*_N_G*(_N_N+1)*_N_E];
+      _neigbors   = new int[_N_N*_N_E];
+      _weight     = new scalar[_N_G];          
+      _A          = new scalar[_N_s*_N_E*_N_F];
+      _Alim       = new scalar[_N_s*_N_E*_N_F];
+
+      // Copy the data to these new pointers
+      for(int e = 0; e < _N_E; e++){
+	for(int i = 0; i < _N_s; i++){
+	  for(int ii = 0; ii < _N_s; ii++){
+	    _Lag2Mono[(e*_N_s+i)*_N_s+ii] = Lag2Mono(e,i*_N_s+ii);
+	    _Mono2Lag[(e*_N_s+i)*_N_s+ii] = Mono2Lag(e,i*_N_s+ii);}}}
+      memcpy(_powersXYZG, powersXYZG, _N_s*_N_G*(_N_N+1)*_N_E*sizeof(scalar));
+      memcpy(_neighbors,  neighbors,  _N_N*_N_E*sizeof(scalar));
+      memcpy(_weight,     weight,     _N_G*sizeof(scalar));
+      
+#elif USE_GPU
+      // tmp host pointers to copy data to gpu
+      scalar* tmpLag2Mono   = new scalar[_N_s*_N_s*_N_E];
+      scalar* tmpMono2Lag   = new scalar[_N_s*_N_s*_N_E];
+      for(int e = 0; e < _N_E; e++){
+	for(int i = 0; i < _N_s; i++){
+	  for(int ii = 0; ii < _N_s; ii++){
+	    _Lag2Mono[(e*_N_s+i)*_N_s+ii] = Lag2Mono(e,i*_N_s+ii);
+	    _Mono2Lag[(e*_N_s+i)*_N_s+ii] = Mono2Lag(e,i*_N_s+ii);}}}
+
+      // Allocate on GPU
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_Lag2Mono,_N_s*_N_s*_N_E*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_Mono2Lag,_N_s*_N_s*_N_E*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_powersXYZG,_N_s*_N_G*(_N_N+1)*_N_E*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_neighbors,_N_N*_N_E*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_weight,_N_G*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_A,_N_s*_N_E*_N_F*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_Alim,_N_s*_N_E*_N_F*sizeof(scalar)));
+
+      // Copy data to GPU
+      CUDA_SAFE_CALL(cudaMemcpy(_Lag2Mono,   tmpLag2Mono, _N_s*_N_s*_N_E*sizeof(scalar), cudaMemcpyHostToDevice));
+      CUDA_SAFE_CALL(cudaMemcpy(_Mono2Lag,   tmpMono2Lag, _N_s*_N_s*_N_E*sizeof(scalar), cudaMemcpyHostToDevice));
+      CUDA_SAFE_CALL(cudaMemcpy(_powersXYZG, powersXYZG,  _N_s*_N_G*(_N_N+1)*_N_E*sizeof(scalar), cudaMemcpyHostToDevice));
+      CUDA_SAFE_CALL(cudaMemcpy(_neighbors,  neighbors,   _N_N*_N_E*sizeof(scalar), cudaMemcpyHostToDevice));
+      CUDA_SAFE_CALL(cudaMemcpy(_weight,     weight,      _N_G*sizeof(scalar), cudaMemcpyHostToDevice));
+	    
+      delete[] tmpLag2Mono;
+      delete[] tmpMono2Lag;
+#endif
+      }
+      break;
+    default:
+      printf("No limiting.\n");
+      _method = 0;
+    }
     
-    
-  }
+/*     // For case specific stuff: */
+/*     switch (_method){ */
+/*     case 2:{ */
+/* #ifdef USE_CPU */
+/*       _pressure     = new scalar[_N_s*_N_E]; */
+/*       _pressureMono = new scalar[_N_s*_N_E]; */
+/*       _pressureLim  = new scalar[_N_s*_N_E]; */
+/* #elif USE_GPU */
+/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar))); */
+/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar))); */
+/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar))); */
+/* #endif */
+/*       } */
+/*       break; */
+/*     case 3:{ */
+/* #ifdef USE_CPU */
+/*       _pressure     = new scalar[_N_s*_N_E]; */
+/*       _pressureMono = new scalar[_N_s*_N_E]; */
+/*       _pressureLim  = new scalar[_N_s*_N_E]; */
+/*       _u            = new scalar[_N_s*_N_E]; */
+/*       _uMono        = new scalar[_N_s*_N_E]; */
+/*       _uLim         = new scalar[_N_s*_N_E]; */
+/* #elif USE_GPU */
+/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar))); */
+/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar))); */
+/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar))); */
+/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_u,_N_s*_N_E*sizeof(scalar))); */
+/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_uMono,_N_s*_N_E*sizeof(scalar))); */
+/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_uLim,_N_s*_N_E*sizeof(scalar))); */
+/* #endif */
+/*       } */
+/*       break; */
+/*     } */
+  } // end 2D constructor
   
   // destructor
   ~Limiting(){
     if(_method!=0){
       if(_Lag2Mono)     del(_Lag2Mono);
       if(_Mono2Lag)     del(_Mono2Lag);
-      if(_V1D)          del(_V1D);
       if(_weight)       del(_weight);
       if(_A)            del(_A);
       if(_Alim)         del(_Alim);
+#ifdef ONED
+      if(_V1D)          del(_V1D);
+#elif TWOD
+      if(_powersXYZG)   del(_powersXYZG);
+      if(_neighbors)    del(_neigbors);
+#endif
     }
     if((_method==2)||(_method==3)){
       if(_pressure)     del(_pressure);

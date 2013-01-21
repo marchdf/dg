@@ -45,8 +45,15 @@ void get_element_types(const int order, int &msh_qua, int &msh_tri, int &msh_lin
 }
 void average_cell_p0(const int N_s, const int N_E, const int N_F, fullMatrix<scalar> &U);
 
+fullMatrix<scalar> getElementCentroids(const int N_E, const int D, const int ncorners, const fullMatrix<scalar> XYZNodes);
+
+
+
 void vandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D);
 void monovandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D);
+void monovandermonde2d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V2D);
+void LagMono2DTransforms(const int N_E, const int D, const int N_s, const int order, const fullMatrix<scalar> XYZNodes, const fullMatrix<scalar> XYZCen, fullMatrix<scalar> Lag2Mono, fullMatrix<scalar> Mono2Lag);
+void getPowersXZYG(const int N_E, const int D, const int N_s, const int N_G, const int N_N, const int order, const fullMatrix<scalar> XYZG, const fullMatrix<scalar> XYZCen, const int* neighbors, scalar* powers);
 
 int factorial(int n){ return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;}
 
@@ -289,70 +296,7 @@ int main (int argc, char **argv)
   }
 #endif
 
-  //////////////////////////////////////////////////////////////////////////   
-  //
-  // Monomial to Lagrange basis transforms
-  //
-  //////////////////////////////////////////////////////////////////////////
-  fullMatrix<scalar> points1D(N_G,1); for(int g=0; g<N_G; g++) {points1D(g,0) = points(g,0);}
-  fullMatrix<scalar> phiinv(N_s,N_G);
-#ifdef ONED
-  phi.invert(phiinv);
-#endif
-  fullMatrix<scalar> monoV1D;
-  fullMatrix<scalar> monoV1Dinv;
-#ifdef ONED
-  monovandermonde1d(order, points1D, monoV1D);
-  monoV1D.invert(monoV1Dinv);
-#endif
 
-  // Go from lagrange to monomial basis 
-  fullMatrix<scalar> Lag2Mono(N_s,N_s);
-  fullMatrix<scalar> Mono2Lag(N_s,N_s);
-#ifdef ONED
-  Lag2Mono.gemm(monoV1Dinv, phi);   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
-  Lag2Mono.invert(Mono2Lag);
-#endif
-  // //Mono2Lag.gemm(phiinv,monoV1D);
-  
-
-  // //////////////////////////////////////////////////////////////////////////   
-  // //
-  // // Modal basis functions and change of basis
-  // //
-  // //////////////////////////////////////////////////////////////////////////
-
-  // // Get the Legendre-Gauss-Lobatto points
-  // fullMatrix<scalar> pointsGL;
-  // JacobiGL(0,0,order,pointsGL);
-  // int N_GL = pointsGL.size1();
-  
-  // // Evaluate the Lagrange polynomials at the GL points (needed for collocation)
-  // fullMatrix<scalar> phiGL   (N_GL,N_s);
-  // fullMatrix<scalar> phiGLinv(N_s,N_GL); 
-  // fullMatrix<double> phiDGL  (N_GL,N_s); 
-  // basis->f (pointsGL, phiDGL);
-  // for(int gl = 0; gl < N_GL; gl++){
-  //   for(int i = 0; i < N_s; i++){
-  //     phiGL(gl,i) = (scalar)phiDGL(gl,i);
-  //   }	  
-  // }   
-  // phiGL.invert(phiGLinv);
-  
-  // // Vandermonde matrix to go from modal to nodal representation
-  // // u_nodal = V1D    u_modal
-  // // u_modal = V1Dinv u_nodal
-  // fullMatrix<scalar> V1D;
-  // fullMatrix<scalar> V1Dinv;
-  // vandermonde1d(order, pointsGL, V1D);
-  // V1D.invert(V1Dinv);
-  
-  // // Go from nodal to modal
-  // fullMatrix<scalar> Nod2Mod(N_s,N_s);
-  // fullMatrix<scalar> Mod2Nod(N_s,N_s);
-  // Nod2Mod.gemm(V1Dinv, phiGL);   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
-  // Nod2Mod.invert(Mod2Nod);
-  
   
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -400,6 +344,9 @@ int main (int argc, char **argv)
   }
   XYZG.gemm (phi, XYZNodes);
 
+  // Element centroids
+  fullMatrix<scalar> XYZCen = getElementCentroids(N_E, D, N_N, XYZNodes);
+  
   // Faces
   fullMatrix<scalar> XYZNodesF (M_s, M_T*2*D);
   fullMatrix<scalar> XYZGF (M_G, M_T*2*D);
@@ -427,6 +374,7 @@ int main (int argc, char **argv)
   }
   XYZGF.gemm (psi, XYZNodesF);
   
+
   //////////////////////////////////////////////////////////////////////////   
   //
   // Build the boundary map
@@ -452,6 +400,74 @@ int main (int argc, char **argv)
   m.buildNeighbors(N_N, N_E, ElementMap);
   int* h_neighbors = m.getNeighbors();
   
+
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Monomial to Lagrange basis transforms
+  //
+  //////////////////////////////////////////////////////////////////////////
+#ifdef ONED
+  fullMatrix<scalar> monoV;
+  fullMatrix<scalar> monoVinv;
+  monovandermonde1d(order, points, monoV);
+  monoV.invert(monoVinv);
+
+  // Go from lagrange to monomial basis (in ref space)
+  fullMatrix<scalar> Lag2Mono(N_s,N_s);
+  fullMatrix<scalar> Mono2Lag(N_s,N_s);
+  Lag2Mono.gemm(monoVinv, phi);   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
+  Lag2Mono.invert(Mono2Lag);
+
+#elif TWOD
+  // Go from lagrange to monomial basis (in physical space)
+  fullMatrix<scalar> Lag2Mono(N_E, N_s*N_s);
+  fullMatrix<scalar> Mono2Lag(N_E, N_s*N_s);
+  LagMono2DTransforms(N_E, D, N_s, order, XYZNodes, XYZCen, Lag2Mono, Mono2Lag);
+
+  // Get the powers of the physical nodes and neighbors
+  // required for limiting in 2D
+  scalar* h_powersXYZG = new scalar[N_s*N_G*(N_N+1)*N_E];
+  getPowersXZYG(N_E, D, N_s, N_G, N_N, order, XYZG, XYZCen, h_neighbors, h_powersXYZG);
+#endif
+    
+
+  // //////////////////////////////////////////////////////////////////////////   
+  // //
+  // // Modal basis functions and change of basis
+  // //
+  // //////////////////////////////////////////////////////////////////////////
+
+  // // Get the Legendre-Gauss-Lobatto points
+  // fullMatrix<scalar> pointsGL;
+  // JacobiGL(0,0,order,pointsGL);
+  // int N_GL = pointsGL.size1();
+  
+  // // Evaluate the Lagrange polynomials at the GL points (needed for collocation)
+  // fullMatrix<scalar> phiGL   (N_GL,N_s);
+  // fullMatrix<scalar> phiGLinv(N_s,N_GL); 
+  // fullMatrix<double> phiDGL  (N_GL,N_s); 
+  // basis->f (pointsGL, phiDGL);
+  // for(int gl = 0; gl < N_GL; gl++){
+  //   for(int i = 0; i < N_s; i++){
+  //     phiGL(gl,i) = (scalar)phiDGL(gl,i);
+  //   }	  
+  // }   
+  // phiGL.invert(phiGLinv);
+  
+  // // Vandermonde matrix to go from modal to nodal representation
+  // // u_nodal = V1D    u_modal
+  // // u_modal = V1Dinv u_nodal
+  // fullMatrix<scalar> V1D;
+  // fullMatrix<scalar> V1Dinv;
+  // vandermonde1d(order, pointsGL, V1D);
+  // V1D.invert(V1Dinv);
+  
+  // // Go from nodal to modal
+  // fullMatrix<scalar> Nod2Mod(N_s,N_s);
+  // fullMatrix<scalar> Mod2Nod(N_s,N_s);
+  // Nod2Mod.gemm(V1Dinv, phiGL);   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
+  // Nod2Mod.invert(Mod2Nod);
+
   //////////////////////////////////////////////////////////////////////////   
   //
   // Initialize the unknowns
@@ -486,8 +502,12 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
   scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++) h_weight[g] = (scalar)weight(g,0);  
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, boundaryMap, Lag2Mono, Mono2Lag, monoV1D, h_weight);
-  
+#ifdef ONED
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, boundaryMap, Lag2Mono, Mono2Lag, monoV, h_weight);
+#elif TWOD
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, h_neighbors, Lag2Mono, Mono2Lag, h_powersXYZG, h_weight);
+#endif
+
   //////////////////////////////////////////////////////////////////////////   
   //
   // Calculate the jacobian matrix for each integration point
@@ -764,7 +784,9 @@ int main (int argc, char **argv)
   delete[] h_invJac;
   delete[] h_normals;
   delete[] h_U;
-
+#ifdef TWOD
+  delete[] h_powersXYZG;
+#endif
   
 }// end main
 
@@ -800,6 +822,23 @@ void average_cell_p0(const int N_s, const int N_E, const int N_F, fullMatrix<sca
   U=tmp; 
 }
 
+// Return a matrix which is N_E x D containing the element centroids
+fullMatrix<scalar> getElementCentroids(const int N_E, const int D, const int ncorners, const fullMatrix<scalar> XYZNodes){
+
+  fullMatrix<scalar> XYZCen(N_E,D);
+  scalar cen =0;
+  
+  for(int e = 0; e < N_E; e++){
+    for(int alpha = 0; alpha < D; alpha++){
+      cen = 0;
+      for(int k = 0; k < ncorners; k++){
+	cen += XYZNodes(k,e*D+alpha);	
+      }
+      XYZCen(e,alpha) = cen/ncorners;
+    }    
+  }
+  return XYZCen;
+}
 
 void vandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D){
 
@@ -823,4 +862,90 @@ void monovandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<s
       V1D(i,j) = pow(r(i,0),j)/(scalar)factorial(j);
     }
   }
+}
+
+void monovandermonde2d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V2D){
+
+  // Purpose : Initialize the 2D Vandermonde Matrix, V = (x_i)^nx (y_i)^ny / (factorial(nx)*factorial(ny));
+  // ith line = [1, x_i, y_i, x_i^2/2!, x_i*y_i, y_i^2/2!, x_i^3/3!, x_i^2*y_i/2!, x_i*y_i^2/2!, y_i^3/3!, ...]
+
+  V2D.resize(r.size1(),(int)((order+1)*(order+2)/2.0));
+
+  for(int i=0;i<r.size1();i++){
+    int offset = 0;
+    for(int p=0; p<order+1; p++){
+      for(int k=0; k<p+1; k++){
+	int nx = p-k;
+	int ny =   k;
+	printf("line(%i) for p=%i: nx=%i and ny=%i (column=%i)\n",i,p,nx,ny,offset+k);
+	V2D(i,offset+k) = pow(r(i,0),nx)*pow(r(i,1),ny)/(scalar)(factorial(nx)*factorial(ny));
+      }
+      offset = offset + p + 1;
+    }
+  }
+}
+
+// Returns the transforms (and inverse) from Lagrange to Taylor
+// polynomials NB: In >< to the 1D transforms, these are in the physical
+// space! So there is one transform per element
+void LagMono2DTransforms(const int N_E, const int D, const int N_s, const int order, const fullMatrix<scalar> XYZNodes, const fullMatrix<scalar> XYZCen, fullMatrix<scalar> Lag2Mono, fullMatrix<scalar> Mono2Lag){
+
+  fullMatrix<scalar> V;
+  fullMatrix<scalar> Vinv;
+  fullMatrix<scalar> points(N_s,D);
+
+  // Loop on elements
+  for(int e = 0; e < N_E; e++){
+
+    // Get the points
+    for(int i = 0; i < N_s; i++)
+      for(int alpha = 0; alpha < D; alpha++)
+	points(i,alpha) = XYZNodes(i,e*D+alpha)-XYZCen(e,alpha);
+
+    // Get the power matrix
+    monovandermonde2d(order, points, V);
+    V.invert(Vinv);
+
+    // Store them in the large transform matrix
+    for(int i = 0; i < N_s; i++){
+      for(int ii = 0; ii < N_s; ii++){
+	Lag2Mono(e,i*N_s+ii) = V(i,ii);
+	Mono2Lag(e,i*N_s+ii) = Vinv(i,ii);
+      }
+    }
+  } // element loop
+}
+
+
+// Get the powers of XZYG-XYZCen for each element and his neighbors
+// This is precalculated for increased speed in 2D limiting
+void getPowersXZYG(const int N_E, const int D, const int N_s, const int N_G, const int N_N, const int order, const fullMatrix<scalar> XYZG, const fullMatrix<scalar> XYZCen, const int* neighbors, scalar* powers){
+
+  fullMatrix<scalar> V;
+  fullMatrix<scalar> points(N_s,D);
+  int neighbor = 0; // index of the neighboring element (or itself)
+  
+  for(int e = 0; e < N_E; e++){
+    for(int nn = 0; nn < N_N+1; nn++){
+      if (nn = 0) {neighbor = e;}
+      else        {neighbor = neighbors[e*N_N+nn];}
+
+      // Get the points to evaluate the Taylor polynomial
+      // in the element or the neighboring elements
+      for(int g = 0; g < N_G; g++)
+	for(int alpha = 0; alpha < D; alpha++)
+	  points(g,alpha) = XYZG(g,neighbor*D+alpha) - XYZCen(e,alpha);
+
+      // Get the powers of these points
+      monovandermonde2d(order, points, V);
+
+      // Store in these in the large matrix
+      for(int g = 0; g < N_G; g++)
+	for(int i = 0; i < N_s; i++)
+	  powers[((e*(N_N+1)*nn)*N_G+g)*N_s+i] = V(g,i);
+      
+    } // nn loop
+
+  } // e loop
+
 }
