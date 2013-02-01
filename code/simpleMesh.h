@@ -38,6 +38,7 @@ class simpleMesh {
   int _N_B; // number of boundaries
   int* _boundary;
   int* _neighbors; // N_N x N_E : element | neighbor1 | neighbor2 | ...
+  fullMatrix<scalar> _shifts;  
   public:
   inline const std::vector<simpleInterface> & getInterfaces () const {return  _interfaces;}
   inline const std::vector<simpleElement> & getElements (int type) const {return  _elements[type];}
@@ -56,5 +57,7 @@ class simpleMesh {
   int* getBoundaryMap()const {return _boundary;}
   void buildNeighbors(int N_N, int N_E, std::map<int,int> &ElementMap);
   int* getNeighbors()const {return _neighbors;}
+  void buildBoundaryElementShift(int order, const fullMatrix<scalar> &XYZNodesF, const int D, std::map<int,int> &ElementMap);
+  inline const fullMatrix<scalar> & getShifts() const {return _shifts;}
 };
 #endif

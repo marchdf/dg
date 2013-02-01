@@ -25,6 +25,7 @@ LIMITING
   - ifdefs on dims in HRL, MYL, M2L
   - move some of these functions to .cc files?
   - write the cpu_hrl2d function
+  - Get a 1D/2D version: put ifdef ONED in header file so I can call the class the same thing (Limiting)
 
 PARALLEL
   - Make MPI capable
@@ -42,3 +43,4 @@ OTHER
   - Create some 2D benchmarks? 
   - Remove cpu_ in the function names (not necessary now)
   - Boundary conditions for farfield are a little strange?
+  - Add a compilation error check

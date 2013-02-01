@@ -52,8 +52,11 @@ fullMatrix<scalar> getElementCentroids(const int N_E, const int D, const int nco
 void vandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D);
 void monovandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D);
 void monovandermonde2d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V2D);
-void LagMono2DTransforms(const int N_E, const int D, const int N_s, const int order, const fullMatrix<scalar> XYZNodes, const fullMatrix<scalar> XYZCen, fullMatrix<scalar> Lag2Mono, fullMatrix<scalar> Mono2Lag);
-void getPowersXZYG(const int N_E, const int D, const int N_s, const int N_G, const int N_N, const int order, const fullMatrix<scalar> XYZG, const fullMatrix<scalar> XYZCen, const int* neighbors, scalar* powers);
+void LagMono2DTransforms(const int N_E, const int D, const int N_s, const int order, const int L2Msize1, const int L2Msize2, std::string ElemType, const fullMatrix<scalar> XYZNodes, const fullMatrix<scalar> XYZCen, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag);
+void getPowersXYZG(const int N_E, const int D, const int N_s, const int N_G, const int N_N, const int M_B, const int order, const fullMatrix<scalar> XYZG, const fullMatrix<scalar> XYZCen, const int* neighbors, const fullMatrix<scalar> shifts, scalar* powers);
+
+int getTaylorDerIdx2DLength(const int order);
+void getTaylorDerIdx2D(const int order, int* TaylorDxIdx, int* TaylorDyIdx);
 
 int factorial(int n){ return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;}
 
@@ -168,10 +171,11 @@ int main (int argc, char **argv)
   int msh_lin;
   int nsides; // this offsets j in buildInterfaces function
   int N_N;    // number of neighbors to an element
+  scalar refArea; // area of reference element
   get_element_types(order, msh_qua, msh_tri, msh_lin);
   if     (inputs.getElemType() == "lin"){face_type = 0      , elem_type = msh_lin; nsides = 0; N_N = 2;}
-  else if(inputs.getElemType() == "tri"){face_type = msh_lin, elem_type = msh_tri; nsides = 3; N_N = 3;}
-  else if(inputs.getElemType() == "qua"){face_type = msh_lin, elem_type = msh_qua; nsides = 4; N_N = 4;} 
+  else if(inputs.getElemType() == "tri"){face_type = msh_lin, elem_type = msh_tri; nsides = 3; N_N = 3; refArea = 0.5;}
+  else if(inputs.getElemType() == "qua"){face_type = msh_lin, elem_type = msh_qua; nsides = 4; N_N = 4; refArea = 4;} 
   else printf("Invalid element type in deck");
     
   // Get the nodes, elements, interfaces, normals
@@ -271,7 +275,7 @@ int main (int argc, char **argv)
       }	  
     }    
   }
-
+  
   // Faces
   fullMatrix<scalar> psi(M_G, M_s);
   fullMatrix<scalar> dpsi(M_G*DF,M_s);
@@ -343,10 +347,10 @@ int main (int argc, char **argv)
     }
   }
   XYZG.gemm (phi, XYZNodes);
-
+  
   // Element centroids
   fullMatrix<scalar> XYZCen = getElementCentroids(N_E, D, N_N, XYZNodes);
-  
+
   // Faces
   fullMatrix<scalar> XYZNodesF (M_s, M_T*2*D);
   fullMatrix<scalar> XYZGF (M_G, M_T*2*D);
@@ -391,7 +395,7 @@ int main (int argc, char **argv)
   else if (farfield){ m.buildFarfield();     boundaryMap = 0;}
   int* h_boundaryMap = m.getBoundaryMap();
   int M_B = m.getBoundaryNB();
-
+  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Build neighbors map (must be done after ElementMap and boundaryMap)
@@ -399,7 +403,12 @@ int main (int argc, char **argv)
   //////////////////////////////////////////////////////////////////////////
   m.buildNeighbors(N_N, N_E, ElementMap);
   int* h_neighbors = m.getNeighbors();
-  
+
+  // Get the coordinate shifts to bring the neighbors of the elements
+  // on the boundaries to the correct (x,y) location. This is used
+  // when evaluating polynomials in neighboring elements.
+  m.buildBoundaryElementShift(order, XYZNodesF, D, ElementMap);
+  fullMatrix<scalar> shifts = m.getShifts();
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -420,14 +429,22 @@ int main (int argc, char **argv)
 
 #elif TWOD
   // Go from lagrange to monomial basis (in physical space)
-  fullMatrix<scalar> Lag2Mono(N_E, N_s*N_s);
-  fullMatrix<scalar> Mono2Lag(N_E, N_s*N_s);
-  LagMono2DTransforms(N_E, D, N_s, order, XYZNodes, XYZCen, Lag2Mono, Mono2Lag);
-
+  int L2Msize1, L2Msize2; // number of rows and columns in Lag2Mono transforms
+  if     (inputs.getElemType()== "tri"){L2Msize1 = N_s; L2Msize2 = N_s;}
+  else if(inputs.getElemType()== "qua"){L2Msize1 = (2*order+1)*(order+1); L2Msize2 = N_s;}
+  fullMatrix<scalar> Lag2Mono(N_E, L2Msize1*L2Msize2);
+  fullMatrix<scalar> Mono2Lag(N_E, L2Msize2*L2Msize1);
+  LagMono2DTransforms(N_E, D, N_s, order, L2Msize1, L2Msize2, inputs.getElemType(), XYZNodes, XYZCen, Lag2Mono, Mono2Lag);
+  
   // Get the powers of the physical nodes and neighbors
   // required for limiting in 2D
-  scalar* h_powersXYZG = new scalar[N_s*N_G*(N_N+1)*N_E];
-  getPowersXZYG(N_E, D, N_s, N_G, N_N, order, XYZG, XYZCen, h_neighbors, h_powersXYZG);
+  scalar* h_powersXYZG;
+  if     (inputs.getElemType() == "tri"){
+    h_powersXYZG = new scalar[N_s*N_G*(N_N+1)*N_E];
+    getPowersXYZG(N_E, D, N_s, N_G, N_N, M_B, order, XYZG, XYZCen, h_neighbors, shifts, h_powersXYZG);}
+  else if(inputs.getElemType() == "qua"){
+    h_powersXYZG = new scalar[(2*order+1)*(order+1)*N_G*(N_N+1)*N_E];
+    getPowersXYZG(N_E, D, (2*order+1)*(order+1), N_G, N_N, M_B, 2*order, XYZG, XYZCen, h_neighbors, shifts, h_powersXYZG);}
 #endif
     
 
@@ -478,35 +495,23 @@ int main (int argc, char **argv)
   fullMatrix<scalar> Us(N_s, N_E*N_F);
   fullMatrix<scalar> Ustar(N_s, N_E*N_F);
 #ifdef MULTIFLUID
-    if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-    else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-    else if(sodmono) init_dg_sodmono_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-    else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-    else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-    else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-    else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-    else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-    else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-    else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(sodmono) init_dg_sodmono_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
 #elif PASSIVE
-    if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, U);
-    if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, U);
+  if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, U);
+  if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, U);
 #endif
 
   if (order0) average_cell_p0(N_s, N_E, N_F, U);
   
-
-  //////////////////////////////////////////////////////////////////////////   
-  //
-  // Setup the limiter
-  //
-  //////////////////////////////////////////////////////////////////////////
-  scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++) h_weight[g] = (scalar)weight(g,0);  
-#ifdef ONED
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, boundaryMap, Lag2Mono, Mono2Lag, monoV, h_weight);
-#elif TWOD
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, h_neighbors, Lag2Mono, Mono2Lag, h_powersXYZG, h_weight);
-#endif
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -616,6 +621,23 @@ int main (int argc, char **argv)
  
   //////////////////////////////////////////////////////////////////////////   
   //
+  // Setup the limiter
+  //
+  //////////////////////////////////////////////////////////////////////////
+  scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++) h_weight[g] = (scalar)weight(g,0);  
+#ifdef ONED
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, boundaryMap, Lag2Mono, Mono2Lag, monoV, h_weight);
+#elif TWOD
+  int L = getTaylorDerIdx2DLength(order);
+  int* h_TaylorDxIdx = new int[L];
+  int* h_TaylorDyIdx = new int[L];
+  getTaylorDerIdx2D(order, h_TaylorDxIdx, h_TaylorDyIdx);
+  Limiting Limiter = Limiting(limiterMethod, D, N_s, N_E, N_F, N_G, N_N, L, order, L2Msize1, L2Msize2, h_neighbors, Lag2Mono, Mono2Lag, XYZCen, h_powersXYZG, h_weight, refArea, h_TaylorDxIdx, h_TaylorDyIdx);
+  delete[] h_TaylorDxIdx; delete[] h_TaylorDyIdx;
+#endif
+
+  //////////////////////////////////////////////////////////////////////////   
+  //
   // Solve the problem on the CPU/GPU.
   //
   //////////////////////////////////////////////////////////////////////////   
@@ -648,18 +670,18 @@ int main (int argc, char **argv)
   // Initial condition
   fullMatrix<scalar> Uinit(N_s, N_E*N_F);
 #ifdef MULTIFLUID
-    if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-    else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-    else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-    else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-    else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-    else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-    else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-    else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-    else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
 #elif PASSIVE
-    if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
-    if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
 #endif
   scalar* h_Uinit = new scalar[N_s*N_E*N_F];  makeZero(h_Uinit,N_s*N_E*N_F);
   for(int e = 0; e < N_E; e++){
@@ -877,7 +899,7 @@ void monovandermonde2d(const int order, const fullMatrix<scalar> r, fullMatrix<s
       for(int k=0; k<p+1; k++){
 	int nx = p-k;
 	int ny =   k;
-	printf("line(%i) for p=%i: nx=%i and ny=%i (column=%i)\n",i,p,nx,ny,offset+k);
+	//printf("line(%i) for p=%i: nx=%i and ny=%i (column=%i)\n",i,p,nx,ny,offset+k);
 	V2D(i,offset+k) = pow(r(i,0),nx)*pow(r(i,1),ny)/(scalar)(factorial(nx)*factorial(ny));
       }
       offset = offset + p + 1;
@@ -888,12 +910,35 @@ void monovandermonde2d(const int order, const fullMatrix<scalar> r, fullMatrix<s
 // Returns the transforms (and inverse) from Lagrange to Taylor
 // polynomials NB: In >< to the 1D transforms, these are in the physical
 // space! So there is one transform per element
-void LagMono2DTransforms(const int N_E, const int D, const int N_s, const int order, const fullMatrix<scalar> XYZNodes, const fullMatrix<scalar> XYZCen, fullMatrix<scalar> Lag2Mono, fullMatrix<scalar> Mono2Lag){
+void LagMono2DTransforms(const int N_E, const int D, const int N_s, const int order, const int L2Msize1, const int L2Msize2, std::string ElemType, const fullMatrix<scalar> XYZNodes, const fullMatrix<scalar> XYZCen, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag){
 
-  fullMatrix<scalar> V;
-  fullMatrix<scalar> Vinv;
+  fullMatrix<scalar> M2L;
+  fullMatrix<scalar> L2M;
   fullMatrix<scalar> points(N_s,D);
 
+  // Modifications if you are dealing with a quadrangle Calculate
+  // the A matrix to go from partial taylor polynomial to full
+  // taylor (T_f = A * T_p) or from full vandermonde matrix to partial
+  // vandermonde matrix (V = V_f * A)
+  fullMatrix<scalar> A;
+  if(ElemType == "qua"){
+    A.resize(L2Msize1,L2Msize2); A.scale(0.0);
+    int i=0,j=0,cnt=0;
+    for(int idx = 0; idx < 2*order+1; idx++){
+      if(idx<=order){
+	for(int k=0; k<=idx; k++){ A(i,j) = 1; i++; j++;}
+      }
+      else if(idx>order){
+	for(int k=0; k<=idx; k++){
+	  if((cnt<k)&&(k<idx-cnt)){ A(i,j) = 1; i++; j++;}
+	  else{ i++;}
+	}
+	cnt++;
+      }
+    }
+  }
+  fullMatrix<scalar> At = A.transpose(); // transpose of A
+  
   // Loop on elements
   for(int e = 0; e < N_E; e++){
 
@@ -903,49 +948,123 @@ void LagMono2DTransforms(const int N_E, const int D, const int N_s, const int or
 	points(i,alpha) = XYZNodes(i,e*D+alpha)-XYZCen(e,alpha);
 
     // Get the power matrix
-    monovandermonde2d(order, points, V);
-    V.invert(Vinv);
+    if(ElemType == "tri"){
+      monovandermonde2d(order, points, M2L);
+      M2L.invert(L2M);
+    }
+    else if(ElemType == "qua"){
+      fullMatrix<scalar> V(N_s,N_s);
+      fullMatrix<scalar> Vinv(N_s,N_s);
+      fullMatrix<scalar> Vf; // full vandermonde matrix
+      monovandermonde2d(2*order, points, Vf);
+      V.gemm(Vf,A);         // strip some columns out of Vf
+      V.invert(Vinv);       // get the inverse
+
+      // build the transform matrices
+      L2M.resize(L2Msize1, L2Msize2);
+      M2L.resize(L2Msize2, L2Msize1);
+      L2M.gemm(A,Vinv);  // T_f = (A*Vinv)*phi
+      M2L.gemm(V,At);    // phi = (V*At)  *T_f
+    }
 
     // Store them in the large transform matrix
-    for(int i = 0; i < N_s; i++){
-      for(int ii = 0; ii < N_s; ii++){
-	Lag2Mono(e,i*N_s+ii) = V(i,ii);
-	Mono2Lag(e,i*N_s+ii) = Vinv(i,ii);
+    for(int i = 0; i < L2Msize1; i++){
+      for(int j = 0; j < L2Msize2; j++){
+    	Lag2Mono(e,i*L2Msize2+j) = L2M(i,j); // size: L2Msize1 x L2Msize2
+	Mono2Lag(e,j*L2Msize1+i) = M2L(j,i); // size: L2Msize2 x L2Msize1
       }
-    }
+    }    
   } // element loop
 }
 
 
 // Get the powers of XZYG-XYZCen for each element and his neighbors
 // This is precalculated for increased speed in 2D limiting
-void getPowersXZYG(const int N_E, const int D, const int N_s, const int N_G, const int N_N, const int order, const fullMatrix<scalar> XYZG, const fullMatrix<scalar> XYZCen, const int* neighbors, scalar* powers){
+void getPowersXYZG(const int N_E, const int D, const int N_s, const int N_G, const int N_N, const int M_B, const int order, const fullMatrix<scalar> XYZG, const fullMatrix<scalar> XYZCen, const int* neighbors, const fullMatrix<scalar> shifts, scalar* powers){
 
   fullMatrix<scalar> V;
-  fullMatrix<scalar> points(N_s,D);
-  int neighbor = 0; // index of the neighboring element (or itself)
+  fullMatrix<scalar> points(N_G,D);
+  int el = 0; // index of the neighboring element (or itself)
+  scalar* XYZshift = new scalar[D]; 
   
   for(int e = 0; e < N_E; e++){
     for(int nn = 0; nn < N_N+1; nn++){
-      if (nn = 0) {neighbor = e;}
-      else        {neighbor = neighbors[e*N_N+nn];}
+      if (nn == 0) {el = e;}
+      else         {el = neighbors[e*N_N+nn-1];} // -1 bc nn starts with the current element
 
+      // Get potentional coordinate shift for the neighbor if this
+      // element is on the boundary
+      bool flag = false; int bidx = 0;
+      for(int b=0; b<M_B; b++)
+	if ((e==shifts(b,0))&&(el==shifts(b,1))){ flag = true; bidx = b; break;}
+      if   (flag) for(int alpha=0; alpha<D; alpha++) XYZshift[alpha] = shifts(bidx,2+alpha);
+      else        for(int alpha=0; alpha<D; alpha++) XYZshift[alpha] = 0;
+      
       // Get the points to evaluate the Taylor polynomial
       // in the element or the neighboring elements
       for(int g = 0; g < N_G; g++)
-	for(int alpha = 0; alpha < D; alpha++)
-	  points(g,alpha) = XYZG(g,neighbor*D+alpha) - XYZCen(e,alpha);
+  	for(int alpha = 0; alpha < D; alpha++)
+  	  points(g,alpha) = XYZG(g,el*D+alpha) - XYZCen(e,alpha) + XYZshift[alpha];
 
       // Get the powers of these points
       monovandermonde2d(order, points, V);
 
       // Store in these in the large matrix
       for(int g = 0; g < N_G; g++)
-	for(int i = 0; i < N_s; i++)
-	  powers[((e*(N_N+1)*nn)*N_G+g)*N_s+i] = V(g,i);
-      
+  	for(int i = 0; i < N_s; i++)
+  	  powers[((e*(N_N+1)+nn)*N_G+g)*N_s+i] = V(g,i);
     } // nn loop
-
   } // e loop
 
+  // Free some stuff
+  delete[] XYZshift;
+}
+
+
+// Get the x and y derivative index. Basically gives you the index for
+// various derivatives of a Taylor polynomial. order is the DG order
+// dxIdx =[idx for 0th derivative wrt x, idx for 1st derivative wrt x, ...]
+int getTaylorDerIdx2DLength(const int order){
+  // Calculate the length of these indexes
+  int L = 0;
+  for(int p = order; p >= 0; p--) L+=(p+1)*(p+2)/2;  // DOES THIS WORK ONLY FOR TRIANGLES?
+  return L;
+}
+
+void getTaylorDerIdx2D(const int order, int* TaylorDxIdx, int* TaylorDyIdx){
+
+  // Fill these vectors with the appropriate indexes
+  // wrt x
+  int countx = 0;
+  int kstart = 0;
+  for(int pstart = 0; pstart <= order; pstart++){ // loop on all derivative orders
+    int offset = pstart*(pstart+1)/2;
+    int kend = 0;
+    for(int p = pstart; p <= order; p++){ 
+      for(int k = kstart; k <= kend+kstart; k++){
+  	TaylorDxIdx[countx] = offset + k;
+  	countx++;
+      }
+      offset = offset + p + 1;
+      kend++;
+    }
+  }// end pstart loop
+
+  // wrt y
+  int county = 0;
+  kstart = 0;
+  for(int pstart = 0; pstart <= order; pstart++){ // loop on all derivative orders
+    int offset = pstart*(pstart+1)/2;
+    int kend = 0;
+    for(int p = pstart; p <= order; p++){ 
+      for(int k = kstart; k <= kend+kstart; k++){
+  	TaylorDyIdx[county] = offset + k;
+  	county++;
+      }
+      offset = offset + p + 1;
+      kend++; 
+    }
+    kstart++;
+  }// end pstart loop
+  
 }

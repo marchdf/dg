@@ -260,6 +260,7 @@ void simpleMesh::buildPeriodicSquare(int order, const fullMatrix<scalar> &XYZNod
     }
   }
 
+  // Free some stuff
   delete[] listInterfaces;
 }
 
@@ -315,6 +316,92 @@ void simpleMesh::buildFarfield()
     _boundary[t*2+1] = listInterfaces[t];
   }
 
+  delete[] listInterfaces;
+}
+
+
+void simpleMesh::buildBoundaryElementShift(int order, const fullMatrix<scalar> &XYZNodesF, const int D, std::map<int,int> &ElementMap)
+{
+  // Objective: create BoundaryElemShift
+  // elem1         | elem2         | xshift | yshift
+  // (tgt element)   his neighbor    shifts to bring elem2 next to elem1
+  
+  _shifts.resize(_N_B,2+D);
+
+
+  // Most of this code is a repeat of buildPeriodicSquare()
+  const std::vector<simpleInterface> &interfaces = getInterfaces();
+  
+  int N_I = _interfaces.size();       // number of interfaces                     (i index)
+  int M_s = order+1;                  // number of nodes on a face
+  
+  // Find all boundary interfaces
+  int N_B = 0;                        // number of boundary interfaces (b index)
+  for(int i = 0; i < N_I; i++){
+    const simpleInterface &face = interfaces[i];
+    if(face.getPhysicalTag()==1){
+      N_B++;
+    }
+  }
+  
+  // Get the center of each interface
+  double* listInterfaces = new double[3*N_B];
+  int counter = 0;
+  double xcenmin = 0.0;
+  double xcenmax = 0.0;
+  double ycenmin = 0.0;
+  double ycenmax = 0.0;
+  for(int i = 0; i < N_I; i++){
+    const simpleInterface &face = interfaces[i];
+    if(face.getPhysicalTag()==1){
+      int t = i;
+      double xcen=0;
+      double ycen=0;
+      for(int j = 0; j < M_s; j++){
+  	xcen += XYZNodesF(j,(t*2+0)*D+0);
+  	ycen += XYZNodesF(j,(t*2+0)*D+1);
+      }
+      listInterfaces[counter*3+0] = t;
+      listInterfaces[counter*3+1] = xcen/M_s;
+      listInterfaces[counter*3+2] = ycen/M_s;      
+      counter++;
+      if(xcenmin > xcen/M_s) xcenmin = xcen/M_s;
+      if(xcenmax < xcen/M_s) xcenmax = xcen/M_s;
+      if(ycenmin > ycen/M_s) ycenmin = ycen/M_s;
+      if(ycenmax < ycen/M_s) ycenmax = ycen/M_s;
+      //printf("t:%i %i xcen:%f ycen:%f\n",t,face.getPhysicalTag(),xcen/M_s,ycen/M_s);
+    }
+  }
+  double L = xcenmax-xcenmin;
+  double H = ycenmax-ycenmin;
+
+  // Match the faces together
+  for(int c1 = 0; c1 < N_B; c1++){
+    int t1 = listInterfaces[c1*3+0];
+    double xcen1 = listInterfaces[c1*3+1];
+    double ycen1 = listInterfaces[c1*3+2];
+    for(int c2 = 0; c2 < N_B; c2++){
+      int t2 = listInterfaces[c2*3+0];
+      double xcen2 = listInterfaces[c2*3+1];
+      double ycen2 = listInterfaces[c2*3+2];
+
+      if (((fabs(xcen1-xcen2)<1E-6)&&(fabs(ycen1-ycen2)+1E-6 >= H)) || ((fabs(ycen1-ycen2)<1E-6)&&(fabs(xcen1-xcen2)+1E-6 >= L))){
+	const simpleInterface &face1 = interfaces[t1];
+	const simpleInterface &face2 = interfaces[t2];
+	const simpleElement *el1 = face1.getElement(0); // get the element of face 1
+	const simpleElement *el2 = face2.getElement(0); // get the element of face 2
+	int el1num = ElementMap[el1->getId()];         // element idx in order of the U matrix
+	int el2num = ElementMap[el2->getId()];         // element idx in order of the U matrix
+	_shifts(c1,0) = el1num; // el1: target element 
+	_shifts(c1,1) = el2num; // el2: his neighbor
+	_shifts(c1,2) = xcen1-xcen2; // xshift to bring el2 next to el1
+	_shifts(c1,3) = ycen1-ycen2; // yshift to bring el2 next to el1
+	//printf("el1num(%i)=%i, el2num(%i)=%i, xshift=%f, yshift=%f\n",el1->getId(),el1num,el2->getId(),el2num, xcen1-xcen2, ycen1-ycen2);
+      }
+    }
+  }
+
+  // Free some stuff
   delete[] listInterfaces;
 }
 
