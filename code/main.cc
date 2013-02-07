@@ -60,8 +60,14 @@ void getTaylorDerIdx2D(const int order, int* TaylorDxIdx, int* TaylorDyIdx);
 
 int factorial(int n){ return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;}
 
+
+void cartesian_permutations(const int order, const fullMatrix<scalar> XYZNodes, fullMatrix<scalar> &Px, fullMatrix<scalar> &Py);
+void LagMono2DTransformsCartesian(const int order, const int msh_lin, const fullMatrix<scalar> Px, const fullMatrix<scalar> Py, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag);
+void getCartesianNeighbors(const int N_E, const int N_N, const int M_B, int* neighbors, const fullMatrix<scalar> XYZCen, const fullMatrix<scalar> shifts, int* neighborsLR, int* neighborsDU);
+  
 int main (int argc, char **argv)
 {
+
 
   ////////////////////////////////////////////////////////////////////////////
   //
@@ -347,10 +353,31 @@ int main (int argc, char **argv)
     }
   }
   XYZG.gemm (phi, XYZNodes);
-  
+
   // Element centroids
   fullMatrix<scalar> XYZCen = getElementCentroids(N_E, D, N_N, XYZNodes);
 
+  // Is this a cartesian mesh
+  bool cartesian = false;
+  if(inputs.getElemType() == "qua"){
+    scalar x0 = XYZNodes(0,0*D+0);
+    scalar y0 = XYZNodes(0,0*D+1);
+    scalar x1 = XYZNodes(1,0*D+0);
+    scalar y1 = XYZNodes(1,0*D+1);
+    scalar x2 = XYZNodes(2,0*D+0);
+    scalar y2 = XYZNodes(2,0*D+1);
+    scalar x3 = XYZNodes(3,0*D+0);
+    scalar y3 = XYZNodes(3,0*D+1);
+
+    // Check if the vectors b0 and b1 and b2 are perpendicular
+    // b1 = [x1-x0;y1-y0], b1 = [x2-x1;y2-y1] and b2 = [x3-x2;y3-y2]
+    if((fabs((x1-x0)*(x2-x1)+(y1-y0)*(y2-y1))<1e-9)&&(fabs((x2-x1)*(x3-x2)+(y2-y1)*(y3-y2))<1e-9)){
+      cartesian = true;
+    }
+  }
+  if  (cartesian) printf("Structured mesh\n");
+  else            printf("Unstructured mesh\n");
+  
   // Faces
   fullMatrix<scalar> XYZNodesF (M_s, M_T*2*D);
   fullMatrix<scalar> XYZGF (M_G, M_T*2*D);
@@ -428,23 +455,47 @@ int main (int argc, char **argv)
   Lag2Mono.invert(Mono2Lag);
 
 #elif TWOD
-  // Go from lagrange to monomial basis (in physical space)
+
+  //
+  // Structured/uniform mesh
+  //
+  fullMatrix<scalar> Lag2MonoX;
+  fullMatrix<scalar> MonoX2MonoY;
+  fullMatrix<scalar> MonoY2Lag;
+  int* h_neighborsLR = new int[2*N_E];
+  int* h_neighborsDU = new int[2*N_E];
+  fullMatrix<scalar> monoV;
+  if(cartesian){
+    fullMatrix<scalar> Px;
+    fullMatrix<scalar> Py;
+    cartesian_permutations(order,XYZNodes, Px,Py);
+    LagMono2DTransformsCartesian(order, msh_lin, Px, Py, Lag2MonoX, MonoX2MonoY, MonoY2Lag);
+    getCartesianNeighbors(N_E, N_N, M_B, h_neighbors, XYZCen, shifts, h_neighborsLR, h_neighborsDU);
+    monovandermonde1d(order, pointsF, monoV);
+  }
+
+  //
+  // Unstructured mesh limiting
+  //
   int L2Msize1, L2Msize2; // number of rows and columns in Lag2Mono transforms
   if     (inputs.getElemType()== "tri"){L2Msize1 = N_s; L2Msize2 = N_s;}
   else if(inputs.getElemType()== "qua"){L2Msize1 = (2*order+1)*(order+1); L2Msize2 = N_s;}
   fullMatrix<scalar> Lag2Mono(N_E, L2Msize1*L2Msize2);
   fullMatrix<scalar> Mono2Lag(N_E, L2Msize2*L2Msize1);
-  LagMono2DTransforms(N_E, D, N_s, order, L2Msize1, L2Msize2, inputs.getElemType(), XYZNodes, XYZCen, Lag2Mono, Mono2Lag);
-  
-  // Get the powers of the physical nodes and neighbors
-  // required for limiting in 2D
   scalar* h_powersXYZG;
-  if     (inputs.getElemType() == "tri"){
-    h_powersXYZG = new scalar[N_s*N_G*(N_N+1)*N_E];
-    getPowersXYZG(N_E, D, N_s, N_G, N_N, M_B, order, XYZG, XYZCen, h_neighbors, shifts, h_powersXYZG);}
-  else if(inputs.getElemType() == "qua"){
-    h_powersXYZG = new scalar[(2*order+1)*(order+1)*N_G*(N_N+1)*N_E];
-    getPowersXYZG(N_E, D, (2*order+1)*(order+1), N_G, N_N, M_B, 2*order, XYZG, XYZCen, h_neighbors, shifts, h_powersXYZG);}
+  if(!cartesian){   // Go from lagrange to monomial basis (in physical space)
+    LagMono2DTransforms(N_E, D, N_s, order, L2Msize1, L2Msize2, inputs.getElemType(), XYZNodes, XYZCen, Lag2Mono, Mono2Lag);
+  
+    // Get the powers of the physical nodes and neighbors
+    // required for limiting in 2D
+    if     (inputs.getElemType() == "tri"){
+      h_powersXYZG = new scalar[N_s*N_G*(N_N+1)*N_E];
+      getPowersXYZG(N_E, D, N_s, N_G, N_N, M_B, order, XYZG, XYZCen, h_neighbors, shifts, h_powersXYZG);}
+    else if(inputs.getElemType() == "qua"){
+      h_powersXYZG = new scalar[L2Msize1*N_G*(N_N+1)*N_E];
+      getPowersXYZG(N_E, D, L2Msize1, N_G, N_N, M_B, 2*order, XYZG, XYZCen, h_neighbors, shifts, h_powersXYZG);}
+  }
+  
 #endif
     
 
@@ -628,12 +679,32 @@ int main (int argc, char **argv)
 #ifdef ONED
   Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, boundaryMap, Lag2Mono, Mono2Lag, monoV, h_weight);
 #elif TWOD
-  int L = getTaylorDerIdx2DLength(order);
-  int* h_TaylorDxIdx = new int[L];
-  int* h_TaylorDyIdx = new int[L];
-  getTaylorDerIdx2D(order, h_TaylorDxIdx, h_TaylorDyIdx);
-  Limiting Limiter = Limiting(limiterMethod, D, N_s, N_E, N_F, N_G, N_N, L, order, L2Msize1, L2Msize2, h_neighbors, Lag2Mono, Mono2Lag, XYZCen, h_powersXYZG, h_weight, refArea, h_TaylorDxIdx, h_TaylorDyIdx);
-  delete[] h_TaylorDxIdx; delete[] h_TaylorDyIdx;
+
+  //
+  // Structured mesh
+  //
+  //if(cartesian){
+  scalar* h_weightF  = new scalar[M_G]; makeZero(h_weightF,M_G); for(int g=0; g<M_G; g++) h_weightF[g] = (scalar)weightF(g,0);  
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, order, cartesian, h_neighborsLR, h_neighborsDU, Lag2MonoX, MonoX2MonoY, MonoY2Lag, monoV, h_weightF);
+  delete[] h_weightF;
+  //}
+  
+  delete[] h_neighborsLR;
+  delete[] h_neighborsDU;
+
+  // //
+  // // Unstructured mesh
+  // //
+  // if(!cartesian){
+  //   int L = getTaylorDerIdx2DLength(order);
+  //   int* h_TaylorDxIdx = new int[L];
+  //   int* h_TaylorDyIdx = new int[L];
+  //   getTaylorDerIdx2D(order, h_TaylorDxIdx, h_TaylorDyIdx);
+  //   Limiting Limiter = Limiting(limiterMethod, D, N_s, N_E, N_F, N_G, N_N, L, order, L2Msize1, L2Msize2, h_neighbors, Lag2Mono, Mono2Lag, XYZCen, h_powersXYZG, h_weight, refArea, h_TaylorDxIdx, h_TaylorDyIdx);
+  //   delete[] h_TaylorDxIdx; delete[] h_TaylorDyIdx;
+  //   delete[] h_powersXYZG;
+  // }
+ 
 #endif
 
   //////////////////////////////////////////////////////////////////////////   
@@ -806,10 +877,6 @@ int main (int argc, char **argv)
   delete[] h_invJac;
   delete[] h_normals;
   delete[] h_U;
-#ifdef TWOD
-  delete[] h_powersXYZG;
-#endif
-  
 }// end main
 
 
@@ -1066,5 +1133,226 @@ void getTaylorDerIdx2D(const int order, int* TaylorDxIdx, int* TaylorDyIdx){
     }
     kstart++;
   }// end pstart loop
+}
+
+
+void cartesian_permutations(const int order, const fullMatrix<scalar> XYZNodes, fullMatrix<scalar> &Px, fullMatrix<scalar> &Py){
+
+  /* This function should be used for a cartesian mesh.  The idea is
+   to find the permutation matrix to go from the numbering system in
+   gmsh to a system where the nodes are numbered in increasing order
+   for increasing x and decreasing y. Best shown by example: for p=2,
+   the values of U are stored at the following indexes:
+
+    0--4--1                                     3--5--4
+    |  |  |                                     |  |  |
+    7--8--5   but we want (for 2D limiting) =>  6--8--7
+    |  |  |                                     |  |  |
+    3--6--2                                     0--2--1
+
+    Therefore:
+        U(ordered in x) = Px*U(original)
+	[3 2 6 0 1 4 7 5 8]' = Px * [0 1 2 3 4 5 6 7 8]
+
+	U(ordered in y) = Py*U(original)
+	[3 0 7 2 1 5 6 4 8]' = Px * [0 1 2 3 4 5 6 7 8]
+
+    And the inverse transform is given by Px' and Py'
+    (bc inverse of permutation matrix is the transpose)
+  */
+
+  // Allocate some resources
+  int nlvl = order+1;
+  int N_s = nlvl*nlvl;
+  Px.resize(N_s,N_s);
+  Py.resize(N_s,N_s);
+  int* tmp = new int[nlvl];
+  int pcnt = 0;
+
+  fullMatrix<scalar> xy(N_s,2);
+  for(int i=0;i<N_s;i++){
+    xy(i,0) = XYZNodes(i,0*2+0); // use the first element (for example...)
+    xy(i,1) = XYZNodes(i,0*2+1);
+  }
+
+  //
+  // Initialize the levels of constant x and y
+  //
+  scalar* xlvl = new double[nlvl];
+  scalar* ylvl = new double[nlvl]; 
+
+  // Find xmax, xmin, ymax, ymin
+  scalar xmax=xy(0,0),xmin=xy(0,0),ymin=xy(0,1),ymax=xy(0,1);
+  for(int i=1; i<N_s; i++){
+    xmax = MAX(xmax,xy(i,0));
+    xmin = MIN(xmin,xy(i,0));
+    ymax = MAX(ymax,xy(i,1));
+    ymin = MIN(ymin,xy(i,1));
+  }
+
+  // Determine the spacing of the lvls of constant x and y
+  scalar dx = (xmax-xmin)/order;
+  scalar dy = (ymax-ymin)/order;
   
+  // Build the levels of constant x and y. First do the min, then the
+  // max, then fill in the rest in increasing order.
+  xlvl[0] = xmin; xlvl[1] = xmax;
+  ylvl[0] = ymin; ylvl[1] = ymax;
+  for(int p=2;p<nlvl;p++){
+    xlvl[p] = xmin+(p-1)*dx;
+    ylvl[p] = ymin+(p-1)*dy;
+  }
+
+  //
+  // Get the permutations wrt x
+  // 
+  pcnt=0;
+  // Loop on all the y levels
+  for(int ycnt=0; ycnt<nlvl; ycnt++){
+    int cnt = 0;
+    // Loop to find all the nodes at that ylvl
+    for(int i=0; i<N_s; i++){
+      if(fabs(ylvl[ycnt]-xy(i,1))<1e-9) {tmp[cnt] = i; cnt++;}
+    }// end loop on nodes
+
+    // Sort the nodes at this level in ascending x coord
+    for(int xcnt=0; xcnt<nlvl; xcnt++){
+      for(int i=0;i<nlvl;i++){
+	if(fabs(xlvl[xcnt]-xy(tmp[i],0)) < 1e-9){
+	  Px(pcnt,tmp[i]) = 1;
+	  pcnt++;
+	}
+      }
+    }    
+  } // end ycnt loop
+
+  //
+  // Get permutations wrt y
+  //
+  pcnt = 0;
+  // Loop on all the x levels
+  for(int xcnt=0; xcnt<nlvl; xcnt++){
+    int cnt = 0;
+    // Loop to find all the nodes at that xlvl
+    for(int i=0; i<N_s; i++){
+      if(fabs(xlvl[xcnt]-xy(i,0))<1e-9) {tmp[cnt] = i; cnt++;}
+    }// end loop on nodes
+
+    // Sort the nodes at this level in ascending y coord
+    for(int ycnt=0; ycnt<nlvl; ycnt++){
+      for(int i=0;i<order+1;i++){
+	if(fabs(ylvl[ycnt]-xy(tmp[i],1)) < 1e-9){
+	  Py(pcnt,tmp[i]) = 1;
+	  pcnt++;
+	}
+      }
+    }
+    
+  } // end ycnt loop
+  
+  delete[] xlvl;
+  delete[] ylvl;
+  delete[] tmp;
+}
+
+
+void LagMono2DTransformsCartesian(const int order, const int msh_lin, const fullMatrix<scalar> Px, const fullMatrix<scalar> Py, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag){
+  /* This function returns the 1D transforms for 2D transforms of
+     Lagrangian basis. Ax = Lag2MonoX * U, Ay = MonoX2MonoY * Ax,
+     U = MonoY2Lag Ay. */
+
+  int N_s = (order+1)*(order+1);
+
+  // 1D basis: phi and integration points
+  const polynomialBasis *basis = polynomialBases::find (msh_lin);
+  fullMatrix<double> points, weight;
+  gaussIntegration::getLine(order*2+1, points, weight);
+  int N_G1D = points.size1();
+  int N_s1D = order+1;
+  fullMatrix<scalar> phi (N_G1D,N_s1D); 
+  fullMatrix<double> phiD (N_G1D,N_s1D); 
+  basis->f (points, phiD);
+  for(int g = 0; g < N_G1D; g++)
+    for(int i = 0; i < N_s1D; i++)
+      phi(g,i) = (scalar)phiD(g,i);
+  
+  // Vandermonde matrix and inverse
+  fullMatrix<scalar> V;
+  fullMatrix<scalar> Vinv;
+  monovandermonde1d(order, points, V);
+  V.invert(Vinv);
+
+  // Calculate the complete nodal to modal transform = V1Dinv*phiGL
+  fullMatrix<scalar> Transform1D(order+1,order+1);
+  Transform1D.gemm(Vinv, phi);
+  
+  // holds copies of Vinv on the diagonal
+  fullMatrix<scalar> DiagVinv(N_s, N_s); 
+  for(int p=0;p<order+1;p++)
+    for(int i=0;i<order+1;i++)
+      for(int j=0;j<order+1;j++)
+	DiagVinv(i+p*(order+1),j+p*(order+1)) = Transform1D(i,j);
+
+  // Lag2MonoX = diag(monoVinv,order+1) X Px
+  Lag2MonoX.resize(N_s,N_s);
+  Lag2MonoX.gemm(DiagVinv,Px);
+  fullMatrix<scalar> MonoX2Lag(N_s,N_s);
+  Lag2MonoX.invert(MonoX2Lag);
+
+  // Lag2MonoY = diag(monoVinv,order+1) X Py
+  fullMatrix<scalar> Lag2MonoY(N_s,N_s);
+  Lag2MonoY.gemm(DiagVinv,Py);
+  MonoY2Lag.resize(N_s,N_s);
+  Lag2MonoY.invert(MonoY2Lag);
+
+  // MonoX2MonoY = Lag2MonoY X MonoX2Lag
+  MonoX2MonoY.resize(N_s,N_s);
+  MonoX2MonoY.gemm(Lag2MonoY,MonoX2Lag);
+}
+
+void getCartesianNeighbors(const int N_E, const int N_N, const int M_B, int* neighbors, const fullMatrix<scalar> XYZCen, const fullMatrix<scalar> shifts, int* neighborsLR, int* neighborsDU){
+
+  /* Return the neighbors to the left and right and the neighbors
+     below and above each element.
+
+     neighborsLR is 2*N_E (because two neighbors on LR)
+
+  */
+
+  // input: N_E, N_N, neighbors, cell centers, 
+  // output: vector of L/R and D/U neighbors
+  
+  scalar x, y, xn, yn;
+  int neighbor;
+  
+  // Loop on each element
+  for(int e=0; e<N_E; e++){
+    // get its cell center
+    x = XYZCen(e,0);
+    y = XYZCen(e,1);
+   
+    // Loop on all the neighbors
+    for(int nn=0; nn<N_N; nn++){
+      neighbor = neighbors[e*N_N+nn]; // get a neighbor element
+      xn = XYZCen(neighbor,0);        // get the centroid
+      yn = XYZCen(neighbor,1);
+
+      // Get potentional coordinate shift for the neighbor if this
+      // element is on the boundary
+      bool flag = false; int bidx = 0;
+      for(int b=0; b<M_B; b++)
+	if ((e==shifts(b,0))&&(neighbor==shifts(b,1))){ flag = true; bidx = b; break;}
+      if(flag){
+	xn = xn+shifts(bidx,2+0);
+	yn = yn+shifts(bidx,2+1);
+      }
+
+      // Relation to current element
+      if     ((fabs(yn-y)<1e-9)&&(x>xn))  neighborsLR[e*2+0]=neighbor; // left
+      else if((fabs(yn-y)<1e-9)&&(x<xn))  neighborsLR[e*2+1]=neighbor; // right
+      else if((fabs(xn-x)<1e-9)&&(y>yn))  neighborsDU[e*2+0]=neighbor; // below
+      else if((fabs(xn-x)<1e-9)&&(y<yn))  neighborsDU[e*2+1]=neighbor; // above
+    }//loop on neighbors
+  }// loop on elements
+
 }

@@ -21,11 +21,11 @@ RIEMANN SOLVERS
 LIMITING
   - It's a very ugly implementation right now...
   - I have powersXYZG and V1D, could I combine the two to avoid ifdefs?
-  - code TaylorDerivative (kernel), DerivativeIdx (main.cc), integrateincell (kernel)
   - ifdefs on dims in HRL, MYL, M2L
   - move some of these functions to .cc files?
-  - write the cpu_hrl2d function
   - Get a 1D/2D version: put ifdef ONED in header file so I can call the class the same thing (Limiting)
+  - idea to clean: instead of different constructors, have one main constructor and extra functions to set the parts that are different (eg. Limiter.setNeighbors(neighbors))
+  - see if I can get an if (pointer) then delete pointer to work.
 
 PARALLEL
   - Make MPI capable
