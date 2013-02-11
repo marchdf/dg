@@ -10,27 +10,63 @@ FLUX=ROE
 directories       := . quadratures
 BINNAME           := dg1d
 
-# flags
+# paths to libs
 CUDA_INSTALL_PATH := /usr/local/cuda
 CUDA_SDK_PATH     := /home/marchdf/NVIDIA_GPU_Computing_SDK/C
-#INCLUDES += -I. -I$(CUDA_INSTALL_PATH)/include -I$(CUDA_SDK_PATH)/common/inc
+
+# compilers
+NVCC              := nvcc
+CXX               := g++
+
+# defines
+DEFINES           := -DHAVE_BLAS -DHAVE_LAPACK -D$(ARCH) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS)
+
+# libs
 LIBS              := 
-LDFLAGS           := -lrt -lm -lblas -lstdc++ -llapack 
-ifeq ($(ARCH),USE_GPU)
-INCLUDES += -I. -I$(CUDA_INSTALL_PATH)/include -I$(CUDA_SDK_PATH)/common/inc
-LIBS              := $(LIBS) -L$(CUDA_INSTALL_PATH)/lib64 -L$(CUDA_SDK_PATH)/lib -lcutil_x86_64
-LDFLAGS           := $(LDFLAGS) -lcudart -lcublas 
-endif
+
+# blas libs
+BLAS_INC          := 
+BLAS_LIB          := 
+BLAS_LINKER       := -lblas
+
+# lapack libs
+LAPACK_INC        := 
+LAPACK_LIB        := 
+LAPACK_LINKER     := -llapack
+
+# cuda libs
+CUDA_INC          := $(CUDA_INSTALL_PATH)/include
+CUDA_LIB          := $(CUDA_INSTALL_PATH)/lib64
+CUDA_LINKER       := -lcudart
+
+# cuda libs
+CUDASDK_INC       := $(CUDA_SDK_PATH)/common/inc
+CUDASDK_LIB       := $(CUDA_SDK_PATH)/lib
+
+# cutil
+CUTIL_LINKER      := -lcutil_x86_64
+
+# cublas
+CUBLAS_LINKER     := -lcublas
+
+# All together
+LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) -L$(CUDASDK_LIB)
+
+# flags
+LDFLAGS           := -lrt -lm -lstdc++ $(LAPACK_LINKER) $(BLAS_LINKER)
 CFLAGS 	          := -03
-CPPFLAGS          := -I. -DHAVE_BLAS -DHAVE_LAPACK -w -ansi -D$(ARCH) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS)
-CUFLAGS	          := --ptxas-options=-v -D$(ARCH) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS) 
+CXXFLAGS          := -I. -w -ansi $(DEFINES)
+ifeq ($(ARCH),USE_GPU)
+INCLUDES          += -I. -I$(CUDA_INC) -I$(CUDASDK_INC)
+LDFLAGS           := $(LDFLAGS) $(CUDA_LINKER) $(CUBLAS_LINKER)
+CUFLAGS	          := --ptxas-options=-v $(DEFINES)
+endif
 ifeq ($(PREC),USE_DOUBLE)
 CUFLAGS	          := $(CUFLAGS) -arch sm_13
 endif
 
 
-# compilers
-NVCC              := nvcc
+
 
 .DELETE_ON_ERROR: *.o
 .IGNORE: *.h
@@ -52,12 +88,12 @@ objs:=$(foreach file,$(srcc) $(srcu),$(ODIR)/$(file).o)
 $(DDIR)/%.d : %.cc
 	@echo "Dependencies of $*.cc"
 	@mkdir -p $(@D)
-	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.cc=\.o)|$(ODIR)/$*.o |'>$@
+	@$(CXX) $(CXXFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.cc=\.o)|$(ODIR)/$*.o |'>$@
 
 $(DDIR)/%.d : %.c
 	@echo "Dependencies of $<"
 	@mkdir -p $(@D)
-	@$(CC) $(CPPFLAGS) $(CFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.c=\.o)|$(ODIR)/$*.o $@|'>$@
+	@$(CC) $(CXXFLAGS) $(CFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.c=\.o)|$(ODIR)/$*.o $@|'>$@
 
 $(DDIR)/%.d : %.cu
 	@echo "Dependencies of $<"
@@ -65,7 +101,7 @@ $(DDIR)/%.d : %.cu
 ifeq ($(ARCH),USE_GPU)
 	@$(NVCC) $(CUFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o $@|'>$@
 else ifeq ($(ARCH),USE_CPU)
-	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$@
+	@$(CXX) $(CXXFLAGS) $(INCLUDES) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$@
 endif
 
 
@@ -78,28 +114,28 @@ sinclude $(deps)
 
 $(ODIR)/%.o : %.c
 	@mkdir -p $(@D)
-	@$(CXX) $(CPPFLAGS) $(CFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.c=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.c=.d)
+	@$(CXX) $(CXXFLAGS) $(CFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.c=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.c=.d)
 	@echo "Compilation of $<"
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(CXXFLAGS) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(ODIR)/%.o : %.cc
 	@mkdir -p $(@D)
-	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.cc=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cc=.d)
+	@$(CXX) $(CXXFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.cc=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cc=.d)
 	@echo "Compilation of $<"
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+	$(CXX) $(CXXFLAGS)  $(INCLUDES) -c $< -o $@
 
 $(ODIR)/%.o : %.cu
 	@mkdir -p $(@D)
 ifeq ($(ARCH),USE_GPU)
 	@$(NVCC) $(CUFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
 else ifeq ($(ARCH),USE_CPU)
-	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
+	@$(CXX) $(CXXFLAGS) $(INCLUDES) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
 endif
 	@echo "Compilation of $<"
 ifeq ($(ARCH),USE_GPU)
 	$(NVCC) $(CUFLAGS) $(INCLUDES) -c $< -o $@
 else ifeq ($(ARCH),USE_CPU)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -x c++ -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -x c++ -c $< -o $@
 endif
 
 $(BINNAME) : $(objs)

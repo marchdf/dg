@@ -211,7 +211,7 @@ class Limiting
       // Allocate on GPU
       CUDA_SAFE_CALL(cudaMalloc((void**) &_Lag2MonoX  ,_N_s*_N_s*sizeof(scalar)));
       CUDA_SAFE_CALL(cudaMalloc((void**) &_MonoX2MonoY,_N_s*_N_s*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_MonoY2La   ,_N_s*_N_s*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_MonoY2Lag  ,_N_s*_N_s*sizeof(scalar)));
       CUDA_SAFE_CALL(cudaMalloc((void**) &_V1D        ,_N_G1D*_N_s1D*sizeof(scalar)));
       CUDA_SAFE_CALL(cudaMalloc((void**) &_weight     ,_N_G1D*sizeof(scalar)));
       CUDA_SAFE_CALL(cudaMalloc((void**) &_A          ,_N_s*_N_E*_N_F*sizeof(scalar)));
@@ -223,8 +223,8 @@ class Limiting
       CUDA_SAFE_CALL(cudaMemcpy(_Lag2MonoX,   tmpLag2MonoX, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
       CUDA_SAFE_CALL(cudaMemcpy(_MonoX2MonoY, tmpMonoX2MonoY, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
       CUDA_SAFE_CALL(cudaMemcpy(_MonoY2Lag,   tmpMonoY2Lag, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_V1D, tmpV1D, N_G1D*N_s1D*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_weight,weight, N_G1D*sizeof(scalar), cudaMemcpyHostToDevice));
+      CUDA_SAFE_CALL(cudaMemcpy(_V1D, tmpV1D, _N_G1D*_N_s1D*sizeof(scalar), cudaMemcpyHostToDevice));
+      CUDA_SAFE_CALL(cudaMemcpy(_weight,weight, _N_G1D*sizeof(scalar), cudaMemcpyHostToDevice));
       CUDA_SAFE_CALL(cudaMemcpy(_neighborsLR,  neighborsLR,   2*_N_E*sizeof(int), cudaMemcpyHostToDevice));
       CUDA_SAFE_CALL(cudaMemcpy(_neighborsDU,  neighborsDU,   2*_N_E*sizeof(int), cudaMemcpyHostToDevice));
 
@@ -342,8 +342,8 @@ class Limiting
 	for(int alpha = 0; alpha < D; alpha++){ tmpXYZCen[e*D+alpha] = XYZCen(e,alpha);}
 	for(int i = 0; i < _L2Msize1; i++){
 	  for(int j = 0; j < _L2Msize2; j++){
-      	    _tmpLag2Mono[(e*_L2Msize1+i)*_L2Msize2+j] = Lag2Mono(e,i*_L2Msize2+j);
-      	    _tmpMono2Lag[(e*_L2Msize2+j)*_L2Msize1+i] = Mono2Lag(e,j*_L2Msize1+i);}}}
+      	    tmpLag2Mono[(e*_L2Msize1+i)*_L2Msize2+j] = Lag2Mono(e,i*_L2Msize2+j);
+      	    tmpMono2Lag[(e*_L2Msize2+j)*_L2Msize1+i] = Mono2Lag(e,j*_L2Msize1+i);}}}
 
       // Allocate on GPU
       CUDA_SAFE_CALL(cudaMalloc((void**) &_Lag2Mono,_L2Msize1*_L2Msize2*_N_E*sizeof(scalar)));

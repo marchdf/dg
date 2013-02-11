@@ -1170,7 +1170,7 @@ void Lcpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weigh
 extern "C"
 void Lcpu_hrl2DCartesian(int N_s, int N_E, int N_F, int N_G, int* neighbors, scalar* weight, scalar* V, scalar* A, scalar* Alim){
 #ifdef USE_GPU
-  dim3 dimBlock(order,N_F,1);
+  dim3 dimBlock(N_s,N_F,1);
   dim3 dimGrid(N_E,1);
 #endif
 
