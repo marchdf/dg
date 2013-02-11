@@ -5,6 +5,7 @@ DIMS=ONED
 PROB=MULTIFLUID
 GAMM=GAMNCON
 FLUX=ROE
+LIEU=HOME
 
 # configuration
 directories       := . quadratures
@@ -16,41 +17,51 @@ CUDA_SDK_PATH     := /home/marchdf/NVIDIA_GPU_Computing_SDK/C
 
 # compilers
 NVCC              := nvcc
-CXX               := g++
+CXX               := gcc
+ifeq ($(LIEU),NYX)
+CXX               := gcc
+endif
 
 # defines
 DEFINES           := -DHAVE_BLAS -DHAVE_LAPACK -D$(ARCH) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS)
-
-# libs
-LIBS              := 
 
 # blas libs
 BLAS_INC          := 
 BLAS_LIB          := 
 BLAS_LINKER       := -lblas
+ifeq ($(LIEU),NYX)
+BLAS_LINKER       := -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
+#BLAS_LINKER       := -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_intel_thread.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm #you can control the number of threads: export MKL_NUM_THREADS=#
+endif
 
 # lapack libs
 LAPACK_INC        := 
 LAPACK_LIB        := 
 LAPACK_LINKER     := -llapack
+ifeq ($(LIEU),NYX)
+LAPACK_LINKER     := -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
+#LAPACK_LINKER       := -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_intel_thread.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm #you can control the number of threads: export MKL_NUM_THREADS=#
+endif
+
 
 # cuda libs
 CUDA_INC          := $(CUDA_INSTALL_PATH)/include
 CUDA_LIB          := $(CUDA_INSTALL_PATH)/lib64
-CUDA_LINKER       := -lcudart
+CUDA_LINKER       :=-lcudart
 
 # cuda libs
 CUDASDK_INC       := $(CUDA_SDK_PATH)/common/inc
 CUDASDK_LIB       := $(CUDA_SDK_PATH)/lib
 
 # cutil
-CUTIL_LINKER      := -lcutil_x86_64
+CUTIL_LINKER      :=-lcutil_x86_64
 
 # cublas
-CUBLAS_LINKER     := -lcublas
+CUBLAS_LINKER     :=-lcublas
 
 # All together
 LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) -L$(CUDASDK_LIB)
+INCLUDES          += -I. -I$(BLAS_INC) -I$(LAPACK_INC)
 
 # flags
 LDFLAGS           := -lrt -lm -lstdc++ $(LAPACK_LINKER) $(BLAS_LINKER)
@@ -64,8 +75,6 @@ endif
 ifeq ($(PREC),USE_DOUBLE)
 CUFLAGS	          := $(CUFLAGS) -arch sm_13
 endif
-
-
 
 
 .DELETE_ON_ERROR: *.o
@@ -88,20 +97,20 @@ objs:=$(foreach file,$(srcc) $(srcu),$(ODIR)/$(file).o)
 $(DDIR)/%.d : %.cc
 	@echo "Dependencies of $*.cc"
 	@mkdir -p $(@D)
-	@$(CXX) $(CXXFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.cc=\.o)|$(ODIR)/$*.o |'>$@
+	@$(CXX) $(INCLUDES) $(CXXFLAGS) -M $< |sed 's|$(<F:.cc=\.o)|$(ODIR)/$*.o |'>$@
 
 $(DDIR)/%.d : %.c
 	@echo "Dependencies of $<"
 	@mkdir -p $(@D)
-	@$(CC) $(CXXFLAGS) $(CFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.c=\.o)|$(ODIR)/$*.o $@|'>$@
+	@$(CC)  $(INCLUDES) $(CXXFLAGS) $(CFLAGS) -M $< |sed 's|$(<F:.c=\.o)|$(ODIR)/$*.o $@|'>$@
 
 $(DDIR)/%.d : %.cu
 	@echo "Dependencies of $<"
 	@mkdir -p $(@D)
 ifeq ($(ARCH),USE_GPU)
-	@$(NVCC) $(CUFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o $@|'>$@
+	@$(NVCC) $(INCLUDES) $(CUFLAGS) -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o $@|'>$@
 else ifeq ($(ARCH),USE_CPU)
-	@$(CXX) $(CXXFLAGS) $(INCLUDES) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$@
+	@$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$@
 endif
 
 
@@ -114,34 +123,34 @@ sinclude $(deps)
 
 $(ODIR)/%.o : %.c
 	@mkdir -p $(@D)
-	@$(CXX) $(CXXFLAGS) $(CFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.c=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.c=.d)
+	@$(CXX) $(INCLUDES) $(CXXFLAGS) $(CFLAGS) -M $< |sed 's|$(<F:.c=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.c=.d)
 	@echo "Compilation of $<"
-	$(CC) $(CXXFLAGS) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(INCLUDES) $(CXXFLAGS) $(CFLAGS) -c $< -o $@
 
 $(ODIR)/%.o : %.cc
 	@mkdir -p $(@D)
-	@$(CXX) $(CXXFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.cc=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cc=.d)
+	@$(CXX) $(INCLUDES) $(CXXFLAGS) -M $< |sed 's|$(<F:.cc=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cc=.d)
 	@echo "Compilation of $<"
-	$(CXX) $(CXXFLAGS)  $(INCLUDES) -c $< -o $@
+	$(CXX) $(INCLUDES) $(CXXFLAGS) -c $< -o $@
 
 $(ODIR)/%.o : %.cu
 	@mkdir -p $(@D)
 ifeq ($(ARCH),USE_GPU)
-	@$(NVCC) $(CUFLAGS) $(INCLUDES) -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
+	@$(NVCC) $(INCLUDES) $(CUFLAGS) -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
 else ifeq ($(ARCH),USE_CPU)
-	@$(CXX) $(CXXFLAGS) $(INCLUDES) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
+	@$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
 endif
 	@echo "Compilation of $<"
 ifeq ($(ARCH),USE_GPU)
-	$(NVCC) $(CUFLAGS) $(INCLUDES) -c $< -o $@
+	$(NVCC) $(INCLUDES) $(CUFLAGS) -c $< -o $@
 else ifeq ($(ARCH),USE_CPU)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -x c++ -c $< -o $@
+	$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ -c $< -o $@
 endif
 
 $(BINNAME) : $(objs)
 	@echo "Link of $@"
 	@mkdir -p $(@D)
-	$(CXX) -o$@ $(objs) $(LDFLAGS) $(INCLUDES) $(LIBS)
+	$(CXX) -o$@ $(objs) $(INCLUDES) $(LIBS) $(LDFLAGS) 
 
 .PHONY : clean cleanall all install
 
