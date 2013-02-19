@@ -23,7 +23,6 @@
 #include <limiting.h>
 #include <dg_solver.h>
 
-
 //
 // Function prototypes
 //
@@ -134,6 +133,8 @@ int main (int argc, char **argv)
   bool expogam = false;
   bool shckint = false;
   bool multint = false;
+  bool sodcirc = false;
+  bool rminstb = false;
   bool sinephi = false;
   bool sodmono = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
@@ -145,6 +146,8 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="expogam") expogam = true;
   else if (inputs.getInitialCondition()=="shckint") shckint = true;
   else if (inputs.getInitialCondition()=="multint") multint = true;
+  else if (inputs.getInitialCondition()=="sodcirc") sodcirc = true;
+  else if (inputs.getInitialCondition()=="rminstb") rminstb = true;
   else if (inputs.getInitialCondition()=="sinephi") sinephi = true;
   else if (inputs.getInitialCondition()=="sodmono") sodmono = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
@@ -556,6 +559,8 @@ int main (int argc, char **argv)
   else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
   else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
   else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
 #elif PASSIVE
   if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, U);
   if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, U);
@@ -750,6 +755,8 @@ int main (int argc, char **argv)
   else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
   else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
   else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
 #elif PASSIVE
   if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
   if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);

@@ -485,6 +485,149 @@ void init_dg_multint_multifluid(const int N_s, const int N_E, const int N_F, con
   }
 }
 
+void init_dg_sodcirc_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+
+#ifdef ONED
+  printf("sodcirc problem can only be run in 2D. Exiting");
+  exit(1);
+#elif TWOD
+  
+  if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
+  
+  // Initial conditions (see Toro p. 587)
+
+  // Left state
+  scalar rhoL   = 1;
+  scalar uL     = 0;
+  scalar vL     = 0;
+  scalar pL     = 1.0;
+  scalar gammaL = 1.4;
+  scalar EtL    = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*(uL*uL + vL*vL);
+ 
+  // Right state
+  scalar rhoR   = 0.125;
+  scalar uR     = 0;
+  scalar vR     = 0;
+  scalar pR     = 0.1;
+  scalar gammaR = 1.4;
+  scalar EtR    = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*(uR*uR + vR*vR);
+
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+      scalar x = XYZNodes(i,e*D+0);
+      scalar y = XYZNodes(i,e*D+1);
+      scalar rad = sqrt(x*x+y*y);
+
+      if (rad<0.4){
+	U(i,e*N_F+0) = rhoL;
+	U(i,e*N_F+1) = rhoL*uL;
+	U(i,e*N_F+2) = rhoL*vL;
+	U(i,e*N_F+3) = EtL ;
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rhoL/(gammaL-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gammaL-1);
+#endif
+      }
+      else{
+	U(i,e*N_F+0) = rhoR;
+	U(i,e*N_F+1) = rhoR*uR;
+	U(i,e*N_F+2) = rhoR*vR;
+	U(i,e*N_F+3) = EtR ;
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rhoR/(gammaR-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gammaR-1);
+#endif
+      }
+    }
+  }
+#endif
+}
+
+void init_dg_rminstb_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+
+#ifdef ONED
+  printf("rminstb problem can only be run in 2D. Exiting");
+  exit(1);
+#elif TWOD
+  
+  if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
+  
+  // Pre-shock state (material 1)
+  scalar rho02   = 0.1;
+  scalar u02     =-2.0;
+  scalar v02     = 0.0;
+  scalar gamma02 = 1.4;//1.6667;
+  scalar p02     = 1.0;
+  scalar Et02    = 1.0/(gamma02-1.0)*p02 + 0.5*rho02*(u02*u02+v02*v02);
+  scalar c02     = sqrt(gamma02*p02/rho02); // sound speed
+  scalar M02     = u02/c02; //Mach number ahead of shock
+  
+  // Pre-shock state (material 2)
+  scalar rho01   = 1.0;
+  scalar u01     =-2.0;
+  scalar v01     = 0.0;
+  scalar gamma01 = 1.4;
+  scalar p01     = 1.0;
+  scalar Et01    = 1.0/(gamma01-1.0)*p01 + 0.5*rho01*(u01*u01+v01*v01);
+
+  // Post-shock state (material 1) (see p 101 Toro)
+  //scalar Ms = 9;   // Shock Mach number
+  scalar Ms     = M02+sqrt((gamma02+1)/(2.0*gamma02)*100.0 + (gamma02-1)/(2.0*gamma02));   // Shock Mach number (with ratio)
+  printf("Ms=%f\n",Ms);
+  scalar s      = Ms*c02;  // shock speed
+  scalar rho4   = rho02*(gamma02+1) * (M02-Ms)*(M02-Ms)/((gamma02-1) * (M02-Ms)*(M02-Ms) + 2);
+  scalar p4     = p02  *(2*gamma02*(M02-Ms)*(M02-Ms) - (gamma02-1))/(gamma02+1);
+  scalar u4     = (1 - rho02/rho4)*s + u02*rho02/rho4;
+  scalar v4     = 0;
+  scalar gamma4 = gamma02;
+  scalar Et4    = 1.0/(gamma4-1.0)*p4 + 0.5*rho4*(u4*u4+v4*v4);
+
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+      scalar x = XYZNodes(i,e*D+0);
+      scalar y = XYZNodes(i,e*D+1);
+
+      if (y>0.6){ // post-shock region
+	U(i,e*N_F+0) = rho4;
+	U(i,e*N_F+1) = rho4*u4;
+	U(i,e*N_F+2) = rho4*v4;
+	U(i,e*N_F+3) = Et4 ;
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rho4/(gamma4-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gamma4-1);
+#endif
+      }
+      else if ((0.6>=y)&&(y>0.0)){ // pre-shock region
+	U(i,e*N_F+0) = rho02;
+	U(i,e*N_F+1) = rho02*u02;
+	U(i,e*N_F+2) = rho02*v02;
+	U(i,e*N_F+3) = Et02 ;
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rho02/(gamma02-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gamma02-1);
+#endif
+      }
+      else if (0.0>y){
+	U(i,e*N_F+0) = rho01;
+	U(i,e*N_F+1) = rho01*u01;
+	U(i,e*N_F+2) = rho01*v01;
+	U(i,e*N_F+3) = Et01 ;
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rho01/(gamma01-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gamma01-1);
+#endif
+      }
+    }
+  }
+#endif
+}
+
+
 void init_dg_sinephi_passive(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   scalar rho     = 1.0;
@@ -582,6 +725,9 @@ void init_dg_sodmono_passive(const int N_s, const int N_E, const int N_F, const 
     }
   }
 }
+
+
+
 
 void init_dg_euler1D_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
 

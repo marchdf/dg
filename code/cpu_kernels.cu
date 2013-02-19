@@ -969,7 +969,7 @@ void Lcpu_add(int N_s, int N_E, int N_F, scalar* A, scalar* B, scalar c){
 #ifdef USE_GPU
   dim3 dimBlock(N_s,N_F,1);
   dim3 dimGrid(N_E,1);
-#endif
+#endif 
 
   cpu_add arch_args (N_s, N_E, N_F, A, B, c);
 }

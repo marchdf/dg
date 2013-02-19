@@ -26,7 +26,7 @@ LIMITING
   - move some of these functions to .cc files?
   - Get a 1D/2D version: put ifdef ONED in header file so I can call the class the same thing (Limiting)
   - idea to clean: instead of different constructors, have one main constructor and extra functions to set the parts that are different (eg. Limiter.setNeighbors(neighbors))
-  - see if I can get an if (pointer) then delete pointer to work.
+  - see if I can get an if (pointer) then delete pointer to work => just needed to initialize to NULL
 
 PARALLEL
   - Make MPI capable
@@ -44,4 +44,3 @@ OTHER
   - Create some 2D benchmarks? 
   - Remove cpu_ in the function names (not necessary now)
   - Boundary conditions for farfield are a little strange?
-  - Add a compilation error check
