@@ -22,3 +22,7 @@ void blasDgemm(char or1, char or2, int M , int N, int K, double alpha, double* A
 void makeZero(scalar* A, int size){
   for(int k=0; k < size; k++) A[k] = 0.0;
 }
+
+int factorial(int n){
+  return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;
+}

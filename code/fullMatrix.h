@@ -537,7 +537,16 @@ class fullMatrix
     fclose(f);
   }
 
+  void copyMatrixToPointer(scalar* h_A) const{
+    // Column major sorting
+    for(int j = 0; j < (*this).size2(); j++){
+      for(int i = 0; i < (*this).size1(); i++){
+	h_A[j*(*this).size1()+i] = (*this)(i,j);
+      }
+    }
+  }
 
+  
 };
 
 #endif

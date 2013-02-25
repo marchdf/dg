@@ -3,6 +3,7 @@
 #include <vector>
 #include "fullMatrix.h"
 #include <scalar_def.h>
+#include <string>
 #include <map>
 
 class simpleElement {
@@ -38,7 +39,8 @@ class simpleMesh {
   int _N_B; // number of boundaries
   int* _boundary;
   int* _neighbors; // N_N x N_E : element | neighbor1 | neighbor2 | ...
-  fullMatrix<scalar> _shifts;  
+  fullMatrix<scalar> _shifts;
+  fullMatrix<scalar> _XYZCen;
   public:
   inline const std::vector<simpleInterface> & getInterfaces () const {return  _interfaces;}
   inline const std::vector<simpleElement> & getElements (int type) const {return  _elements[type];}
@@ -56,8 +58,11 @@ class simpleMesh {
   int getBoundaryNB()  const {return _N_B;}
   int* getBoundaryMap()const {return _boundary;}
   void buildNeighbors(int N_N, int N_E, std::map<int,int> &ElementMap);
+  void sortNeighbors(const int N_E, const int N_N, const fullMatrix<scalar> XYZCen);
   int* getNeighbors()const {return _neighbors;}
   void buildBoundaryElementShift(int order, const fullMatrix<scalar> &XYZNodesF, const int D, std::map<int,int> &ElementMap);
   inline const fullMatrix<scalar> & getShifts() const {return _shifts;}
+  fullMatrix<scalar> getElementCentroids(const int N_E, const int D, const int ncorners, const fullMatrix<scalar> XYZNodes);
+  bool iscartesian(std::string typeElement, const int elem_type);
 };
 #endif

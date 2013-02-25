@@ -515,96 +515,13 @@ arch_global void cpu_hsl(int N_s, int N_E, int N_F, int boundaryMap, scalar* U, 
   
 }
 
+
 //==========================================================================
-arch_global void cpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* A, scalar* Alim){
+arch_global void cpu_hrl1D(int N_s, int N_E, int N_F, int N_G, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
-    scalar* c = new scalar[2*N_F];
-    for(int fc = 0; fc < N_F; fc++){
-#elif USE_GPU
-      int e = blockIdx.x;
-      int fc= threadIdx.y;
-      extern __shared__ scalar c[];
-#endif  
-
-      int N = N_s - 1;
-      scalar avgdUL = 0, avgdUC=0, avgdUR=0;
-      scalar dUL = 0, dUC = 0, dUR = 0;
-      scalar RL = 0, RC=0, RR=0;
-      scalar avgRL = 0, avgRC=0, avgRR=0;
-      scalar avgLL = 0, avgLC=0, avgLR=0;
-
-      // Loop on derivatives
-      for(int m = N; m > 0; m--){
-	avgdUL = 0; avgdUC=0; avgdUR=0;
-
-	int left  = e-1;
-	int right = e+1; 
-	if (e==0){
-	  if      (boundaryMap == 0  ){left = 0;}//farfield
-	  else if (boundaryMap == N_E){left = N_E-1;}//periodic
-	}
-	else if (e == (N_E-1)){
-	  if      (boundaryMap == 0  ){right = e;}//farfield
-	  else if (boundaryMap == N_E){right = 0;}//periodic
-	}
-	
-	// Calculate the derivative average in the cells: left, center,
-	// right calculate the remainder polynomial in our cells and its
-	// two neighbors
-	for(int g = 0; g < N_G; g++){
-	  dUL = 0; dUC = 0; dUR = 0;
-	  RL  = 0; RC  = 0; RR  = 0;
-
-	  for(int j=0;j<=N-(m-1);j++){
-	    dUL += A[(left *N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
-	    dUC += A[(e    *N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
-	    dUR += A[(right*N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
-	    if(j>=2){
-	      RL += Alim[(e*N_F+fc)*N_s+(j+m-1)]*pow(V[1*N_G+g]-2,j)/(scalar)cpu_factorial(j);
-	      RC += Alim[(e*N_F+fc)*N_s+(j+m-1)]*V[j*N_G+g];
-	      RR += Alim[(e*N_F+fc)*N_s+(j+m-1)]*pow(V[1*N_G+g]+2,j)/(scalar)cpu_factorial(j);
-	    }// end if
-	  }
-	  avgdUL += dUL*weight[g];
-	  avgdUC += dUC*weight[g];
-	  avgdUR += dUR*weight[g];
-	  avgRL  += RL*weight[g];
-	  avgRC  += RC*weight[g]; 
-	  avgRR  += RR*weight[g];
-	}// end integration loop
-
-	// Approximate the average of the linear part
-	avgLL = 0.5*(avgdUL - avgRL); // avg = \frac{1}{2} \int_{-1}^1 U \ud x
-	avgLC = 0.5*(avgdUC - avgRC);
-	avgLR = 0.5*(avgdUR - avgRR);
-	
-	// MUSCL approach to get candidate coefficients
-	c[fc*2+0] = 0.5*(avgLC - avgLL);  // 1/dx = 1/2 = 0.5
-	c[fc*2+1] = 0.5*(avgLR - avgLC);
-
-	Alim[(e*N_F+fc)*N_s+m] = cpu_minmod(&c[fc*2],2); // give it a subset of c (the part you want minmod to act on)
-	//Alim[(e*N_F+fc)*N_s+m] = cminmod(c,2,0.01);
-	//or use minmod2(c,2), minmod(c,2,eps), cminmod(c,2,0.01); cminmod2(c,2,eps)
-	if(m==1){Alim[(e*N_F+fc)*N_s+0] = avgLC;}
-
-	avgRL=0; avgRC=0; avgRR=0;
-      }// end loop on m
-
-#ifdef USE_CPU
-    }
-    delete[] c;
-  }
-#endif  
-}
-
-//==========================================================================
-arch_global void cpu_hrl2DCartesian(int N_s, int N_E, int N_F, int N_G, int* neighbors, scalar* weight, scalar* V, scalar* A, scalar* Alim){
-
-#ifdef USE_CPU
-  for(int e = 0; e < N_E; e++){
-    for(int slice = 0; slice < N_s; slice++){
+    for(int slice = 0; slice < slicenum; slice++){
       scalar* c = new scalar[2*N_F];
       for(int fc = 0; fc < N_F; fc++){
 #elif USE_GPU
@@ -625,9 +542,10 @@ arch_global void cpu_hrl2DCartesian(int N_s, int N_E, int N_F, int N_G, int* nei
 	for(int m = N; m > 0; m--){
 	  avgdUL = 0; avgdUC=0; avgdUR=0;
 
-	  int left  = neighbors[e*2+0];
-	  int right = neighbors[e*2+1];
-	
+	  int left  = neighbors[e*N_N+offxy+0];
+	  int right = neighbors[e*N_N+offxy+1];
+	  //printf("N_N:%i,offxy:%i, e:%i, left:%i, right:%i\n",N_N,offxy,e,left,right);
+	  
 	  // Calculate the derivative average in the cells: left, center,
 	  // right calculate the remainder polynomial in our cells and its
 	  // two neighbors
@@ -636,13 +554,13 @@ arch_global void cpu_hrl2DCartesian(int N_s, int N_E, int N_F, int N_G, int* nei
 	    RL  = 0; RC  = 0; RR  = 0;
 
 	    for(int j=0;j<=N-(m-1);j++){
-	      dUL += A[(left *N_F+fc)*N_s*N_s+slice*N_s+(j+m-1)]*V[j*N_G+g];
-	      dUC += A[(e    *N_F+fc)*N_s*N_s+slice*N_s+(j+m-1)]*V[j*N_G+g];
-	      dUR += A[(right*N_F+fc)*N_s*N_s+slice*N_s+(j+m-1)]*V[j*N_G+g];
+	      dUL += A[(left *N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
+	      dUC += A[(e    *N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
+	      dUR += A[(right*N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
 	      if(j>=2){
-		RL += Alim[(e*N_F+fc)*N_s*N_s+slice*N_s+(j+m-1)]*pow(V[1*N_G+g]-2,j)/(scalar)cpu_factorial(j);
-		RC += Alim[(e*N_F+fc)*N_s*N_s+slice*N_s+(j+m-1)]*V[j*N_G+g];
-		RR += Alim[(e*N_F+fc)*N_s*N_s+slice*N_s+(j+m-1)]*pow(V[1*N_G+g]+2,j)/(scalar)cpu_factorial(j);
+		RL += Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*pow(V[1*N_G+g]-2,j)/(scalar)cpu_factorial(j);
+		RC += Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
+		RR += Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*pow(V[1*N_G+g]+2,j)/(scalar)cpu_factorial(j);
 	      }// end if
 	    }
 	    avgdUL += dUL*weight[g];
@@ -662,10 +580,10 @@ arch_global void cpu_hrl2DCartesian(int N_s, int N_E, int N_F, int N_G, int* nei
 	  c[fc*2+0] = 0.5*(avgLC - avgLL);  // 1/dx = 1/2 = 0.5
 	  c[fc*2+1] = 0.5*(avgLR - avgLC);
 
-	  Alim[(e*N_F+fc)*N_s*N_s+slice*N_s+m] = cpu_minmod(&c[fc*2],2); // give it a subset of c (the part you want minmod to act on)
+	  Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+m] = cpu_minmod(&c[fc*2],2); // give it a subset of c (the part you want minmod to act on)
 	  //Alim[(e*N_F+fc)*N_s*N_s+slice*N_s+m] = cminmod(c,2,0.01);
 	  //or use minmod2(c,2), minmod(c,2,eps), cminmod(c,2,0.01); cminmod2(c,2,eps)
-	  if(m==1){Alim[(e*N_F+fc)*N_s*N_s+slice*N_s+0] = avgLC;}
+	  if(m==1){Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+0] = avgLC;}
 
 	  avgRL=0; avgRC=0; avgRR=0;
 	}// end loop on m
@@ -1158,23 +1076,13 @@ void Lcpu_Cons2Half(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool 
 }
 
 extern "C"
-void Lcpu_hrl(int N_s, int N_E, int N_F, int N_G, int boundaryMap, scalar* weight, scalar* V, scalar* A, scalar* Alim){
+void Lcpu_hrl1D(int N_s, int N_E, int N_F, int N_G, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim){
 #ifdef USE_GPU
-  dim3 dimBlock(1,N_F,1);
+  dim3 dimBlock(slicenum,N_F,1);
   dim3 dimGrid(N_E,1);
 #endif
 
-  cpu_hrl arch_args_array(N_F*2*sizeof(scalar)) (N_s, N_E, N_F, N_G, boundaryMap, weight, V, A, Alim);
-}
-
-extern "C"
-void Lcpu_hrl2DCartesian(int N_s, int N_E, int N_F, int N_G, int* neighbors, scalar* weight, scalar* V, scalar* A, scalar* Alim){
-#ifdef USE_GPU
-  dim3 dimBlock(N_s,N_F,1);
-  dim3 dimGrid(N_E,1);
-#endif
-
-  cpu_hrl2DCartesian arch_args_array(N_s*N_F*2*sizeof(scalar)) (N_s, N_E, N_F, N_G, neighbors, weight, V, A, Alim);
+  cpu_hrl1D arch_args_array(N_s*N_F*2*sizeof(scalar)) (N_s, N_E, N_F, N_G, N_N, slicenum, neighbors, offxy, weight, V, A, Alim);
 }
 
 extern "C"

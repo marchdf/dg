@@ -150,8 +150,8 @@ void simpleMesh::buildNormals (int typeInterface, int typeElement, int D)
 
     // Loop on the nodes of the interface and calculate the normal
     for(int k = 0; k < cl.size(); k++){
-	for(int alpha = 0; alpha < D; alpha++){
-	  for(int a = 0; a < D; a++){ // loop for matrix-matrix mult of invJac and dphi
+      for(int alpha = 0; alpha < D; alpha++){
+	for(int a = 0; a < D; a++){ // loop for matrix-matrix mult of invJac and dphi
 	  n[alpha] += invJac(a,cl[k]*D+alpha)*dphi(cl[k]*D+a,cl[k]);
 	}
       }
@@ -334,7 +334,7 @@ void simpleMesh::buildBoundaryElementShift(int order, const fullMatrix<scalar> &
   
   int N_I = _interfaces.size();       // number of interfaces                     (i index)
   int M_s = order+1;                  // number of nodes on a face
-  
+
   // Find all boundary interfaces
   int N_B = 0;                        // number of boundary interfaces (b index)
   for(int i = 0; i < N_I; i++){
@@ -343,7 +343,7 @@ void simpleMesh::buildBoundaryElementShift(int order, const fullMatrix<scalar> &
       N_B++;
     }
   }
-  
+ 
   // Get the center of each interface
   double* listInterfaces = new double[3*N_B];
   int counter = 0;
@@ -453,6 +453,57 @@ void simpleMesh::buildNeighbors(int N_N, int N_E, std::map<int,int> &ElementMap)
   delete[] nn;
 }
 
+void simpleMesh::sortNeighbors(const int N_E, const int N_N, const fullMatrix<scalar> XYZCen){
+  
+  /* Return the neighbors to the left and right and the neighbors
+     below and above each element.
+
+     Sort in L-R-D-U order
+
+     Only for a cartesian mesh
+  */
+
+  scalar x, y, xn, yn;
+  int neighbor;
+  int* LRDU = new int[4];
+  
+  // Loop on each element
+  for(int e=0; e<N_E; e++){
+    // get its cell center
+    x = XYZCen(e,0);
+    y = XYZCen(e,1);
+   
+    // Loop on all the neighbors
+    for(int nn=0; nn<N_N; nn++){
+      neighbor = _neighbors[e*N_N+nn]; // get a neighbor element
+      xn = XYZCen(neighbor,0);        // get the centroid
+      yn = XYZCen(neighbor,1);
+
+      // Get potentional coordinate shift for the neighbor if this
+      // element is on the boundary
+      bool flag = false; int bidx = 0;
+      for(int b=0; b<_N_B; b++)
+  	if ((e==_shifts(b,0))&&(neighbor==_shifts(b,1))){ flag = true; bidx = b; break;}
+      if(flag){
+  	xn = xn+_shifts(bidx,2+0);
+  	yn = yn+_shifts(bidx,2+1);
+      }
+
+      // Relation to current element
+      if     ((fabs(yn-y)<1e-9)&&(x>xn))  LRDU[0]=neighbor; // left
+      else if((fabs(yn-y)<1e-9)&&(x<xn))  LRDU[1]=neighbor; // right
+      else if((fabs(xn-x)<1e-9)&&(y>yn))  LRDU[2]=neighbor; // below
+      else if((fabs(xn-x)<1e-9)&&(y<yn))  LRDU[3]=neighbor; // above
+    }//loop on neighbors
+
+    // Sort the neighbors
+    for(int nn=0; nn<N_N; nn++) _neighbors[e*N_N+nn] = LRDU[nn];
+    
+  }// loop on elements
+  
+  delete[] LRDU;
+}
+
 
 simpleInterface::simpleInterface(int physicalTag)
 {
@@ -533,3 +584,47 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
   }
 }
 
+// Return a matrix which is N_E x D containing the element centroids
+fullMatrix<scalar> simpleMesh::getElementCentroids(const int N_E, const int D, const int ncorners, const fullMatrix<scalar> XYZNodes){
+
+  fullMatrix<scalar> XYZCen(N_E,D);
+  scalar cen =0;
+  
+  for(int e = 0; e < N_E; e++){
+    for(int alpha = 0; alpha < D; alpha++){
+      cen = 0;
+      for(int k = 0; k < ncorners; k++){
+	cen += XYZNodes(k,e*D+alpha);	
+      }
+      XYZCen(e,alpha) = cen/ncorners;
+    }    
+  }
+  return XYZCen;
+}
+
+bool simpleMesh::iscartesian(std::string typeElement, const int elem_type){
+
+  // default is unstructured mesh
+  bool cartesian = false;
+  
+  if (typeElement=="qua"){
+    const std::vector<simpleElement> &elements = getElements(elem_type);
+    const simpleElement &el = elements[0];
+    scalar x0 = (scalar)_nodes(0,el.getNode(0));
+    scalar y0 = (scalar)_nodes(1,el.getNode(0));
+    scalar x1 = (scalar)_nodes(0,el.getNode(1));
+    scalar y1 = (scalar)_nodes(1,el.getNode(1));
+    scalar x2 = (scalar)_nodes(0,el.getNode(2));
+    scalar y2 = (scalar)_nodes(1,el.getNode(2));
+    scalar x3 = (scalar)_nodes(0,el.getNode(3));
+    scalar y3 = (scalar)_nodes(1,el.getNode(3));
+
+    // Check if the vectors b0 and b1 and b2 are perpendicular
+    // b1 = [x1-x0;y1-y0], b1 = [x2-x1;y2-y1] and b2 = [x3-x2;y3-y2]
+    if((fabs((x1-x0)*(x2-x1)+(y1-y0)*(y2-y1))<1e-9)&&(fabs((x2-x1)*(x3-x2)+(y2-y1)*(y3-y2))<1e-9)){
+      cartesian = true;
+    }
+  }
+
+  return cartesian;
+}

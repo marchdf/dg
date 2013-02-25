@@ -1,8 +1,3 @@
-I think that the prioritites when I get back are: 
-- Limiting in 2D
-- GPU/MPI capabilities
-- compilation on nyx
-
 OUTPUT
   - Inefficient to build a matrix to output it...
   - Add capability to output in the .txt format that gmsh can generate too
@@ -26,7 +21,6 @@ LIMITING
   - move some of these functions to .cc files?
   - Get a 1D/2D version: put ifdef ONED in header file so I can call the class the same thing (Limiting)
   - idea to clean: instead of different constructors, have one main constructor and extra functions to set the parts that are different (eg. Limiter.setNeighbors(neighbors))
-  - see if I can get an if (pointer) then delete pointer to work => just needed to initialize to NULL
 
 PARALLEL
   - Make MPI capable
@@ -37,10 +31,20 @@ PARALLEL
 
 NYX
   - Can my code compile and run on nyx?
+
+BC
+  - implement farfield for HR
+  - implement non-reflecting for normal flux and HR
+  - capability to mix BCs
+
+BASIS TRANSFORMS (for HR)
+  - put in a seperate class
 	
 OTHER
   - Add CFL condition
   - Clean if conditions on dimensions: they are all over the place. Can they be reduced?
   - Create some 2D benchmarks? 
   - Remove cpu_ in the function names (not necessary now)
-  - Boundary conditions for farfield are a little strange?
+  - Does shifts works in 1D? It does not!
+  - Clean neighbors generation...
+  - 

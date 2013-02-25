@@ -26,8 +26,6 @@
 //
 // Function prototypes
 //
-void copyMatrixToPointer(fullMatrix<scalar> &A, scalar* h_A);
-void copyMatrixToPointer(const fullMatrix<scalar> &A, scalar* h_A);
 void get_element_types(const int order, int &msh_qua, int &msh_tri, int &msh_lin){
   if      (order==0)  {msh_qua = MSH_QUA_4;    msh_tri = MSH_TRI_3;    msh_lin = MSH_LIN_2;  }
   else if (order==1)  {msh_qua = MSH_QUA_4;    msh_tri = MSH_TRI_3;    msh_lin = MSH_LIN_2;  }
@@ -44,9 +42,6 @@ void get_element_types(const int order, int &msh_qua, int &msh_tri, int &msh_lin
 }
 void average_cell_p0(const int N_s, const int N_E, const int N_F, fullMatrix<scalar> &U);
 
-fullMatrix<scalar> getElementCentroids(const int N_E, const int D, const int ncorners, const fullMatrix<scalar> XYZNodes);
-
-
 
 void vandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D);
 void monovandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D);
@@ -57,12 +52,8 @@ void getPowersXYZG(const int N_E, const int D, const int N_s, const int N_G, con
 int getTaylorDerIdx2DLength(const int order);
 void getTaylorDerIdx2D(const int order, int* TaylorDxIdx, int* TaylorDyIdx);
 
-int factorial(int n){ return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;}
-
-
 void cartesian_permutations(const int order, const fullMatrix<scalar> XYZNodes, fullMatrix<scalar> &Px, fullMatrix<scalar> &Py);
 void LagMono2DTransformsCartesian(const int order, const int msh_lin, const fullMatrix<scalar> Px, const fullMatrix<scalar> Py, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag);
-void getCartesianNeighbors(const int N_E, const int N_N, const int M_B, int* neighbors, const fullMatrix<scalar> XYZCen, const fullMatrix<scalar> shifts, int* neighborsLR, int* neighborsDU);
   
 int main (int argc, char **argv)
 {
@@ -358,26 +349,10 @@ int main (int argc, char **argv)
   XYZG.gemm (phi, XYZNodes);
 
   // Element centroids
-  fullMatrix<scalar> XYZCen = getElementCentroids(N_E, D, N_N, XYZNodes);
+  fullMatrix<scalar> XYZCen = m.getElementCentroids(N_E, D, N_N, XYZNodes);
 
-  // Is this a cartesian mesh
-  bool cartesian = false;
-  if(inputs.getElemType() == "qua"){
-    scalar x0 = XYZNodes(0,0*D+0);
-    scalar y0 = XYZNodes(0,0*D+1);
-    scalar x1 = XYZNodes(1,0*D+0);
-    scalar y1 = XYZNodes(1,0*D+1);
-    scalar x2 = XYZNodes(2,0*D+0);
-    scalar y2 = XYZNodes(2,0*D+1);
-    scalar x3 = XYZNodes(3,0*D+0);
-    scalar y3 = XYZNodes(3,0*D+1);
-
-    // Check if the vectors b0 and b1 and b2 are perpendicular
-    // b1 = [x1-x0;y1-y0], b1 = [x2-x1;y2-y1] and b2 = [x3-x2;y3-y2]
-    if((fabs((x1-x0)*(x2-x1)+(y1-y0)*(y2-y1))<1e-9)&&(fabs((x2-x1)*(x3-x2)+(y2-y1)*(y3-y2))<1e-9)){
-      cartesian = true;
-    }
-  }
+  // Is this a cartesian mesh?
+  bool cartesian = m.iscartesian(inputs.getElemType(),elem_type);
   if  (cartesian) printf("Structured mesh\n");
   else            printf("Unstructured mesh\n");
   
@@ -431,14 +406,34 @@ int main (int argc, char **argv)
   // Build neighbors map (must be done after ElementMap and boundaryMap)
   //
   //////////////////////////////////////////////////////////////////////////
-  m.buildNeighbors(N_N, N_E, ElementMap);
-  int* h_neighbors = m.getNeighbors();
 
   // Get the coordinate shifts to bring the neighbors of the elements
   // on the boundaries to the correct (x,y) location. This is used
   // when evaluating polynomials in neighboring elements.
   m.buildBoundaryElementShift(order, XYZNodesF, D, ElementMap);
   fullMatrix<scalar> shifts = m.getShifts();
+
+#ifdef ONED
+  int* h_neighbors = new int[N_N*N_E];
+  for(int e=0; e<N_E; e++){
+    int left  = e-1;
+    int right = e+1; 
+    if (e==0){
+      if      (boundaryMap == 0  ){left = 0;}//farfield
+      else if (boundaryMap == N_E){left = N_E-1;}//periodic
+    }
+    else if (e == (N_E-1)){
+      if      (boundaryMap == 0  ){right = e;}//farfield
+      else if (boundaryMap == N_E){right = 0;}//periodic
+    }
+    h_neighbors[e*N_N+0] = left;
+    h_neighbors[e*N_N+1] = right;
+  }
+#elif TWOD
+  m.buildNeighbors(N_N, N_E, ElementMap);
+  if(cartesian) m.sortNeighbors(N_E,N_N, XYZCen);
+  int* h_neighbors = m.getNeighbors();
+#endif
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -465,15 +460,12 @@ int main (int argc, char **argv)
   fullMatrix<scalar> Lag2MonoX;
   fullMatrix<scalar> MonoX2MonoY;
   fullMatrix<scalar> MonoY2Lag;
-  int* h_neighborsLR = new int[2*N_E];
-  int* h_neighborsDU = new int[2*N_E];
   fullMatrix<scalar> monoV;
   if(cartesian){
     fullMatrix<scalar> Px;
     fullMatrix<scalar> Py;
     cartesian_permutations(order,XYZNodes, Px,Py);
     LagMono2DTransformsCartesian(order, msh_lin, Px, Py, Lag2MonoX, MonoX2MonoY, MonoY2Lag);
-    getCartesianNeighbors(N_E, N_N, M_B, h_neighbors, XYZCen, shifts, h_neighborsLR, h_neighborsDU);
     monovandermonde1d(order, pointsF, monoV);
   }
 
@@ -643,12 +635,12 @@ int main (int argc, char **argv)
   scalar* h_U       = new scalar[N_s*N_E*N_F];	    makeZero(h_U,N_s*N_E*N_F);
 
   // copy from the fullMatrix to the pointer format (column major)
-  copyMatrixToPointer(phi,h_phi);
-  copyMatrixToPointer(phi_w,h_phi_w);
-  copyMatrixToPointer(dphi,h_dphi);
-  copyMatrixToPointer(dphi_w,h_dphi_w);
-  copyMatrixToPointer(psi,h_psi);
-  copyMatrixToPointer(psi_w,h_psi_w);
+  phi.copyMatrixToPointer(h_phi);
+  phi_w.copyMatrixToPointer(h_phi_w);
+  dphi.copyMatrixToPointer(h_dphi);
+  dphi_w.copyMatrixToPointer(h_dphi_w);
+  psi.copyMatrixToPointer(h_psi);
+  psi_w.copyMatrixToPointer(h_psi_w);
   for(int e = 0; e < N_E; e++){
     h_J[e] = J(e,0);
   }
@@ -666,7 +658,7 @@ int main (int argc, char **argv)
       h_JF[t*2+d] = JF(t*2+d,0);
     }
   }
-  copyMatrixToPointer(normals,h_normals);
+  normals.copyMatrixToPointer(h_normals);
   for(int e = 0; e < N_E; e++){
     for(int fc = 0; fc < N_F; fc++){
       for(int i = 0; i < N_s; i++){
@@ -682,7 +674,7 @@ int main (int argc, char **argv)
   //////////////////////////////////////////////////////////////////////////
   scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++) h_weight[g] = (scalar)weight(g,0);  
 #ifdef ONED
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, boundaryMap, Lag2Mono, Mono2Lag, monoV, h_weight);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, N_N, h_neighbors, Lag2Mono, Mono2Lag, monoV, h_weight);
 #elif TWOD
 
   //
@@ -690,13 +682,10 @@ int main (int argc, char **argv)
   //
   //if(cartesian){
   scalar* h_weightF  = new scalar[M_G]; makeZero(h_weightF,M_G); for(int g=0; g<M_G; g++) h_weightF[g] = (scalar)weightF(g,0);  
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, order, cartesian, h_neighborsLR, h_neighborsDU, Lag2MonoX, MonoX2MonoY, MonoY2Lag, monoV, h_weightF);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, order, cartesian, N_N, h_neighbors, Lag2MonoX, MonoX2MonoY, MonoY2Lag, monoV, h_weightF);
   delete[] h_weightF;
   //}
   
-  delete[] h_neighborsLR;
-  delete[] h_neighborsDU;
-
   // //
   // // Unstructured mesh
   // //
@@ -891,49 +880,12 @@ int main (int argc, char **argv)
 //
 // Function definitions
 //
-void copyMatrixToPointer(fullMatrix<scalar> &A, scalar* h_A){
-  
-  // Column major sorting
-  for(int j = 0; j < A.size2(); j++){
-    for(int i = 0; i < A.size1(); i++){
-      h_A[j*A.size1()+i] = A(i,j);
-    }
-  }
-}
-
-void copyMatrixToPointer(const fullMatrix<scalar> &A, scalar* h_A){
-  
-  // Column major sorting
-  for(int j = 0; j < A.size2(); j++){
-    for(int i = 0; i < A.size1(); i++){
-      h_A[j*A.size1()+i] = A(i,j);
-    }
-  }
-}
 void average_cell_p0(const int N_s, const int N_E, const int N_F, fullMatrix<scalar> &U){
   fullMatrix<scalar> average(N_s,N_s);
   average.setAll((scalar)1.0/N_s);
   fullMatrix<scalar> tmp(N_s,N_E*N_F);
   tmp.gemm(average,U);
   U=tmp; 
-}
-
-// Return a matrix which is N_E x D containing the element centroids
-fullMatrix<scalar> getElementCentroids(const int N_E, const int D, const int ncorners, const fullMatrix<scalar> XYZNodes){
-
-  fullMatrix<scalar> XYZCen(N_E,D);
-  scalar cen =0;
-  
-  for(int e = 0; e < N_E; e++){
-    for(int alpha = 0; alpha < D; alpha++){
-      cen = 0;
-      for(int k = 0; k < ncorners; k++){
-	cen += XYZNodes(k,e*D+alpha);	
-      }
-      XYZCen(e,alpha) = cen/ncorners;
-    }    
-  }
-  return XYZCen;
 }
 
 void vandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D){
@@ -1315,51 +1267,4 @@ void LagMono2DTransformsCartesian(const int order, const int msh_lin, const full
   // MonoX2MonoY = Lag2MonoY X MonoX2Lag
   MonoX2MonoY.resize(N_s,N_s);
   MonoX2MonoY.gemm(Lag2MonoY,MonoX2Lag);
-}
-
-void getCartesianNeighbors(const int N_E, const int N_N, const int M_B, int* neighbors, const fullMatrix<scalar> XYZCen, const fullMatrix<scalar> shifts, int* neighborsLR, int* neighborsDU){
-
-  /* Return the neighbors to the left and right and the neighbors
-     below and above each element.
-
-     neighborsLR is 2*N_E (because two neighbors on LR)
-
-  */
-
-  // input: N_E, N_N, neighbors, cell centers, 
-  // output: vector of L/R and D/U neighbors
-  
-  scalar x, y, xn, yn;
-  int neighbor;
-  
-  // Loop on each element
-  for(int e=0; e<N_E; e++){
-    // get its cell center
-    x = XYZCen(e,0);
-    y = XYZCen(e,1);
-   
-    // Loop on all the neighbors
-    for(int nn=0; nn<N_N; nn++){
-      neighbor = neighbors[e*N_N+nn]; // get a neighbor element
-      xn = XYZCen(neighbor,0);        // get the centroid
-      yn = XYZCen(neighbor,1);
-
-      // Get potentional coordinate shift for the neighbor if this
-      // element is on the boundary
-      bool flag = false; int bidx = 0;
-      for(int b=0; b<M_B; b++)
-	if ((e==shifts(b,0))&&(neighbor==shifts(b,1))){ flag = true; bidx = b; break;}
-      if(flag){
-	xn = xn+shifts(bidx,2+0);
-	yn = yn+shifts(bidx,2+1);
-      }
-
-      // Relation to current element
-      if     ((fabs(yn-y)<1e-9)&&(x>xn))  neighborsLR[e*2+0]=neighbor; // left
-      else if((fabs(yn-y)<1e-9)&&(x<xn))  neighborsLR[e*2+1]=neighbor; // right
-      else if((fabs(xn-x)<1e-9)&&(y>yn))  neighborsDU[e*2+0]=neighbor; // below
-      else if((fabs(xn-x)<1e-9)&&(y<yn))  neighborsDU[e*2+1]=neighbor; // above
-    }//loop on neighbors
-  }// loop on elements
-
 }

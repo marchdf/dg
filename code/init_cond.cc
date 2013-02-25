@@ -1,4 +1,5 @@
 #include <init_cond.h>
+#include <stdlib.h>
 
 void init_dg_shallow(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
