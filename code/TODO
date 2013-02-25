@@ -1,8 +1,7 @@
 OUTPUT
   - Inefficient to build a matrix to output it...
   - Add capability to output in the .txt format that gmsh can generate too
-  - Clean output functions: unmerge them would be smart I think (same rational as for the flux functions)
-  - Make into a class to do this?
+  - Make into a class to do this (yes to avoid re-initializing matrices)
   - restart files?
 
 INITIAL CONDITIONS
