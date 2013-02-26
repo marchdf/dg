@@ -55,6 +55,7 @@ class simpleMesh {
   void buildPeriodicSquare(int order, const fullMatrix<scalar> &XYZNodesF, const int D);
   void buildPeriodicLine();
   void buildFarfield();
+  void buildCombined(int order, const fullMatrix<scalar> &XYZNodesF, const int D);
   int getBoundaryNB()  const {return _N_B;}
   int* getBoundaryMap()const {return _boundary;}
   void buildNeighbors(int N_N, int N_E, std::map<int,int> &ElementMap);

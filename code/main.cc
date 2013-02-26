@@ -146,8 +146,10 @@ int main (int argc, char **argv)
   // setup the boundary condition type
   bool periodic = false;
   bool farfield = false;
+  bool combined = false;
   if      (inputs.getBoundaryCondition()=="periodic") periodic = true;
   else if (inputs.getBoundaryCondition()=="farfield") farfield = true;
+  else if (inputs.getBoundaryCondition()=="combined") combined = true;
   else{ printf("Invalid boundary condition setup. Correct the deck.\n");}    
 
   //==========================================================================
@@ -382,8 +384,8 @@ int main (int argc, char **argv)
     }
   }
   XYZGF.gemm (psi, XYZNodesF);
-  
 
+  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Build the boundary map
@@ -398,6 +400,7 @@ int main (int argc, char **argv)
 #endif
   }
   else if (farfield){ m.buildFarfield();     boundaryMap = 0;}
+  else if (combined){ m.buildCombined(order, XYZNodesF, D);}
   int* h_boundaryMap = m.getBoundaryMap();
   int M_B = m.getBoundaryNB();
   

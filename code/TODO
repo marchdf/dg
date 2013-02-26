@@ -18,7 +18,7 @@ LIMITING
   - I have powersXYZG and V1D, could I combine the two to avoid ifdefs?
   - ifdefs on dims in HRL, MYL, M2L
   - move some of these functions to .cc files?
-  - Get a 1D/2D version: put ifdef ONED in header file so I can call the class the same thing (Limiting)
+  - Get a 1D/2D version: put ifdef ONED in header file so I can call the class the same thing (Limiting). Actually do a strucutured/unstructured file?
   - idea to clean: instead of different constructors, have one main constructor and extra functions to set the parts that are different (eg. Limiter.setNeighbors(neighbors))
 
 PARALLEL
@@ -46,4 +46,3 @@ OTHER
   - Remove cpu_ in the function names (not necessary now)
   - Does shifts works in 1D? It does not!
   - Clean neighbors generation...
-  - 

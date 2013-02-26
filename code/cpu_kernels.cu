@@ -190,7 +190,11 @@ arch_global void cpu_boundary(int M_s, int N_F, int M_B, int* boundaryMap, scala
 	int fc = threadIdx.y;
 #endif
 
-	UF[((t1*N_F+fc)*2+1)*M_s+j] = UF[((t2*N_F+fc)*2+0)*M_s+j];
+	// This is fiddling bc the boundaries get rotated... 
+	if      (j==0) UF[((t1*N_F+fc)*2+1)*M_s+0] = UF[((t2*N_F+fc)*2+0)*M_s+1];
+	else if (j==1) UF[((t1*N_F+fc)*2+1)*M_s+1] = UF[((t2*N_F+fc)*2+0)*M_s+0];
+	else           UF[((t1*N_F+fc)*2+1)*M_s+j] = UF[((t2*N_F+fc)*2+0)*M_s+M_s-1-j];
+	//UF[((t1*N_F+fc)*2+1)*M_s+j] = UF[((t2*N_F+fc)*2+0)*M_s+j];
 
 #ifdef USE_CPU
       }
@@ -538,14 +542,13 @@ arch_global void cpu_hrl1D(int N_s, int N_E, int N_F, int N_G, int N_N, int slic
 	scalar avgRL = 0, avgRC=0, avgRR=0;
 	scalar avgLL = 0, avgLC=0, avgLR=0;
 
+	int left  = neighbors[e*N_N+offxy+0];
+	int right = neighbors[e*N_N+offxy+1];
+
 	// Loop on derivatives
 	for(int m = N; m > 0; m--){
 	  avgdUL = 0; avgdUC=0; avgdUR=0;
 
-	  int left  = neighbors[e*N_N+offxy+0];
-	  int right = neighbors[e*N_N+offxy+1];
-	  //printf("N_N:%i,offxy:%i, e:%i, left:%i, right:%i\n",N_N,offxy,e,left,right);
-	  
 	  // Calculate the derivative average in the cells: left, center,
 	  // right calculate the remainder polynomial in our cells and its
 	  // two neighbors

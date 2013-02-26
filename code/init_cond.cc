@@ -554,75 +554,114 @@ void init_dg_rminstb_multifluid(const int N_s, const int N_E, const int N_F, con
 #elif TWOD
   
   if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
-  
-  // Pre-shock state (material 1)
-  scalar rho02   = 0.1;
-  scalar u02     =-2.0;
-  scalar v02     = 0.0;
-  scalar gamma02 = 1.4;//1.6667;
-  scalar p02     = 1.0;
-  scalar Et02    = 1.0/(gamma02-1.0)*p02 + 0.5*rho02*(u02*u02+v02*v02);
-  scalar c02     = sqrt(gamma02*p02/rho02); // sound speed
-  scalar M02     = u02/c02; //Mach number ahead of shock
-  
-  // Pre-shock state (material 2)
-  scalar rho01   = 1.0;
-  scalar u01     =-2.0;
-  scalar v01     = 0.0;
-  scalar gamma01 = 1.4;
-  scalar p01     = 1.0;
-  scalar Et01    = 1.0/(gamma01-1.0)*p01 + 0.5*rho01*(u01*u01+v01*v01);
 
-  // Post-shock state (material 1) (see p 101 Toro)
-  //scalar Ms = 9;   // Shock Mach number
-  scalar Ms     = M02+sqrt((gamma02+1)/(2.0*gamma02)*100.0 + (gamma02-1)/(2.0*gamma02));   // Shock Mach number (with ratio)
-  printf("Ms=%f\n",Ms);
-  scalar s      = Ms*c02;  // shock speed
-  scalar rho4   = rho02*(gamma02+1) * (M02-Ms)*(M02-Ms)/((gamma02-1) * (M02-Ms)*(M02-Ms) + 2);
-  scalar p4     = p02  *(2*gamma02*(M02-Ms)*(M02-Ms) - (gamma02-1))/(gamma02+1);
-  scalar u4     = (1 - rho02/rho4)*s + u02*rho02/rho4;
-  scalar v4     = 0;
-  scalar gamma4 = gamma02;
-  scalar Et4    = 1.0/(gamma4-1.0)*p4 + 0.5*rho4*(u4*u4+v4*v4);
+
+  // Initialize
+  //scalar A0 =0.00183;             // initial amplitude
+  scalar A0 =0.183;             // initial amplitude
+  scalar yinterface=0.051;        // initial interface location
+
+  // pre-shock density (material 1)
+  scalar rho01   = 1.351;          
+  scalar u01     = 0.0;
+  scalar v01     = 0.0;
+  scalar gamma01 = 1.276;         
+  scalar alpha01 = 1/(1.276-1);     
+  scalar p01     = 1.0;
+  scalar Et01    = alpha01*p01 + 0.5*rho01*(u01*u01+v01*v01);
+  scalar M1      = 34.76;  // molecular weight
+  
+  // pre-shock density (material 2)
+  // The shock is initialized in here
+  scalar rho02   = 5.494;
+  scalar u02     = 0.0;
+  scalar v02     = 0.0;
+  scalar gamma02 = 1.093;           
+  scalar alpha02 = 1/(1.093-1);
+  scalar p02     = 1.0;
+  scalar Et02    = alpha02*p02 + 0.5*rho02*(u02*u02+v02*v02);
+  scalar c02     = sqrt(gamma02*p02/rho02); // sound speed
+  scalar Ma02    = u02/c02; //Mach number ahead of shock
+  scalar M2      = 146.05;         // Molecular weight
+
+  // The diffusion layer thickness
+  scalar delta=0.005;
+  
+  // // Post-shock state (material 1) (see p 101 Toro)
+  // //scalar Ms = 9;   // Shock Mach number
+  // scalar Ms     = M02+sqrt((gamma02+1)/(2.0*gamma02)*5.0 + (gamma02-1)/(2.0*gamma02));   // Shock Mach number (with ratio)
+  // printf("Ms=%f\n",Ms);
+  // scalar s      = Ms*c02;  // shock speed
+  // scalar rho4   = rho02*(gamma02+1) * (M02-Ms)*(M02-Ms)/((gamma02-1) * (M02-Ms)*(M02-Ms) + 2);
+  // scalar p4     = p02  *(2*gamma02*(M02-Ms)*(M02-Ms) - (gamma02-1))/(gamma02+1);
+  // scalar u4     = (1 - rho02/rho4)*s + u02*rho02/rho4;
+  // scalar v4     = 0;
+  // scalar gamma4 = gamma02;
+  // scalar Et4    = 1.0/(gamma4-1.0)*p4 + 0.5*rho4*(u4*u4+v4*v4);
 
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
       scalar y = XYZNodes(i,e*D+1);
 
-      if (y>0.6){ // post-shock region
-	U(i,e*N_F+0) = rho4;
-	U(i,e*N_F+1) = rho4*u4;
-	U(i,e*N_F+2) = rho4*v4;
-	U(i,e*N_F+3) = Et4 ;
+      // vertical distance from interface
+      scalar d = ((delta+A0*sin(2*M_PI*x+M_PI/2))-y)/(2*delta);
+
+      // Calculate volume fractions
+      scalar vol=0;
+      if      ((d<1)&&(d>0)) vol = exp(log(1e-16)*pow(fabs(d),8));
+      else if (d<=0)         vol = 1;
+      else                   vol = 0;
+
+      scalar jx  = 1-vol;
+      scalar rho = jx*rho01+(1-jx)*rho02;
+      scalar jy  = jx*rho01/(jx*rho01+(1-jx)*rho02);       // mass fraction
+      scalar jM  = 1/(jy/M1+(1-jy)/M2);                    // total molecular weight
+
+      scalar gamma = jy*alpha01*jM/M1+(1-jy)*alpha02*jM/M2; 
+
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = 0;
+      U(i,e*N_F+2) = 0;
+      U(i,e*N_F+3) = 0;
 #ifdef GAMCONS
-	U(i,e*N_F+4) = rho4/(gamma4-1);
+      U(i,e*N_F+4) = rho/(gamma-1);
 #elif GAMNCON
-	U(i,e*N_F+4) = 1.0/(gamma4-1);
+      U(i,e*N_F+4) = 1.0/(gamma-1);
 #endif
-      }
-      else if ((0.6>=y)&&(y>0.0)){ // pre-shock region
-	U(i,e*N_F+0) = rho02;
-	U(i,e*N_F+1) = rho02*u02;
-	U(i,e*N_F+2) = rho02*v02;
-	U(i,e*N_F+3) = Et02 ;
-#ifdef GAMCONS
-	U(i,e*N_F+4) = rho02/(gamma02-1);
-#elif GAMNCON
-	U(i,e*N_F+4) = 1.0/(gamma02-1);
-#endif
-      }
-      else if (0.0>y){
-	U(i,e*N_F+0) = rho01;
-	U(i,e*N_F+1) = rho01*u01;
-	U(i,e*N_F+2) = rho01*v01;
-	U(i,e*N_F+3) = Et01 ;
-#ifdef GAMCONS
-	U(i,e*N_F+4) = rho01/(gamma01-1);
-#elif GAMNCON
-	U(i,e*N_F+4) = 1.0/(gamma01-1);
-#endif
-      }
+
+      //       if (y>0.6){ // post-shock region
+// 	U(i,e*N_F+0) = rho4;
+// 	U(i,e*N_F+1) = rho4*u4;
+// 	U(i,e*N_F+2) = rho4*v4;
+// 	U(i,e*N_F+3) = Et4 ;
+// #ifdef GAMCONS
+// 	U(i,e*N_F+4) = rho4/(gamma4-1);
+// #elif GAMNCON
+// 	U(i,e*N_F+4) = 1.0/(gamma4-1);
+// #endif
+//       }
+//       else if ((0.6>=y)&&(y>A0*sin(M_PI*x))){ // pre-shock region
+// 	U(i,e*N_F+0) = rho02;
+// 	U(i,e*N_F+1) = rho02*u02;
+// 	U(i,e*N_F+2) = rho02*v02;
+// 	U(i,e*N_F+3) = Et02 ;
+// #ifdef GAMCONS
+// 	U(i,e*N_F+4) = rho02/(gamma02-1);
+// #elif GAMNCON
+// 	U(i,e*N_F+4) = 1.0/(gamma02-1);
+// #endif
+//       }
+//       else if (A0*sin(M_PI*x)>=y){
+// 	U(i,e*N_F+0) = rho01;
+// 	U(i,e*N_F+1) = rho01*u01;
+// 	U(i,e*N_F+2) = rho01*v01;
+// 	U(i,e*N_F+3) = Et01 ;
+// #ifdef GAMCONS
+// 	U(i,e*N_F+4) = rho01/(gamma01-1);
+// #elif GAMNCON
+// 	U(i,e*N_F+4) = 1.0/(gamma01-1);
+// #endif
     }
   }
 #endif
@@ -635,8 +674,10 @@ void init_dg_sinephi_passive(const int N_s, const int N_E, const int N_F, const 
   scalar u       = 1.0;
   scalar gamma = constants::GLOBAL_GAMMA;
   scalar phi     = 0.0;
-  scalar sinephi = 0.0; // sine perturbation on phi
-  scalar sinerho = 0.0; // sine perturbation on rho
+  scalar sinephix= 0.0; // sine perturbation on phi
+  scalar sinephiy= 0.0; // sine perturbation on phi
+  scalar sinerhox= 0.0; // sine perturbation on rho
+  scalar sinerhoy= 0.0; // sine perturbation on rho
   scalar Aphi    = 0.2; // amplitude of the perturbation
   scalar Arho    = 0.2; // amplitude of the perturbation
   scalar p       = 1.0;
@@ -651,25 +692,27 @@ void init_dg_sinephi_passive(const int N_s, const int N_E, const int N_F, const 
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
+      scalar y = XYZNodes(i,e*D+1);
       for(int b = 0; b < N_S; b++) if ((xS(b,0) <= x) && (x < xS(b+1,0)))  ind = b;
-      if ((x<-1)||(x>1)) {sinephi = 0; sinerho=0;}
-      else               {sinephi = Aphi*sin(M_PI*x); sinerho = Arho*sin(4*M_PI*x);}
+      if ((x<-1)||(x>1)) {sinephix = 0; sinerhox=0;}
+      else               {sinephix = Aphi*sin(M_PI*x); sinephiy = Aphi*sin(M_PI*y); sinerhox = Arho*sin(4*M_PI*x); sinerhoy = Arho*sin(4*M_PI*y);}
 #ifdef ONED
       if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
-      S(0,0) = (rho+sinerho);
-      S(1,0) = (rho+sinerho)*u;
-      S(2,0) = 1.0/(gamma-1.0)*p + 0.5*(rho+sinerho)*u*u;
-      S(3,0) = (rho+sinerho)*(phi+sinephi);
-      S(4,0) = phi+sinephi;
+      S(0,0) = (rho+sinerhox);
+      S(1,0) = (rho+sinerhox)*u;
+      S(2,0) = 1.0/(gamma-1.0)*p + 0.5*(rho+sinerhox)*u*u;
+      S(3,0) = (rho+sinerhox)*(phi+sinephix);
+      S(4,0) = phi+sinephix;
 #elif TWOD
       if (N_F!=6) printf("You are setting up the wrong problem. N_F =%i != 6.\n",N_F);
-      scalar v = 0;            
-      S(0,0) = (rho+sinerho);
-      S(1,0) = (rho+sinerho)*u;
-      S(2,0) = (rho+sinerho)*v;
-      S(3,0) = 1.0/(gamma-1.0)*p + 0.5*(rho+sinerho)*(u*u+v*v);
-      S(4,0) = (rho+sinerho)*(phi+sinephi);
-      S(5,0) = phi+sinephi;
+      scalar v = 0;
+      u = 1;
+      S(0,0) = (rho+sinerhox+sinerhoy);
+      S(1,0) = (rho+sinerhox+sinerhoy)*u;
+      S(2,0) = (rho+sinerhox+sinerhoy)*v;
+      S(3,0) = 1.0/(gamma-1.0)*p + 0.5*(rho+sinerhox+sinerhoy)*(u*u+v*v);
+      S(4,0) = (rho+sinerhox+sinerhoy)*(phi+sinephix+sinephiy);
+      S(5,0) = phi+sinephix+sinephiy;
 #endif
       for(int k = 0; k < N_F; k++) U(i,e*N_F+k) = S(k,ind);
     }
