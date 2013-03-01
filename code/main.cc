@@ -126,6 +126,7 @@ int main (int argc, char **argv)
   bool multint = false;
   bool sodcirc = false;
   bool rminstb = false;
+  bool khinstb = false;
   bool sinephi = false;
   bool sodmono = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
@@ -139,6 +140,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="multint") multint = true;
   else if (inputs.getInitialCondition()=="sodcirc") sodcirc = true;
   else if (inputs.getInitialCondition()=="rminstb") rminstb = true;
+  else if (inputs.getInitialCondition()=="khinstb") khinstb = true;
   else if (inputs.getInitialCondition()=="sinephi") sinephi = true;
   else if (inputs.getInitialCondition()=="sodmono") sodmono = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
@@ -438,6 +440,13 @@ int main (int argc, char **argv)
   int* h_neighbors = m.getNeighbors();
 #endif
 
+  // for(int e=0; e<N_E; e++){
+  //   // int left  = _neighbors[e*N_N+offxy+0];
+  //   // int right = _neighbors[e*N_N+offxy+1];
+  //   int offxy = 0;
+  //   printf("In main: N_N=%i; e:%i ; left:%i; right:%i\n",N_N,e,h_neighbors[e*N_N+offxy+0],h_neighbors[e*N_N+offxy+1]);
+  // }
+  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Monomial to Lagrange basis transforms
@@ -556,6 +565,7 @@ int main (int argc, char **argv)
   else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
   else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
   else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(khinstb) init_dg_khinstb_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
 #elif PASSIVE
   if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, U);
   if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, U);
@@ -749,6 +759,7 @@ int main (int argc, char **argv)
   else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
   else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
   else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(khinstb) init_dg_khinstb_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
 #elif PASSIVE
   if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
   if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);

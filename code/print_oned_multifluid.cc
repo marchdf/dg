@@ -41,10 +41,9 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simp
 
       Rho(i,e) = rho;
       Ux (i,e) = ux;
-      Uy (i,e) = uy;
       Et (i,e) = et;
       G  (i,e) = gamma;
-      P  (i,e) = (gamma-1)*(et - 0.5*ux*ux/rho);
+      P  (i,e) = (gamma-1)*(et - 0.5*ux*ux*rho);
     }
   }
 

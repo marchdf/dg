@@ -555,113 +555,183 @@ void init_dg_rminstb_multifluid(const int N_s, const int N_E, const int N_F, con
   
   if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
 
-
   // Initialize
-  //scalar A0 =0.00183;             // initial amplitude
-  scalar A0 =0.183;             // initial amplitude
+  scalar A0 = 0.00183;                 // initial amplitude
   scalar yinterface=0.051;        // initial interface location
+  scalar yshck = 0.2; // initial shock location
+  scalar Lx = 0.089*2.0/3.0;
 
+  // Velocities/pressures in both materials
+  scalar u = 0.0;
+  scalar v = 0.0;
+  scalar p = 1.0;
+  
   // pre-shock density (material 1)
-  scalar rho01   = 1.351;          
-  scalar u01     = 0.0;
-  scalar v01     = 0.0;
-  scalar gamma01 = 1.276;         
-  scalar alpha01 = 1/(1.276-1);     
-  scalar p01     = 1.0;
-  scalar Et01    = alpha01*p01 + 0.5*rho01*(u01*u01+v01*v01);
+  scalar rho01   = 1.0;//1.351;//1.0;//1.351;          
+  scalar gamma01 = 1.4;//1.276;//1.4;//1.276
+  scalar alpha01 = 1/(gamma01-1);
   scalar M1      = 34.76;  // molecular weight
   
   // pre-shock density (material 2)
   // The shock is initialized in here
-  scalar rho02   = 5.494;
-  scalar u02     = 0.0;
-  scalar v02     = 0.0;
-  scalar gamma02 = 1.093;           
-  scalar alpha02 = 1/(1.093-1);
-  scalar p02     = 1.0;
-  scalar Et02    = alpha02*p02 + 0.5*rho02*(u02*u02+v02*v02);
-  scalar c02     = sqrt(gamma02*p02/rho02); // sound speed
-  scalar Ma02    = u02/c02; //Mach number ahead of shock
+  scalar rho02   = 3.0;//5.494;//0.1;//5.494;
+  scalar gamma02 = 1.6;//1.093;//1.6667;//1.093;           
+  scalar alpha02 = 1/(gamma02-1);
+  scalar c02     = sqrt(gamma02*p/rho02); // sound speed
+  scalar Ma02    = v/c02; //Mach number ahead of shock
   scalar M2      = 146.05;         // Molecular weight
 
   // The diffusion layer thickness
   scalar delta=0.005;
   
-  // // Post-shock state (material 1) (see p 101 Toro)
-  // //scalar Ms = 9;   // Shock Mach number
-  // scalar Ms     = M02+sqrt((gamma02+1)/(2.0*gamma02)*5.0 + (gamma02-1)/(2.0*gamma02));   // Shock Mach number (with ratio)
-  // printf("Ms=%f\n",Ms);
-  // scalar s      = Ms*c02;  // shock speed
-  // scalar rho4   = rho02*(gamma02+1) * (M02-Ms)*(M02-Ms)/((gamma02-1) * (M02-Ms)*(M02-Ms) + 2);
-  // scalar p4     = p02  *(2*gamma02*(M02-Ms)*(M02-Ms) - (gamma02-1))/(gamma02+1);
-  // scalar u4     = (1 - rho02/rho4)*s + u02*rho02/rho4;
-  // scalar v4     = 0;
+  // Post-shock state (material 2) (see p 101 Toro)
+  scalar Ms = 1.5;   // Shock Mach number
+  //scalar Ms     = Ma02+sqrt((gamma02+1)/(2.0*gamma02)*5.0 + (gamma02-1)/(2.0*gamma02));   // Shock Mach number (with ratio)
+  printf("Ms=%f\n",Ms);
+  // scalar s      =-Ms*c02;  // shock speed
+  // scalar rho4   = rho02*(gamma02+1) * (Ma02-Ms)*(Ma02-Ms)/((gamma02-1) * (Ma02-Ms)*(Ma02-Ms) + 2);
+  // scalar p4     = p    *(2*gamma02*(Ma02-Ms)*(Ma02-Ms) - (gamma02-1))/(gamma02+1);
+  // scalar u4     = 0;
+  // scalar v4     = (1 - rho02/rho4)*s + v*rho02/rho4;
   // scalar gamma4 = gamma02;
-  // scalar Et4    = 1.0/(gamma4-1.0)*p4 + 0.5*rho4*(u4*u4+v4*v4);
+  // scalar Et4    = p4/(gamma4-1.0) + 0.5*rho4*(u4*u4+v4*v4);
+  scalar u4   = 0;
+  scalar v4   =-Ms*c02*(2*(Ms*Ms-1))/(gamma02+1)/(Ms*Ms); // shock is moving downwards
+  scalar p4   = p*(1+2*gamma02/(gamma02+1)*(Ms*Ms-1));
+  scalar rho4 = rho02*(gamma02+1)*Ms*Ms/(2+(gamma02-1)*Ms*Ms);
+  scalar gamma4 = gamma02;
+  scalar Et4    = p4/(gamma4-1.0) + 0.5*rho4*(u4*u4+v4*v4);
 
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
       scalar y = XYZNodes(i,e*D+1);
 
-      // vertical distance from interface
-      scalar d = ((delta+A0*sin(2*M_PI*x+M_PI/2))-y)/(2*delta);
-
-      // Calculate volume fractions
-      scalar vol=0;
-      if      ((d<1)&&(d>0)) vol = exp(log(1e-16)*pow(fabs(d),8));
-      else if (d<=0)         vol = 1;
-      else                   vol = 0;
-
-      scalar jx  = 1-vol;
-      scalar rho = jx*rho01+(1-jx)*rho02;
-      scalar jy  = jx*rho01/(jx*rho01+(1-jx)*rho02);       // mass fraction
-      scalar jM  = 1/(jy/M1+(1-jy)/M2);                    // total molecular weight
-
-      scalar gamma = jy*alpha01*jM/M1+(1-jy)*alpha02*jM/M2; 
-
-      U(i,e*N_F+0) = rho;
-      U(i,e*N_F+1) = 0;
-      U(i,e*N_F+2) = 0;
-      U(i,e*N_F+3) = 0;
+      if(y >= yshck+1e-6){ // post-shock region
+	U(i,e*N_F+0) = rho4;
+	U(i,e*N_F+1) = rho4*u4;
+	U(i,e*N_F+2) = rho4*v4;
+	U(i,e*N_F+3) = Et4 ;
 #ifdef GAMCONS
-      U(i,e*N_F+4) = rho/(gamma-1);
+	U(i,e*N_F+4) = rho4/(gamma4-1);
 #elif GAMNCON
-      U(i,e*N_F+4) = 1.0/(gamma-1);
+	U(i,e*N_F+4) = 1.0/(gamma4-1);
 #endif
+      }
+      else{
+	// vertical distance from interface
+	scalar d = ((delta+A0*sin(2*M_PI*x/Lx+M_PI/2))-y)/(2*delta);
+	
+	// Calculate volume fractions
+	scalar vol=0;
+	if      ((d<1)&&(d>0)) vol = exp(log(1e-16)*pow(fabs(d),8));
+	else if (d<=0)         vol = 1;
+	else                   vol = 0;
 
-      //       if (y>0.6){ // post-shock region
-// 	U(i,e*N_F+0) = rho4;
-// 	U(i,e*N_F+1) = rho4*u4;
-// 	U(i,e*N_F+2) = rho4*v4;
-// 	U(i,e*N_F+3) = Et4 ;
-// #ifdef GAMCONS
-// 	U(i,e*N_F+4) = rho4/(gamma4-1);
-// #elif GAMNCON
-// 	U(i,e*N_F+4) = 1.0/(gamma4-1);
-// #endif
-//       }
-//       else if ((0.6>=y)&&(y>A0*sin(M_PI*x))){ // pre-shock region
-// 	U(i,e*N_F+0) = rho02;
-// 	U(i,e*N_F+1) = rho02*u02;
-// 	U(i,e*N_F+2) = rho02*v02;
-// 	U(i,e*N_F+3) = Et02 ;
-// #ifdef GAMCONS
-// 	U(i,e*N_F+4) = rho02/(gamma02-1);
-// #elif GAMNCON
-// 	U(i,e*N_F+4) = 1.0/(gamma02-1);
-// #endif
-//       }
-//       else if (A0*sin(M_PI*x)>=y){
-// 	U(i,e*N_F+0) = rho01;
-// 	U(i,e*N_F+1) = rho01*u01;
-// 	U(i,e*N_F+2) = rho01*v01;
-// 	U(i,e*N_F+3) = Et01 ;
-// #ifdef GAMCONS
-// 	U(i,e*N_F+4) = rho01/(gamma01-1);
-// #elif GAMNCON
-// 	U(i,e*N_F+4) = 1.0/(gamma01-1);
-// #endif
+	scalar jx  = 1-vol;
+	scalar rho = jx*rho01+(1-jx)*rho02;
+	scalar jy  = jx*rho01/(jx*rho01+(1-jx)*rho02);       // mass fraction
+	scalar jM  = 1/(jy/M1+(1-jy)/M2);                    // total molecular weight
+
+	scalar gamma = jy*alpha01*jM/M1+(1-jy)*alpha02*jM/M2; 
+
+
+	// rho = rho02;
+	// gamma = gamma02;
+	U(i,e*N_F+0) = rho;
+	U(i,e*N_F+1) = rho*u;
+	U(i,e*N_F+2) = rho*v;
+	U(i,e*N_F+3) = p/(gamma-1)+ 0.5*rho*(u*u+v*v);
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rho/(gamma-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gamma-1);
+#endif
+      }
+    }
+  }
+#endif
+}
+
+void init_dg_khinstb_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+
+#ifdef ONED
+  printf("khinstb problem can only be run in 2D. Exiting");
+  exit(1);
+#elif TWOD
+  
+  if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
+
+  // Initialize
+  // Velocities/pressures in both materials
+  scalar u = 0.0;
+  scalar v = 0.0;
+  scalar p = 1.0;
+  
+  // pre-shock density (material 1)
+  scalar rho01   = 3.0;//1.351;//1.0;//1.351;          
+  scalar gamma01 = 1.4;//1.276;//1.4;//1.276
+  scalar alpha01 = 1/(gamma01-1);
+  scalar M1      = 34.76;  // molecular weight
+  
+  // pre-shock density (material 2)
+  // The shock is initialized in here
+  scalar rho02   = 1.0;//5.494;//0.1;//5.494;
+  scalar gamma02 = 1.4;//1.093;//1.6667;//1.093;           
+  scalar alpha02 = 1/(gamma02-1);
+  scalar c02     = sqrt(gamma02*p/rho02); // sound speed
+  scalar M2      = 146.05;         // Molecular weight
+
+  // Post-shock state (material 2) (see p 101 Toro)
+  scalar Ms = 1.5;   // Shock Mach number
+  printf("Ms=%f\n",Ms);
+  scalar u4   = 0;
+  scalar v4   =-Ms*c02*(2*(Ms*Ms-1))/(gamma02+1)/(Ms*Ms); // shock is moving downwards
+  scalar p4   = p*(1+2*gamma02/(gamma02+1)*(Ms*Ms-1));
+  scalar rho4 = rho02*(gamma02+1)*Ms*Ms/(2+(gamma02-1)*Ms*Ms);
+  scalar gamma4 = gamma02;
+  scalar Et4    = p4/(gamma4-1.0) + 0.5*rho4*(u4*u4+v4*v4);
+
+  double eps = 1e-6;
+  
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+      scalar x = XYZNodes(i,e*D+0);
+      scalar y = XYZNodes(i,e*D+1);
+
+      if((y>0.8+eps)&&(x>0+eps)){ // shocked region
+	U(i,e*N_F+0) = rho4;
+	U(i,e*N_F+1) = rho4*u4;
+	U(i,e*N_F+2) = rho4*v4;
+	U(i,e*N_F+3) = Et4 ;
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rho4/(gamma4-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gamma4-1);
+#endif
+      }
+      else if((y<=0.8+eps)&&(x>0+eps)){ // top material, unshocked
+	U(i,e*N_F+0) = rho02;
+	U(i,e*N_F+1) = rho02*u;
+	U(i,e*N_F+2) = rho02*v;
+	U(i,e*N_F+3) = p/(gamma02-1) + 0.5*rho02*(u*u+v*v);
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rho02/(gamma02-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gamma02-1);
+#endif
+      }
+      else if(x<=0+eps){// lower material, unshocked
+	U(i,e*N_F+0) = rho01;
+	U(i,e*N_F+1) = rho01*u;
+	U(i,e*N_F+2) = rho01*v;
+	U(i,e*N_F+3) = p/(gamma01-1) + 0.5*rho01*(u*u+v*v);
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rho01/(gamma01-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gamma01-1);
+#endif
+      }
     }
   }
 #endif

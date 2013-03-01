@@ -40,7 +40,7 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simp
       Et (i,e) = et;
       PhiC  (i,e) = U[(e*N_F+3)*N_s+i]/rho;
       PhiNC (i,e) = U[(e*N_F+4)*N_s+i];
-      P     (i,e) = (gamma-1)*(et - 0.5*ux*ux/rho);
+      P     (i,e) = (gamma-1)*(et - 0.5*ux*ux*rho);
     }
   }
 

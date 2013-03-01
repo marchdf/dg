@@ -36,10 +36,10 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simp
       gamma = 1+1.0/U[(e*N_F+4)*N_s+i];
 #endif
 
-      // Check for NaN error
+      //Check for NaN error
       if(rho != rho){
-	printf("NaN error. Code crashed... bummer.\n");
-	exit(1);
+      	printf("NaN error. Code crashed... bummer.\n");
+      	//exit(1);
       }
 
       Rho(i,e) = rho;
@@ -47,7 +47,7 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simp
       Uy (i,e) = uy;
       Et (i,e) = et;
       G  (i,e) = gamma;
-      P  (i,e) = (gamma-1)*(et - 0.5*(ux*ux+uy*uy)/rho);
+      P  (i,e) = (gamma-1)*(et - 0.5*(ux*ux+uy*uy)*rho);
     }
   }
 

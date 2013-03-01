@@ -89,18 +89,19 @@ class RK
 #endif
 
 
-    // Output conservation of the fields
-    dgsolver.conservation(h_U,0.0);
-    
-    // Limit solution
-    if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(arch(U));
-    else if (Limiter.getLimitingMethod()==2) Limiter.MYlimiting(arch(U));
-    else if (Limiter.getLimitingMethod()==3) Limiter.M2limiting(arch(U));
+  
+    /* // Limit solution */
+    /* if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(arch(U)); */
+    /* else if (Limiter.getLimitingMethod()==2) Limiter.MYlimiting(arch(U)); */
+    /* else if (Limiter.getLimitingMethod()==3) Limiter.M2limiting(arch(U)); */
 
     // print the initial condition to the file
     printf("Initial condition written to output file.\n");
     print_dg(N_s, N_E, N_F, h_U, m, elem_type, 0, 0, 0);
-   
+
+    // Output conservation of the fields
+    dgsolver.conservation(h_U,0.0);
+    
     // Time integration
     for (int n = 1; n <= N_t; n++){
 

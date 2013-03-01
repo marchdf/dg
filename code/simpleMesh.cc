@@ -479,6 +479,7 @@ void simpleMesh::buildBoundaryElementShift(int order, const fullMatrix<scalar> &
       double xcen2 = listInterfaces[c2*3+1];
       double ycen2 = listInterfaces[c2*3+2];
 
+      // if the interfaces are pairs of each other
       if (((fabs(xcen1-xcen2)<1E-6)&&(fabs(ycen1-ycen2)+1E-6 >= H)) || ((fabs(ycen1-ycen2)<1E-6)&&(fabs(xcen1-xcen2)+1E-6 >= L))){
 	const simpleInterface &face1 = interfaces[t1];
 	const simpleInterface &face2 = interfaces[t2];
@@ -542,7 +543,7 @@ void simpleMesh::buildNeighbors(int N_N, int N_E, std::map<int,int> &ElementMap)
       nn[el1num]++; // increment the neighbor counter
     }
   }
-  
+
   // Free some stuff
   delete[] nn;
 }
@@ -557,6 +558,13 @@ void simpleMesh::sortNeighbors(const int N_E, const int N_N, const fullMatrix<sc
      Only for a cartesian mesh
   */
 
+  // printf("Before sorting...\n");
+  // for(int e=0; e<N_E; e++){
+  //   // int left  = _neighbors[e*N_N+offxy+0];
+  //   // int right = _neighbors[e*N_N+offxy+1];
+  //   printf("N_N=%i; e:%i ; left:%i; right:%i; down:%i; up:%i\n",N_N,e,_neighbors[e*N_N+0],_neighbors[e*N_N+1],_neighbors[e*N_N+2],_neighbors[e*N_N+3]);
+  // }
+  
   scalar x, y, xn, yn;
   int neighbor;
   int* LRDU = new int[4];
@@ -566,35 +574,52 @@ void simpleMesh::sortNeighbors(const int N_E, const int N_N, const fullMatrix<sc
     // get its cell center
     x = XYZCen(e,0);
     y = XYZCen(e,1);
-   
+    //printf("\n");
+    
     // Loop on all the neighbors
     for(int nn=0; nn<N_N; nn++){
       neighbor = _neighbors[e*N_N+nn]; // get a neighbor element
       xn = XYZCen(neighbor,0);        // get the centroid
       yn = XYZCen(neighbor,1);
 
+      // if (e==neighbor){
+      // }
+      // else{  // for periodic boundary condition
       // Get potentional coordinate shift for the neighbor if this
       // element is on the boundary
       bool flag = false; int bidx = 0;
       for(int b=0; b<_N_B; b++)
-  	if ((e==_shifts(b,0))&&(neighbor==_shifts(b,1))){ flag = true; bidx = b; break;}
+	if ((e==_shifts(b,0))&&(neighbor==_shifts(b,1))){ flag = true; bidx = b; break;}
       if(flag){
-  	xn = xn+_shifts(bidx,2+0);
-  	yn = yn+_shifts(bidx,2+1);
+	xn = xn+_shifts(bidx,2+0);
+	yn = yn+_shifts(bidx,2+1);
       }
-
+      
+      
+      //printf("(x,y)=(%f,%f) and (xn,yn)=(%f,%f)  ",x,y,xn,yn);
       // Relation to current element
-      if     ((fabs(yn-y)<1e-9)&&(x>xn))  LRDU[0]=neighbor; // left
-      else if((fabs(yn-y)<1e-9)&&(x<xn))  LRDU[1]=neighbor; // right
-      else if((fabs(xn-x)<1e-9)&&(y>yn))  LRDU[2]=neighbor; // below
-      else if((fabs(xn-x)<1e-9)&&(y<yn))  LRDU[3]=neighbor; // above
+      if     ((fabs(yn-y)<1e-9)&&(x>xn)){  LRDU[0]=neighbor; /*printf("found L\n");*/}// left
+      else if((fabs(yn-y)<1e-9)&&(x<xn)){  LRDU[1]=neighbor; /*printf("found R\n");*/} // right
+      else if((fabs(xn-x)<1e-9)&&(y>yn)){  LRDU[2]=neighbor; /*printf("found D\n");*/} // below
+      else if((fabs(xn-x)<1e-9)&&(y<yn)){  LRDU[3]=neighbor; /*printf("found U\n");*/} // above
+      //else printf("PROBLEM!\n");
+      //}
     }//loop on neighbors
 
     // Sort the neighbors
     for(int nn=0; nn<N_N; nn++) _neighbors[e*N_N+nn] = LRDU[nn];
     
   }// loop on elements
-  
+
+  // printf("After sorting...\n");
+  // for(int e=0; e<N_E; e++){
+  //   // int left  = _neighbors[e*N_N+offxy+0];
+  //   // int right = _neighbors[e*N_N+offxy+1];
+  //   int offxy = 0;
+  //   printf("N_N=%i; e:%i ; left:%i; right:%i; down:%i; up:%i\n",N_N,e,_neighbors[e*N_N+0],_neighbors[e*N_N+1],_neighbors[e*N_N+2],_neighbors[e*N_N+3]);
+  // }
+
+ 
   delete[] LRDU;
 }
 

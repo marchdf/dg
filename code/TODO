@@ -35,6 +35,7 @@ BC
   - implement farfield for HR
   - implement non-reflecting for normal flux and HR
   - capability to mix BCs
+  - Farfield is broken. The shifts don't work and so the neighbor sorting doesn't either
 
 BASIS TRANSFORMS (for HR)
   - put in a seperate class

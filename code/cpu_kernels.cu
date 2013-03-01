@@ -190,11 +190,15 @@ arch_global void cpu_boundary(int M_s, int N_F, int M_B, int* boundaryMap, scala
 	int fc = threadIdx.y;
 #endif
 
+
+#ifdef ONED
+	UF[((t1*N_F+fc)*2+1)*M_s+j] = UF[((t2*N_F+fc)*2+0)*M_s+j]; // original buggy one (works for 1D)
+#elif TWOD
 	// This is fiddling bc the boundaries get rotated... 
 	if      (j==0) UF[((t1*N_F+fc)*2+1)*M_s+0] = UF[((t2*N_F+fc)*2+0)*M_s+1];
 	else if (j==1) UF[((t1*N_F+fc)*2+1)*M_s+1] = UF[((t2*N_F+fc)*2+0)*M_s+0];
 	else           UF[((t1*N_F+fc)*2+1)*M_s+j] = UF[((t2*N_F+fc)*2+0)*M_s+M_s-1-j];
-	//UF[((t1*N_F+fc)*2+1)*M_s+j] = UF[((t2*N_F+fc)*2+0)*M_s+j];
+#endif
 
 #ifdef USE_CPU
       }
@@ -544,7 +548,8 @@ arch_global void cpu_hrl1D(int N_s, int N_E, int N_F, int N_G, int N_N, int slic
 
 	int left  = neighbors[e*N_N+offxy+0];
 	int right = neighbors[e*N_N+offxy+1];
-
+	//printf("e:%i ; left:%i; right:%i\n",e,neighbors[e*N_N+offxy+0],neighbors[e*N_N+offxy+1]);
+	
 	// Loop on derivatives
 	for(int m = N; m > 0; m--){
 	  avgdUL = 0; avgdUC=0; avgdUR=0;
@@ -561,9 +566,9 @@ arch_global void cpu_hrl1D(int N_s, int N_E, int N_F, int N_G, int N_N, int slic
 	      dUC += A[(e    *N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
 	      dUR += A[(right*N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
 	      if(j>=2){
-		RL += Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*pow(V[1*N_G+g]-2,j)/(scalar)cpu_factorial(j);
-		RC += Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
-		RR += Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*pow(V[1*N_G+g]+2,j)/(scalar)cpu_factorial(j);
+	    	RL += Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*pow(V[1*N_G+g]-2,j)/(scalar)cpu_factorial(j);
+	    	RC += Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
+	    	RR += Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*pow(V[1*N_G+g]+2,j)/(scalar)cpu_factorial(j);
 	      }// end if
 	    }
 	    avgdUL += dUL*weight[g];

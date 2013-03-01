@@ -192,11 +192,12 @@ class Limiting
       _MonoY2Lag   = new scalar[_N_s*_N_s];     MonoY2Lag.copyMatrixToPointer(_MonoY2Lag);
       _V1D      = new scalar[_N_G1D*_N_s1D];    V1D.copyMatrixToPointer(_V1D);
       _weight   = new scalar[_N_G1D];           memcpy(_weight,weight,_N_G1D*sizeof(scalar));
-      _A        = new scalar[_N_s*_N_E*N_F];
-      _Alim     = new scalar[_N_s*_N_E*N_F];
+      _A        = new scalar[_N_s*_N_E*N_F];    makeZero(_A,    _N_s*_N_E*_N_F);
+      _Alim     = new scalar[_N_s*_N_E*N_F];    makeZero(_Alim,    _N_s*_N_E*_N_F);
       _neighbors  = new int[_N_N*_N_E];
       memcpy(_neighbors,   neighbors,   _N_N*_N_E*sizeof(int));
 
+     
 #elif USE_GPU
       // tmp host pointers to copy data to gpu
       scalar* tmpLag2MonoX   = new scalar[_N_s*_N_s];     Lag2MonoX.copyMatrixToPointer(tmpLag2MonoX);
@@ -446,7 +447,7 @@ class Limiting
     if(_cartesian){
       // Go from lagrange to monomial representation wrt x
       blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Lag2MonoX, _N_s, U, _N_s, 0.0, _A, _N_s);
-      
+
       // Limit the solution according to Liu (for each x slice)
       Lcpu_hrl1D(_N_s1D, _N_E, _N_F, _N_G1D, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _A, _Alim);
       
