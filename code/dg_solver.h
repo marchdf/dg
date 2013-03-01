@@ -233,7 +233,6 @@ class DG_SOLVER
     Lcpu_mapToFace(_M_s, _M_T, _N_F, _N_s, _map, U, _UF);
 
     // Apply boundary conditions
-    //Lcpu_boundary(_M_s, _N_F, _M_B, _boundaryMap, _UF);
     LperiodicBoundary(_M_s,_N_F,(_boundaryIdx[0]-0)/2,              _boundaryMap,0,              _UF);
     LfarfieldBoundary(_M_s,_N_F,(_boundaryIdx[1]-_boundaryIdx[0])/2,_boundaryMap,_boundaryIdx[0],_UF);
     /*LrflctiveBoundary(_M_s,_N_F,(_M_B-_boundaryIdx[1])/2,           _boundaryMap,_boundaryIdx[1],_UF); */

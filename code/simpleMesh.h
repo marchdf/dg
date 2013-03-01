@@ -54,12 +54,6 @@ class simpleMesh {
   }
   void buildNormals(int typeInterface, int typeElement, const int D);
 
-  void buildPeriodicSquare(int order, const fullMatrix<scalar> &XYZNodesF, const int D);
-  void buildPeriodicLine();
-  void buildFarfield();
-  void buildCombined(int order, const fullMatrix<scalar> &XYZNodesF, const int D);
-  int  getBoundaryNB()  const {return _N_B;}
-
   void buildLineBoundary(int boundaryType);
   void buildSquareBoundary(int M_s, const fullMatrix<scalar> &XYZNodesF, const int D, int boundaryType);
   void setBoundarySize();

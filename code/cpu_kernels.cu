@@ -157,55 +157,6 @@ arch_global void cpu_mapToFace(int M_s, int M_T, int N_F, int N_s, int* map, sca
 #endif
 }
 
-      // if ((t>=1)&&(t<M_T-1)){
-      // 	UF[(t*N_F+fc)*2+0] = U[((t-1)*N_F+fc)*N_s+1];
-      // 	UF[(t*N_F+fc)*2+1] = U[(t*N_F+fc)*N_s+0];}
-
-      // // Start and end boundaries
-      // else if (t==0){
-      // 	UF[(0*N_F+fc)*2+1]       = U[(0*N_F+fc)*N_s+0];     
-      // 	UF[((M_T-1)*N_F+fc)*2+0] = U[((M_T-2)*N_F+fc)*N_s+1];
-      // 	if      (boundaryMap == 0){      //farfield
-      // 	  UF[(0*N_F+fc)*2+0]        = UF[(0*N_F+fc)*2+1];
-      // 	  UF[((M_T-1)*N_F+fc)*2+1]  = UF[((M_T-1)*N_F+fc)*2+0];
-      // 	}
-      // 	else if (boundaryMap == M_T-1){  //periodic
-      // 	  UF[(0*N_F+fc)*2+0]        = UF[((M_T-1)*N_F+fc)*2+0];
-      // 	  UF[((M_T-1)*N_F+fc)*2+1]  = UF[(0*N_F+fc)*2+1];
-      // 	}
-      // }
-
-//==========================================================================
-arch_global void cpu_boundary(int M_s, int N_F, int M_B, int* boundaryMap, scalar* UF){
-#ifdef USE_CPU
-  for(int t = 0; t < M_B; t++){
-    int t1 = boundaryMap[t*2+0];
-    int t2 = boundaryMap[t*2+1];
-    for(int j = 0; j < M_s; j++){
-      for(int fc = 0; fc < N_F; fc++){
-#elif USE_GPU
-	int t1 = boundaryMap[blockIdx.x*2+0];
-	int t2 = boundaryMap[blockIdx.x*2+1];
-	int j  = threadIdx.x;
-	int fc = threadIdx.y;
-#endif
-
-
-#ifdef ONED
-	UF[((t1*N_F+fc)*2+1)*M_s+j] = UF[((t2*N_F+fc)*2+0)*M_s+j]; // original buggy one (works for 1D)
-#elif TWOD
-	// This is fiddling bc the boundaries get rotated... 
-	if      (j==0) UF[((t1*N_F+fc)*2+1)*M_s+0] = UF[((t2*N_F+fc)*2+0)*M_s+1];
-	else if (j==1) UF[((t1*N_F+fc)*2+1)*M_s+1] = UF[((t2*N_F+fc)*2+0)*M_s+0];
-	else           UF[((t1*N_F+fc)*2+1)*M_s+j] = UF[((t2*N_F+fc)*2+0)*M_s+M_s-1-j];
-#endif
-
-#ifdef USE_CPU
-      }
-    }
-  }
-#endif
-}
 
 //==========================================================================
 arch_global void cpu_mapToElement(int N_s, int N_E, int N_F, int* invmap, scalar* Q, scalar* Qtcj){

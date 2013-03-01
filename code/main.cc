@@ -393,27 +393,14 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
   m.setBoundarySize();
-  int boundaryMap = 0;
-//   if      (periodic){ boundaryMap = N_E;
-// #ifdef ONED
-//     m.buildPeriodicLine();
-// #elif TWOD
-//     m.buildPeriodicSquare(order, XYZNodesF, D);
-// #endif
-//   }
-//   else if (farfield){ m.buildFarfield();     boundaryMap = 0;}
-//   else if (combined){ m.buildCombined(order, XYZNodesF, D);}
-//   else if (perxfary){ m.buildSquareBoundary(M_s, XYZNodesF, D, 0);}
 #ifdef ONED
   m.buildLineBoundary(boundaryType);
-  if(boundaryType==0) boundaryMap = N_E;
-  if(boundaryType==1) boundaryMap = 0;
 #elif TWOD
   m.buildSquareBoundary(M_s, XYZNodesF, D, boundaryType);
 #endif
   int* h_boundaryMap = m.getBoundaryMap();
   int* h_boundaryIdx = m.getBoundaryIdx();
-  int M_B = m.getBoundaryNB();
+  int M_B = m.getBoundarySize();
   
   //////////////////////////////////////////////////////////////////////////   
   //
