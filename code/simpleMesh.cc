@@ -195,6 +195,230 @@ void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, co
   output << "$EndElementNodeData\n";
 }
 
+void simpleMesh::setBoundarySize(){
+  /* Set _N_B to the number of boundary interfaces
+     in the problem
+  */
+  _N_B = 0;
+#ifdef ONED
+  _N_B = 2;
+#elif TWOD
+  const std::vector<simpleInterface> &interfaces = getInterfaces();
+  int N_I = _interfaces.size();       // number of interfaces
+
+  for(int i = 0; i < N_I; i++){
+    const simpleInterface &face = interfaces[i];
+    if(face.getPhysicalTag()==1){
+      _N_B++;
+    }
+  }
+#endif
+  
+  printf("M_B %i\n",_N_B);
+}
+
+void simpleMesh::buildLineBoundary(int boundaryType){
+  /* Boundary maker in 1D
+     boundaryType:
+        0 : periodic everywhere
+	1 : farfield everywhere
+	2 : rflctive everywhere
+  */
+  
+  int N_B = getBoundarySize();  // number of boundaries
+
+  // For the line we build with our mesher, the ends are the first two
+  // interfaces
+  _boundary = new int[2*N_B]; // 2 interfaces
+  _boundaryIdx = new int[2];
+  if(boundaryType==0){ // periodic
+    _boundary[0*2+0] = 0;
+    _boundary[0*2+1] = 1;
+    _boundary[1*2+0] = 1;
+    _boundary[1*2+1] = 0;
+    _boundaryIdx[0]  = 4; _boundaryIdx[1]  = 4;
+  }
+  else if(boundaryType==1){ // farfield
+    _boundary[0*2+0] = 0;
+    _boundary[0*2+1] = 0;
+    _boundary[1*2+0] = 1;
+    _boundary[1*2+1] = 1;
+    _boundaryIdx[0]  = 0;
+    _boundaryIdx[0]  = 0; _boundaryIdx[1]  = 4;
+  }
+  else if(boundaryType==1){ // periodic
+    _boundary[0*2+0] = 0;
+    _boundary[0*2+1] = 0;
+    _boundary[1*2+0] = 1;
+    _boundary[1*2+1] = 1;
+    _boundaryIdx[0]  = 0; _boundaryIdx[1]  = 0;
+  }
+ 
+}
+
+
+void simpleMesh::buildSquareBoundary(int M_s, const fullMatrix<scalar> &XYZNodesF, const int D, int boundaryType){
+  /* Match the interfaces with their partner
+
+     Returns boundaryMap and boundaryidx.
+     boundaryMap holds:
+     [ [[t1,t2,nodepair][..] [[t1,t2,nodepair][..] [[t1,t2,nodepair][..]]
+       periodic              farfield              reflected
+     boundaryidx holds:
+     the idx of where each of those start
+
+     boundaryType:
+        0 : periodic everywhere
+	1 : farfield everywhere
+	2 : rflctive everywhere
+	3 : periodic in x, farfield in y
+	4 : farfield in x, reflective in y
+   */
+
+  int N_I =_interfaces.size(); // number of interfaces
+  int N_B = getBoundarySize(); // number of boundaries
+
+  //
+  // Get the center of each interface
+  //
+  double* listInterfaces = new double[3*_N_B];
+  int counter = 0;
+  double xcenmin = 0.0;
+  double xcenmax = 0.0;
+  double ycenmin = 0.0;
+  double ycenmax = 0.0;
+  for(int i = 0; i < N_I; i++){
+    const simpleInterface &face = _interfaces[i];
+    if(face.getPhysicalTag()==1){
+      int t = i;
+      double xcen=0;
+      double ycen=0;
+      for(int j = 0; j < M_s; j++){
+	xcen += XYZNodesF(j,(t*2+0)*D+0);
+	ycen += XYZNodesF(j,(t*2+0)*D+1);
+      }
+      listInterfaces[counter*3+0] = t;
+      listInterfaces[counter*3+1] = xcen/M_s;
+      listInterfaces[counter*3+2] = ycen/M_s;      
+      counter++;
+      if(xcenmin > xcen/M_s) xcenmin = xcen/M_s;
+      if(xcenmax < xcen/M_s) xcenmax = xcen/M_s;
+      if(ycenmin > ycen/M_s) ycenmin = ycen/M_s;
+      if(ycenmax < ycen/M_s) ycenmax = ycen/M_s;
+      //printf("t:%i %i xcen:%f ycen:%f\n",t,face.getPhysicalTag(),xcen/M_s,ycen/M_s);
+    }
+  }
+  double L = xcenmax-xcenmin;
+  double H = ycenmax-ycenmin;
+
+  //
+  // Match the faces together
+  //
+  std::vector<fullMatrix<scalar> > periodic;
+  std::vector<fullMatrix<scalar> > farfield;
+  std::vector<fullMatrix<scalar> > rflctive;
+
+  fullMatrix<scalar> tmp(2,1);
+ 
+  for(int c1 = 0; c1 < _N_B; c1++){
+    int t1 = listInterfaces[c1*3+0];
+    double xcen1 = listInterfaces[c1*3+1];
+    double ycen1 = listInterfaces[c1*3+2];
+
+    if(boundaryType==0){ // periodic everywhere
+      for(int c2 = 0; c2 < _N_B; c2++){ // find its pair
+	int t2 = listInterfaces[c2*3+0];
+	double xcen2 = listInterfaces[c2*3+1];
+	double ycen2 = listInterfaces[c2*3+2];
+	if (((fabs(xcen1-xcen2)<1E-6)&&(fabs(ycen1-ycen2)+1E-6 >= H))||((fabs(ycen1-ycen2)<1E-6)&&(fabs(xcen1-xcen2)+1E-6 >= L))) {
+	  tmp(0,0) = t1; tmp(1,0) = t2;
+	  periodic.push_back(tmp);}
+      }
+    }
+    else if (boundaryType==1){ // farfield everywhere
+      tmp(0,0) = t1; tmp(1,0) = t1;
+      farfield.push_back(tmp);
+    }
+    else if (boundaryType==2){ // reflective everywhere
+      tmp(0,0) = t1; tmp(1,0) = t1;
+      rflctive.push_back(tmp);
+    }
+    else if (boundaryType==3){ // periodic in x, farfield in y 
+      for(int c2 = 0; c2 < _N_B; c2++){ // find its pair
+	int t2 = listInterfaces[c2*3+0];
+	double xcen2 = listInterfaces[c2*3+1];
+	double ycen2 = listInterfaces[c2*3+2];
+	if ((fabs(xcen1-xcen2)<1E-6)&&(fabs(ycen1-ycen2)+1E-6 >= H)){tmp(0,0) = t1; tmp(1,0) = t1; farfield.push_back(tmp);}
+	if ((fabs(ycen1-ycen2)<1E-6)&&(fabs(xcen1-xcen2)+1E-6 >= L)){tmp(0,0) = t1; tmp(1,0) = t2; farfield.push_back(tmp);}
+      }
+    }
+    else if (boundaryType==4){ // farfield in x, reflective in y
+      for(int c2 = 0; c2 < _N_B; c2++){ // find its pair
+	int t2 = listInterfaces[c2*3+0];
+	double xcen2 = listInterfaces[c2*3+1];
+	double ycen2 = listInterfaces[c2*3+2];
+	if ((fabs(xcen1-xcen2)<1E-6)&&(fabs(ycen1-ycen2)+1E-6 >= H)){tmp(0,0) = t1; tmp(1,0) = t1; rflctive.push_back(tmp);}
+	if ((fabs(ycen1-ycen2)<1E-6)&&(fabs(xcen1-xcen2)+1E-6 >= L)){tmp(0,0) = t1; tmp(1,0) = t1; farfield.push_back(tmp);}
+      }
+    }
+  }
+
+
+  // Build the boundary array
+  _boundary = new int[2*_N_B];
+  _boundaryIdx = new int[2];
+  int t = 0;
+
+  for(int k=0; k<periodic.size(); k++){
+    tmp = periodic[k];
+    _boundary[2*t+0] = tmp(0,0);
+    _boundary[2*t+1] = tmp(1,0);
+    t++;
+  }
+  _boundaryIdx[0] = 2*t;
+  
+  for(int k=0; k<farfield.size(); k++){
+    tmp = farfield[k];
+    _boundary[2*t+0] = tmp(0,0);
+    _boundary[2*t+1] = tmp(1,0);
+    t++;
+  }
+  _boundaryIdx[1] = 2*t;
+      
+  for(int k=0; k<rflctive.size(); k++){
+    tmp = rflctive[k];
+    _boundary[2*t+0] = tmp(0,0);
+    _boundary[2*t+1] = tmp(1,0);
+    t++;
+  }
+
+  // Free some stuff
+  delete[] listInterfaces;
+
+
+  // // Match the nodes explicitely
+  // for(int b=0; b<_N_B; b++){
+  //   int t1 = _boundary[b*2+0];
+  //   int t2 = _boundary[b*2+1];
+  //   for(int j1 =0; j1<M_s; j1++){
+  //     double x1 = XYZNodesF(j1,(t1*2+1)*D+0);
+  //     double y1 = XYZNodesF(j1,(t1*2+1)*D+1);
+  //     for(int j2 =0; j2<M_s; j2++){
+  // 	double x2 = XYZNodesF(j2,(t2*2+0)*D+0);
+  // 	double y2 = XYZNodesF(j2,(t2*2+0)*D+1);
+  // 	printf("(x1,y1)=(%f,%f) and (x2,y2)=(%f,%f)\n",x1,y1,x2,y2);
+  // 	if((fabs(x1-x2)<1e-6)||(fabs(y1-y2)<1e-6)){
+  // 	  printf("     j1=%i and j2=%i\n",j1,j2);
+  // 	  break;
+  // 	}
+  //     }
+  //   }
+  //   printf("\n");
+  // }
+ 
+
+}
+
 void simpleMesh::buildPeriodicSquare(int order, const fullMatrix<scalar> &XYZNodesF, const int D)
 {
   // Objective: match the interfaces with their periodic partner

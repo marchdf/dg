@@ -38,6 +38,7 @@ class simpleMesh {
   fullMatrix<scalar> _normals;
   int _N_B; // number of boundaries
   int* _boundary;
+  int* _boundaryIdx;
   int* _neighbors; // N_N x N_E : element | neighbor1 | neighbor2 | ...
   fullMatrix<scalar> _shifts;
   fullMatrix<scalar> _XYZCen;
@@ -52,12 +53,20 @@ class simpleMesh {
     simpleInterface::BuildInterfaces(*this, _interfaces, typeInterface, typeElement, nsides);
   }
   void buildNormals(int typeInterface, int typeElement, const int D);
+
   void buildPeriodicSquare(int order, const fullMatrix<scalar> &XYZNodesF, const int D);
   void buildPeriodicLine();
   void buildFarfield();
   void buildCombined(int order, const fullMatrix<scalar> &XYZNodesF, const int D);
-  int getBoundaryNB()  const {return _N_B;}
+  int  getBoundaryNB()  const {return _N_B;}
+
+  void buildLineBoundary(int boundaryType);
+  void buildSquareBoundary(int M_s, const fullMatrix<scalar> &XYZNodesF, const int D, int boundaryType);
+  void setBoundarySize();
+  int  getBoundarySize()  const {return _N_B;}
   int* getBoundaryMap()const {return _boundary;}
+  int* getBoundaryIdx()const {return _boundaryIdx;}
+
   void buildNeighbors(int N_N, int N_E, std::map<int,int> &ElementMap);
   void sortNeighbors(const int N_E, const int N_N, const fullMatrix<scalar> XYZCen);
   int* getNeighbors()const {return _neighbors;}

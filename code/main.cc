@@ -146,12 +146,11 @@ int main (int argc, char **argv)
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // setup the boundary condition type
-  bool periodic = false;
-  bool farfield = false;
-  bool combined = false;
-  if      (inputs.getBoundaryCondition()=="periodic") periodic = true;
-  else if (inputs.getBoundaryCondition()=="farfield") farfield = true;
-  else if (inputs.getBoundaryCondition()=="combined") combined = true;
+  int boundaryType = 0;
+  if      (inputs.getBoundaryCondition()=="periodic") boundaryType = 0;
+  else if (inputs.getBoundaryCondition()=="farfield") boundaryType = 1;
+  else if (inputs.getBoundaryCondition()=="combined") boundaryType = 2;
+  else if (inputs.getBoundaryCondition()=="perxfary") boundaryType = 3;
   else{ printf("Invalid boundary condition setup. Correct the deck.\n");}    
 
   //==========================================================================
@@ -393,17 +392,27 @@ int main (int argc, char **argv)
   // Build the boundary map
   //
   //////////////////////////////////////////////////////////////////////////
+  m.setBoundarySize();
   int boundaryMap = 0;
-  if      (periodic){ boundaryMap = N_E;
+//   if      (periodic){ boundaryMap = N_E;
+// #ifdef ONED
+//     m.buildPeriodicLine();
+// #elif TWOD
+//     m.buildPeriodicSquare(order, XYZNodesF, D);
+// #endif
+//   }
+//   else if (farfield){ m.buildFarfield();     boundaryMap = 0;}
+//   else if (combined){ m.buildCombined(order, XYZNodesF, D);}
+//   else if (perxfary){ m.buildSquareBoundary(M_s, XYZNodesF, D, 0);}
 #ifdef ONED
-    m.buildPeriodicLine();
+  m.buildLineBoundary(boundaryType);
+  if(boundaryType==0) boundaryMap = N_E;
+  if(boundaryType==1) boundaryMap = 0;
 #elif TWOD
-    m.buildPeriodicSquare(order, XYZNodesF, D);
+  m.buildSquareBoundary(M_s, XYZNodesF, D, boundaryType);
 #endif
-  }
-  else if (farfield){ m.buildFarfield();     boundaryMap = 0;}
-  else if (combined){ m.buildCombined(order, XYZNodesF, D);}
   int* h_boundaryMap = m.getBoundaryMap();
+  int* h_boundaryIdx = m.getBoundaryIdx();
   int M_B = m.getBoundaryNB();
   
   //////////////////////////////////////////////////////////////////////////   
@@ -730,7 +739,7 @@ int main (int argc, char **argv)
   printf("==== Now RK 4 steps =====\n");
   DG_SOLVER dgsolver = DG_SOLVER(D, N_F, N_E, N_s, N_G, M_T, M_s, M_G, M_B,
   				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, h_J, h_invJac, h_JF, h_weight, h_normals,
-  				 h_boundaryMap);
+  				 h_boundaryMap, h_boundaryIdx);
   RK rk4 = RK(4);
   rk4.RK_integration(Dt, N_t, output_factor,
   		     D, N_F, N_E, N_s, N_G, M_T, M_s,
