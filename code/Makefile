@@ -14,12 +14,15 @@ BINNAME           := dg1d
 # paths to libs
 CUDA_INSTALL_PATH := /usr/local/cuda
 CUDA_SDK_PATH     := /home/marchdf/NVIDIA_GPU_Computing_SDK/C
+ifeq ($(LIEU),NYX)
+CUDA_INSTALL_PATH := $(CUDA_ROOT)
+endif
 
 # compilers
 NVCC              := nvcc
 CXX               := gcc
 ifeq ($(LIEU),NYX)
-CXX               := gcc
+CXX               := icc
 endif
 
 # defines
