@@ -44,8 +44,8 @@ void average_cell_p0(const int N_s, const int N_E, const int N_F, fullMatrix<sca
 
 
 void vandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D);
-void monovandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D);
-void monovandermonde2d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V2D);
+void monovandermonde1d(const int order, const fullMatrix<double> r, fullMatrix<scalar> &V1D);
+void monovandermonde2d(const int order, const fullMatrix<double> r, fullMatrix<scalar> &V2D);
 void LagMono2DTransforms(const int N_E, const int D, const int N_s, const int order, const int L2Msize1, const int L2Msize2, std::string ElemType, const fullMatrix<scalar> XYZNodes, const fullMatrix<scalar> XYZCen, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag);
 void getPowersXYZG(const int N_E, const int D, const int N_s, const int N_G, const int N_N, const int M_B, const int order, const fullMatrix<scalar> XYZG, const fullMatrix<scalar> XYZCen, const int* neighbors, const fullMatrix<scalar> shifts, scalar* powers);
 
@@ -414,35 +414,10 @@ int main (int argc, char **argv)
   m.buildBoundaryElementShift(order, XYZNodesF, D, ElementMap);
   fullMatrix<scalar> shifts = m.getShifts();
 
-#ifdef ONED
-  int* h_neighbors = new int[N_N*N_E];
-  for(int e=0; e<N_E; e++){
-    int left  = e-1;
-    int right = e+1; 
-    if (e==0){
-      if      (boundaryMap == 0  ){left = 0;}//farfield
-      else if (boundaryMap == N_E){left = N_E-1;}//periodic
-    }
-    else if (e == (N_E-1)){
-      if      (boundaryMap == 0  ){right = e;}//farfield
-      else if (boundaryMap == N_E){right = 0;}//periodic
-    }
-    h_neighbors[e*N_N+0] = left;
-    h_neighbors[e*N_N+1] = right;
-  }
-#elif TWOD
   m.buildNeighbors(N_N, N_E, ElementMap);
   if(cartesian) m.sortNeighbors(N_E,N_N, XYZCen);
   int* h_neighbors = m.getNeighbors();
-#endif
 
-  // for(int e=0; e<N_E; e++){
-  //   // int left  = _neighbors[e*N_N+offxy+0];
-  //   // int right = _neighbors[e*N_N+offxy+1];
-  //   int offxy = 0;
-  //   printf("In main: N_N=%i; e:%i ; left:%i; right:%i\n",N_N,e,h_neighbors[e*N_N+offxy+0],h_neighbors[e*N_N+offxy+1]);
-  // }
-  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Monomial to Lagrange basis transforms
@@ -560,8 +535,8 @@ int main (int argc, char **argv)
   else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
   else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
   else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-  else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-  else if(khinstb) init_dg_khinstb_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
+  else if(khinstb) init_dg_khinstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
 #elif PASSIVE
   if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, U);
   if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, U);
@@ -754,8 +729,8 @@ int main (int argc, char **argv)
   else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
   else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
   else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-  else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-  else if(khinstb) init_dg_khinstb_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
+  else if(khinstb) init_dg_khinstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
 #elif PASSIVE
   if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
   if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
@@ -867,6 +842,7 @@ int main (int argc, char **argv)
   //////////////////////////////////////////////////////////////////////////   
 
   delete[] h_boundaryMap;
+  delete[] h_boundaryIdx;
   delete[] h_neighbors;
   delete[] h_Minv;
   delete[] h_map;
@@ -910,7 +886,7 @@ void vandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scala
   }
 }
 
-void monovandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D){
+void monovandermonde1d(const int order, const fullMatrix<double> r, fullMatrix<scalar> &V1D){
 
   // Purpose : Initialize the 1D Vandermonde Matrix, V_{ij} = (r_i)^j/factorial(j);
   
@@ -922,7 +898,7 @@ void monovandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<s
   }
 }
 
-void monovandermonde2d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V2D){
+void monovandermonde2d(const int order, const fullMatrix<double> r, fullMatrix<scalar> &V2D){
 
   // Purpose : Initialize the 2D Vandermonde Matrix, V = (x_i)^nx (y_i)^ny / (factorial(nx)*factorial(ny));
   // ith line = [1, x_i, y_i, x_i^2/2!, x_i*y_i, y_i^2/2!, x_i^3/3!, x_i^2*y_i/2!, x_i*y_i^2/2!, y_i^3/3!, ...]
@@ -950,7 +926,7 @@ void LagMono2DTransforms(const int N_E, const int D, const int N_s, const int or
 
   fullMatrix<scalar> M2L;
   fullMatrix<scalar> L2M;
-  fullMatrix<scalar> points(N_s,D);
+  fullMatrix<double> points(N_s,D);
 
   // Modifications if you are dealing with a quadrangle Calculate
   // the A matrix to go from partial taylor polynomial to full
@@ -958,7 +934,7 @@ void LagMono2DTransforms(const int N_E, const int D, const int N_s, const int or
   // vandermonde matrix (V = V_f * A)
   fullMatrix<scalar> A;
   if(ElemType == "qua"){
-    A.resize(L2Msize1,L2Msize2); A.scale(0.0);
+    A.resize(L2Msize1,L2Msize2); A.scale((scalar)0.0);
     int i=0,j=0,cnt=0;
     for(int idx = 0; idx < 2*order+1; idx++){
       if(idx<=order){
@@ -1019,7 +995,7 @@ void LagMono2DTransforms(const int N_E, const int D, const int N_s, const int or
 void getPowersXYZG(const int N_E, const int D, const int N_s, const int N_G, const int N_N, const int M_B, const int order, const fullMatrix<scalar> XYZG, const fullMatrix<scalar> XYZCen, const int* neighbors, const fullMatrix<scalar> shifts, scalar* powers){
 
   fullMatrix<scalar> V;
-  fullMatrix<scalar> points(N_G,D);
+  fullMatrix<double> points(N_G,D);
   int el = 0; // index of the neighboring element (or itself)
   scalar* XYZshift = new scalar[D]; 
   
@@ -1147,8 +1123,8 @@ void cartesian_permutations(const int order, const fullMatrix<scalar> XYZNodes, 
   //
   // Initialize the levels of constant x and y
   //
-  scalar* xlvl = new double[nlvl];
-  scalar* ylvl = new double[nlvl]; 
+  double* xlvl = new double[nlvl];
+  double* ylvl = new double[nlvl]; 
 
   // Find xmax, xmin, ymax, ymin
   scalar xmax=xy(0,0),xmin=xy(0,0),ymin=xy(0,1),ymax=xy(0,1);

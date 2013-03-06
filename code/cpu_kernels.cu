@@ -480,8 +480,8 @@ arch_global void cpu_hrl1D(int N_s, int N_E, int N_F, int N_G, int N_N, int slic
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
+    scalar* c = new scalar[2*N_F*slicenum];
     for(int slice = 0; slice < slicenum; slice++){
-      scalar* c = new scalar[2*N_F];
       for(int fc = 0; fc < N_F; fc++){
 #elif USE_GPU
 	int e = blockIdx.x;
@@ -536,10 +536,10 @@ arch_global void cpu_hrl1D(int N_s, int N_E, int N_F, int N_G, int N_N, int slic
 	  avgLR = 0.5*(avgdUR - avgRR);
 	
 	  // MUSCL approach to get candidate coefficients
-	  c[fc*2+0] = 0.5*(avgLC - avgLL);  // 1/dx = 1/2 = 0.5
-	  c[fc*2+1] = 0.5*(avgLR - avgLC);
+	  c[(slice*N_F+fc)*2+0] = 0.5*(avgLC - avgLL);  // 1/dx = 1/2 = 0.5
+	  c[(slice*N_F+fc)*2+1] = 0.5*(avgLR - avgLC);
 
-	  Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+m] = cpu_minmod(&c[fc*2],2); // give it a subset of c (the part you want minmod to act on)
+	  Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+m] = cpu_minmod(&c[(slice*N_F+fc)*2],2); // give it a subset of c (the part you want minmod to act on)
 	  //Alim[(e*N_F+fc)*N_s*N_s+slice*N_s+m] = cminmod(c,2,0.01);
 	  //or use minmod2(c,2), minmod(c,2,eps), cminmod(c,2,0.01); cminmod2(c,2,eps)
 	  if(m==1){Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+0] = avgLC;}
@@ -549,8 +549,8 @@ arch_global void cpu_hrl1D(int N_s, int N_E, int N_F, int N_G, int N_N, int slic
 
 #ifdef USE_CPU
       }
-      delete[] c;
     }
+    delete[] c;
   }
 #endif  
 }
@@ -566,116 +566,116 @@ arch_global void cpu_hrl2D(int N_s, int N_E, int N_F, int N_G, int N_N, int D, i
       extern __shared__ scalar c[];
 #endif  
 
-      // Allocate resources locally
-      scalar* localU = new scalar[N_s*(N_N+1)];
-      scalar* neighPowers = new scalar[N_s*N_G*(N_N+1)]; // powers of X in the cell + neighbors
-      scalar* localPowers = new scalar[N_s*N_G*(N_N+1)]; // powers of X to eval cell poly in neighbors
-      scalar* localXYZCen = new scalar[D*(N_N+1)];
-      scalar* dT = new scalar[N_s]; for(int i=0;i<N_s;i++) dT[i]=0;
-      scalar* cx = new scalar[N_N]; // candidates wrt x to limit
-      scalar* cy = new scalar[N_N]; // candidates wrt y to limit
-      scalar* avgdU = new scalar[N_N+1];
-      scalar* avgR  = new scalar[N_N+1];
-      scalar* avgL  = new scalar[N_N+1];
-      scalar candA, candB, oldcandA;
+//       // Allocate resources locally
+//       scalar* localU = new scalar[N_s*(N_N+1)];
+//       scalar* neighPowers = new scalar[N_s*N_G*(N_N+1)]; // powers of X in the cell + neighbors
+//       scalar* localPowers = new scalar[N_s*N_G*(N_N+1)]; // powers of X to eval cell poly in neighbors
+//       scalar* localXYZCen = new scalar[D*(N_N+1)];
+//       scalar* dT = new scalar[N_s]; for(int i=0;i<N_s;i++) dT[i]=0;
+//       scalar* cx = new scalar[N_N]; // candidates wrt x to limit
+//       scalar* cy = new scalar[N_N]; // candidates wrt y to limit
+//       scalar* avgdU = new scalar[N_N+1];
+//       scalar* avgR  = new scalar[N_N+1];
+//       scalar* avgL  = new scalar[N_N+1];
+//       scalar candA, candB, oldcandA;
 	  
-      // Copy global to local resources (going to have to make these N_F times bigger for GPU)
-      int el = 0; // place holder for the elements
-      for(int nn = 0; nn < N_N+1; nn++){
-      	if(nn==0) el = e; // acting on the target element
-      	else      el = neighbors[e*N_N+nn-1]; // acting on his neighbors
-      	// Copy U
-      	for(int i = 0; i < N_s; i++) localU[nn*N_s+i] = A[(el*N_F+fc)*N_s+i];
-      	// Copy XYZ centroids
-      	//for(int alpha = 0; alpha < D; alpha ++){
-      	scalar cenx = 0, ceny=0;
-      	for(int g = 0; g < N_G; g++){
-      	  cenx += powersXYZG[((e*(N_N+1)+nn)*N_G+g)*N_s+1];
-      	  ceny += powersXYZG[((e*(N_N+1)+nn)*N_G+g)*N_s+2];
-      	}
-      	//localXYZCen[nn*D+alpha] = XYZCen[el*D+alpha];
-      	localXYZCen[nn*D+0] = cenx/N_G;
-      	localXYZCen[nn*D+1] = ceny/N_G;
-      	//}
-      	// Copy powers of XYZ
-      	for(int g = 0; g < N_G; g++){
-      	  for(int i = 0; i < N_s; i++){
-      	    neighPowers[(nn*N_G+g)*N_s+i] = powersXYZG[((el*(N_N+1)+0)*N_G+g)*N_s+i];
-      	    //if((nn==0)&&(e==0)&&(fc==0)) printf("%e ",neighPowers[(nn*N_G+g)*N_s+i]);
-      	    localPowers[(nn*N_G+g)*N_s+i] = powersXYZG[((e*(N_N+1)+nn)*N_G+g)*N_s+i];
-      	  }
-      	  //if((nn==0)&&(e==0)&&(fc==0)) printf("\n");
-      	}
-      }
+//       // Copy global to local resources (going to have to make these N_F times bigger for GPU)
+//       int el = 0; // place holder for the elements
+//       for(int nn = 0; nn < N_N+1; nn++){
+//       	if(nn==0) el = e; // acting on the target element
+//       	else      el = neighbors[e*N_N+nn-1]; // acting on his neighbors
+//       	// Copy U
+//       	for(int i = 0; i < N_s; i++) localU[nn*N_s+i] = A[(el*N_F+fc)*N_s+i];
+//       	// Copy XYZ centroids
+//       	//for(int alpha = 0; alpha < D; alpha ++){
+//       	scalar cenx = 0, ceny=0;
+//       	for(int g = 0; g < N_G; g++){
+//       	  cenx += powersXYZG[((e*(N_N+1)+nn)*N_G+g)*N_s+1];
+//       	  ceny += powersXYZG[((e*(N_N+1)+nn)*N_G+g)*N_s+2];
+//       	}
+//       	//localXYZCen[nn*D+alpha] = XYZCen[el*D+alpha];
+//       	localXYZCen[nn*D+0] = cenx/N_G;
+//       	localXYZCen[nn*D+1] = ceny/N_G;
+//       	//}
+//       	// Copy powers of XYZ
+//       	for(int g = 0; g < N_G; g++){
+//       	  for(int i = 0; i < N_s; i++){
+//       	    neighPowers[(nn*N_G+g)*N_s+i] = powersXYZG[((el*(N_N+1)+0)*N_G+g)*N_s+i];
+//       	    //if((nn==0)&&(e==0)&&(fc==0)) printf("%e ",neighPowers[(nn*N_G+g)*N_s+i]);
+//       	    localPowers[(nn*N_G+g)*N_s+i] = powersXYZG[((e*(N_N+1)+nn)*N_G+g)*N_s+i];
+//       	  }
+//       	  //if((nn==0)&&(e==0)&&(fc==0)) printf("\n");
+//       	}
+//       }
       
-      // Loop on derivatives
-      for(int m = order; m > 0; m--){
-      	for(int k = 0; k < m; k++){ // loop on combinations of (m-1) order derivatives
-      	  int mx = m-1-k;
-      	  int my = k;
+//       // Loop on derivatives
+//       for(int m = order; m > 0; m--){
+//       	for(int k = 0; k < m; k++){ // loop on combinations of (m-1) order derivatives
+//       	  int mx = m-1-k;
+//       	  int my = k;
 	  
-      	  for(int nn = 0; nn < N_N+1; nn++){ 
-      	    if(nn==0) el = e; // acting on the target element
-      	    else      el = neighbors[e*N_N+nn-1]; // acting on his neighbors
+//       	  for(int nn = 0; nn < N_N+1; nn++){ 
+//       	    if(nn==0) el = e; // acting on the target element
+//       	    else      el = neighbors[e*N_N+nn-1]; // acting on his neighbors
 
-      	    // Calculate the cell averages of the target polynomial and neighbor polynomials
-      	    for(int i=0;i<N_s;i++) dT[i]=0;
-      	    getTaylorDerivative(order, N_s, &localU[nn*N_s], mx, my, TaylorDxIdx, TaylorDyIdx, dT);
-      	    // if((e==8)&&(fc==0)){
-      	    //   printf("In element %i\n",el);
-      	    //   for(int i=0;i<N_s;i++){printf("    T[%i]=%f ",i,dT[i]);}
-      	    //   printf("\n");
-      	    // }
-      	    avgdU[nn] = CellAvg(N_G, 0, weight, refArea, &neighPowers[nn*N_G*N_s], N_s, dT);
+//       	    // Calculate the cell averages of the target polynomial and neighbor polynomials
+//       	    for(int i=0;i<N_s;i++) dT[i]=0;
+//       	    getTaylorDerivative(order, N_s, &localU[nn*N_s], mx, my, TaylorDxIdx, TaylorDyIdx, dT);
+//       	    // if((e==8)&&(fc==0)){
+//       	    //   printf("In element %i\n",el);
+//       	    //   for(int i=0;i<N_s;i++){printf("    T[%i]=%f ",i,dT[i]);}
+//       	    //   printf("\n");
+//       	    // }
+//       	    avgdU[nn] = CellAvg(N_G, 0, weight, refArea, &neighPowers[nn*N_G*N_s], N_s, dT);
 	      
-      	    // Calculate the cell average of the target remainder (with limited coeffs) on element and neighbors
-      	    for(int i=0;i<N_s;i++) dT[i]=0;
-      	    //getTaylorDerivative(order, N_s, &localU[nn*N_s], mx, my, TaylorDxIdx, TaylorDyIdx, dT);
-      	    getTaylorDerivative(order, N_s, &Alim[(e*N_F+fc)*N_s], mx, my, TaylorDxIdx, TaylorDyIdx, dT);
-      	    //if((e==8)&&(fc==0)) for(int i=0;i<N_s;i++) printf("    T[%i]=%f ",i,dT[i]);
-      	    avgR[nn] = CellAvg(N_G, 3, weight, refArea, &localPowers[nn*N_G*N_s], N_s,dT);
+//       	    // Calculate the cell average of the target remainder (with limited coeffs) on element and neighbors
+//       	    for(int i=0;i<N_s;i++) dT[i]=0;
+//       	    //getTaylorDerivative(order, N_s, &localU[nn*N_s], mx, my, TaylorDxIdx, TaylorDyIdx, dT);
+//       	    getTaylorDerivative(order, N_s, &Alim[(e*N_F+fc)*N_s], mx, my, TaylorDxIdx, TaylorDyIdx, dT);
+//       	    //if((e==8)&&(fc==0)) for(int i=0;i<N_s;i++) printf("    T[%i]=%f ",i,dT[i]);
+//       	    avgR[nn] = CellAvg(N_G, 3, weight, refArea, &localPowers[nn*N_G*N_s], N_s,dT);
       
-      	    // Estimate the cell averages
-      	    avgL[nn] = avgdU[nn] - avgR[nn];
+//       	    // Estimate the cell averages
+//       	    avgL[nn] = avgdU[nn] - avgR[nn];
 
-      	    //if((e==8)&&(fc==0))printf("avgdU=%f avgR=%f avgL=%f\n",avgdU[nn]*(0.5*0.44444),avgR[nn]*(0.5*0.4444444),avgL[nn]*(0.5*0.4444444));
-      	  }
+//       	    //if((e==8)&&(fc==0))printf("avgdU=%f avgR=%f avgL=%f\n",avgdU[nn]*(0.5*0.44444),avgR[nn]*(0.5*0.4444444),avgL[nn]*(0.5*0.4444444));
+//       	  }
 
-      	  // store in the coefficient vectors
-      	  for(int nn = 1; nn < N_N+1; nn++){ // loop on element + neighbors
-      	    cx[nn-1] = (avgL[nn] - avgL[0]) / (localXYZCen[nn*D+0]-localXYZCen[0*D+0]);
-      	    cy[nn-1] = (avgL[nn] - avgL[0]) / (localXYZCen[nn*D+1]-localXYZCen[0*D+1]);
-      	    //if((e==8)&&(fc==0)) printf("avgL(%i)=%f, avgL(0)=%f, dL=%f, dx=%f, dy=%f\n", nn,avgL[nn],avgL[0], avgL[nn] - avgL[0], (localXYZCen[nn*D+0]-localXYZCen[0*D+0]), (localXYZCen[nn*D+1]-localXYZCen[0*D+1]));
-      	  }
+//       	  // store in the coefficient vectors
+//       	  for(int nn = 1; nn < N_N+1; nn++){ // loop on element + neighbors
+//       	    cx[nn-1] = (avgL[nn] - avgL[0]) / (localXYZCen[nn*D+0]-localXYZCen[0*D+0]);
+//       	    cy[nn-1] = (avgL[nn] - avgL[0]) / (localXYZCen[nn*D+1]-localXYZCen[0*D+1]);
+//       	    //if((e==8)&&(fc==0)) printf("avgL(%i)=%f, avgL(0)=%f, dL=%f, dx=%f, dy=%f\n", nn,avgL[nn],avgL[0], avgL[nn] - avgL[0], (localXYZCen[nn*D+0]-localXYZCen[0*D+0]), (localXYZCen[nn*D+1]-localXYZCen[0*D+1]));
+//       	  }
 
-      	  //Get the canditate coefficients
-      	  candA = cpu_minmod(cx,N_N);
-      	  candB = cpu_minmod(cy,N_N);
-      	  if     (k==0)   Alim[(e*N_F+fc)*N_s+m*(m+1)/2+k]   = candA;
-      	  else if(k==m-1){
-      	    Alim[(e*N_F+fc)*N_s+m*(m+1)/2+k]   = cpu_minmod(candA,oldcandA);
-      	    Alim[(e*N_F+fc)*N_s+m*(m+1)/2+k+1] = candB;
-      	  }
-      	  else Alim[(e*N_F+fc)*N_s+m*(m+1)/2+k]= cpu_minmod(candA,oldcandA);
-      	  oldcandA = candB;
-      	  //if((e==8)&&(fc==0))printf("candA=%f, candB=%f, oldcandA=%f\n",candA,candB,oldcandA);
+//       	  //Get the canditate coefficients
+//       	  candA = cpu_minmod(cx,N_N);
+//       	  candB = cpu_minmod(cy,N_N);
+//       	  if     (k==0)   Alim[(e*N_F+fc)*N_s+m*(m+1)/2+k]   = candA;
+//       	  else if(k==m-1){
+//       	    Alim[(e*N_F+fc)*N_s+m*(m+1)/2+k]   = cpu_minmod(candA,oldcandA);
+//       	    Alim[(e*N_F+fc)*N_s+m*(m+1)/2+k+1] = candB;
+//       	  }
+//       	  else Alim[(e*N_F+fc)*N_s+m*(m+1)/2+k]= cpu_minmod(candA,oldcandA);
+//       	  oldcandA = candB;
+//       	  //if((e==8)&&(fc==0))printf("candA=%f, candB=%f, oldcandA=%f\n",candA,candB,oldcandA);
 	  
-      	  // Cell average invariance
-      	  if(m==1) Alim[(e*N_F+fc)*N_s+0] = avgL[0];
+//       	  // Cell average invariance
+//       	  if(m==1) Alim[(e*N_F+fc)*N_s+0] = avgL[0];
 
-      	} // loop on combinations
-      } // loop on m
+//       	} // loop on combinations
+//       } // loop on m
       
-      delete[] localU;
-      delete[] neighPowers;
-      delete[] localPowers;
-      delete[] localXYZCen;
-      delete[] dT;
-      delete[] cx;
-      delete[] cy;
-      delete[] avgdU;
-      delete[] avgR;
-      delete[] avgL;
+//       delete[] localU;
+//       delete[] neighPowers;
+//       delete[] localPowers;
+//       delete[] localXYZCen;
+//       delete[] dT;
+//       delete[] cx;
+//       delete[] cy;
+//       delete[] avgdU;
+//       delete[] avgR;
+//       delete[] avgL;
  
 #ifdef USE_CPU
     }
@@ -884,17 +884,6 @@ void Lcpu_mapToFace(int M_s, int M_T, int N_F, int N_s, int* map, scalar* U, sca
   cpu_mapToFace arch_args (M_s, M_T, N_F, N_s, map, U, UF);
 }
 
-extern "C"
-void Lcpu_boundary(int M_s, int N_F, int M_B, int* boundaryMap, scalar* UF){
-
-#ifdef USE_GPU
-  dim3 dimBlock(M_s,N_F,1);
-  dim3 dimGrid(M_B,1);
-#endif
-
-  cpu_boundary arch_args (M_s, N_F, M_B, boundaryMap, UF);
-}
-
 extern "C" 
 void Lcpu_mapToElement(int N_s, int N_E, int N_F, int* invmap, scalar* Q, scalar* q){
 
@@ -1041,7 +1030,7 @@ void Lcpu_hrl1D(int N_s, int N_E, int N_F, int N_G, int N_N, int slicenum, int* 
   dim3 dimGrid(N_E,1);
 #endif
 
-  cpu_hrl1D arch_args_array(N_s*N_F*2*sizeof(scalar)) (N_s, N_E, N_F, N_G, N_N, slicenum, neighbors, offxy, weight, V, A, Alim);
+  cpu_hrl1D arch_args_array(slicenum*N_F*2*sizeof(scalar)) (N_s, N_E, N_F, N_G, N_N, slicenum, neighbors, offxy, weight, V, A, Alim);
 }
 
 extern "C"
@@ -1146,27 +1135,27 @@ arch_device int cpu_factorial(int n)
 #endif 
 }
 
-arch_device void getTaylorDerivative(int order, int N_s, scalar* T, int mx, int my, int* DxIdx, int* DyIdx, scalar* ddT){
-  // Get mx+my order derivative of Taylor polynomial T
-  int offsetx  = 0, offsety = 0;
-  scalar* dT = new scalar[N_s]; for(int i=0; i < N_s; i++) dT[i] = 0;
+// arch_device void getTaylorDerivative(int order, int N_s, scalar* T, int mx, int my, int* DxIdx, int* DyIdx, scalar* ddT){
+//   // Get mx+my order derivative of Taylor polynomial T
+//   int offsetx  = 0, offsety = 0;
+//   scalar* dT = new scalar[N_s]; for(int i=0; i < N_s; i++) dT[i] = 0;
 
-  // Find the offsets
-  for(int p = order; p > order-mx; p--) offsetx += (p+1)*(p+2)/2;
-  for(int p = order; p > order-my; p--) offsety += (p+1)*(p+2)/2;
+//   // Find the offsets
+//   for(int p = order; p > order-mx; p--) offsetx += (p+1)*(p+2)/2;
+//   for(int p = order; p > order-my; p--) offsety += (p+1)*(p+2)/2;
   
-  // Get mx-order order derivative wrt x
-  for(int k = 0; k < (order-mx+1)*(order-mx+2)/2; k++){
-    dT[k] = T[DxIdx[offsetx + k]];
-  }
+//   // Get mx-order order derivative wrt x
+//   for(int k = 0; k < (order-mx+1)*(order-mx+2)/2; k++){
+//     dT[k] = T[DxIdx[offsetx + k]];
+//   }
 
-  // Get my-order order derivative wrt y
-  for(int k = 0; k < (order-my+1)*(order-my+2)/2; k++){
-    ddT[k] = dT[DyIdx[offsety + k]];
-  }
+//   // Get my-order order derivative wrt y
+//   for(int k = 0; k < (order-my+1)*(order-my+2)/2; k++){
+//     ddT[k] = dT[DyIdx[offsety + k]];
+//   }
 
-  delete[] dT;
-}
+//   delete[] dT;
+// }
 
 arch_device scalar CellAvg(int N_G, int ioff, scalar* weight, scalar refArea, scalar* powers, int N_s, scalar* T){
   // Get cell avg of a polynomial of order=order in a cell

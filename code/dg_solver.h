@@ -22,7 +22,11 @@ class DG_SOLVER
   int* _map;
   int* _invmap;
   int* _boundaryMap;
-  int* _boundaryIdx;
+  int _periodicIdx;
+  int _farfieldIdx;
+  int _rflctiveIdx;
+  int _farfieldstart;
+  int _rflctivestart;
   scalar* _phi     ; 
   scalar* _phi_w   ; 
   scalar* _dphi    ; 
@@ -63,12 +67,19 @@ class DG_SOLVER
 	   int* map, int* invmap, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* psi, scalar* psi_w, scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals, int* boundaryMap, int* boundaryIdx) :
   _D(D), _N_F(N_F), _N_E(N_E), _N_s(N_s), _N_G(N_G), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B) {
 
+
+    // Indexes for boundary conditions
+    _periodicIdx = (boundaryIdx[0]-0)/2;
+    _farfieldIdx = (boundaryIdx[1]-boundaryIdx[0])/2;
+    _rflctiveIdx = (_M_B-boundaryIdx[1])/2;
+    _farfieldstart = boundaryIdx[0];
+    _rflctivestart = boundaryIdx[1];
+    
 #ifdef USE_CPU
 
     _map     = new int[M_s*M_T*N_F*2];       
     _invmap  = new int[N_s*N_E*N_F*2];
     _boundaryMap  = new int[M_B*2];
-    _boundaryIdx  = new int[2];       
     _phi     = new scalar[N_G*N_s];          makeZero(_phi,N_G*N_s);
     _phi_w   = new scalar[N_G*N_s];          makeZero(_phi_w,N_G*N_s);          
     _dphi    = new scalar[D*N_G*N_s];	     makeZero(_dphi,D*N_G*N_s);	 
@@ -97,7 +108,6 @@ class DG_SOLVER
     memcpy(_map        , map        , M_s*M_T*N_F*2*sizeof(int));
     memcpy(_invmap     , invmap     , N_s*N_E*N_F*2*sizeof(int));
     memcpy(_boundaryMap, boundaryMap, M_B*2*sizeof(int));
-    memcpy(_boundaryIdx, boundaryIdx, 2*sizeof(int));
     memcpy(_phi        , phi        , N_G*N_s*sizeof(scalar));
     memcpy(_phi_w      , phi_w      , N_G*N_s*sizeof(scalar));
     memcpy(_dphi       , dphi       , D*N_G*N_s*sizeof(scalar));
@@ -114,7 +124,6 @@ class DG_SOLVER
     CUDA_SAFE_CALL(cudaMalloc((void**) &_map        , M_s*M_T*N_F*2*sizeof(int)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_invmap     , N_s*N_E*N_F*2*sizeof(int)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_boundaryMap, M_B*2*sizeof(int)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_boundaryIdx, 2*sizeof(int)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_phi        , N_G*N_s*sizeof(scalar)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_phi_w      , N_G*N_s*sizeof(scalar)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_dphi       , D*N_G*N_s*sizeof(scalar)));
@@ -164,7 +173,6 @@ class DG_SOLVER
     CUDA_SAFE_CALL(cudaMemcpy(_map        , map        , M_s*M_T*N_F*2*sizeof(int) , cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_invmap     , invmap     , N_s*N_E*N_F*2*sizeof(int) , cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_boundaryMap, boundaryMap, M_B*2*sizeof(int)         , cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_boundaryIdx, boundaryIdx, M_B*2*sizeof(int)         , cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_phi        , phi        , N_G*N_s*sizeof(scalar)    , cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_phi_w      , phi_w      , N_G*N_s*sizeof(scalar)    , cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_dphi       , dphi       , D*N_G*N_s*sizeof(scalar)  , cudaMemcpyHostToDevice));
@@ -193,7 +201,6 @@ class DG_SOLVER
     del(_map);
     del(_invmap);
     del(_boundaryMap);
-    del(_boundaryIdx);
     del(_phi);
     del(_phi_w);
     del(_dphi);
@@ -232,10 +239,11 @@ class DG_SOLVER
     // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
     Lcpu_mapToFace(_M_s, _M_T, _N_F, _N_s, _map, U, _UF);
 
+
     // Apply boundary conditions
-    LperiodicBoundary(_M_s,_N_F,(_boundaryIdx[0]-0)/2,              _boundaryMap,0,              _UF);
-    LfarfieldBoundary(_M_s,_N_F,(_boundaryIdx[1]-_boundaryIdx[0])/2,_boundaryMap,_boundaryIdx[0],_UF);
-    /*LrflctiveBoundary(_M_s,_N_F,(_M_B-_boundaryIdx[1])/2,           _boundaryMap,_boundaryIdx[1],_UF); */
+    LperiodicBoundary(_M_s,_N_F,_periodicIdx,_boundaryMap,0,             _UF);
+    LfarfieldBoundary(_M_s,_N_F,_farfieldIdx,_boundaryMap,_farfieldstart,_UF);
+/*     LrflctiveBoundary(_M_s,_N_F,_rflctiveIdx,_boundaryMap,_rflctivestart,_UF); */
 
     
     // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes

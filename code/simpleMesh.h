@@ -68,5 +68,9 @@ class simpleMesh {
   inline const fullMatrix<scalar> & getShifts() const {return _shifts;}
   fullMatrix<scalar> getElementCentroids(const int N_E, const int D, const int ncorners, const fullMatrix<scalar> XYZNodes);
   bool iscartesian(std::string typeElement, const int elem_type);
+
+  // Destructor
+  ~simpleMesh();
+
 };
 #endif

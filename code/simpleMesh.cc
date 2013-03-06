@@ -246,7 +246,7 @@ void simpleMesh::buildLineBoundary(int boundaryType){
     _boundaryIdx[0]  = 0;
     _boundaryIdx[0]  = 0; _boundaryIdx[1]  = 4;
   }
-  else if(boundaryType==1){ // periodic
+  else if(boundaryType==2){ // reflective
     _boundary[0*2+0] = 0;
     _boundary[0*2+1] = 0;
     _boundary[1*2+0] = 1;
@@ -349,7 +349,7 @@ void simpleMesh::buildSquareBoundary(int M_s, const fullMatrix<scalar> &XYZNodes
 	double xcen2 = listInterfaces[c2*3+1];
 	double ycen2 = listInterfaces[c2*3+2];
 	if ((fabs(xcen1-xcen2)<1E-6)&&(fabs(ycen1-ycen2)+1E-6 >= H)){tmp(0,0) = t1; tmp(1,0) = t1; farfield.push_back(tmp);}
-	if ((fabs(ycen1-ycen2)<1E-6)&&(fabs(xcen1-xcen2)+1E-6 >= L)){tmp(0,0) = t1; tmp(1,0) = t2; farfield.push_back(tmp);}
+	if ((fabs(ycen1-ycen2)<1E-6)&&(fabs(xcen1-xcen2)+1E-6 >= L)){tmp(0,0) = t1; tmp(1,0) = t2; periodic.push_back(tmp);}
       }
     }
     else if (boundaryType==4){ // farfield in x, reflective in y
@@ -511,10 +511,10 @@ void simpleMesh::buildNeighbors(int N_N, int N_E, std::map<int,int> &ElementMap)
   // | neighbor1 | ...
   // | neighbor2 | ...
 
-  int N_I = _interfaces.size();       // number of interfaces                   (i index)
-
   // Allocate neighbors, set to zero
   _neighbors = new int[N_N*N_E]; for(int k=0; k < N_N*N_E; k++){_neighbors[k]=0;}
+
+  int N_I = _interfaces.size();       // number of interfaces                   (i index)
 
   // A neighbor counter for each element, set to zero
   int* nn = new int[N_E];  for(int k=0; k<N_E; k++){ nn[k]=0;} 
@@ -540,7 +540,7 @@ void simpleMesh::buildNeighbors(int N_N, int N_E, std::map<int,int> &ElementMap)
       int t2 = 0;
       for(int t = 0; t < _N_B; t++) if (_boundary[t*2+0]==i) t2 = _boundary[t*2+1];
       const simpleInterface &face2 = _interfaces[t2];  // get that other interface
-      const simpleElement *el3 = face2.getElement(0); // get the element on one side
+      const simpleElement *el3 = face2.getElement(0);  // get the element on one side
       int el3num = ElementMap[el3->getId()];
       //printf("face %2i: el1 = %2i (or %2i) and el3 = %2i (or %2i)\n", i, el1->getId(), el1num, el3->getId(), el3num);
       _neighbors[el1num*N_N+nn[el1num]] = el3num;
@@ -562,23 +562,18 @@ void simpleMesh::sortNeighbors(const int N_E, const int N_N, const fullMatrix<sc
      Only for a cartesian mesh
   */
 
-  // printf("Before sorting...\n");
-  // for(int e=0; e<N_E; e++){
-  //   // int left  = _neighbors[e*N_N+offxy+0];
-  //   // int right = _neighbors[e*N_N+offxy+1];
-  //   printf("N_N=%i; e:%i ; left:%i; right:%i; down:%i; up:%i\n",N_N,e,_neighbors[e*N_N+0],_neighbors[e*N_N+1],_neighbors[e*N_N+2],_neighbors[e*N_N+3]);
-  // }
-  
   scalar x, y, xn, yn;
   int neighbor;
-  int* LRDU = new int[4];
+  int* LRDU = new int[N_N];
   
   // Loop on each element
   for(int e=0; e<N_E; e++){
     // get its cell center
     x = XYZCen(e,0);
     y = XYZCen(e,1);
-    //printf("\n");
+
+    // set to -1 so we can check later which ones were accessed
+    for(int nn=0; nn<N_N; nn++) LRDU[nn] = -1; 
     
     // Loop on all the neighbors
     for(int nn=0; nn<N_N; nn++){
@@ -586,9 +581,7 @@ void simpleMesh::sortNeighbors(const int N_E, const int N_N, const fullMatrix<sc
       xn = XYZCen(neighbor,0);        // get the centroid
       yn = XYZCen(neighbor,1);
 
-      // if (e==neighbor){
-      // }
-      // else{  // for periodic boundary condition
+      // for periodic boundary condition
       // Get potentional coordinate shift for the neighbor if this
       // element is on the boundary
       bool flag = false; int bidx = 0;
@@ -599,31 +592,23 @@ void simpleMesh::sortNeighbors(const int N_E, const int N_N, const fullMatrix<sc
 	yn = yn+_shifts(bidx,2+1);
       }
       
-      
-      //printf("(x,y)=(%f,%f) and (xn,yn)=(%f,%f)  ",x,y,xn,yn);
       // Relation to current element
       if     ((fabs(yn-y)<1e-9)&&(x>xn)){  LRDU[0]=neighbor; /*printf("found L\n");*/}// left
       else if((fabs(yn-y)<1e-9)&&(x<xn)){  LRDU[1]=neighbor; /*printf("found R\n");*/} // right
       else if((fabs(xn-x)<1e-9)&&(y>yn)){  LRDU[2]=neighbor; /*printf("found D\n");*/} // below
       else if((fabs(xn-x)<1e-9)&&(y<yn)){  LRDU[3]=neighbor; /*printf("found U\n");*/} // above
-      //else printf("PROBLEM!\n");
-      //}
     }//loop on neighbors
+
+    // For the ones that were not allocated, assume it's because we
+    // are dealing with a farfield/reflective boundary so we just copy
+    // the current element to his neighbor
+    for(int nn=0; nn<N_N; nn++) if(LRDU[nn]==-1) LRDU[nn] = e;
 
     // Sort the neighbors
     for(int nn=0; nn<N_N; nn++) _neighbors[e*N_N+nn] = LRDU[nn];
     
   }// loop on elements
 
-  // printf("After sorting...\n");
-  // for(int e=0; e<N_E; e++){
-  //   // int left  = _neighbors[e*N_N+offxy+0];
-  //   // int right = _neighbors[e*N_N+offxy+1];
-  //   int offxy = 0;
-  //   printf("N_N=%i; e:%i ; left:%i; right:%i; down:%i; up:%i\n",N_N,e,_neighbors[e*N_N+0],_neighbors[e*N_N+1],_neighbors[e*N_N+2],_neighbors[e*N_N+3]);
-  // }
-
- 
   delete[] LRDU;
 }
 
@@ -750,4 +735,10 @@ bool simpleMesh::iscartesian(std::string typeElement, const int elem_type){
   }
 
   return cartesian;
+}
+
+
+simpleMesh::~simpleMesh(){
+  //delete[] _boundary;
+  //delete _boundaryIdx;
 }

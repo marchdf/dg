@@ -32,13 +32,12 @@ NYX
   - Can my code compile and run on nyx?
 
 BC
-  - implement farfield for HR
   - implement non-reflecting for normal flux and HR
   - capability to mix BCs
-  - Farfield is broken. The shifts don't work and so the neighbor sorting doesn't either
+  - reflective BC
 
 BASIS TRANSFORMS (for HR)
-  - put in a seperate class
+  - put in a separate class
 	
 OTHER
   - Add CFL condition
@@ -46,4 +45,3 @@ OTHER
   - Create some 2D benchmarks? 
   - Remove cpu_ in the function names (not necessary now)
   - Does shifts works in 1D? It does not!
-  - Clean neighbors generation...
