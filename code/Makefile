@@ -57,7 +57,7 @@ CUDASDK_INC       := $(CUDA_SDK_PATH)/common/inc
 CUDASDK_LIB       := $(CUDA_SDK_PATH)/lib
 
 # cutil
-#CUTIL_LINKER      :=-lcutil_x86_64
+CUTIL_LINKER      :=-lcutil_x86_64
 
 # cublas
 CUBLAS_LINKER     :=-lcublas
@@ -69,7 +69,7 @@ INCLUDES          += -I. -I$(BLAS_INC) -I$(LAPACK_INC)
 # flags
 LDFLAGS           := -lrt -lm -lstdc++ $(LAPACK_LINKER) $(BLAS_LINKER)
 CFLAGS 	          := -03
-CXXFLAGS          := -I. -w -ansi $(DEFINES)
+CXXFLAGS          := -I. -w -O3 -ansi $(DEFINES)
 ifeq ($(ARCH),USE_GPU)
 INCLUDES          += -I. -I$(CUDA_INC) -I$(CUDASDK_INC)
 LDFLAGS           := $(LDFLAGS) $(CUDA_LINKER) $(CUBLAS_LINKER)

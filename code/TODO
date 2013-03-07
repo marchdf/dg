@@ -13,7 +13,6 @@ RIEMANN SOLVERS
   - Optimize Riemann solvers. I think they are inefficient. Also, make the 1D closer to the 2D implementation
   - Add an entropy fix for Roe (http://www.cfdbooks.com/cfdcodes/oned_euler_fluxes_v4.f90)
   - add HLLC
-  - make them compile separately (kind of like the print functions) -> cut down on compile time
 
 LIMITING
   - It's a very ugly implementation right now...

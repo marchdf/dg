@@ -1,5 +1,6 @@
 #ifndef TWOD_PASSIVE_FLUXES_H
 #define TWOD_PASSIVE_FLUXES_H
+#ifdef TWOD
 #include <scalar_def.h>
 #include <math.h>
 #include <macros.h>
@@ -14,6 +15,7 @@
 //* Obstacles, J. Comput. Math. Phys. USSR, 1, pp. 267-279, 1961.
 //*
 //*****************************************************************************
+#ifdef RUS
 arch_device void twod_passive_rusanov(scalar rhoL,
 				      scalar rhoR,
 				      scalar vxL,
@@ -90,6 +92,7 @@ arch_device void twod_passive_rusanov(scalar rhoL,
 //* Numerical Analysis, 25(2), pp. 294-318, 1988.
 //*
 //*****************************************************************************
+#elif HLL
 arch_device void twod_passive_hll(scalar rhoL,
 				  scalar rhoR,
 				  scalar vxL,
@@ -184,6 +187,7 @@ arch_device void twod_passive_hll(scalar rhoL,
 //* Schemes, Journal of Computational Physics, 43, pp. 357-372.
 //*
 //*****************************************************************************
+#elif ROE
 arch_device void twod_passive_roe(scalar rhoL,
 				  scalar rhoR,
 				  scalar vxL,
@@ -313,8 +317,6 @@ arch_device void twod_passive_roe(scalar rhoL,
   ncterm[5] = 0.5*vn*(phincL-phincR);
 
 } // end Roe function
-
-#endif 
-
-/*  LocalWords:  ifndef
- */
+#endif
+#endif
+#endif

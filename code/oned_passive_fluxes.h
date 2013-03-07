@@ -1,5 +1,6 @@
 #ifndef ONED_PASSIVE_FLUXES_H
 #define ONED_PASSIVE_FLUXES_H
+#ifdef ONED
 #include <scalar_def.h>
 #include <math.h>
 #include <macros.h>
@@ -13,6 +14,7 @@
 //* Obstacles, J. Comput. Math. Phys. USSR, 1, pp. 267-279, 1961.
 //*
 //*****************************************************************************
+#ifdef RUS
 arch_device void oned_passive_rusanov(scalar rhoL,
 				      scalar rhoR,
 				      scalar vxL,
@@ -78,6 +80,7 @@ arch_device void oned_passive_rusanov(scalar rhoL,
 //* Numerical Analysis, 25(2), pp. 294-318, 1988.
 //*
 //*****************************************************************************
+#elif HLL
 arch_device void oned_passive_hll(scalar rhoL,
 				  scalar rhoR,
 				  scalar vxL,
@@ -162,6 +165,7 @@ arch_device void oned_passive_hll(scalar rhoL,
 //* Schemes, Journal of Computational Physics, 43, pp. 357-372.
 //*
 //*****************************************************************************
+#elif ROE
 arch_device void oned_passive_roe(scalar rhoL,
 				  scalar rhoR,
 				  scalar vxL,
@@ -256,5 +260,6 @@ arch_device void oned_passive_roe(scalar rhoL,
   ncterm[4] = -0.5*v*(phincR-phincL)*nx;
 
 } // end Roe function
-
+#endif 
+#endif
 #endif
