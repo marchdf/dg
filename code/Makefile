@@ -57,7 +57,7 @@ CUDASDK_INC       := $(CUDA_SDK_PATH)/common/inc
 CUDASDK_LIB       := $(CUDA_SDK_PATH)/lib
 
 # cutil
-CUTIL_LINKER      :=-lcutil_x86_64
+#CUTIL_LINKER      :=-lcutil_x86_64
 
 # cublas
 CUBLAS_LINKER     :=-lcublas

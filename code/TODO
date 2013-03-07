@@ -3,6 +3,7 @@ OUTPUT
   - Add capability to output in the .txt format that gmsh can generate too
   - Make into a class to do this (yes to avoid re-initializing matrices)
   - restart files?
+  - hdf5? Binary format to compress data?
 
 INITIAL CONDITIONS
   - Clean initial conditions
@@ -12,7 +13,8 @@ RIEMANN SOLVERS
   - Optimize Riemann solvers. I think they are inefficient. Also, make the 1D closer to the 2D implementation
   - Add an entropy fix for Roe (http://www.cfdbooks.com/cfdcodes/oned_euler_fluxes_v4.f90)
   - add HLLC
-  
+  - make them compile separately (kind of like the print functions) -> cut down on compile time
+
 LIMITING
   - It's a very ugly implementation right now...
   - I have powersXYZG and V1D, could I combine the two to avoid ifdefs?
@@ -45,3 +47,4 @@ OTHER
   - Create some 2D benchmarks? 
   - Remove cpu_ in the function names (not necessary now)
   - Does shifts works in 1D? It does not!
+  - get rid of N_F as input (define it with IC)
