@@ -29,21 +29,23 @@ PARALLEL
   - passive/multifluid HLL
   - boundary conditions: do they work? are they correct? combine farfield et periodic?
 
-NYX
-  - Can my code compile and run on nyx?
-
 BC
-  - implement non-reflecting for normal flux and HR
-  - capability to mix BCs
   - reflective BC
 
 BASIS TRANSFORMS (for HR)
   - put in a separate class
+
+BLAS
+  - Can the axpy in rk.h be changed to a blas3 level function?
+  - Can the copy in rk.h be changed/reduced?
+  - see write-up for the dg_solver.h ideas
+
+PROFILER
+  - Add some sort of timer to these functions?
 	
 OTHER
   - Add CFL condition
   - Clean if conditions on dimensions: they are all over the place. Can they be reduced?
-  - Create some 2D benchmarks? 
   - Remove cpu_ in the function names (not necessary now)
   - Does shifts works in 1D? It does not!
   - get rid of N_F as input (define it with IC)

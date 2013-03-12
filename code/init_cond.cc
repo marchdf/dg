@@ -556,7 +556,7 @@ void init_dg_rminstb_multifluid(const int N_s, const int N_E, const int N_F, con
   if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
 
   // Initialize
-  scalar A0 = 0.005;//0.00183;                 // initial amplitude
+  scalar A0 = 0.02;//0.00183;                 // initial amplitude
   scalar yshck = 0.05; // initial shock location
   scalar Lx = 0.089*2.0/3.0;
 

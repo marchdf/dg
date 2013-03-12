@@ -239,11 +239,10 @@ class DG_SOLVER
     // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
     Lcpu_mapToFace(_M_s, _M_T, _N_F, _N_s, _map, U, _UF);
 
-
     // Apply boundary conditions
     LperiodicBoundary(_M_s,_N_F,_periodicIdx,_boundaryMap,0,             _UF);
     LfarfieldBoundary(_M_s,_N_F,_farfieldIdx,_boundaryMap,_farfieldstart,_UF);
-/*     LrflctiveBoundary(_M_s,_N_F,_rflctiveIdx,_boundaryMap,_rflctivestart,_UF); */
+    LrflctiveBoundary(_M_s,_N_F,_rflctiveIdx,_boundaryMap,_rflctivestart,_UF);
 
     
     // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes
