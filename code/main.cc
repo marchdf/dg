@@ -151,6 +151,7 @@ int main (int argc, char **argv)
   else if (inputs.getBoundaryCondition()=="farfield") boundaryType = 1;
   else if (inputs.getBoundaryCondition()=="combined") boundaryType = 2;
   else if (inputs.getBoundaryCondition()=="perxfary") boundaryType = 3;
+  else if (inputs.getBoundaryCondition()=="whatever") boundaryType = 1000; // 2D doesn't need a boundary type
   else{ printf("Invalid boundary condition setup. Correct the deck.\n");}    
 
   //==========================================================================
@@ -389,18 +390,20 @@ int main (int argc, char **argv)
   
   //////////////////////////////////////////////////////////////////////////   
   //
-  // Build the boundary map
+  // Build the boundary map (must be done after the normals)
   //
   //////////////////////////////////////////////////////////////////////////
-  m.setBoundarySize();
 #ifdef ONED
   m.buildLineBoundary(boundaryType);
 #elif TWOD
-  m.buildSquareBoundary(M_s, XYZNodesF, D, boundaryType);
+  m.buildSquareBoundary(M_s, XYZNodesF, D);
 #endif
   int* h_boundaryMap = m.getBoundaryMap();
   int* h_boundaryIdx = m.getBoundaryIdx();
   int M_B = m.getBoundarySize();
+  printf("M_B %i\n",M_B);
+
+
   
   //////////////////////////////////////////////////////////////////////////   
   //

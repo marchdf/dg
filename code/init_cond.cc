@@ -678,11 +678,11 @@ void init_dg_khinstb_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar c02     = sqrt(gamma02*p/rho02); // sound speed
 
   // Post-shock state (material 2) (see p 101 Toro)
-  scalar Ms     = 1;   // Shock Mach number
+  scalar Ms     = 1.5;   // Shock Mach number
   scalar u4     = 0;
-  scalar v4     = v;//-Ms*c02*(2*(Ms*Ms-1))/(gamma02+1)/(Ms*Ms); // shock is moving downwards
-  scalar p4     = p;//p*(1+2*gamma02/(gamma02+1)*(Ms*Ms-1));
-  scalar rho4   = rho02;//*(gamma02+1)*Ms*Ms/(2+(gamma02-1)*Ms*Ms);
+  scalar v4     = -Ms*c02*(2*(Ms*Ms-1))/(gamma02+1)/(Ms*Ms); // shock is moving downwards
+  scalar p4     = p*(1+2*gamma02/(gamma02+1)*(Ms*Ms-1));
+  scalar rho4   = rho02*(gamma02+1)*Ms*Ms/(2+(gamma02-1)*Ms*Ms);
   scalar gamma4 = gamma02;
   scalar Et4    = p4/(gamma4-1.0) + 0.5*rho4*(u4*u4+v4*v4);
 

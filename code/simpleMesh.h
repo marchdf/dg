@@ -5,6 +5,7 @@
 #include <scalar_def.h>
 #include <string>
 #include <map>
+#include <macros.h>
 
 class simpleElement {
   std::vector<int> _nodes;
@@ -55,8 +56,7 @@ class simpleMesh {
   void buildNormals(int typeInterface, int typeElement, const int D);
 
   void buildLineBoundary(int boundaryType);
-  void buildSquareBoundary(int M_s, const fullMatrix<scalar> &XYZNodesF, const int D, int boundaryType);
-  void setBoundarySize();
+  void buildSquareBoundary(int M_s, const fullMatrix<scalar> &XYZNodesF, const int D);
   int  getBoundarySize()  const {return _N_B;}
   int* getBoundaryMap()const {return _boundary;}
   int* getBoundaryIdx()const {return _boundaryIdx;}
