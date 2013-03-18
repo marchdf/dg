@@ -39,7 +39,7 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simp
       //Check for NaN error
       if(rho != rho){
       	printf("NaN error. Code crashed... bummer.\n");
-      	//exit(1);
+      	exit(1);
       }
 
       Rho(i,e) = rho;

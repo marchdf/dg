@@ -49,3 +49,4 @@ OTHER
   - Remove cpu_ in the function names (not necessary now)
   - Does shifts works in 1D? It does not!
   - get rid of N_F as input (define it with IC)
+  - Determine as many of the constants (N_F, N_s, D, etc) at compile time (loop unrolling?)

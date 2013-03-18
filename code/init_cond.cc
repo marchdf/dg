@@ -556,11 +556,11 @@ void init_dg_rminstb_multifluid(const int N_s, const int N_E, const int N_F, con
   if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
 
   // Initialize
-  scalar A0 = 0.02;//0.00183;                 // initial amplitude
+  scalar A0 = 0.00183;//0.00183;                 // initial amplitude
   scalar yshck = 0.05; // initial shock location
   scalar Lx = 0.089*2.0/3.0;
 
-  scalar vcoord = 150; // coordinate shift upwards
+  scalar vcoord = 149; // coordinate shift upwards
     
   // Velocities/pressures in both materials
   scalar u = 0.0;
@@ -627,11 +627,13 @@ void init_dg_rminstb_multifluid(const int N_s, const int N_E, const int N_F, con
 	scalar jy  = jx*rho01/(jx*rho01+(1-jx)*rho02);       // mass fraction
 	scalar jM  = 1/(jy/M1+(1-jy)/M2);                    // total molecular weight
 
-	scalar gamma = jy*alpha01*jM/M1+(1-jy)*alpha02*jM/M2; 
-
-
-	// rho = rho02;
-	// gamma = gamma02;
+	scalar alpha = jy*alpha01*jM/M1+(1-jy)*alpha02*jM/M2;
+	scalar gamma = 1+1.0/alpha;
+	
+	//rho = rho02;
+	//gamma = gamma02;
+	// u = 0;
+	// v = 0;
 	U(i,e*N_F+0) = rho;
 	U(i,e*N_F+1) = rho*u;
 	U(i,e*N_F+2) = rho*v;
@@ -660,28 +662,27 @@ void init_dg_khinstb_multifluid(const int N_s, const int N_E, const int N_F, con
   // Velocities/pressures in both materials
   scalar u = 0.0;
   scalar v = 0.0;
-  scalar p = 1.0;
+  scalar p = 1e5;
+  scalar shckpos = 0.0025;
   
   // pre-shock density (material 1)
-  scalar rho01   = 3.0;//1.351;//1.0;//1.351;          
-  scalar gamma01 = 1.4;//1.276;//1.4;//1.276
+  scalar rho01   = 1400;
+  scalar gamma01 = 5.0/3.0;
   scalar alpha01 = 1/(gamma01-1);
-  scalar M1      = 34.76;  // molecular weight
   
   // pre-shock density (material 2)
   // The shock is initialized in here
-  scalar rho02   = 1.0;//5.494;//0.1;//5.494;
-  scalar gamma02 = 1.4;//1.093;//1.6667;//1.093;           
+  scalar rho02   = 100;
+  scalar gamma02 = 5.0/3.0;
   scalar alpha02 = 1/(gamma02-1);
   scalar c02     = sqrt(gamma02*p/rho02); // sound speed
-  scalar M2      = 146.05;         // Molecular weight
 
   // Post-shock state (material 2) (see p 101 Toro)
-  scalar Ms = 1.5;   // Shock Mach number
-  scalar u4   = 0;
-  scalar v4   =-Ms*c02*(2*(Ms*Ms-1))/(gamma02+1)/(Ms*Ms); // shock is moving downwards
-  scalar p4   = p*(1+2*gamma02/(gamma02+1)*(Ms*Ms-1));
-  scalar rho4 = rho02*(gamma02+1)*Ms*Ms/(2+(gamma02-1)*Ms*Ms);
+  scalar Ms     = 1;   // Shock Mach number
+  scalar u4     = 0;
+  scalar v4     = v;//-Ms*c02*(2*(Ms*Ms-1))/(gamma02+1)/(Ms*Ms); // shock is moving downwards
+  scalar p4     = p;//p*(1+2*gamma02/(gamma02+1)*(Ms*Ms-1));
+  scalar rho4   = rho02;//*(gamma02+1)*Ms*Ms/(2+(gamma02-1)*Ms*Ms);
   scalar gamma4 = gamma02;
   scalar Et4    = p4/(gamma4-1.0) + 0.5*rho4*(u4*u4+v4*v4);
 
@@ -692,7 +693,7 @@ void init_dg_khinstb_multifluid(const int N_s, const int N_E, const int N_F, con
       scalar x = XYZNodes(i,e*D+0);
       scalar y = XYZNodes(i,e*D+1);
 
-      if((yc>0.8)&&(xc>0)){ // shocked region
+      if((yc>shckpos)&&(xc>0)){ // shocked region
 	U(i,e*N_F+0) = rho4;
 	U(i,e*N_F+1) = rho4*u4;
 	U(i,e*N_F+2) = rho4*v4;
@@ -703,7 +704,7 @@ void init_dg_khinstb_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+4) = 1.0/(gamma4-1);
 #endif
       }
-      else if((yc<=0.8)&&(xc>0)){ // top material, unshocked
+      else if((yc<=shckpos)&&(xc>0)){ // top material, unshocked
 	U(i,e*N_F+0) = rho02;
 	U(i,e*N_F+1) = rho02*u;
 	U(i,e*N_F+2) = rho02*v;
