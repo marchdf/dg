@@ -560,7 +560,7 @@ void init_dg_rminstb_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar yshck = 0.05; // initial shock location
   scalar Lx = 0.089*2.0/3.0;
 
-  scalar vcoord = 149; // coordinate shift upwards
+  scalar vcoord = 72; // coordinate shift upwards
     
   // Velocities/pressures in both materials
   scalar u = 0.0;
@@ -568,25 +568,25 @@ void init_dg_rminstb_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar p = 1e5;
   
   // pre-shock density (material 1)
-  scalar rho01   = 1.351;//1.0;//1.351;          
-  scalar gamma01 = 1.4;//1.276;//1.4;//1.276
+  scalar rho01   = 5.494;
+  scalar gamma01 = 1.093;
   scalar alpha01 = 1/(gamma01-1);
-  scalar M1      = 34.76;  // molecular weight
+  scalar M1      = 146.05;         // Molecular weight
   
   // pre-shock density (material 2)
   // The shock is initialized in here
-  scalar rho02   = 5.494;//0.1;//5.494;
-  scalar gamma02 = 1.4;//1.093;//1.6667;//1.093;           
+  scalar rho02   = 1.351;
+  scalar gamma02 = 1.276;
   scalar alpha02 = 1/(gamma02-1);
   scalar c02     = sqrt(gamma02*p/rho02); // sound speed
   scalar Ma02    = v/c02; //Mach number ahead of shock
-  scalar M2      = 146.05;         // Molecular weight
+  scalar M2      = 34.76;  // molecular weight
 
   // The diffusion layer thickness
   scalar delta=0.005;
   
   // Post-shock state (material 2) (see p 101 Toro)
-  scalar Ms = 1.5;   // Shock Mach number
+  scalar Ms = 1.21;   // Shock Mach number
   scalar u4   = 0;
   scalar v4   =-Ms*c02*(2*(Ms*Ms-1))/(gamma02+1)/(Ms*Ms)+vcoord; // shock is moving downwards
   scalar p4   = p*(1+2*gamma02/(gamma02+1)*(Ms*Ms-1));
@@ -614,7 +614,7 @@ void init_dg_rminstb_multifluid(const int N_s, const int N_E, const int N_F, con
       }
       else{
 	// vertical distance from interface
-	scalar d = ((delta+A0*sin(2*M_PI*x/Lx+M_PI/2))-y)/(2*delta);
+	scalar d = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y)/(2*delta);
 	
 	// Calculate volume fractions
 	scalar vol=0;
