@@ -352,9 +352,7 @@ void simpleMesh::buildSquareBoundary(int M_s, const fullMatrix<scalar> &XYZNodes
     t++;
   }
 
-  for(int t=0; t<_N_B; t++){
-    printf("B1=%i and B2=%i\n",_boundary[2*t+0], _boundary[2*t+1]);
-  }
+  //for(int t=0; t<_N_B; t++){ printf("B1=%i and B2=%i\n",_boundary[2*t+0], _boundary[2*t+1]); }
 
   // // Match the nodes explicitely
   // for(int b=0; b<_N_B; b++){
