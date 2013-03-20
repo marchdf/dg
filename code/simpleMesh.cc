@@ -280,7 +280,7 @@ void simpleMesh::buildSquareBoundary(int M_s, const fullMatrix<scalar> &XYZNodes
   // Number of boundary faces
   //
   _N_B = periodic.size() + farfield.size() + rflctive.size();
-  
+
   //
   // Match the boundaries
   // 

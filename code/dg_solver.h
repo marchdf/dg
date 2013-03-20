@@ -69,9 +69,9 @@ class DG_SOLVER
 
 
     // Indexes for boundary conditions
-    _periodicIdx = (boundaryIdx[0]-0)/2;
-    _farfieldIdx = (boundaryIdx[1]-boundaryIdx[0])/2;
-    _rflctiveIdx = (_M_B-boundaryIdx[1])/2;
+    _periodicIdx = (boundaryIdx[0]-0)/2;              // number of periodic interfaces
+    _farfieldIdx = (boundaryIdx[1]-boundaryIdx[0])/2; // number of farfield interfaces
+    _rflctiveIdx = _M_B-boundaryIdx[1]/2;             // number of rflctive interfaces
     _farfieldstart = boundaryIdx[0];
     _rflctivestart = boundaryIdx[1];
     

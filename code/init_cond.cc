@@ -560,7 +560,7 @@ void init_dg_rminstb_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar yshck = 0.05; // initial shock location
   scalar Lx = 0.089*2.0/3.0;
 
-  scalar vcoord = 72; // coordinate shift upwards
+  scalar vcoord = 0;//72; // coordinate shift upwards
     
   // Velocities/pressures in both materials
   scalar u = 0.0;
