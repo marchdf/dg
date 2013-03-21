@@ -663,7 +663,7 @@ void init_dg_khinstb_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar u = 0.0;
   scalar v = 0.0;
   scalar p = 1e5;
-  scalar shckpos = 0.0025;
+  scalar shckpos = 0.0001;
   
   // pre-shock density (material 1)
   scalar rho01   = 1400;
@@ -692,7 +692,7 @@ void init_dg_khinstb_multifluid(const int N_s, const int N_E, const int N_F, con
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
       scalar y = XYZNodes(i,e*D+1);
-      if((yc>shckpos)&&(xc>0)){ // shocked region
+      if((yc>(shckpos-1e-6))&&(xc>0)){ // shocked region
 	U(i,e*N_F+0) = rho4;
 	U(i,e*N_F+1) = rho4*u4;
 	U(i,e*N_F+2) = rho4*v4;
