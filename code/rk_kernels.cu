@@ -1,6 +1,8 @@
 #include <rk_kernels.h>
 #include <cstdlib>
 #include <stdio.h>
+#include <upa.h>
+#include <constants.h>
 
 //==========================================================================
 //
@@ -63,6 +65,50 @@ arch_global void average_cell_p0(const int N_s, const int N_E, const int N_F, sc
 #endif
 }
 
+arch_global void findUPA(const int N_s, const int N_E, const int N_F, scalar* U, scalar* UPA){
+
+#ifdef USE_CPU
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+#elif USE_GPU
+  int e = blockIdx.x;
+  int i = threadIdx.x;
+#endif
+
+#ifdef PASSIVE
+#ifdef ONED
+  UPA[e*N_s+i] = oned_passive_upa(U[(e*N_F+0)*N_s+i],                    // rho
+				  U[(e*N_F+1)*N_s+i]/U[(e*N_F+0)*N_s+i], // u
+				  U[(e*N_F+2)*N_s+i],                    // E
+				  constants::GLOBAL_GAMMA);              // gamma
+#elif TWOD
+  UPA[e*N_s+i] = twod_passive_upa(U[(e*N_F+0)*N_s+i],                    // rho
+				  U[(e*N_F+1)*N_s+i]/U[(e*N_F+0)*N_s+i], // u
+				  U[(e*N_F+2)*N_s+i]/U[(e*N_F+0)*N_s+i], // v
+				  U[(e*N_F+3)*N_s+i],                    // E
+				  constants::GLOBAL_GAMMA);              // gamma
+#endif // dimensions
+#elif MULTIFLUID
+#ifdef ONED
+  UPA[e*N_s+i] = oned_multifluid_upa(U[(e*N_F+0)*N_s+i],                    // rho
+				     U[(e*N_F+1)*N_s+i]/U[(e*N_F+0)*N_s+i], // u
+				     U[(e*N_F+2)*N_s+i],                    // E
+				     U[(e*N_F+3)*N_s+i]);                   // alpha
+#elif TWOD
+  UPA[e*N_s+i] = twod_multifluid_upa(U[(e*N_F+0)*N_s+i],                    // rho
+				     U[(e*N_F+1)*N_s+i]/U[(e*N_F+0)*N_s+i], // u
+				     U[(e*N_F+2)*N_s+i]/U[(e*N_F+0)*N_s+i], // v
+				     U[(e*N_F+3)*N_s+i],                    // E
+				     U[(e*N_F+4)*N_s+i]);                   // alpha
+#endif //dimesions
+#endif // problem type
+
+#ifdef USE_CPU
+    }
+  }
+#endif
+}
+
 //==========================================================================
 //
 //  Host C functions
@@ -90,3 +136,13 @@ void Laverage_cell_p0(const int N_s, const int N_E, const int N_F, scalar* DU){
   average_cell_p0 arch_args (N_s, N_E, N_F, DU);
 }
 
+extern "C"
+void LfindUPA(const int N_s, const int N_E, const int N_F, scalar* U, scalar* UPA){
+
+#ifdef USE_GPU
+    dim3 dimBlock(N_s,1,1);
+    dim3 dimGrid(N_E,1);
+#endif
+    
+    findUPA arch_args (N_s, N_E, N_F, U, UPA);
+}

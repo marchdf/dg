@@ -9,6 +9,9 @@ void blasSaxpy(int M, float alpha, float* x, int INCX, float* y, int INCY){
 void blasSgemm(char or1, char or2, int M , int N, int K, float alpha, float* A, int LDA, float* B, int LDB, float beta, float* C, int LDC){
   F77NAME(sgemm)(&or1, &or2, &M, &N, &K, &alpha, A, &LDA, B, &LDB, &beta, C, &LDC);
 }
+int blasIsamax(int N, float* x, int INCX){
+  F77NAME(isamax)(&N, x, &INCX);
+}
 void blasDcopy(int N, double* x, int INCX, double* y, int INCY){
   F77NAME(dcopy)(&N, x, &INCX, y, &INCY);
 }
@@ -17,6 +20,9 @@ void blasDaxpy(int M, double alpha, double* x, int INCX, double* y, int INCY){
 }
 void blasDgemm(char or1, char or2, int M , int N, int K, double alpha, double* A, int LDA, double* B, int LDB, double beta, double* C, int LDC){
   F77NAME(dgemm)(&or1, &or2, &M, &N, &K, &alpha, A, &LDA, B, &LDB, &beta, C, &LDC);
+}
+int blasIdamax(int N, double* x, int INCX){
+  F77NAME(idamax)(&N, x, &INCX);
 }
 
 void makeZero(scalar* A, int size){

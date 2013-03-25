@@ -7,8 +7,8 @@ class deck {
  private:
   std::string _timeMeth;
   double _Dt;
-  int _nt;
-  int _ofactor;
+  double _tf;
+  double _cfl;
   int _order;
   std::string _flux;
   std::string _meshfile;
@@ -20,9 +20,9 @@ class deck {
   
  public:
   inline std::string getTimeMeth() { return _timeMeth;}
-  inline double getTimeStep() {return _Dt;}
-  inline int getNumberStep() {return _nt;}
-  inline int getOutputFactor() {return _ofactor;}
+  inline double getOutputTimeStep() {return _Dt;}
+  inline double getFinalTime() {return _tf;}
+  inline double getCFL() {return _cfl;}
   inline int getOrder() {return _order;}
   inline std::string getMeshfile() { return _meshfile;}
   inline std::string getElemType() { return _elemType;}

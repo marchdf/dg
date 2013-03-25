@@ -14,6 +14,8 @@
 #if defined(HAVE_BLAS)
 
 extern "C" {
+  int F77NAME(idamax)(int *n, double *x, int *incx);
+  int F77NAME(isamax)(int *n, float *x, int *incx);
   void F77NAME(dcopy)(int *n, double *x, int *incx, double *y, int *incy);
   void F77NAME(scopy)(int *n, float *x, int *incx, float *y, int *incy);
   void F77NAME(daxpy)(int *n, double *alpha, double *x, int *incx, double *y, int *incy);

@@ -223,7 +223,6 @@ void simpleMesh::buildLineBoundary(int boundaryType){
     _boundary[0*2+1] = 0;
     _boundary[1*2+0] = 1;
     _boundary[1*2+1] = 1;
-    _boundaryIdx[0]  = 0;
     _boundaryIdx[0]  = 0; _boundaryIdx[1]  = 4;
   }
   else if(boundaryType==2){ // reflective
@@ -375,15 +374,43 @@ void simpleMesh::buildSquareBoundary(int M_s, const fullMatrix<scalar> &XYZNodes
   // }
 }
 
+void simpleMesh::buildBoundaryElementShift1D(const int N_s, const int D, const int N_E, const fullMatrix<scalar> &XYZNodes){ 
+  // Objective: create BoundaryElemShift
+  // elem1         | elem2         | xshift 
+  // (tgt element)   his neighbor    shifts to bring elem2 next to elem1
 
-void simpleMesh::buildBoundaryElementShift(int order, const fullMatrix<scalar> &XYZNodesF, const int D, std::map<int,int> &ElementMap)
+  // In a 1D straight line, the leftmost element is 0 and the rightmost element is N_E-1
+  // The shift to bring them next to each other is equal to the length of the domain.
+  scalar xmin = XYZNodes(0,0);
+  scalar xmax = XYZNodes(0,0);
+  scalar x = 0;
+  for(int e=0; e<N_E; e++){
+    for(int i=0; i<N_s; i++){
+      x = XYZNodes(i,e);
+      if(xmin>x) xmin = x;
+      if(xmax<x) xmax = x;
+    }
+  }
+  scalar L = xmax - xmin;
+
+  // Build shifts
+  _shifts.resize(_N_B,2+D);
+  _shifts(0,0) = 0;
+  _shifts(0,1) = N_E-1;
+  _shifts(0,2) =-L; // xshift to bring el2 next to el1
+  _shifts(1,0) = N_E-1;
+  _shifts(1,1) = 0;
+  _shifts(1,2) = L;
+
+}
+  
+void simpleMesh::buildBoundaryElementShift2D(int order, const fullMatrix<scalar> &XYZNodesF, const int D, std::map<int,int> &ElementMap)
 {
   // Objective: create BoundaryElemShift
   // elem1         | elem2         | xshift | yshift
   // (tgt element)   his neighbor    shifts to bring elem2 next to elem1
   
   _shifts.resize(_N_B,2+D);
-
 
   // Most of this code is a repeat of buildPeriodicSquare()
   const std::vector<simpleInterface> &interfaces = getInterfaces();
@@ -520,7 +547,7 @@ void simpleMesh::sortNeighbors(const int N_E, const int N_N, const fullMatrix<sc
      Only for a cartesian mesh
   */
 
-  scalar x, y, xn, yn;
+  scalar x=0, y=0, xn=0, yn=0;
   int neighbor;
   int* LRDU = new int[N_N];
   
@@ -528,8 +555,10 @@ void simpleMesh::sortNeighbors(const int N_E, const int N_N, const fullMatrix<sc
   for(int e=0; e<N_E; e++){
     // get its cell center
     x = XYZCen(e,0);
+#ifdef TWOD
     y = XYZCen(e,1);
-
+#endif
+    
     // set to -1 so we can check later which ones were accessed
     for(int nn=0; nn<N_N; nn++) LRDU[nn] = -1; 
     
@@ -537,7 +566,9 @@ void simpleMesh::sortNeighbors(const int N_E, const int N_N, const fullMatrix<sc
     for(int nn=0; nn<N_N; nn++){
       neighbor = _neighbors[e*N_N+nn]; // get a neighbor element
       xn = XYZCen(neighbor,0);        // get the centroid
+#ifdef TWOD
       yn = XYZCen(neighbor,1);
+#endif
 
       // for periodic boundary condition
       // Get potentional coordinate shift for the neighbor if this
@@ -547,7 +578,9 @@ void simpleMesh::sortNeighbors(const int N_E, const int N_N, const fullMatrix<sc
 	if ((e==_shifts(b,0))&&(neighbor==_shifts(b,1))){ flag = true; bidx = b; break;}
       if(flag){
 	xn = xn+_shifts(bidx,2+0);
+#ifdef TWOD
 	yn = yn+_shifts(bidx,2+1);
+#endif
       }
       
       // Relation to current element
@@ -672,8 +705,9 @@ bool simpleMesh::iscartesian(std::string typeElement, const int elem_type){
 
   // default is unstructured mesh
   bool cartesian = false;
-  
-  if (typeElement=="qua"){
+
+  if      (typeElement=="lin"){ cartesian = true;}
+  else if (typeElement=="qua"){
     const std::vector<simpleElement> &elements = getElements(elem_type);
     const simpleElement &el = elements[0];
     scalar x0 = (scalar)_nodes(0,el.getNode(0));
@@ -695,8 +729,59 @@ bool simpleMesh::iscartesian(std::string typeElement, const int elem_type){
   return cartesian;
 }
 
+void simpleMesh::setDx(const int N_N, const int N_E, const int D, const fullMatrix<scalar> &XYZCen, const fullMatrix<scalar> &XYZNodes){
+  /* This function finds the minium Dx of all the elements in the
+     mesh. It is later used for the CFL condition and the adaptive
+     time-stepping.
+
+     For 1D, it's straight forward.  For 2D, it calculates the minimum
+     distance from the cell center to edges of the element and it sets
+     Dx to twice that value. This means Dx will be equal to the
+     conventional Dx for a square element and it will be equal to the
+     diameter of the inscribed circle for a triangular element.
+
+  */
+
+  _Dx = 0;
+  
+#ifdef ONED
+  _Dx = XYZNodes(1,0) - XYZNodes(0,0); // initialize first delta x
+  // loop on all elements to find the miniumum
+  for(int e=0; e<N_E; e++){
+    scalar dx = XYZNodes(1,e) - XYZNodes(0,e);
+    if (_Dx > dx) _Dx = dx;    
+  }
+
+#elif TWOD
+
+  // Distance from first element center to first edge
+  scalar d = distance_to_edge(XYZCen(0,0),XYZCen(0,1),XYZNodes(0,0*D+0),XYZNodes(0,0*D+1),XYZNodes(1,0*D+0),XYZNodes(1,0*D+1));
+  _Dx = d;
+
+  // Find the other distance in the mesh
+  for(int e=0; e<N_E; e++){           // Loop on all the elements
+    for(int nn=0; nn<N_N; nn++){     // Loop on all the edges
+      d = distance_to_edge(XYZCen(e,0),XYZCen(e,1),XYZNodes(nn,e*D+0),XYZNodes(nn,e*D+1),XYZNodes((nn+1)%N_N,e*D+0),XYZNodes((nn+1)%N_N,e*D+1));
+      if(_Dx > d) _Dx = d;
+    }
+  }
+
+  // Multiply by 2 to get full length of cell
+  _Dx = 2*_Dx;
+  
+#elif THRD
+  // distance from point to surface?
+#endif
+}
+
+inline scalar simpleMesh::distance_to_edge(scalar x0,scalar y0,scalar x1,scalar y1,scalar x2,scalar y2){
+  // Distance from center to an edge (from http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html)
+  return fabs((x2-x1)*(y1-y0)-(x1-x0)*(y2-y1))/sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+}
+
 
 simpleMesh::~simpleMesh(){
   //delete[] _boundary;
   //delete _boundaryIdx;
 }
+

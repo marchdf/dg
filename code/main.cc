@@ -414,7 +414,11 @@ int main (int argc, char **argv)
   // Get the coordinate shifts to bring the neighbors of the elements
   // on the boundaries to the correct (x,y) location. This is used
   // when evaluating polynomials in neighboring elements.
-  m.buildBoundaryElementShift(order, XYZNodesF, D, ElementMap);
+#ifdef ONED
+  m.buildBoundaryElementShift1D(N_s, D, N_E, XYZNodes);
+#elif TWOD
+  m.buildBoundaryElementShift2D(order, XYZNodesF, D, ElementMap);
+#endif
   fullMatrix<scalar> shifts = m.getShifts();
 
   m.buildNeighbors(N_N, N_E, ElementMap);
@@ -479,7 +483,6 @@ int main (int argc, char **argv)
   
 #endif
     
-
   // //////////////////////////////////////////////////////////////////////////   
   // //
   // // Modal basis functions and change of basis
@@ -598,7 +601,7 @@ int main (int argc, char **argv)
   cublasStatus status;
   status = cublasInit();
 #endif
-  
+
   //////////////////////////////////////////////////////////////////////////   
   //
   // Initialize some stuff on the host
@@ -693,20 +696,17 @@ int main (int argc, char **argv)
   // Solve the problem on the CPU/GPU.
   //
   //////////////////////////////////////////////////////////////////////////   
-
-  double T = 0;
-  double Tstar = 0;
-  scalar Dt = inputs.getTimeStep(); 
-  int N_t = inputs.getNumberStep(); 
-  int output_factor = inputs.getOutputFactor();
-  int count = 1;
- 
+  double DtOut = inputs.getOutputTimeStep(); 
+  double Tf    = inputs.getFinalTime();
+  m.setDx(N_N,N_E,D,XYZCen,XYZNodes);
+  scalar CFL   = inputs.getCFL()*m.getDx()/(2*order+1);
+  
   printf("==== Now RK 4 steps =====\n");
   DG_SOLVER dgsolver = DG_SOLVER(D, N_F, N_E, N_s, N_G, M_T, M_s, M_G, M_B,
   				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, h_J, h_invJac, h_JF, h_weight, h_normals,
   				 h_boundaryMap, h_boundaryIdx);
   RK rk4 = RK(4);
-  rk4.RK_integration(Dt, N_t, output_factor,
+  rk4.RK_integration(DtOut, Tf, CFL,
   		     D, N_F, N_E, N_s, N_G, M_T, M_s,
   		     h_Minv, 
   		     h_U,

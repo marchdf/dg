@@ -22,17 +22,17 @@ void deck::readDeck(const char *fileName)
     printf("Invalid file format (at time integration)\n");
   getline(input,_timeMeth);
   getline(input,line);
-  if (line!="#time step size")
-    printf("Invalid file format (at time step size)\n");
+  if (line!="#output time step size")
+    printf("Invalid file format (at output time step size)\n");
   input>>_Dt;
   getline(input,line); getline(input,line);
-  if (line!="#number of time steps")
-    printf("Invalid file format (at number of time steps)\n");
-  input>>_nt;
+  if (line!="#final time")
+    printf("Invalid file format (at final time)\n");
+  input>>_tf;
   getline(input,line); getline(input,line);
-  if (line!="#output factor")
-    printf("Invalid file format (at output factor)\n");
-  input>>_ofactor;
+  if (line!="#Courant-Friedrichs-Lewy condition")
+    printf("Invalid file format (at Courant-Friedrichs-Lewy condition)\n");
+  input>>_cfl;
   getline(input,line); getline(input,line);
   if (line!="#order")
     printf("Invalid file format (at order)\n");

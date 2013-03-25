@@ -6,6 +6,7 @@
 #include <string>
 #include <map>
 #include <macros.h>
+#include <math.h>
 
 class simpleElement {
   std::vector<int> _nodes;
@@ -42,8 +43,8 @@ class simpleMesh {
   int* _boundaryIdx;
   int* _neighbors; // N_N x N_E : element | neighbor1 | neighbor2 | ...
   fullMatrix<scalar> _shifts;
-  fullMatrix<scalar> _XYZCen;
-  public:
+  scalar _Dx;
+ public:
   inline const std::vector<simpleInterface> & getInterfaces () const {return  _interfaces;}
   inline const std::vector<simpleElement> & getElements (int type) const {return  _elements[type];}
   inline const fullMatrix<double> & getNodes () const {return _nodes;}
@@ -64,11 +65,16 @@ class simpleMesh {
   void buildNeighbors(int N_N, int N_E, std::map<int,int> &ElementMap);
   void sortNeighbors(const int N_E, const int N_N, const fullMatrix<scalar> XYZCen);
   int* getNeighbors()const {return _neighbors;}
-  void buildBoundaryElementShift(int order, const fullMatrix<scalar> &XYZNodesF, const int D, std::map<int,int> &ElementMap);
+  void buildBoundaryElementShift1D(const int N_s, const int D, const int N_E, const fullMatrix<scalar> &XYZNodes);
+  void buildBoundaryElementShift2D(int order, const fullMatrix<scalar> &XYZNodesF, const int D, std::map<int,int> &ElementMap);
   inline const fullMatrix<scalar> & getShifts() const {return _shifts;}
+
   fullMatrix<scalar> getElementCentroids(const int N_E, const int D, const int ncorners, const fullMatrix<scalar> XYZNodes);
   bool iscartesian(std::string typeElement, const int elem_type);
-
+  void setDx(const int N_N, const int N_E, const int D, const fullMatrix<scalar> &XYZCen, const fullMatrix<scalar> &XYZNodes);
+  scalar getDx()const {return _Dx;}
+  inline scalar distance_to_edge(scalar x0,scalar y0,scalar x1,scalar y1,scalar x2,scalar y2);
+    
   // Destructor
   ~simpleMesh();
 

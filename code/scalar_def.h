@@ -9,11 +9,13 @@ typedef float scalar;
 #define blasAxpy blasSaxpy
 #define blasCopy blasScopy
 #define blasScal blasSScal
+#define blasIamax blasIsamax
 #elif USE_GPU
 #define blasGemm cublasSgemm
 #define blasAxpy cublasSaxpy
 #define blasCopy cublasScopy
 #define blasScal cublasSscal
+#define blasIamax cublasIsamax
 #endif
 #endif
 
@@ -25,11 +27,13 @@ typedef double scalar;
 #define blasAxpy blasDaxpy
 #define blasCopy blasDcopy
 #define blasScal blasDscal
+#define blasIamax blasIdamax
 #elif USE_GPU
 #define blasGemm cublasDgemm
 #define blasAxpy cublasDaxpy
 #define blasCopy cublasDcopy
 #define blasScal cublasDscal
+#define blasIamax cublasIdamax
 #endif
 #endif
 
