@@ -56,6 +56,7 @@ class RK
     double Tstar = 0;
     double Tout = T+DtOut; // next output time
     scalar Dt = 0;
+    scalar DtCFL = 0;
     int n = 0;             // counts the time steps
     int count = 1;         // counts the output steps
     bool output = false;
@@ -115,8 +116,8 @@ class RK
       // Find new Dt
       Dt = DtFromCFL(N_s, N_E, N_F, CFL, arch(U),_UPA); output = false;
       if(Dt<1e-14){ printf("Next time step is too small (%e<1e-14). Exiting.\n",Dt); exit(1);}
-      if     (Dt>(Tf  -T)){ Dt = Tf  -T; output = true; done = true;}
-      else if(Dt>(Tout-T)){ Dt = Tout-T; output = true;}
+      if     (Dt>(Tf  -T)){ DtCFL = Dt; Dt = Tf  -T; output = true; done = true;}
+      else if(Dt>(Tout-T)){ DtCFL = Dt; Dt = Tout-T; output = true;}
       //printf("current time=%f, this Dt=%f, next output at %f\n",T+Dt,Dt,Tout);
       /* Dt = 1e-5; */
       /* if ((n+1)%1000==0){output=true;} */
@@ -183,7 +184,7 @@ class RK
 	CUDA_SAFE_CALL(cudaMemcpy(h_U, d_U, N_s*N_F*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
 #endif
      
-	printf("Solution written to output file at step %i and time %f.\n",n,T);
+	printf("Solution written to output file at step %7i and time %e (current CFL time step:%e).\n",n,T,DtCFL);
 	print_dg(N_s, N_E, N_F, h_U, m, elem_type, count, T, 1);
 	Tout = T + DtOut; // update the new output time
 	count++;
