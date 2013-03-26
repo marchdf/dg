@@ -208,11 +208,17 @@ class RK
   }; //end main RK function
 
   scalar DtFromCFL(const int N_s, const int N_E, const int N_F, const scalar CFL, scalar* U, scalar* UPA){
+
     LfindUPA(N_s, N_E, N_F, U, UPA);
-    scalar max=UPA[0];
-    int maxUPAIdx = blasIamax(N_E*N_s,UPA,1)-1; // Fortran starts numbering at 1
-    scalar maxUPA = UPA[maxUPAIdx];
-    return CFL/maxUPA;
+    int maxUPAIdx;
+    maxUPAIdx = blasIamax(N_E*N_s,UPA,1)-1; // Fortran starts numbering at 1
+    scalar* maxUPA = new scalar[1];
+#ifdef USE_CPU
+    maxUPA = &UPA[maxUPAIdx];
+#elif USE_GPU
+    CUDA_SAFE_CALL(cudaMemcpy(maxUPA, &UPA[maxUPAIdx], sizeof(scalar), cudaMemcpyDeviceToHost));
+#endif
+    return CFL/maxUPA[0];
   }
 
   
