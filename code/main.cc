@@ -126,6 +126,7 @@ int main (int argc, char **argv)
   bool multint = false;
   bool sodcirc = false;
   bool rminstb = false;
+  bool rmmulti = false;
   bool khinstb = false;
   bool sinephi = false;
   bool sodmono = false;
@@ -140,6 +141,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="multint") multint = true;
   else if (inputs.getInitialCondition()=="sodcirc") sodcirc = true;
   else if (inputs.getInitialCondition()=="rminstb") rminstb = true;
+  else if (inputs.getInitialCondition()=="rmmulti") rmmulti = true;
   else if (inputs.getInitialCondition()=="khinstb") khinstb = true;
   else if (inputs.getInitialCondition()=="sinephi") sinephi = true;
   else if (inputs.getInitialCondition()=="sodmono") sodmono = true;
@@ -539,9 +541,10 @@ int main (int argc, char **argv)
   else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
   else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
   else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-  else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
   else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
   else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
+  else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
   else if(khinstb) init_dg_khinstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
 #elif PASSIVE
   if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, U);
@@ -730,9 +733,10 @@ int main (int argc, char **argv)
   else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
   else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
   else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-  else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
   else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
   else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
+  else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
   else if(khinstb) init_dg_khinstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
 #elif PASSIVE
   if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
