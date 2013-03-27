@@ -427,7 +427,7 @@ void init_dg_multint_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar delta=0.005;               // The diffusion layer thickness
 
   // Velocities/pressures in all materials
-  scalar ucoord = 0; // coordinate shift to the right
+  scalar ucoord = 103; // coordinate shift to the right
   scalar u = 0.0+ucoord;
   scalar p = 1e5;
 
@@ -702,7 +702,7 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar delta=0.005;    // The diffusion layer thickness
     
   // Velocities/pressures in all materials
-  scalar vcoord = 110; // coordinate shift upwards
+  scalar vcoord = 103; // coordinate shift upwards
   scalar u = 0.0;
   scalar v = 0.0+vcoord;
   scalar p = 1e5;
