@@ -118,11 +118,11 @@ class RK
       if(Dt<1e-14){ printf("Next time step is too small (%e<1e-14). Exiting.\n",Dt); exit(1);}
       if     (Dt>(Tf  -T)){ DtCFL = Dt; Dt = Tf  -T; output = true; done = true;}
       else if(Dt>(Tout-T)){ DtCFL = Dt; Dt = Tout-T; output = true;}
-      //printf("current time=%f, this Dt=%f, next output at %f\n",T+Dt,Dt,Tout);
-      /* Dt = 1e-5; */
-      /* if ((n+1)%1000==0){output=true;} */
+      /* printf("current time=%f, this Dt=%f, next output at %f\n",T+Dt,Dt,Tout); */
+      /* Dt = 1e-7; */
+      /* if ((n+1)%100==0){output=true;} */
       /* else {output=false;} */
-      /* if ((n+1)==200000) {done = true;} */
+      /* if ((n+1)==1000) {done = true;} */
       
       // Us = U
 #ifdef HAVE_BLAS

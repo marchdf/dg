@@ -5,8 +5,9 @@ OUTPUT
   - restart files?
   - hdf5? Binary format to compress data?
 
-INITIAL CONDITIONS
+IC
   - Clean initial conditions
+  - Clean initialization of initial conditions... determine at compile time?
   - Design some generic ICs that can be made in the deck (maybe a LR state thing for now)
 
 RIEMANN SOLVERS
@@ -27,10 +28,8 @@ PARALLEL
 
 2D PHYSICS
   - passive/multifluid HLL
-  - boundary conditions: do they work? are they correct? combine farfield et periodic?
 
 BC
-  - reflective BC
   - make the 1D ones similar to 2D implementation (where you define the BC in the mesh, not the deck)
 
 BASIS TRANSFORMS (for HR)
@@ -45,9 +44,8 @@ PROFILER
   - Add some sort of timer to these functions?
 	
 OTHER
-  - Add CFL condition
   - Clean if conditions on dimensions: they are all over the place. Can they be reduced?
   - Remove cpu_ in the function names (not necessary now)
   - Does shifts works in 1D? It does not!
   - get rid of N_F as input (define it with IC)
-  - Determine as many of the constants (N_F, N_s, D, etc) at compile time (loop unrolling?)
+  - Determine as many of the constants (N_F, N_s, D, DF, order, M_s, div, mod, etc) at compile time (loop unrolling?)

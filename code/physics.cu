@@ -18,8 +18,9 @@ arch_global void evaluate_sf(int D, int N_G, int N_E, int N_F, scalar* s, scalar
   for(int e = 0; e < N_E; e++){
     for(int g = 0; g < N_G; g++){
 #elif USE_GPU
-      int e = blockIdx.x;
-      int g = threadIdx.x;
+  int e = blockIdx.x*blkE+threadIdx.z;
+  if (e < N_E){
+    int g = threadIdx.x;
 #endif
 
 
@@ -179,8 +180,8 @@ arch_global void evaluate_sf(int D, int N_G, int N_E, int N_F, scalar* s, scalar
      
 #ifdef USE_CPU
     }
-  }
 #endif
+  }
 }
 
 
@@ -188,18 +189,21 @@ arch_global void evaluate_sf(int D, int N_G, int N_E, int N_F, scalar* s, scalar
 arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar* UgF, scalar* normals){
  
 #ifdef USE_CPU
+  int blk = 0;
   for(int t = 0; t < M_T; t++){
     scalar* buffer = new scalar[M_G*2*N_F]; // buffer holds F and ncterm (M_G x 2*N_F: [F,ncterm])
     for(int g = 0; g < M_G; g++){
 #elif USE_GPU
-      int t = blockIdx.x;
-      int g = threadIdx.x;
-      extern __shared__ scalar buffer[];    // buffer holds F and ncterm (M_G x 2*N_F: [F,ncterm])
+  int blk = threadIdx.z; // buffer needs room for all the elements in the block
+  int t = blockIdx.x*blkT+threadIdx.z;
+  if ( t < M_T){
+    int g = threadIdx.x;
+    extern __shared__ scalar buffer[];    // buffer holds F and ncterm (blkT x M_G x 2*N_F: [F,ncterm])
 #endif
 
       // Initialize the buffer
-      int Fidx = g*2*N_F;       // index for start of F
-      int ncidx = g*2*N_F+N_F;  // index for start of ncterm
+      int Fidx = (blk*M_G+g)*2*N_F;       // index for start of F
+      int ncidx = (blk*M_G+g)*2*N_F+N_F;  // index for start of ncterm
       for(int k = 0; k < 2*N_F; k++) buffer[Fidx+k]  = 0;
       
       // Send the data to the Riemann solvers
@@ -411,9 +415,8 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 #ifdef USE_CPU
     } // end loop on g
     delete[] buffer;
-  } // end loop on t
 #endif
-
+  } // end loop on t
 }
 
 //==========================================================================
@@ -423,8 +426,9 @@ arch_global void pressure(int N_s, int N_E, int N_F, scalar* U, scalar* p){
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
 #elif USE_GPU
-      int e = blockIdx.x;
-      int i = threadIdx.x;
+  int e = blockIdx.x*blkE+threadIdx.z;
+  if (e < N_E){
+    int i = threadIdx.x;
 #endif
          
       // Get the pressure field
@@ -444,8 +448,8 @@ arch_global void pressure(int N_s, int N_E, int N_F, scalar* U, scalar* p){
 
 #ifdef USE_CPU
     }
-  }
 #endif
+  }
 }
 
 //==========================================================================
@@ -455,7 +459,8 @@ arch_global void pressure_u(int N_s, int N_E, int N_F, scalar* U, scalar* p, sca
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
 #elif USE_GPU
-      int e = blockIdx.x;
+  int e = blockIdx.x*blkE+threadIdx.z;
+  if (e < N_E){
       int i = threadIdx.x;
 #endif
          
@@ -477,8 +482,8 @@ arch_global void pressure_u(int N_s, int N_E, int N_F, scalar* U, scalar* p, sca
 
 #ifdef USE_CPU
     }
-  }
 #endif
+  }
 }
 
 
@@ -488,7 +493,8 @@ arch_global void limmodif(int N_s, int N_E, int N_F, scalar* A, scalar* plim, sc
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
 #elif USE_GPU
-    int e = blockIdx.x;
+  int e = blockIdx.x*blkE+threadIdx.z;
+  if (e < N_E){
 #endif
 
     // My modification:
@@ -577,10 +583,7 @@ arch_global void limmodif(int N_s, int N_E, int N_F, scalar* A, scalar* plim, sc
       Alim[(e*N_F+2)*N_s+2] = g2lim;
 #endif
     }
-
-#ifdef USE_CPU
   }
-#endif
 }
 
 //==========================================================================
@@ -589,7 +592,8 @@ arch_global void limmodif2(int N_s, int N_E, int N_F, scalar* A, scalar* plim, s
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
 #elif USE_GPU
-    int e = blockIdx.x;
+  int e = blockIdx.x*blkE+threadIdx.z;
+  if (e < N_E){
 #endif
 
     // M2 modification:
@@ -714,9 +718,7 @@ arch_global void limmodif2(int N_s, int N_E, int N_F, scalar* A, scalar* plim, s
 #endif
     }
 
-#ifdef USE_CPU
   }
-#endif
 }
 
 
@@ -729,8 +731,11 @@ extern "C"
 void Levaluate_sf(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
 
 #ifdef USE_GPU
-  dim3 dimBlock(N_G,1,1);
-  dim3 dimGrid(N_E,1);
+  int div = N_E/blkE;
+  int mod = 0;
+  if (N_E%blkE != 0) mod = 1;
+  dim3 dimBlock(N_G,1,blkE);
+  dim3 dimGrid(div+mod,1);
 #endif
 
   evaluate_sf arch_args (D, N_G, N_E, N_F, s, f, Ug, dUg, invJac);
@@ -740,18 +745,24 @@ extern "C"
 void Levaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar* UgF, scalar* normals){
 
 #ifdef USE_GPU
-  dim3 dimBlock(M_G,1,1);
-  dim3 dimGrid(M_T,1);
+  int div = M_T/blkT;
+  int mod = 0;
+  if (M_T%blkT != 0) mod = 1;
+  dim3 dimBlock(M_G,1,blkT);
+  dim3 dimGrid(div+mod,1);
 #endif
 
-  evaluate_q arch_args_array(M_G*2*N_F*sizeof(scalar)) (M_G, M_T, N_F, D, q, UgF, normals);
+  evaluate_q arch_args_array(blkT*M_G*2*N_F*sizeof(scalar)) (M_G, M_T, N_F, D, q, UgF, normals);
 }
 
 extern "C"
 void Lpressure(int N_s, int N_E, int N_F, scalar* U, scalar* p){
 #ifdef USE_GPU
-  dim3 dimBlock(N_s,1,1);
-  dim3 dimGrid(N_E,1);
+  int div = N_E/blkE;
+  int mod = 0;
+  if (N_E%blkE != 0) mod = 1;
+  dim3 dimBlock(N_s,1,blkE);
+  dim3 dimGrid(div+mod,1);
 #endif
 
   pressure arch_args (N_s, N_E, N_F, U, p);
@@ -760,8 +771,11 @@ void Lpressure(int N_s, int N_E, int N_F, scalar* U, scalar* p){
 extern "C"
 void Lpressure_u(int N_s, int N_E, int N_F, scalar* U, scalar* p, scalar* u){
 #ifdef USE_GPU
-  dim3 dimBlock(N_s,1,1);
-  dim3 dimGrid(N_E,1);
+  int div = N_E/blkE;
+  int mod = 0;
+  if (N_E%blkE != 0) mod = 1;
+  dim3 dimBlock(N_s,1,blkE);
+  dim3 dimGrid(div+mod,1);
 #endif
 
   pressure_u arch_args (N_s, N_E, N_F, U, p, u);
@@ -771,8 +785,11 @@ void Lpressure_u(int N_s, int N_E, int N_F, scalar* U, scalar* p, scalar* u){
 extern "C"
 void Llimmodif(int N_s, int N_E, int N_F, scalar* A, scalar* plim, scalar* Alim){
 #ifdef USE_GPU
-  dim3 dimBlock(1,N_F,1);
-  dim3 dimGrid(N_E,1);
+  int div = N_E/blkE;
+  int mod = 0;
+  if (N_E%blkE != 0) mod = 1;
+  dim3 dimBlock(1,N_F,blkE);
+  dim3 dimGrid(div+mod,1);
 #endif
 
   limmodif arch_args (N_s, N_E, N_F, A, plim, Alim);
@@ -781,8 +798,11 @@ void Llimmodif(int N_s, int N_E, int N_F, scalar* A, scalar* plim, scalar* Alim)
 extern "C"
 void Llimmodif2(int N_s, int N_E, int N_F, scalar* A, scalar* plim, scalar* ulim, scalar* Alim){
 #ifdef USE_GPU
-  dim3 dimBlock(1,N_F,1);
-  dim3 dimGrid(N_E,1);
+  int div = N_E/blkE;
+  int mod = 0;
+  if (N_E%blkE != 0) mod = 1;
+  dim3 dimBlock(1,N_F,blkE);
+  dim3 dimGrid(div+mod,1);
 #endif
 
   limmodif2 arch_args (N_s, N_E, N_F, A, plim, ulim, Alim);

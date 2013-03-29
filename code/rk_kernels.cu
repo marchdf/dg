@@ -18,9 +18,10 @@ arch_global void solve(int N_s, int N_E, int N_F, scalar Dt, scalar* Minv, scala
     for(int i = 0; i < N_s; i++){
       for(int fc = 0; fc < N_F; fc++){
 #elif USE_GPU
-  int e = blockIdx.x;
-  int i = threadIdx.x;
-  int fc= threadIdx.y;
+  int e = blockIdx.x*blkE+threadIdx.z;
+  if (e < N_E){
+    int i = threadIdx.x;
+    int fc= threadIdx.y;
 #endif
 
   scalar sol = 0.0;
@@ -34,8 +35,8 @@ arch_global void solve(int N_s, int N_E, int N_F, scalar Dt, scalar* Minv, scala
 #ifdef USE_CPU
       }
     }
-  }
 #endif
+  }
 }
 
 
@@ -46,8 +47,9 @@ arch_global void average_cell_p0(const int N_s, const int N_E, const int N_F, sc
   for(int e = 0; e < N_E; e++){
     for(int fc = 0; fc < N_F; fc++){
 #elif USE_GPU
-  int e = blockIdx.x;
-  int fc= threadIdx.y;
+  int e = blockIdx.x*blkE+threadIdx.z;
+  if (e < N_E){
+    int fc= threadIdx.y;
 #endif
   
   scalar average = 0.0;
@@ -61,8 +63,8 @@ arch_global void average_cell_p0(const int N_s, const int N_E, const int N_F, sc
 
 #ifdef USE_CPU
     }
-  }
 #endif
+  }
 }
 
 arch_global void findUPA(const int N_s, const int N_E, const int N_F, scalar* U, scalar* UPA){
@@ -71,8 +73,9 @@ arch_global void findUPA(const int N_s, const int N_E, const int N_F, scalar* U,
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
 #elif USE_GPU
-  int e = blockIdx.x;
-  int i = threadIdx.x;
+  int e = blockIdx.x*blkE+threadIdx.z;
+  if (e < N_E){
+    int i = threadIdx.x;
 #endif
 
 #ifdef PASSIVE
@@ -105,8 +108,8 @@ arch_global void findUPA(const int N_s, const int N_E, const int N_F, scalar* U,
 
 #ifdef USE_CPU
     }
-  }
 #endif
+  }
 }
 
 //==========================================================================
@@ -118,8 +121,11 @@ arch_global void findUPA(const int N_s, const int N_E, const int N_F, scalar* U,
 extern "C" 
 void Lsolver(int N_s, int N_E, int N_F, scalar Dt, scalar* Minv, scalar* f, scalar* DU){
 #ifdef USE_GPU
-  dim3 dimBlock(N_s,N_F,1);
-  dim3 dimGrid(N_E,1);
+  int div = N_E/blkE;
+  int mod = 0;
+  if (N_E%blkE != 0) mod = 1;
+  dim3 dimBlock(N_s,N_F,blkE);
+  dim3 dimGrid(div+mod,1);
 #endif
 
   solve arch_args (N_s, N_E, N_F, Dt, Minv, f, DU);
@@ -129,8 +135,11 @@ extern "C"
 void Laverage_cell_p0(const int N_s, const int N_E, const int N_F, scalar* DU){
 
 #ifdef USE_GPU
-  dim3 dimBlock(1,N_F,1);
-  dim3 dimGrid(N_E,1);
+  int div = N_E/blkE;
+  int mod = 0;
+  if (N_E%blkE != 0) mod = 1;
+  dim3 dimBlock(1,N_F,blkE);
+  dim3 dimGrid(div+mod,1);
 #endif
 
   average_cell_p0 arch_args (N_s, N_E, N_F, DU);
@@ -140,8 +149,11 @@ extern "C"
 void LfindUPA(const int N_s, const int N_E, const int N_F, scalar* U, scalar* UPA){
 
 #ifdef USE_GPU
-    dim3 dimBlock(N_s,1,1);
-    dim3 dimGrid(N_E,1);
+  int div = N_E/blkE;
+  int mod = 0;
+  if (N_E%blkE != 0) mod = 1;
+  dim3 dimBlock(N_s,1,blkE);
+  dim3 dimGrid(div+mod,1);
 #endif
     
     findUPA arch_args (N_s, N_E, N_F, U, UPA);
