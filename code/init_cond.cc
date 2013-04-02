@@ -435,24 +435,23 @@ void init_dg_multint_multifluid(const int N_s, const int N_E, const int N_F, con
   // mat1 (with shock) | mat 2 | mat 3
   // pre-shock density (material 1)
   // The shock is initialized in here
-  scalar rho01   = 1.351;//0.1785;
-  scalar gamma01 = 1.276;//5.0/3.0;
+  scalar rho01   = 1.351;
+  scalar gamma01 = 1.276;
   scalar alpha01 = 1/(gamma01-1);
   scalar c01     = sqrt(gamma01*p/rho01); // sound speed
-  scalar Ma01    = u/c01; //Mach number ahead of shock
-  scalar M1      = 34.76;//4;  // molecular weight
+  scalar M1      = 34.76; // molecular weight
 
   // pre-shock density (material 2)
-  scalar rho02   = 1.351;
-  scalar gamma02 = 1.276;
+  scalar rho02   = 5.494;
+  scalar gamma02 = 1.093;
   scalar alpha02 = 1/(gamma02-1);
-  scalar M2      = 34.76;         // Molecular weight
+  scalar M2      = 146.05;
 
   // pre-shock density (material 3)
-  scalar rho03   = 5.494;
-  scalar gamma03 = 1.093;
+  scalar rho03   = 0.1785;
+  scalar gamma03 = 5.0/3.0;
   scalar alpha03 = 1/(gamma03-1);
-  scalar M3      = 146.05;         // Molecular weight
+  scalar M3      = 4;
   
   // Post-shock state (material 1) (see p 101 Toro)
   scalar Ms     = 1.21;   // Shock Mach number
@@ -711,23 +710,23 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const int N_F, con
   // mat1 (with shock) | mat 2 | mat 3
   // pre-shock density (material 1)
   // The shock is initialized in here
-  scalar rho01   = 0.1785;//1.351;//0.1785;
-  scalar gamma01 = 5.0/3.0;//1.276;//5.0/3.0;
+  scalar rho01   = 1.351;
+  scalar gamma01 = 1.276;
   scalar alpha01 = 1/(gamma01-1);
   scalar c01     = sqrt(gamma01*p/rho01); // sound speed
-  scalar M1      = 4;//34.76;//4;  // molecular weight
+  scalar M1      = 34.76; // molecular weight
 
   // pre-shock density (material 2)
-  scalar rho02   = 1.351;
-  scalar gamma02 = 1.276;
+  scalar rho02   = 5.494;
+  scalar gamma02 = 1.093;
   scalar alpha02 = 1/(gamma02-1);
-  scalar M2      = 34.76;         // Molecular weight
+  scalar M2      = 146.05;
 
   // pre-shock density (material 3)
-  scalar rho03   = 5.494;
-  scalar gamma03 = 1.093;
+  scalar rho03   = 0.1785;
+  scalar gamma03 = 5.0/3.0;
   scalar alpha03 = 1/(gamma03-1);
-  scalar M3      = 146.05;         // Molecular weight
+  scalar M3      = 4;
 
   // Post-shock state (material 1) (see p 101 Toro)
   scalar Ms = 1.21;   // Shock Mach number
