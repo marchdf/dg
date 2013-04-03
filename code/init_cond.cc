@@ -427,7 +427,7 @@ void init_dg_multint_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar delta=0.005;               // The diffusion layer thickness
 
   // Velocities/pressures in all materials
-  scalar ucoord = 72.9; // coordinate shift to the right
+  scalar ucoord = 134; // coordinate shift to the right
   scalar u = 0.0+ucoord;
   scalar p = 1e5;
 
@@ -516,6 +516,74 @@ void init_dg_multint_multifluid(const int N_s, const int N_E, const int N_F, con
     }
   }
 }
+
+void init_dg_blast1d_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+
+#ifdef TWOD
+  printf("blast1d problem can only be run in 1D. Exiting");
+  exit(1);
+#endif TWOD
+
+  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
+
+  // Load/open the table file
+  std::string tablefile = "xwup.txt";
+
+  // Read the data from file and fill a matrix xwup
+  fullMatrix<scalar> XWUP;
+  scalar gamma;
+  scalar alpha;
+  readTable(tablefile.c_str(),XWUP,gamma,alpha);
+  
+  // Initialize
+  scalar patm = 1e5;
+  scalar p0 = 1.6e11;  // pressure at shock in Pa
+  scalar t0 = 25*1e-9; // time = 25ns
+  scalar rho0 = 100; // density of unshocked material (100 kg/m^3 = 0.1 g/cc)
+  scalar u0  = 0;    // velocity of unshocked material
+  scalar R0 = sqrt(0.5*(gamma+1)*p0/rho0)/(alpha*pow(t0,alpha-1));
+  
+  std::vector<std::pair<scalar, scalar> > rho_r;
+  std::vector<std::pair<scalar, scalar> > u_r;
+  std::vector<std::pair<scalar, scalar> > p_r;
+  scalar t = 1e-10;
+  scalar R    = R0*pow(t,alpha);
+  scalar Rdot = alpha*R0*pow(t,alpha-1);
+
+  for(int k=0; k<XWUP.size1(); k++){
+
+    scalar r_t = R*XWUP(k,0);
+    scalar rho_t = rho0*XWUP(k,1);
+    scalar u_t = Rdot*XWUP(k,2);
+    scalar p_t = rho0*Rdot*Rdot*XWUP(k,3);
+    
+    rho_r.push_back(std::make_pair(r_t,rho_t));
+    u_r.push_back(std::make_pair(r_t,u_t));
+    p_r.push_back(std::make_pair(r_t,p_t));
+  }
+
+  
+  // Blast wave profile
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+      scalar x = XYZNodes(i,e*D+0);
+
+      scalar rho = interpolate(x,rho_r,rho_r[0].second,rho0);
+      scalar u   = interpolate(x,u_r,0,0);
+      scalar p   = interpolate(x,p_r,p_r[0].second,patm);
+      
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*u;
+      U(i,e*N_F+2) = p/(gamma-1.0) + 0.5*rho*u*u;
+#ifdef GAMCONS
+      U(i,e*N_F+3) = rho/(gamma-1);
+#elif GAMNCON
+      U(i,e*N_F+3) = 1.0/(gamma-1);
+#endif
+    }
+  }
+}
+
 
 void init_dg_sodcirc_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
@@ -692,16 +760,16 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const int N_F, con
   // Initialize
   scalar A01 = 0.00183;                 // initial amplitude
   scalar A02 = 0.00183;                 // initial amplitude
-  scalar yshck = 0.05; // initial shock location
+  scalar yshck = 0.025; // initial shock location
   scalar Lx = 0.089*2.0/3.0;
   scalar K = 1;
   scalar h = K*Lx;
-  scalar yinterface1 = h/2; // first interface location
-  scalar yinterface2 =-h/2; // second interface location
+  scalar yinterface1 = 0; // first interface location
+  scalar yinterface2 =-h; // second interface location
   scalar delta=0.005;    // The diffusion layer thickness
     
   // Velocities/pressures in all materials
-  scalar vcoord = 103; // coordinate shift upwards
+  scalar vcoord = 134; // coordinate shift upwards
   scalar u = 0.0;
   scalar v = 0.0+vcoord;
   scalar p = 1e5;
