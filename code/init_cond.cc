@@ -427,7 +427,7 @@ void init_dg_multint_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar delta=0.005;               // The diffusion layer thickness
 
   // Velocities/pressures in all materials
-  scalar ucoord = 134; // coordinate shift to the right
+  scalar ucoord = 51.5; // coordinate shift to the right
   scalar u = 0.0+ucoord;
   scalar p = 1e5;
 
@@ -448,10 +448,10 @@ void init_dg_multint_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar M2      = 146.05;
 
   // pre-shock density (material 3)
-  scalar rho03   = 0.1785;
+  scalar rho03   = 10;//0.1785;
   scalar gamma03 = 5.0/3.0;
   scalar alpha03 = 1/(gamma03-1);
-  scalar M3      = 4;
+  scalar M3      = 300; //4
   
   // Post-shock state (material 1) (see p 101 Toro)
   scalar Ms     = 1.21;   // Shock Mach number
@@ -526,62 +526,106 @@ void init_dg_blast1d_multifluid(const int N_s, const int N_E, const int N_F, con
 
   if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
 
-  // Load/open the table file
-  std::string tablefile = "xwup.txt";
+  scalar gamma = 5./3.;
+  scalar alpha = 2./3.; // = 2/3 for planar, 1/2 for cyl, 2/5 for sph.
+  scalar Q = 0.66927; // for alpha = 2/3 and gamma = 5/3
 
-  // Read the data from file and fill a matrix xwup
-  fullMatrix<scalar> XWUP;
-  scalar gamma;
-  scalar alpha;
-  readTable(tablefile.c_str(),XWUP,gamma,alpha);
-  
-  // Initialize
+  // Initialize by setting the explosion energy
   scalar patm = 1e5;
   scalar p0 = 1.6e11;  // pressure at shock in Pa
   scalar t0 = 25*1e-9; // time = 25ns
   scalar rho0 = 100; // density of unshocked material (100 kg/m^3 = 0.1 g/cc)
   scalar u0  = 0;    // velocity of unshocked material
   scalar R0 = sqrt(0.5*(gamma+1)*p0/rho0)/(alpha*pow(t0,alpha-1));
+
+  scalar Ex = rho0*pow(Q,3)*pow(R0,3); // explosion energy
+  scalar explosion = 0.00004;
   
-  std::vector<std::pair<scalar, scalar> > rho_r;
-  std::vector<std::pair<scalar, scalar> > u_r;
-  std::vector<std::pair<scalar, scalar> > p_r;
-  scalar t = 1e-10;
-  scalar R    = R0*pow(t,alpha);
-  scalar Rdot = alpha*R0*pow(t,alpha-1);
-
-  for(int k=0; k<XWUP.size1(); k++){
-
-    scalar r_t = R*XWUP(k,0);
-    scalar rho_t = rho0*XWUP(k,1);
-    scalar u_t = Rdot*XWUP(k,2);
-    scalar p_t = rho0*Rdot*Rdot*XWUP(k,3);
-    
-    rho_r.push_back(std::make_pair(r_t,rho_t));
-    u_r.push_back(std::make_pair(r_t,u_t));
-    p_r.push_back(std::make_pair(r_t,p_t));
-  }
-
-  
-  // Blast wave profile
   for(int e = 0; e < N_E; e++){
+    scalar xc = XYZCen(e,0);
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
 
-      scalar rho = interpolate(x,rho_r,rho_r[0].second,rho0);
-      scalar u   = interpolate(x,u_r,0,0);
-      scalar p   = interpolate(x,p_r,p_r[0].second,patm);
-      
-      U(i,e*N_F+0) = rho;
-      U(i,e*N_F+1) = rho*u;
-      U(i,e*N_F+2) = p/(gamma-1.0) + 0.5*rho*u*u;
+      if(xc<explosion){
+	U(i,e*N_F+0) = rho0;
+	U(i,e*N_F+1) = rho0*u0;
+	U(i,e*N_F+2) = Ex/explosion;
 #ifdef GAMCONS
-      U(i,e*N_F+3) = rho/(gamma-1);
+	U(i,e*N_F+3) = rho0/(gamma-1);
 #elif GAMNCON
-      U(i,e*N_F+3) = 1.0/(gamma-1);
+	U(i,e*N_F+3) = 1.0/(gamma-1);
 #endif
+      }
+      else{
+	U(i,e*N_F+0) = rho0;
+	U(i,e*N_F+1) = rho0*u0;
+	U(i,e*N_F+2) = patm/(gamma-1.0) + 0.5*rho0*u0*u0;
+#ifdef GAMCONS
+	U(i,e*N_F+3) = rho0/(gamma-1);
+#elif GAMNCON
+	U(i,e*N_F+3) = 1.0/(gamma-1);
+#endif
+      }
     }
   }
+
+//   // Initialize using interpolation method
+  // // Load/open the table file
+  // std::string tablefile = "xwup.txt";
+
+  // // Read the data from file and fill a matrix xwup
+  // fullMatrix<scalar> XWUP;
+  // scalar gamma;
+  // scalar alpha;
+  // scalar Q;
+  // readTable(tablefile.c_str(),XWUP,gamma,alpha,Q);
+
+//   scalar patm = 1e5;
+//   scalar p0 = 1.6e11;  // pressure at shock in Pa
+//   scalar t0 = 25*1e-9; // time = 25ns
+//   scalar rho0 = 100; // density of unshocked material (100 kg/m^3 = 0.1 g/cc)
+//   scalar u0  = 0;    // velocity of unshocked material
+//   scalar R0 = sqrt(0.5*(gamma+1)*p0/rho0)/(alpha*pow(t0,alpha-1));
+  
+//   std::vector<std::pair<scalar, scalar> > rho_r;
+//   std::vector<std::pair<scalar, scalar> > u_r;
+//   std::vector<std::pair<scalar, scalar> > p_r;
+//   scalar t = 1e-9;
+//   scalar R    = R0*pow(t,alpha);
+//   scalar Rdot = alpha*R0*pow(t,alpha-1);
+
+//   for(int k=0; k<XWUP.size1(); k++){
+
+//     scalar r_t = R*XWUP(k,0);
+//     scalar rho_t = rho0*XWUP(k,1);
+//     scalar u_t = Rdot*XWUP(k,2);
+//     scalar p_t = rho0*Rdot*Rdot*XWUP(k,3);
+    
+//     rho_r.push_back(std::make_pair(r_t,rho_t));
+//     u_r.push_back(std::make_pair(r_t,u_t));
+//     p_r.push_back(std::make_pair(r_t,p_t));
+//   }
+
+  
+//   // Blast wave profile
+//   for(int e = 0; e < N_E; e++){
+//     for(int i = 0; i < N_s; i++){
+//       scalar x = XYZNodes(i,e*D+0);
+
+//       scalar rho = interpolate(x,rho_r,rho_r[0].second,rho0);
+//       scalar u   = interpolate(x,u_r,0,0);
+//       scalar p   = interpolate(x,p_r,p_r[0].second,patm);
+      
+//       U(i,e*N_F+0) = rho;
+//       U(i,e*N_F+1) = rho*u;
+//       U(i,e*N_F+2) = p/(gamma-1.0) + 0.5*rho*u*u;
+// #ifdef GAMCONS
+//       U(i,e*N_F+3) = rho/(gamma-1);
+// #elif GAMNCON
+//       U(i,e*N_F+3) = 1.0/(gamma-1);
+// #endif
+//     }
+//   }
 }
 
 
@@ -769,7 +813,7 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar delta=0.005;    // The diffusion layer thickness
     
   // Velocities/pressures in all materials
-  scalar vcoord = 134; // coordinate shift upwards
+  scalar vcoord = 51.5; // coordinate shift upwards
   scalar u = 0.0;
   scalar v = 0.0+vcoord;
   scalar p = 1e5;
@@ -791,10 +835,10 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar M2      = 146.05;
 
   // pre-shock density (material 3)
-  scalar rho03   = 0.1785;
+  scalar rho03   = 10;//0.1785;
   scalar gamma03 = 5.0/3.0;
   scalar alpha03 = 1/(gamma03-1);
-  scalar M3      = 4;
+  scalar M3      = 300;//4;
 
   // Post-shock state (material 1) (see p 101 Toro)
   scalar Ms = 1.21;   // Shock Mach number
@@ -884,7 +928,7 @@ void init_dg_khinstb_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar shckpos = 0.0001;
   
   // pre-shock density (material 1)
-  scalar rho01   = 1400;
+  scalar rho01   = 700;
   scalar gamma01 = 5.0/3.0;
   scalar alpha01 = 1/(gamma01-1);
   
@@ -945,6 +989,89 @@ void init_dg_khinstb_multifluid(const int N_s, const int N_E, const int N_F, con
       }
     }
   }
+#endif
+}
+
+void init_dg_khblast_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+
+#ifdef ONED
+  printf("khblast problem can only be run in 2D. Exiting");
+  exit(1);
+#elif TWOD
+  
+  if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
+
+  // Initialize
+  // Velocities/pressures in both materials
+  scalar u = 0.0;
+  scalar v = 0.0;
+  scalar p = 1e5;
+  scalar blstpos = 0.0;
+  scalar gamma = 5./3.;
+  scalar alpha = 2./3.; // = 2/3 for planar, 1/2 for cyl, 2/5 for sph.
+  scalar Q = 0.66927; // for alpha = 2/3 and gamma = 5/3
+
+  // pre-shock density (material 1)
+  scalar rho01   = 1400;
+  scalar gamma01 = gamma;
+  scalar alpha01 = 1/(gamma01-1);
+  
+  // pre-shock density (material 2)
+  // The blast is initialized in here
+  scalar rho02   = 100;
+  scalar gamma02 = gamma;
+  scalar alpha02 = 1/(gamma02-1);
+
+  // Initialize by setting the explosion energy
+  scalar ps = 1.6e11;  // pressure at shock in Pa
+  scalar t0 = 25*1e-9; // time = 25ns
+  scalar R0 = sqrt(0.5*(gamma02+1)*ps/rho02)/(alpha*pow(t0,alpha-1));
+
+  scalar Ex  = rho02*pow(Q,3)*pow(R0,3); // explosion energy
+  scalar Dxx = 0.00005; // energy initially deposited in Dxx
+
+  for(int e = 0; e < N_E; e++){
+    scalar xc = XYZCen(e,0);
+    scalar yc = XYZCen(e,1);
+    for(int i = 0; i < N_s; i++){
+      scalar x = XYZNodes(i,e*D+0);
+      scalar y = XYZNodes(i,e*D+1);
+      if((yc>(blstpos-1e-6))&&(xc>0)){ // blast region
+	U(i,e*N_F+0) = rho02;
+	U(i,e*N_F+1) = rho02*u;
+	U(i,e*N_F+2) = rho02*v;
+	U(i,e*N_F+3) = Ex/Dxx;
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rh02/(gamma02-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gamma02-1);
+#endif
+      }
+      else if((yc<=blstpos)&&(xc>0)){ // top material, unshocked
+	U(i,e*N_F+0) = rho02;
+	U(i,e*N_F+1) = rho02*u;
+	U(i,e*N_F+2) = rho02*v;
+	U(i,e*N_F+3) = p/(gamma02-1) + 0.5*rho02*(u*u+v*v);
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rho02/(gamma02-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gamma02-1);
+#endif
+      }
+      else if(xc<=0){// lower material, unshocked
+	U(i,e*N_F+0) = rho01;
+	U(i,e*N_F+1) = rho01*u;
+	U(i,e*N_F+2) = rho01*v;
+	U(i,e*N_F+3) = p/(gamma01-1) + 0.5*rho01*(u*u+v*v);
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rho01/(gamma01-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gamma01-1);
+#endif
+      }
+    }
+  }
+
 #endif
 }
 

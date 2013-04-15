@@ -33,7 +33,7 @@ int factorial(int n){
   return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;
 }
 
-void readTable(const char *fileName, fullMatrix<scalar> &XWUP, scalar &gamma, scalar &alpha){
+void readTable(const char *fileName, fullMatrix<scalar> &XWUP, scalar &gamma, scalar &alpha, scalar &Q){
   /* Read the data from a table in a txt file
 
      It is used by init_cond.cc
@@ -43,12 +43,12 @@ void readTable(const char *fileName, fullMatrix<scalar> &XWUP, scalar &gamma, sc
   // Open the file
   std::ifstream table;
   table.open(fileName,std::ifstream::in);
-  if(table.is_open()==0){ printf("No file named %s. Exiting.\n",fileName);}
+  if(table.is_open()==0){ printf("No file named %s. Exiting.\n",fileName); exit(1);}
 
   int nrows;
 
   // First line contains gamma, alpha, number of rows
-  table >> gamma >> alpha >> nrows;
+  table >> gamma >> alpha >> Q >> nrows;
 
   // Read the rest of the table, populate XWUP
   XWUP.resize(nrows,4);

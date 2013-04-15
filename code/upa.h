@@ -14,7 +14,7 @@ arch_device scalar oned_passive_upa(scalar rho,
 				    scalar E,
 				    scalar gamma){
   scalar p = (gamma-1)*(E-0.5*rho*u*u);
-  return u+sqrt(gamma*p/rho);
+  return fabs(u)+sqrt(gamma*p/rho);
 }
 #elif TWOD
 arch_device scalar twod_passive_upa(scalar rho,
@@ -24,7 +24,7 @@ arch_device scalar twod_passive_upa(scalar rho,
 				    scalar gamma){
   scalar p = (gamma-1)*(E-0.5*rho*(u*u+v*v));
   scalar a = sqrt(gamma*p/rho);
-  return MAX(fabs(u+a),fabs(v+a));
+  return MAX(fabs(u)+a,fabs(v)+a);
 }
 				  
 #endif // dimensions
@@ -39,7 +39,7 @@ arch_device scalar oned_multifluid_upa(scalar rho,
 #endif
   scalar gamma = 1.0+1.0/alpha;
   scalar p = (gamma-1)*(E-0.5*rho*u*u);
-  return u+sqrt(gamma*p/rho);
+  return fabs(u)+sqrt(gamma*p/rho);
 }
 #elif TWOD
 arch_device scalar twod_multifluid_upa(scalar rho,
@@ -53,8 +53,8 @@ arch_device scalar twod_multifluid_upa(scalar rho,
   scalar gamma = 1.0+1.0/alpha;
   scalar p = (gamma-1)*(E-0.5*rho*(u*u+v*v));
   scalar a = sqrt(gamma*p/rho);
-  return MAX(fabs(u+a),fabs(v+a));
+  return MAX(fabs(u)+a,fabs(v)+a);
 }
-#endif //dimesions
+#endif //dimensions
 #endif // problem type
 #endif // header file

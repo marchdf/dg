@@ -130,6 +130,7 @@ int main (int argc, char **argv)
   bool rminstb = false;
   bool rmmulti = false;
   bool khinstb = false;
+  bool khblast = false;
   bool sinephi = false;
   bool sodmono = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
@@ -146,6 +147,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="rminstb") rminstb = true;
   else if (inputs.getInitialCondition()=="rmmulti") rmmulti = true;
   else if (inputs.getInitialCondition()=="khinstb") khinstb = true;
+  else if (inputs.getInitialCondition()=="khblast") khblast = true;
   else if (inputs.getInitialCondition()=="sinephi") sinephi = true;
   else if (inputs.getInitialCondition()=="sodmono") sodmono = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
@@ -154,8 +156,7 @@ int main (int argc, char **argv)
   int boundaryType = 0;
   if      (inputs.getBoundaryCondition()=="periodic") boundaryType = 0;
   else if (inputs.getBoundaryCondition()=="farfield") boundaryType = 1;
-  else if (inputs.getBoundaryCondition()=="combined") boundaryType = 2;
-  else if (inputs.getBoundaryCondition()=="perxfary") boundaryType = 3;
+  else if (inputs.getBoundaryCondition()=="rflctive") boundaryType = 2;
   else if (inputs.getBoundaryCondition()=="whatever") boundaryType = 1000; // 2D doesn't need a boundary type
   else{ printf("Invalid boundary condition setup. Correct the deck.\n");}    
 
@@ -550,6 +551,7 @@ int main (int argc, char **argv)
   else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
   else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
   else if(khinstb) init_dg_khinstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
+  else if(khblast) init_dg_khblast_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
 #elif PASSIVE
   if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, U);
   if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, U);
@@ -741,7 +743,7 @@ int main (int argc, char **argv)
   else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
   else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
   else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
-  else if(khinstb) init_dg_khinstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
+  else if(khblast) init_dg_khblast_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
 #elif PASSIVE
   if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
   if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);

@@ -23,7 +23,7 @@ void makeZero(scalar* A, int size);
 
 int factorial(int n);//{ return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;}
 
-void readTable(const char *fileName, fullMatrix<scalar> &XWUP, scalar &gamma, scalar &alpha);
+void readTable(const char *fileName, fullMatrix<scalar> &XWUP, scalar &gamma, scalar &alpha, scalar &Q);
 scalar interpolate(scalar x, std::vector<std::pair<scalar, scalar> > table, scalar BCL, scalar BCR);
 
   
