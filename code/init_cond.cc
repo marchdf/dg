@@ -806,14 +806,14 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar A02 = 0.00183;                 // initial amplitude
   scalar yshck = 0.025; // initial shock location
   scalar Lx = 0.089*2.0/3.0;
-  scalar K = 1;
+  scalar K = 1.5;
   scalar h = K*Lx;
   scalar yinterface1 = 0; // first interface location
   scalar yinterface2 =-h; // second interface location
   scalar delta=0.005;    // The diffusion layer thickness
     
   // Velocities/pressures in all materials
-  scalar vcoord = 51.5; // coordinate shift upwards
+  scalar vcoord = 134; // coordinate shift upwards
   scalar u = 0.0;
   scalar v = 0.0+vcoord;
   scalar p = 1e5;
@@ -835,10 +835,10 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar M2      = 146.05;
 
   // pre-shock density (material 3)
-  scalar rho03   = 10;//0.1785;
+  scalar rho03   = 0.1785;//10;//
   scalar gamma03 = 5.0/3.0;
   scalar alpha03 = 1/(gamma03-1);
-  scalar M3      = 300;//4;
+  scalar M3      = 4;//300;//
 
   // Post-shock state (material 1) (see p 101 Toro)
   scalar Ms = 1.21;   // Shock Mach number
@@ -925,22 +925,22 @@ void init_dg_khinstb_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar u = 0.0;
   scalar v = 0.0;
   scalar p = 1e5;
-  scalar shckpos = 0.0001;
+  scalar shckpos = 0.0;
   
   // pre-shock density (material 1)
-  scalar rho01   = 700;
+  scalar rho01   = 1400;//5.494;//2800;
   scalar gamma01 = 5.0/3.0;
   scalar alpha01 = 1/(gamma01-1);
   
   // pre-shock density (material 2)
   // The shock is initialized in here
-  scalar rho02   = 100;
+  scalar rho02   = 100;//1.351;//100;
   scalar gamma02 = 5.0/3.0;
   scalar alpha02 = 1/(gamma02-1);
   scalar c02     = sqrt(gamma02*p/rho02); // sound speed
 
   // Post-shock state (material 2) (see p 101 Toro)
-  scalar Ms     = 100;   // Shock Mach number
+  scalar Ms     = 100;//1.21;//100//   // Shock Mach number
   scalar u4     = 0;
   scalar v4     = -Ms*c02*(2*(Ms*Ms-1))/(gamma02+1)/(Ms*Ms); // shock is moving downwards
   scalar p4     = p*(1+2*gamma02/(gamma02+1)*(Ms*Ms-1));
@@ -1012,7 +1012,7 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar Q = 0.66927; // for alpha = 2/3 and gamma = 5/3
 
   // pre-shock density (material 1)
-  scalar rho01   = 1400;
+  scalar rho01   = 2800;
   scalar gamma01 = gamma;
   scalar alpha01 = 1/(gamma01-1);
   
