@@ -420,14 +420,14 @@ void init_dg_multint_multifluid(const int N_s, const int N_E, const int N_F, con
   // Initialize
   scalar xshck = 0.05; // initial shock location
   scalar Lx = 0.089*2.0/3.0; // wavelength (or width of tube)
-  scalar K = 1; 
+  scalar K = 10; 
   scalar h = K*Lx;
-  scalar xinterface1 = h/2; // first interface location
-  scalar xinterface2 =-h/2; // second interface location
+  scalar xinterface1 = 0; // first interface location
+  scalar xinterface2 =-h; // second interface location
   scalar delta=0.005;               // The diffusion layer thickness
 
   // Velocities/pressures in all materials
-  scalar ucoord = 51.5; // coordinate shift to the right
+  scalar ucoord = 0; // coordinate shift to the right
   scalar u = 0.0+ucoord;
   scalar p = 1e5;
 
@@ -448,7 +448,7 @@ void init_dg_multint_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar M2      = 146.05;
 
   // pre-shock density (material 3)
-  scalar rho03   = 10;//0.1785;
+  scalar rho03   = 0.1785; // 10
   scalar gamma03 = 5.0/3.0;
   scalar alpha03 = 1/(gamma03-1);
   scalar M3      = 300; //4
