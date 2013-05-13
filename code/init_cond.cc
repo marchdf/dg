@@ -650,11 +650,11 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar EtL  = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
 
   // Contact discontinuity
-  scalar xcon = 0.05;
+  scalar xcon = 0.02;
   scalar rhoC = 1.351;
   scalar uC   = uL;
   scalar pC   = pL;
-  scalar gammaC = 1.4;
+  scalar gammaC = 1.6;
   scalar EtC  = 1.0/(gammaC-1.0)*pC + 0.5*rhoC*uC*uC;
 
   // Right state
@@ -664,7 +664,6 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar gammaR= 1.4;
   scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
 
-  // Initialize by setting the explosion energy
   
   for(int e = 0; e < N_E; e++){
     scalar xc = XYZCen(e,0);
@@ -703,7 +702,6 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const int N_F, con
       }
     }
   }
-
 }
 
 
@@ -1150,6 +1148,100 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const int N_F, con
     }
   }
 
+#endif
+}
+
+void init_dg_rarec2d_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+
+#ifdef ONED
+  printf("rarec2d problem can only be run in 2D. Exiting");
+  exit(1);
+#elif TWOD
+  
+  if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
+
+
+  // Initialize
+  scalar A0 = 0.00183;
+  scalar Lx = 0.089*2.0/3.0;
+  scalar vcoord = 0;//72; // coordinate shift upwards
+  scalar delta=0.005;   // The diffusion layer thickness
+  scalar u = 0;
+  scalar v = 0;
+  scalar p = 1e5;
+
+  // left state 
+  scalar yjmp = 0.0;
+  scalar rhoL = 5.494;
+  scalar gammaL= 1.4;
+  scalar alphaL= 1.0/(gammaL-1);
+  scalar EtL  = 1.0/(gammaL-1.0)*p + 0.5*rhoL*(u*u+v*v);
+  scalar ML     = 146.05;         // Molecular weight
+
+  // Contact discontinuity
+  scalar ycon = -0.05;
+  scalar rhoC = 1.351;
+  scalar gammaC = 1.6;
+  scalar alphaC = 1.0/(gammaC-1);
+  scalar EtC  = 1.0/(gammaC-1.0)*p + 0.5*rhoC*(u*u+v*v);
+  scalar MC      = 34.76;  // molecular weight
+  
+  // Right state
+  scalar rhoR = 1;
+  scalar uR   = 0;
+  scalar vR   = 0;
+  scalar pR   = 1e4;
+  scalar gammaR= 1.4;
+  scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*(uR*uR+vR*vR);
+    
+  for(int e = 0; e < N_E; e++){
+    scalar xc = XYZCen(e,0);
+    scalar yc = XYZCen(e,1);
+    for(int i = 0; i < N_s; i++){
+      scalar x = XYZNodes(i,e*D+0);
+      scalar y = XYZNodes(i,e*D+1);
+
+      if(yc >= yjmp){ // post-shock region
+	U(i,e*N_F+0) = rhoR;
+	U(i,e*N_F+1) = rhoR*uR;
+	U(i,e*N_F+2) = rhoR*vR;
+	U(i,e*N_F+3) = EtR ;
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rhoR/(gammaR-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gammaR-1);
+#endif
+      }
+      else{
+	// vertical distance from interface
+	scalar d = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+ycon)/(2*delta);
+	
+	// Calculate volume fractions
+	scalar vol=0;
+	if      ((d<1)&&(d>0)) vol = exp(log(1e-16)*pow(fabs(d),8));
+	else if (d<=0)         vol = 1;
+	else                   vol = 0;
+
+	scalar jx  = 1-vol;
+	scalar rho = jx*rhoC+(1-jx)*rhoL;
+	scalar jy  = jx*rhoC/(jx*rhoC+(1-jx)*rhoL);       // mass fraction
+	scalar jM  = 1/(jy/MC+(1-jy)/ML);                    // total molecular weight
+
+	scalar alpha = jy*alphaC*jM/MC+(1-jy)*alphaL*jM/ML;
+	scalar gamma = 1+1.0/alpha;
+	
+	U(i,e*N_F+0) = rho;
+	U(i,e*N_F+1) = rho*u;
+	U(i,e*N_F+2) = rho*v;
+	U(i,e*N_F+3) = p/(gamma-1)+ 0.5*rho*(u*u+v*v);
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rho/(gamma-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gamma-1);
+#endif
+      }
+    }
+  }
 #endif
 }
 
