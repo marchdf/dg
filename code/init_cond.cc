@@ -628,6 +628,84 @@ void init_dg_blast1d_multifluid(const int N_s, const int N_E, const int N_F, con
 //   }
 }
 
+void init_dg_rarecon_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+
+#ifdef TWOD
+  printf("rarecon problem can only be run in 1D. Exiting");
+  exit(1);
+#endif TWOD
+
+  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
+
+
+  // setup: right state | left state | rho jump 
+  // state btw left and right is from Sod shock tube
+  
+  // Left state 
+  scalar xjmp = 0.0;
+  scalar rhoL = 5.494;
+  scalar uL   = 0;
+  scalar pL   = 1e5;
+  scalar gammaL= 1.4;
+  scalar EtL  = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
+
+  // Contact discontinuity
+  scalar xcon = 0.05;
+  scalar rhoC = 1.351;
+  scalar uC   = uL;
+  scalar pC   = pL;
+  scalar gammaC = 1.4;
+  scalar EtC  = 1.0/(gammaC-1.0)*pC + 0.5*rhoC*uC*uC;
+
+  // Right state
+  scalar rhoR = 1;
+  scalar uR   = 0;
+  scalar pR   = 1e4;
+  scalar gammaR= 1.4;
+  scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
+
+  // Initialize by setting the explosion energy
+  
+  for(int e = 0; e < N_E; e++){
+    scalar xc = XYZCen(e,0);
+    for(int i = 0; i < N_s; i++){
+      scalar x = XYZNodes(i,e*D+0);
+
+      if      (xc<xjmp){
+	U(i,e*N_F+0) = rhoR;
+	U(i,e*N_F+1) = rhoR*uR;
+	U(i,e*N_F+2) = EtR;
+#ifdef GAMCONS
+	U(i,e*N_F+3) = rhoR/(gammaR-1);
+#elif GAMNCON
+	U(i,e*N_F+3) = 1.0/(gammaR-1);
+#endif
+      }
+      else if(xc<xcon){
+	U(i,e*N_F+0) = rhoL;
+	U(i,e*N_F+1) = rhoL*uL;
+	U(i,e*N_F+2) = EtL;
+#ifdef GAMCONS
+	U(i,e*N_F+3) = rhoL/(gammaL-1);
+#elif GAMNCON
+	U(i,e*N_F+3) = 1.0/(gammaL-1);
+#endif
+      }
+      else{
+	U(i,e*N_F+0) = rhoC;
+	U(i,e*N_F+1) = rhoC*uC;
+	U(i,e*N_F+2) = EtC;
+#ifdef GAMCONS
+	U(i,e*N_F+3) = rho0C/(gammaC-1);
+#elif GAMNCON
+	U(i,e*N_F+3) = 1.0/(gammaC-1);
+#endif
+      }
+    }
+  }
+
+}
+
 
 void init_dg_sodcirc_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 

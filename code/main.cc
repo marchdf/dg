@@ -126,6 +126,7 @@ int main (int argc, char **argv)
   bool shckint = false;
   bool multint = false;
   bool blast1d = false;
+  bool rarecon = false;
   bool sodcirc = false;
   bool rminstb = false;
   bool rmmulti = false;
@@ -143,6 +144,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="shckint") shckint = true;
   else if (inputs.getInitialCondition()=="multint") multint = true;
   else if (inputs.getInitialCondition()=="blast1d") blast1d = true;
+  else if (inputs.getInitialCondition()=="rarecon") rarecon = true;
   else if (inputs.getInitialCondition()=="sodcirc") sodcirc = true;
   else if (inputs.getInitialCondition()=="rminstb") rminstb = true;
   else if (inputs.getInitialCondition()=="rmmulti") rmmulti = true;
@@ -547,6 +549,7 @@ int main (int argc, char **argv)
   else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
   else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
   else if(blast1d) init_dg_blast1d_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
+  else if(rarecon) init_dg_rarecon_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
   else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
   else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
   else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
@@ -739,7 +742,7 @@ int main (int argc, char **argv)
   else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
   else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
   else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-  else if(blast1d) init_dg_blast1d_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
+  else if(rarecon) init_dg_rarecon_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
   else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
   else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
   else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
