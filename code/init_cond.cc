@@ -650,7 +650,7 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar EtL  = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
 
   // Contact discontinuity
-  scalar xcon = 0.02;
+  scalar xcon = -0.05;
   scalar rhoC = 1.351;
   scalar uC   = uL;
   scalar pC   = pL;
