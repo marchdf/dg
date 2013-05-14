@@ -670,7 +670,7 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const int N_F, con
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
 
-      if      (xc<xjmp){
+      if      (xc>=xjmp){
 	U(i,e*N_F+0) = rhoR;
 	U(i,e*N_F+1) = rhoR*uR;
 	U(i,e*N_F+2) = EtR;
@@ -681,16 +681,6 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const int N_F, con
 #endif
       }
       else if(xc<xcon){
-	U(i,e*N_F+0) = rhoL;
-	U(i,e*N_F+1) = rhoL*uL;
-	U(i,e*N_F+2) = EtL;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = rhoL/(gammaL-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = 1.0/(gammaL-1);
-#endif
-      }
-      else{
 	U(i,e*N_F+0) = rhoC;
 	U(i,e*N_F+1) = rhoC*uC;
 	U(i,e*N_F+2) = EtC;
@@ -698,6 +688,16 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const int N_F, con
 	U(i,e*N_F+3) = rho0C/(gammaC-1);
 #elif GAMNCON
 	U(i,e*N_F+3) = 1.0/(gammaC-1);
+#endif
+      }
+      else{
+	U(i,e*N_F+0) = rhoL;
+	U(i,e*N_F+1) = rhoL*uL;
+	U(i,e*N_F+2) = EtL;
+#ifdef GAMCONS
+	U(i,e*N_F+3) = rhoL/(gammaL-1);
+#elif GAMNCON
+	U(i,e*N_F+3) = 1.0/(gammaL-1);
 #endif
       }
     }
