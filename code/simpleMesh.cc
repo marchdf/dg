@@ -7,6 +7,59 @@
 #include <algorithm>
 #include "polynomialBasis.h"
 #include "quadratures/Gauss.h"
+#include <stdexcept>      // std::out_of_range
+
+bool pairPeriodic(const fullMatrix<double> &meshNodes, std::vector<int> nodes1, std::vector<int> nodes2){
+
+  /* Given a list of nodes on an interface and their coordinates,
+     figure out if they are periodic pairs.
+
+     Return true if periodic pairs.
+
+     Used by BuildInterfaces. */
+     
+  bool paired = false;
+  double eps = 1e-10;
+  
+  // Get start and end nodes of the first interface
+  scalar xs1 = meshNodes(0,nodes1[0]);
+  scalar xe1 = meshNodes(0,nodes1[0]);
+  scalar ys1 = meshNodes(1,nodes1[0]);
+  scalar ye1 = meshNodes(1,nodes1[0]);
+  for(int j=1; j<nodes1.size(); j++){
+    xs1 = MIN(xs1,meshNodes(0,nodes1[j]));
+    xe1 = MAX(xe1,meshNodes(0,nodes1[j]));
+    ys1 = MIN(ys1,meshNodes(1,nodes1[j]));
+    ye1 = MAX(ye1,meshNodes(1,nodes1[j]));
+  }
+
+  // Get start and end nodes of the second interface
+  scalar xs2 = meshNodes(0,nodes2[0]);
+  scalar xe2 = meshNodes(0,nodes2[0]);
+  scalar ys2 = meshNodes(1,nodes2[0]);
+  scalar ye2 = meshNodes(1,nodes2[0]);
+  for(int j=1; j<nodes2.size(); j++){
+    xs2 = MIN(xs2,meshNodes(0,nodes2[j]));
+    xe2 = MAX(xe2,meshNodes(0,nodes2[j]));
+    ys2 = MIN(ys2,meshNodes(1,nodes2[j]));
+    ye2 = MAX(ye2,meshNodes(1,nodes2[j]));
+  }
+
+  // Make sure not to find myself
+  if ((fabs(xs1-xs2)<eps)&&(fabs(xe1-xe2)<eps)&&(fabs(ys1-ys2)<eps)&&(fabs(ye1-ye2)<eps)){ return paired;}
+  // vertical interface
+  else if (fabs(ys1-ye1)>eps){
+    // if their start and end nodes match, pair them
+    if ((fabs(ys1-ys2)<eps)&&(fabs(ye1-ye2)<eps)){ paired = true;}
+  }
+  // horizontal interface
+  else if (fabs(xs1-xe1)>eps){
+    // if their start and end nodes match, pair them
+    if ((fabs(xs1-xs2)<eps)&&(fabs(xe1-xe2)<eps)){ paired = true;}
+  }	  
+
+  return paired;  
+}
 
 void simpleMesh::load (const char *fileName)
 {
@@ -36,23 +89,30 @@ void simpleMesh::load (const char *fileName)
   int nelements;
   input >> nelements;
   std::vector<int> enodes;
-  _elements.resize(MSH_NUM_TYPE);
+  _elements.resize(MSH_NUM_TYPE);      // holds elements in my partition
+  _otherElements.resize(MSH_NUM_TYPE); // holds elements in other partitions
   getline (input, line);
   for (int i = 0; i < nelements; i++) {
     enodes.resize(0);
-    int elementId, elementType, ntags, ptag, num;
+    int elementId, elementType, ntags, ptag, num, partition=1;
     getline (input, line);
     std::istringstream sline (line);
     sline >> elementId >> elementType >> ntags; 
     for (int j = 0; j < ntags; j++) {
       int tag;
-      sline >> ((j==1) ? tag : ptag);;
+      if      (j==0) sline >> ptag;      // physical tag of element
+      else if (j==3) sline >> partition; // main partition of element
+      else           sline >> tag;
+      //printf("Id=%i: j=%i, tag=%i, ptag=%i, partition=%i \n",elementId, j, tag,ptag, partition);
     }
     int idNode;
     while (sline >> idNode) {
       enodes.push_back(idNode-1);
     }
-    _elements[elementType].push_back (simpleElement(elementId, ptag, enodes));
+    // Only store the element if it's in my partition
+    if(_myid == partition-1) _elements[elementType].push_back (simpleElement(elementId, ptag, partition-1, enodes));
+    // Otherwise store the element in the otherElements
+    else _otherElements[elementType].push_back (simpleElement(elementId, ptag, partition-1, enodes));
   }
   getline (input, line);
   if (line!="$EndElements")
@@ -168,8 +228,15 @@ void simpleMesh::buildNormals (int typeInterface, int typeElement, int D)
 }
 
 
-void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, const char *filename, const char *name, int step, double time, int append) const
+void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, char *filename, const char *name, int step, double time, int append) const
 {
+
+
+// #ifdef USE_MPI
+//   printf("CPU id: %i and last letter of filename is %s",_myid,filename[4]);
+//   srtcat(filename,sprintf("%i",_myid));
+//   printf("CPU id: %i and filename is %s",_myid);
+// #endif  
   const std::vector<simpleElement> &list = _elements[type];
   if (list.size() != solution.size2())
     printf("bad solution for this element\n");
@@ -181,7 +248,7 @@ void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, co
   output << "$ElementNodeData\n";
   output << "1\n\"" << name << "\"\n";
   output << "1\n" << time << "\n";
-  output << "3\n" << step<< "\n1\n" << list.size() << "\n";
+  output << "4\n" << step<< "\n1\n" << list.size() << "\n" << _myid << "\n";
   for (int i = 0; i < list.size(); i++) {
     const simpleElement &element = list[i];
     output << element.getId() << " " << element.getNbNodes() <<" ";
@@ -616,8 +683,18 @@ simpleInterface::simpleInterface(int physicalTag)
 
 void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterface> &interfaces, int typeInterface, int typeElement, int nsides)
 {
+  /* This function builds all the interfaces. For each interface, it
+     will find both elements on the right and left. If it's on a
+     boundary, it will use the BC information to find the correct
+     neighboring element.
+
+     For MPI processes, there a bunch of conditions to take care of so
+     things might get a bit convoluted. Hang on to your hats.*/
+
   std::map<std::vector<int>, simpleInterface> interfacesMap;
-  // pre-existing interfaces
+  //
+  // Read the pre-existing interfaces in the mesh (my partition)
+  //
   const std::vector<simpleElement> preElements = mesh.getElements(typeInterface);
   //  printf("preElements size %i\n", preElements.size());
   for (int i = 0; i < preElements.size(); i++) {
@@ -632,7 +709,11 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
     interfacesMap[nodes] = simpleInterface(el.getPhysicalTag());
   }
   //  printf("Map size is %i after the preElement analysis\n", interfacesMap.size());
-  // other interfaces
+
+  //
+  // Now loop through the elements in the mesh and find all the other
+  // interfaces (in my partition)
+  //
   const std::vector<simpleElement> &elements = mesh.getElements(typeElement);
   const polynomialBasis &basis = *polynomialBases::find(typeElement);
   const std::vector<std::vector<int> > &closures = basis.closures;
@@ -655,12 +736,21 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
   	//	printf("   node %i\n", nodes[k]);
       }
       std::sort(nodes.begin(), nodes.end());
+      
+      // If found in the map, use it. If not, add it to the map
       simpleInterface &interfaceFound = interfacesMap[nodes];
       if (interfaceFound._elements[0] == NULL) {
         interfaceFound._elements[0] = &el;
-  	interfaceFound._elements[1] = NULL;
         interfaceFound._closureId[0] = j;
-  	interfaceFound._closureId[1] = -1;
+	// farfield or reflective BC, copy my element to my neighbor
+	if ((interfaceFound.getPhysicalTag()==2)||(interfaceFound.getPhysicalTag()==3)){ 
+	  interfaceFound._elements[1] = &el;
+	  interfaceFound._closureId[1] = j+nsides;
+	}
+	else{	  
+	  interfaceFound._elements[1] = NULL;
+	  interfaceFound._closureId[1] = -1;
+	}
   	//	printf("This has to be 8 times\n");
       }
       else if (interfaceFound._elements[0] != &el) {
@@ -676,12 +766,83 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
       }
     }
   }
+
+
+  //
+  // Now account for the periodic BC which are on my partition
+  //
+  const fullMatrix<double> &meshNodes = mesh.getNodes();  
+  for (std::map<std::vector<int>, simpleInterface>::iterator it = interfacesMap.begin(); it != interfacesMap.end(); ++it) {
+    std::vector<int> nodes1 = it -> first;
+    simpleInterface & interface1 = it -> second;
+
+    // If it's a periodic BC and we haven't found a partner element yet
+    if ((interface1.getPhysicalTag()==1)&&(interface1.getElement(1)==NULL)){
+  
+      // Now loop on all the other interfaces to find the match
+      for (std::map<std::vector<int>, simpleInterface>::iterator it2 = interfacesMap.begin(); it2 != interfacesMap.end(); ++it2) {
+	std::vector<int> nodes2 = it2 -> first;
+	simpleInterface & interface2 = it2 -> second;
+
+	// If it's a periodic BC and we haven't found a partner element yet
+	if ((interface2.getPhysicalTag()==1)&&(interface2.getElement(1)==NULL)){
+
+	  // Check if they are paired
+	  bool paired = pairPeriodic(meshNodes, nodes1, nodes2);
+	  if(paired){
+	    interface1._elements[1] = interface2.getElement(0);
+	    interface1._closureId[1] = interface2.getClosureId(0)+nsides;
+	    interface2._elements[1] = interface1.getElement(0);
+	    interface2._closureId[1] = interface1.getClosureId(0)+nsides;
+	  }
+
+	} // end second if condition on periodic
+      } // end second loop on interfaceMap
+    } // end first if condition on periodic
+  }// end first loop on interfaceMap
+
+
+  //
+  // Now take care of all the inner boundaries (the interfaces
+  // directly connected to elements on another partition). Very
+  // similar to first interface-element matching
+  //
+  const std::vector<simpleElement> &otherElements = mesh.getOtherElements(typeElement);
+  for (int i = 0; i < otherElements.size(); i++) {
+    const simpleElement &el = otherElements[i];
+    for (int j = 0; j < closures.size(); j++) {
+      nodes.clear();
+      const std::vector<int> &cl = closures[j];
+      for (int k = 0; k < cl.size(); k++) {
+        nodes.push_back(el.getNode(cl[k]));
+      }
+      std::sort(nodes.begin(), nodes.end());
+      
+      // If found in the map, use it. If not, move on (do not add to the map)
+      try{
+	simpleInterface &interfaceFound = interfacesMap.at(nodes);
+	// If this interface has a first element but not a second element
+	if ((interfaceFound._elements[0] != NULL)&&(interfaceFound._elements[1] == NULL)) {
+	  interfaceFound._elements[1] = &el;
+	  interfaceFound._closureId[1] = j+nsides;
+	}
+      }
+      catch(const std::out_of_range &oor){continue;}
+    }
+  }
+  
+
+  
+  //
+  // Store the interfaces into the interface vector
+  //  
   interfaces.clear();
   interfaces.reserve(interfacesMap.size());
   for (std::map<std::vector<int>, simpleInterface>::iterator it = interfacesMap.begin(); it != interfacesMap.end(); ++it) {
     interfaces.push_back(it->second);
   }
 }
+
 
 // Return a matrix which is N_E x D containing the element centroids
 fullMatrix<scalar> simpleMesh::getElementCentroids(const int N_E, const int D, const int ncorners, const fullMatrix<scalar> XYZNodes){

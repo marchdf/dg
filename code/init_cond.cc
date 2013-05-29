@@ -532,24 +532,27 @@ void init_dg_blast1d_multifluid(const int N_s, const int N_E, const int N_F, con
 
   // Initialize by setting the explosion energy
   scalar patm = 1e5;
-  scalar p0 = 1.6e11;  // pressure at shock in Pa
+  scalar p0 = 1.98e11; //1.6e11  // pressure at shock in Pa
   scalar t0 = 25*1e-9; // time = 25ns
   scalar rho0 = 100; // density of unshocked material (100 kg/m^3 = 0.1 g/cc)
   scalar u0  = 0;    // velocity of unshocked material
   scalar R0 = sqrt(0.5*(gamma+1)*p0/rho0)/(alpha*pow(t0,alpha-1));
 
   scalar Ex = rho0*pow(Q,3)*pow(R0,3); // explosion energy
-  scalar explosion = 0.00004;
+  printf("Explosion energy=%e\n",Ex);
+  rho0 = 50;
+  scalar blastpos = 0.0;
+  scalar Dxx = 0.00005;
   
   for(int e = 0; e < N_E; e++){
     scalar xc = XYZCen(e,0);
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
 
-      if(xc<explosion){
+      if(xc<blastpos){
 	U(i,e*N_F+0) = rho0;
 	U(i,e*N_F+1) = rho0*u0;
-	U(i,e*N_F+2) = Ex/explosion;
+	U(i,e*N_F+2) = Ex/Dxx;
 #ifdef GAMCONS
 	U(i,e*N_F+3) = rho0/(gamma-1);
 #elif GAMNCON
@@ -640,17 +643,19 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const int N_F, con
 
   // setup: right state | left state | rho jump 
   // state btw left and right is from Sod shock tube
+
+  scalar ucoord =-150.65;//-115.26;//72; // coordinate shift upwards
   
   // Left state 
   scalar xjmp = 0.0;
   scalar rhoL = 5.494;
-  scalar uL   = 0;
+  scalar uL   = 0+ucoord;
   scalar pL   = 1e5;
   scalar gammaL= 1.4;
   scalar EtL  = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
 
   // Contact discontinuity
-  scalar xcon = -0.05;
+  scalar xcon = -0.02;
   scalar rhoC = 1.351;
   scalar uC   = uL;
   scalar pC   = pL;
@@ -659,7 +664,7 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const int N_F, con
 
   // Right state
   scalar rhoR = 1;
-  scalar uR   = 0;
+  scalar uR   = 0+ucoord;
   scalar pR   = 1e4;
   scalar gammaR= 1.4;
   scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
