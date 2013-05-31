@@ -128,7 +128,7 @@ void dg_inverse_mass_matrix(const int order, const int elem_type, const std::str
   }
 }
 
-void dg_mappings(const int myid, const int M_s, const int M_T, const int N_F, const int N_s, const int N_E, const std::vector<simpleInterface> &interfaces, std::map<int,int> &ElementMap, const std::vector<std::vector<int> > &closures, int* map, int* invmap){
+void dg_mappings(const int myid, const int M_s, const int M_T, const int N_F, const int N_s, const int N_E, const std::vector<simpleInterface> &interfaces, const std::map<int,int> &ElementMap, const std::vector<std::vector<int> > &closures, int* map, int* invmap){
 
   for(int k = 0; k < M_s*M_T*N_F*2 ; k++) { map[k] = -1;}
   for(int k = 0; k < N_s*N_E*N_F*2 ; k++) { invmap[k] = -1;}
@@ -137,17 +137,17 @@ void dg_mappings(const int myid, const int M_s, const int M_T, const int N_F, co
     const simpleInterface &face = interfaces[t];    // get the interface
     for(int d = 0; d < 2; d++){
       const simpleElement *el = face.getElement(d); // get the element to the right/left
-      if((el!=NULL)&&(myid==el->getPartition())){                                 // as long as there is a element to the right/left
+      if(myid==el->getPartition()){                                 // as long as there is a element to the right/left
   	int id = face.getClosureId(d);
   	const std::vector<int> &cl = closures[id];
 	for(int fc = 0; fc < N_F; fc++){
 	  for(int j = 0; j < M_s; j++){
-	    map[((t*N_F+fc)*2+d)*M_s+j] = (ElementMap[el->getId()]*N_F+fc)*N_s+cl[j];
-	    if (invmap[((ElementMap[el->getId()]*N_F+fc)*2+0)*N_s+cl[j]] == -1){
-	      invmap[((ElementMap[el->getId()]*N_F+fc)*2+0)*N_s+cl[j]] = ((t*N_F+fc)*2+d)*M_s+j;
+	    map[((t*N_F+fc)*2+d)*M_s+j] = (ElementMap.at(el->getId())*N_F+fc)*N_s+cl[j];
+	    if (invmap[((ElementMap.at(el->getId())*N_F+fc)*2+0)*N_s+cl[j]] == -1){
+	      invmap[((ElementMap.at(el->getId())*N_F+fc)*2+0)*N_s+cl[j]] = ((t*N_F+fc)*2+d)*M_s+j;
 	    }
-	    else if(invmap[((ElementMap[el->getId()]*N_F+fc)*2+0)*N_s+cl[j]] != -1){
-	      invmap[((ElementMap[el->getId()]*N_F+fc)*2+1)*N_s+cl[j]] = ((t*N_F+fc)*2+d)*M_s+j;
+	    else if(invmap[((ElementMap.at(el->getId())*N_F+fc)*2+0)*N_s+cl[j]] != -1){
+	      invmap[((ElementMap.at(el->getId())*N_F+fc)*2+1)*N_s+cl[j]] = ((t*N_F+fc)*2+d)*M_s+j;
 	    }
 	  }
 	}

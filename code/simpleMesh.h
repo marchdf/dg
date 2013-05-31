@@ -41,7 +41,14 @@ class simpleMesh {
   std::vector<simpleInterface> _interfaces;
   fullMatrix<double> _nodes;
   fullMatrix<scalar> _normals;
+  std::map<int,int> _elementMap;
+  std::map<int,int> _ghostElementMap;
+  bool _cartesian;
+  int* _ghostInterfaces;
+  int* _ghostElementSend;
+  int* _ghostElementRecv;
   int _N_B; // number of boundaries
+  int _N_ghosts;
   int* _boundary;
   int* _boundaryIdx;
   int* _neighbors; // N_N x N_E : element | neighbor1 | neighbor2 | ...
@@ -54,20 +61,29 @@ class simpleMesh {
   inline const std::vector<simpleElement> & getOtherElements (int type) const {return  _otherElements[type];}
   inline const fullMatrix<double> & getNodes () const {return _nodes;}
   inline const fullMatrix<scalar> & getNormals () const {return _normals;}
+  inline const std::map<int,int> & getElementMap () const {return _elementMap;}
+  inline const std::map<int,int> & getGhostElementMap () const {return _ghostElementMap;}
   void load (const char *fileName);
   void writeSolution (const fullMatrix<scalar> &solution, int type, char *filename, const char *name, int step, double time, int append) const;
   inline void buildInterfaces(int typeInterface, int typeElement, int nsides) {
     simpleInterface::BuildInterfaces(*this, _interfaces, typeInterface, typeElement, nsides);
   }
+  void buildElementMap(int elem_type);
+  void buildCommunicators(int elem_type);
   void buildNormals(int typeInterface, int typeElement, const int D);
 
+  int getNbGhostInterfaces() const {return _N_ghosts;}
+  int* getGhostInterfaces()const {return _ghostInterfaces;}
+  int* getGhostElementSend()const {return _ghostElementSend;}
+  int* getGhostElementRecv()const {return _ghostElementRecv;}
+  
   void buildLineBoundary(int boundaryType);
   void buildSquareBoundary(int M_s, const fullMatrix<scalar> &XYZNodesF, const int D);
   int  getBoundarySize()  const {return _N_B;}
   int* getBoundaryMap()const {return _boundary;}
   int* getBoundaryIdx()const {return _boundaryIdx;}
 
-  void buildNeighbors(int N_N, int N_E, std::map<int,int> &ElementMap);
+  void buildNeighbors(int N_N, int N_E);
   void sortNeighbors(const int N_E, const int N_N, const fullMatrix<scalar> XYZCen);
   int* getNeighbors()const {return _neighbors;}
   void buildBoundaryElementShift1D(const int N_s, const int D, const int N_E, const fullMatrix<scalar> &XYZNodes);

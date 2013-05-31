@@ -274,17 +274,26 @@ int main (int argc, char **argv)
     else printf("CPU id=%i : face=%i, physical=%i, el1 id=%i\n",myid,i,face.getPhysicalTag(),el1->getId());
   }
 
-
+   
   m.buildNormals(face_type, elem_type, D);
   const fullMatrix<scalar> &normals = m.getNormals();
-  //Build a map: element ID -> element index in order of the U matrix
-  std::map<int,int> ElementMap;
-  for(int e = 0; e < elements.size(); e++){
-    const simpleElement &el = elements[e];
-    //printf("e:%i, id:%i\n", e, el.getId());
-    ElementMap[el.getId()] = e;
-  }
 
+  m.buildElementMap(elem_type);
+  const std::map<int,int> &ElementMap = m.getElementMap();
+
+  m.buildCommunicators(elem_type); // build the indexes to map the ghost elements to my partition
+  const std::map<int,int> & ghostElementMap = m.getGhostElementMap();
+  int* h_ghostInterfaces  = m.getGhostInterfaces();
+  int* h_ghostElementSend = m.getGhostElementSend();
+  int* h_ghostElementRecv = m.getGhostElementRecv();
+
+  for(int k=0; k<6;k++){
+    printf("send %i, to cpu=%i, tag=%i\n",h_ghostInterfaces[k*3+0],h_ghostInterfaces[k*3+1],h_ghostInterfaces[k*3+2]);
+    printf("    send el %i, to cpu=%i, tag=%i\n",h_ghostElementSend[k*3+0],h_ghostElementSend[k*3+1],h_ghostElementSend[k*3+2]);
+    printf("    recv el %i, from cpu=%i, tag=%i\n",h_ghostElementRecv[k*3+0],h_ghostElementRecv[k*3+1],h_ghostElementRecv[k*3+2]);
+  }
+  
+  
   ////////////////////////////////////////////////////////////////////////////   
   //
   // Generer les fonctions de formes, get integration points, weights
@@ -331,7 +340,8 @@ int main (int argc, char **argv)
   int N_G = points.size1();           // number of integration points           (g index)
   int M_G = pointsF.size1();          // number of integration points on a face (g index)
   int N_F = inputs.getNumFields();    // number of unknown fields               (h, u_x, u_y with fc index)
-
+  int N_ghosts = m.getNbGhostInterfaces();
+  
   if(order0) printf("order %i\n",0); else printf("order %i\n",order);
   printf("N_s %i\n",N_s);
   printf("M_s %i\n",M_s);
@@ -340,166 +350,176 @@ int main (int argc, char **argv)
   printf("M_T %i\n",M_T);
   printf("N_G %i\n",N_G);
   printf("M_G %i\n",M_G);
-
+  printf("N_ghosts %i\n",N_ghosts);
  
-//   //////////////////////////////////////////////////////////////////////////   
-//   //
-//   // Calcul de la valeur des fonctions de formes aux points d'integration
-//   //
-//   //////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Calcul de la valeur des fonctions de formes aux points d'integration
+  //
+  //////////////////////////////////////////////////////////////////////////
 
-//   // Elements
-//   fullMatrix<scalar> phi (N_G,N_s); 
-//   fullMatrix<double> phiD (N_G,N_s); 
-//   fullMatrix<scalar> dphi(N_G*D,N_s);
-//   basis->f (points, phiD);
-//   for(int g = 0; g < N_G; g++){
-//     for(int i = 0; i < N_s; i++){
-//       phi(g,i) = (scalar)phiD(g,i);
-//     }	  
-//   }    
-//   double grads[N_s][3];  
-//   for(int g = 0; g < N_G; g++){
-//     basis->df(points(g,0),points(g,1),points(g,2),grads);
-//     for(int alpha = 0; alpha < D; alpha ++){
-//       for(int i = 0; i < N_s; i++){
-//   	dphi(g*D+alpha,i) = (scalar)grads[i][alpha];  //see paper for indexing p.6
-//       }	  
-//     }    
-//   }
+  // Elements
+  fullMatrix<scalar> phi (N_G,N_s); 
+  fullMatrix<double> phiD (N_G,N_s); 
+  fullMatrix<scalar> dphi(N_G*D,N_s);
+  basis->f (points, phiD);
+  for(int g = 0; g < N_G; g++){
+    for(int i = 0; i < N_s; i++){
+      phi(g,i) = (scalar)phiD(g,i);
+    }	  
+  }    
+  double grads[N_s][3];  
+  for(int g = 0; g < N_G; g++){
+    basis->df(points(g,0),points(g,1),points(g,2),grads);
+    for(int alpha = 0; alpha < D; alpha ++){
+      for(int i = 0; i < N_s; i++){
+  	dphi(g*D+alpha,i) = (scalar)grads[i][alpha];  //see paper for indexing p.6
+      }	  
+    }    
+  }
   
-//   // Faces
-//   fullMatrix<scalar> psi(M_G, M_s);
-//   fullMatrix<scalar> dpsi(M_G*DF,M_s);
-// #ifdef ONED
-//   psi(0,0)  = 1; dpsi(0,0) = 0;
-// #elif TWOD
-//   fullMatrix<double> psiD(M_G, M_s);
-//   basisF->f (pointsF,psiD);
-//   for(int g = 0; g < M_G; g++){
-//     for(int j = 0; j < M_s; j++){
-//       psi(g,j) = (scalar)psiD(g,j);
-//     }
-//   }
-//   double gradsF[M_s][3];
-//   for(int g = 0; g < M_G; g++){
-//     basisF->df(pointsF(g,0),pointsF(g,1),pointsF(g,2),gradsF);
-//     for(int alpha = 0; alpha < DF; alpha ++){
-//       for(int j = 0; j < M_s; j++){
-// 	dpsi(g*DF+alpha,j) = (scalar)gradsF[j][alpha];  // see paper for indexing p.6
-//       }	  
-//     }    
-//   }
-// #endif
+  // Faces
+  fullMatrix<scalar> psi(M_G, M_s);
+  fullMatrix<scalar> dpsi(M_G*DF,M_s);
+#ifdef ONED
+  psi(0,0)  = 1; dpsi(0,0) = 0;
+#elif TWOD
+  fullMatrix<double> psiD(M_G, M_s);
+  basisF->f (pointsF,psiD);
+  for(int g = 0; g < M_G; g++){
+    for(int j = 0; j < M_s; j++){
+      psi(g,j) = (scalar)psiD(g,j);
+    }
+  }
+  double gradsF[M_s][3];
+  for(int g = 0; g < M_G; g++){
+    basisF->df(pointsF(g,0),pointsF(g,1),pointsF(g,2),gradsF);
+    for(int alpha = 0; alpha < DF; alpha ++){
+      for(int j = 0; j < M_s; j++){
+	dpsi(g*DF+alpha,j) = (scalar)gradsF[j][alpha];  // see paper for indexing p.6
+      }	  
+    }    
+  }
+#endif
 
-
-  
-//   //////////////////////////////////////////////////////////////////////////   
-//   //
-//   // Multiply des fonctions de formes et derivees avec les poids
-//   //
-//   //////////////////////////////////////////////////////////////////////////
-
-//   // Elements
-//   fullMatrix<scalar> phi_w (N_G,N_s); 
-//   fullMatrix<scalar> dphi_w(N_G*D,N_s);
-//   for(int g = 0; g < N_G; g++){
-//     for(int i = 0; i < N_s; i++){
-//       phi_w(g,i) = (scalar)phi(g,i) * weight(g,0);
-//       for(int alpha = 0; alpha < D; alpha++){
-//   	dphi_w(g*D+alpha,i) = (scalar)dphi(g*D+alpha,i)*weight(g,0);
-//       }
-//     }
-//   }
-
-//   // Faces
-//   fullMatrix<scalar> psi_w (M_G,M_s);
-//   for(int g = 0; g < M_G; g++){
-//     for(int j = 0; j < M_s; j++){
-//       psi_w(g,j) = (scalar)psi(g,j)*weightF(g,0);
-//     }
-//   }
-
-//   //////////////////////////////////////////////////////////////////////////   
-//   //
-//   // Get XYZ coordinates at integration points of each elements and interface
-//   //
-//   //////////////////////////////////////////////////////////////////////////
-  
-//   // Elements
-//   fullMatrix<scalar> XYZNodes (N_s, N_E*D);
-//   fullMatrix<scalar> XYZG (N_G, N_E*D);
-//   for (int e = 0; e < N_E; e++) {
-//     const simpleElement &el = elements[e];
-//     for (int i = 0; i < N_s; i++) {
-//       int inode = el.getNode (i);
-//       for(int alpha = 0; alpha < D; alpha++){
-//   	XYZNodes (i, e*D+alpha) = (scalar)nodes (alpha, inode);
-//       }
-//     }
-//   }
-//   XYZG.gemm (phi, XYZNodes);
-
-//   // Element centroids
-//   fullMatrix<scalar> XYZCen = m.getElementCentroids(N_E, D, N_N, XYZNodes);
-
-//   // Is this a cartesian mesh?
-//   bool cartesian = m.iscartesian(inputs.getElemType(),elem_type);
-//   if  (cartesian) printf("Structured mesh\n");
-//   else            printf("Unstructured mesh\n");
-  
-//   // Faces
-//   fullMatrix<scalar> XYZNodesF (M_s, M_T*2*D);
-//   fullMatrix<scalar> XYZGF (M_G, M_T*2*D);
-//   for (int t = 0; t < M_T; t++) {
-//     const simpleInterface &face = interfaces[t];
-//     for(int d = 0; d < 2; d++){
-//       const simpleElement *el = face.getElement(d);
-//       if(el!=NULL){
-//   	int id = face.getClosureId(d);
-//   	const std::vector<int> &cl = closures[id];
-//   	for(int j = 0; j < M_s; j++){
-//   	  for(int alpha = 0; alpha < D; alpha++){
-//   	    XYZNodesF(j,(t*2+d)*D+alpha) = XYZNodes(cl[j],ElementMap[el->getId()]*D+alpha);
-//   	  }
-//   	}
-//       }
-//       else if (el==NULL){
-// 	for(int j = 0; j < M_s; j++){
-//   	  for(int alpha = 0; alpha < D; alpha++){
-// 	    XYZNodesF(j,(t*2+1)*D+alpha) = XYZNodesF(j,(t*2+0)*D+alpha);
-// 	  }
-// 	}
-//       }
-//     }
-//   }
-//   XYZGF.gemm (psi, XYZNodesF);
 
   
-//   //////////////////////////////////////////////////////////////////////////   
-//   //
-//   // Build the boundary map (must be done after the normals)
-//   //
-//   //////////////////////////////////////////////////////////////////////////
-// #ifdef ONED
-//   m.buildLineBoundary(boundaryType);
-// #elif TWOD
-//   m.buildSquareBoundary(M_s, XYZNodesF, D);
-// #endif
-//   int* h_boundaryMap = m.getBoundaryMap();
-//   int* h_boundaryIdx = m.getBoundaryIdx();
-//   int M_B = m.getBoundarySize();
-//   printf("M_B %i\n",M_B);
-  
-//   //////////////////////////////////////////////////////////////////////////   
-//   //
-//   // Build neighbors map (must be done after ElementMap and boundaryMap)
-//   //
-//   //////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Multiply des fonctions de formes et derivees avec les poids
+  //
+  //////////////////////////////////////////////////////////////////////////
 
-//   // Get the coordinate shifts to bring the neighbors of the elements
-//   // on the boundaries to the correct (x,y) location. This is used
-//   // when evaluating polynomials in neighboring elements.
+  // Elements
+  fullMatrix<scalar> phi_w (N_G,N_s); 
+  fullMatrix<scalar> dphi_w(N_G*D,N_s);
+  for(int g = 0; g < N_G; g++){
+    for(int i = 0; i < N_s; i++){
+      phi_w(g,i) = (scalar)phi(g,i) * weight(g,0);
+      for(int alpha = 0; alpha < D; alpha++){
+  	dphi_w(g*D+alpha,i) = (scalar)dphi(g*D+alpha,i)*weight(g,0);
+      }
+    }
+  }
+
+  // Faces
+  fullMatrix<scalar> psi_w (M_G,M_s);
+  for(int g = 0; g < M_G; g++){
+    for(int j = 0; j < M_s; j++){
+      psi_w(g,j) = (scalar)psi(g,j)*weightF(g,0);
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Get XYZ coordinates at integration points of each elements and interface
+  //
+  //////////////////////////////////////////////////////////////////////////
+  
+  // Elements
+  fullMatrix<scalar> XYZNodes (N_s, N_E*D);
+  fullMatrix<scalar> XYZG (N_G, N_E*D);
+  for (int e = 0; e < N_E; e++) {
+    const simpleElement &el = elements[e];
+    for (int i = 0; i < N_s; i++) {
+      int inode = el.getNode (i);
+      for(int alpha = 0; alpha < D; alpha++){
+  	XYZNodes (i, e*D+alpha) = (scalar)nodes (alpha, inode);
+      }
+    }
+  }
+  XYZG.gemm (phi, XYZNodes);
+
+  // Element centroids
+  fullMatrix<scalar> XYZCen = m.getElementCentroids(N_E, D, N_N, XYZNodes);
+
+  // Is this a cartesian mesh?
+  bool cartesian = m.iscartesian(inputs.getElemType(),elem_type);
+  if  (cartesian) printf("Structured mesh\n");
+  else            printf("Unstructured mesh\n");
+  
+  // Faces
+  fullMatrix<scalar> XYZNodesF (M_s, M_T*2*D);
+  fullMatrix<scalar> XYZGF (M_G, M_T*2*D);
+  for (int t = 0; t < M_T; t++) {
+    const simpleInterface &face = interfaces[t];
+    for(int d = 0; d < 2; d++){
+      const simpleElement *el = face.getElement(d);
+      if(el->getPartition()==myid){
+  	int id = face.getClosureId(d);
+  	const std::vector<int> &cl = closures[id];
+  	for(int j = 0; j < M_s; j++){
+  	  for(int alpha = 0; alpha < D; alpha++){
+  	    XYZNodesF(j,(t*2+d)*D+alpha) = XYZNodes(cl[j],ElementMap.at(el->getId())*D+alpha);
+  	  }
+  	}
+      }
+      else{
+	for(int j = 0; j < M_s; j++){
+  	  for(int alpha = 0; alpha < D; alpha++){
+	    XYZNodesF(j,(t*2+1)*D+alpha) = XYZNodesF(j,(t*2+0)*D+alpha);
+	  }
+	}
+      }
+    }
+  }
+
+  // for (int t = 0; t < M_T; t++) {
+  //   for(int d = 0; d < 2; d++){
+  //     for(int j = 0; j < M_s; j++){
+  // 	printf("(x,y) = (%f,%f)\n",XYZNodesF(j,(t*2+d)*D+0),XYZNodesF(j,(t*2+d)*D+1));
+  //     }
+  //   }
+  //   printf("\n");
+  // }
+	
+  XYZGF.gemm (psi, XYZNodesF);
+
+  
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Build the boundary map (must be done after the normals)
+  //
+  //////////////////////////////////////////////////////////////////////////
+#ifdef ONED
+  m.buildLineBoundary(boundaryType);
+#elif TWOD
+  m.buildSquareBoundary(M_s, XYZNodesF, D);
+#endif
+  int* h_boundaryMap = m.getBoundaryMap();
+  int* h_boundaryIdx = m.getBoundaryIdx();
+  int M_B = m.getBoundarySize();
+  printf("M_B %i\n",M_B);
+  
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Build neighbors map (must be done after ElementMap and boundaryMap)
+  //
+  //////////////////////////////////////////////////////////////////////////
+
+  // Get the coordinate shifts to bring the neighbors of the elements
+  // on the boundaries to the correct (x,y) location. This is used
+  // when evaluating polynomials in neighboring elements.
 // #ifdef ONED
 //   m.buildBoundaryElementShift1D(N_s, D, N_E, XYZNodes);
 // #elif TWOD
@@ -507,177 +527,178 @@ int main (int argc, char **argv)
 // #endif
 //   fullMatrix<scalar> shifts = m.getShifts();
 
-//   m.buildNeighbors(N_N, N_E, ElementMap);
-//   if(cartesian) m.sortNeighbors(N_E,N_N, XYZCen);
-//   int* h_neighbors = m.getNeighbors();
+  m.buildNeighbors(N_N, N_E);
+  //if(cartesian) m.sortNeighbors(N_E,N_N, XYZCen);
+  int* h_neighbors = m.getNeighbors();
 
-//   //////////////////////////////////////////////////////////////////////////   
-//   //
-//   // Monomial to Lagrange basis transforms
-//   //
-//   //////////////////////////////////////////////////////////////////////////
-// #ifdef ONED
-//   fullMatrix<scalar> monoV;
-//   fullMatrix<scalar> monoVinv;
-//   monovandermonde1d(order, points, monoV);
-//   monoV.invert(monoVinv);
-
-//   // Go from lagrange to monomial basis (in ref space)
-//   fullMatrix<scalar> Lag2Mono(N_s,N_s);
-//   fullMatrix<scalar> Mono2Lag(N_s,N_s);
-//   Lag2Mono.gemm(monoVinv, phi);   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
-//   Lag2Mono.invert(Mono2Lag);
-
-// #elif TWOD
-
-//   //
-//   // Structured/uniform mesh
-//   //
-//   fullMatrix<scalar> Lag2MonoX;
-//   fullMatrix<scalar> MonoX2MonoY;
-//   fullMatrix<scalar> MonoY2Lag;
-//   fullMatrix<scalar> monoV;
-//   if(cartesian){
-//     fullMatrix<scalar> Px;
-//     fullMatrix<scalar> Py;
-//     cartesian_permutations(order,XYZNodes, Px,Py);
-//     LagMono2DTransformsCartesian(order, msh_lin, Px, Py, Lag2MonoX, MonoX2MonoY, MonoY2Lag);
-//     monovandermonde1d(order, pointsF, monoV);
-//   }
-
-//   //
-//   // Unstructured mesh limiting
-//   //
-//   int L2Msize1, L2Msize2; // number of rows and columns in Lag2Mono transforms
-//   if     (inputs.getElemType()== "tri"){L2Msize1 = N_s; L2Msize2 = N_s;}
-//   else if(inputs.getElemType()== "qua"){L2Msize1 = (2*order+1)*(order+1); L2Msize2 = N_s;}
-//   fullMatrix<scalar> Lag2Mono(N_E, L2Msize1*L2Msize2);
-//   fullMatrix<scalar> Mono2Lag(N_E, L2Msize2*L2Msize1);
-//   scalar* h_powersXYZG;
-//   if(!cartesian){   // Go from lagrange to monomial basis (in physical space)
-//     LagMono2DTransforms(N_E, D, N_s, order, L2Msize1, L2Msize2, inputs.getElemType(), XYZNodes, XYZCen, Lag2Mono, Mono2Lag);
   
-//     // Get the powers of the physical nodes and neighbors
-//     // required for limiting in 2D
-//     if     (inputs.getElemType() == "tri"){
-//       h_powersXYZG = new scalar[N_s*N_G*(N_N+1)*N_E];
-//       getPowersXYZG(N_E, D, N_s, N_G, N_N, M_B, order, XYZG, XYZCen, h_neighbors, shifts, h_powersXYZG);}
-//     else if(inputs.getElemType() == "qua"){
-//       h_powersXYZG = new scalar[L2Msize1*N_G*(N_N+1)*N_E];
-//       getPowersXYZG(N_E, D, L2Msize1, N_G, N_N, M_B, 2*order, XYZG, XYZCen, h_neighbors, shifts, h_powersXYZG);}
-//   }
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Monomial to Lagrange basis transforms
+  //
+  //////////////////////////////////////////////////////////////////////////
+#ifdef ONED
+  fullMatrix<scalar> monoV;
+  fullMatrix<scalar> monoVinv;
+  monovandermonde1d(order, points, monoV);
+  monoV.invert(monoVinv);
+
+  // Go from lagrange to monomial basis (in ref space)
+  fullMatrix<scalar> Lag2Mono(N_s,N_s);
+  fullMatrix<scalar> Mono2Lag(N_s,N_s);
+  Lag2Mono.gemm(monoVinv, phi);   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
+  Lag2Mono.invert(Mono2Lag);
+
+#elif TWOD
+
+  //
+  // Structured/uniform mesh
+  //
+  fullMatrix<scalar> Lag2MonoX;
+  fullMatrix<scalar> MonoX2MonoY;
+  fullMatrix<scalar> MonoY2Lag;
+  fullMatrix<scalar> monoV;
+  if(cartesian){
+    fullMatrix<scalar> Px;
+    fullMatrix<scalar> Py;
+    cartesian_permutations(order,XYZNodes, Px,Py);
+    LagMono2DTransformsCartesian(order, msh_lin, Px, Py, Lag2MonoX, MonoX2MonoY, MonoY2Lag);
+    monovandermonde1d(order, pointsF, monoV);
+  }
+
+  // //
+  // // Unstructured mesh limiting
+  // //
+  // int L2Msize1, L2Msize2; // number of rows and columns in Lag2Mono transforms
+  // if     (inputs.getElemType()== "tri"){L2Msize1 = N_s; L2Msize2 = N_s;}
+  // else if(inputs.getElemType()== "qua"){L2Msize1 = (2*order+1)*(order+1); L2Msize2 = N_s;}
+  // fullMatrix<scalar> Lag2Mono(N_E, L2Msize1*L2Msize2);
+  // fullMatrix<scalar> Mono2Lag(N_E, L2Msize2*L2Msize1);
+  // scalar* h_powersXYZG;
+  // if(!cartesian){   // Go from lagrange to monomial basis (in physical space)
+  //   LagMono2DTransforms(N_E, D, N_s, order, L2Msize1, L2Msize2, inputs.getElemType(), XYZNodes, XYZCen, Lag2Mono, Mono2Lag);
   
-// #endif
+  //   // Get the powers of the physical nodes and neighbors
+  //   // required for limiting in 2D
+  //   if     (inputs.getElemType() == "tri"){
+  //     h_powersXYZG = new scalar[N_s*N_G*(N_N+1)*N_E];
+  //     getPowersXYZG(N_E, D, N_s, N_G, N_N, M_B, order, XYZG, XYZCen, h_neighbors, shifts, h_powersXYZG);}
+  //   else if(inputs.getElemType() == "qua"){
+  //     h_powersXYZG = new scalar[L2Msize1*N_G*(N_N+1)*N_E];
+  //     getPowersXYZG(N_E, D, L2Msize1, N_G, N_N, M_B, 2*order, XYZG, XYZCen, h_neighbors, shifts, h_powersXYZG);}
+  // }
+  
+#endif
     
-//   // //////////////////////////////////////////////////////////////////////////   
-//   // //
-//   // // Modal basis functions and change of basis
-//   // //
-//   // //////////////////////////////////////////////////////////////////////////
+  // //////////////////////////////////////////////////////////////////////////   
+  // //
+  // // Modal basis functions and change of basis
+  // //
+  // //////////////////////////////////////////////////////////////////////////
 
-//   // // Get the Legendre-Gauss-Lobatto points
-//   // fullMatrix<scalar> pointsGL;
-//   // JacobiGL(0,0,order,pointsGL);
-//   // int N_GL = pointsGL.size1();
+  // // Get the Legendre-Gauss-Lobatto points
+  // fullMatrix<scalar> pointsGL;
+  // JacobiGL(0,0,order,pointsGL);
+  // int N_GL = pointsGL.size1();
   
-//   // // Evaluate the Lagrange polynomials at the GL points (needed for collocation)
-//   // fullMatrix<scalar> phiGL   (N_GL,N_s);
-//   // fullMatrix<scalar> phiGLinv(N_s,N_GL); 
-//   // fullMatrix<double> phiDGL  (N_GL,N_s); 
-//   // basis->f (pointsGL, phiDGL);
-//   // for(int gl = 0; gl < N_GL; gl++){
-//   //   for(int i = 0; i < N_s; i++){
-//   //     phiGL(gl,i) = (scalar)phiDGL(gl,i);
-//   //   }	  
-//   // }   
-//   // phiGL.invert(phiGLinv);
+  // // Evaluate the Lagrange polynomials at the GL points (needed for collocation)
+  // fullMatrix<scalar> phiGL   (N_GL,N_s);
+  // fullMatrix<scalar> phiGLinv(N_s,N_GL); 
+  // fullMatrix<double> phiDGL  (N_GL,N_s); 
+  // basis->f (pointsGL, phiDGL);
+  // for(int gl = 0; gl < N_GL; gl++){
+  //   for(int i = 0; i < N_s; i++){
+  //     phiGL(gl,i) = (scalar)phiDGL(gl,i);
+  //   }	  
+  // }   
+  // phiGL.invert(phiGLinv);
   
-//   // // Vandermonde matrix to go from modal to nodal representation
-//   // // u_nodal = V1D    u_modal
-//   // // u_modal = V1Dinv u_nodal
-//   // fullMatrix<scalar> V1D;
-//   // fullMatrix<scalar> V1Dinv;
-//   // vandermonde1d(order, pointsGL, V1D);
-//   // V1D.invert(V1Dinv);
+  // // Vandermonde matrix to go from modal to nodal representation
+  // // u_nodal = V1D    u_modal
+  // // u_modal = V1Dinv u_nodal
+  // fullMatrix<scalar> V1D;
+  // fullMatrix<scalar> V1Dinv;
+  // vandermonde1d(order, pointsGL, V1D);
+  // V1D.invert(V1Dinv);
   
-//   // // Go from nodal to modal
-//   // fullMatrix<scalar> Nod2Mod(N_s,N_s);
-//   // fullMatrix<scalar> Mod2Nod(N_s,N_s);
-//   // Nod2Mod.gemm(V1Dinv, phiGL);   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
-//   // Nod2Mod.invert(Mod2Nod);
+  // // Go from nodal to modal
+  // fullMatrix<scalar> Nod2Mod(N_s,N_s);
+  // fullMatrix<scalar> Mod2Nod(N_s,N_s);
+  // Nod2Mod.gemm(V1Dinv, phiGL);   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
+  // Nod2Mod.invert(Mod2Nod);
 
-//   //////////////////////////////////////////////////////////////////////////   
-//   //
-//   // Initialize the unknowns
-//   //
-//   //////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Initialize the unknowns
+  //
+  //////////////////////////////////////////////////////////////////////////
   
-//   fullMatrix<scalar> U(N_s, N_E*N_F);
-//   fullMatrix<scalar> Us(N_s, N_E*N_F);
-//   fullMatrix<scalar> Ustar(N_s, N_E*N_F);
-// #ifdef MULTIFLUID
-//   if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-//   else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-//   else if(sodmono) init_dg_sodmono_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-//   else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-//   else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-//   else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-//   else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-//   else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-//   else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-//   else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
-//   else if(blast1d) init_dg_blast1d_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
-//   else if(rarecon) init_dg_rarecon_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
-//   else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
-//   else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
-//   else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
-//   else if(khinstb) init_dg_khinstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
-//   else if(khblast) init_dg_khblast_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
-//   else if(rarec2d) init_dg_rarec2d_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
-// #elif PASSIVE
-//   if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, U);
-//   if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, U);
-// #endif
+  fullMatrix<scalar> U(N_s, N_E*N_F);
+  fullMatrix<scalar> Us(N_s, N_E*N_F);
+  fullMatrix<scalar> Ustar(N_s, N_E*N_F);
+#ifdef MULTIFLUID
+  if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(sodmono) init_dg_sodmono_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(multint) init_dg_multint_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
+  else if(blast1d) init_dg_blast1d_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
+  else if(rarecon) init_dg_rarecon_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
+  else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, N_F, D, XYZNodes, U);
+  else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
+  else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
+  else if(khinstb) init_dg_khinstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
+  else if(khblast) init_dg_khblast_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
+  else if(rarec2d) init_dg_rarec2d_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
+#elif PASSIVE
+  if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, U);
+  if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, U);
+#endif
 
-//   if (order0) average_cell_p0(N_s, N_E, N_F, U);
+  if (order0) average_cell_p0(N_s, N_E, N_F, U);
   
 
-//   //////////////////////////////////////////////////////////////////////////   
-//   //
-//   // Calculate the jacobian matrix for each integration point
-//   //
-//   //////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Calculate the jacobian matrix for each integration point
+  //
+  //////////////////////////////////////////////////////////////////////////
   
-//   // Elements
-//   fullMatrix<scalar> Jac(N_E*D,N_G*D);
-//   fullMatrix<scalar> invJac(N_E*D,N_G*D); // Inverse Jacobian matrix: dxi/dx
-//   fullMatrix<scalar> J(N_E,1);            // determinant of the Jacobian
-//   fullMatrix<scalar> invJ(N_E,1);         // determinant of the inverse Jacobian
-//   dg_jacobians_elements(N_G, N_E, D, XYZNodes, dphi, Jac, invJac, J, invJ);
+  // Elements
+  fullMatrix<scalar> Jac(N_E*D,N_G*D);
+  fullMatrix<scalar> invJac(N_E*D,N_G*D); // Inverse Jacobian matrix: dxi/dx
+  fullMatrix<scalar> J(N_E,1);            // determinant of the Jacobian
+  fullMatrix<scalar> invJ(N_E,1);         // determinant of the inverse Jacobian
+  dg_jacobians_elements(N_G, N_E, D, XYZNodes, dphi, Jac, invJac, J, invJ);
   
-//   // Faces
-//   fullMatrix<scalar> JacF(M_T*2*D,M_G*DF);
-//   fullMatrix<scalar> JF(M_T*2,1);            // determinant of the Jacobian
-//   fullMatrix<scalar> invJF(M_T*2,1);         // determinant of the inverse Jacobian
-//   dg_jacobians_face(M_T, D, XYZNodesF, dpsi, JacF, JF, invJF);
+  // Faces
+  fullMatrix<scalar> JacF(M_T*2*D,M_G*DF);
+  fullMatrix<scalar> JF(M_T*2,1);            // determinant of the Jacobian
+  fullMatrix<scalar> invJF(M_T*2,1);         // determinant of the inverse Jacobian
+  dg_jacobians_face(M_T, D, XYZNodesF, dpsi, JacF, JF, invJF);
   
-//   //////////////////////////////////////////////////////////////////////////   
-//   // 
-//   // Calculate the inverse mass matrices
-//   //
-//   //////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////   
+  // 
+  // Calculate the inverse mass matrices
+  //
+  //////////////////////////////////////////////////////////////////////////
   
-//   scalar* h_Minv = new scalar[N_s*N_s*N_E];
-//   dg_inverse_mass_matrix(order, elem_type, inputs.getElemType(), N_s, N_E, D, XYZNodes, h_Minv);
+  scalar* h_Minv = new scalar[N_s*N_s*N_E];
+  dg_inverse_mass_matrix(order, elem_type, inputs.getElemType(), N_s, N_E, D, XYZNodes, h_Minv);
 
-//   //////////////////////////////////////////////////////////////////////////   
-//   // 
-//   // Build the map
-//   //
-//   //////////////////////////////////////////////////////////////////////////
-//   int* h_map = new int[M_s*M_T*N_F*2];
-//   int* h_invmap = new int[N_s*N_E*N_F*2];
-//   dg_mappings(myid, M_s, M_T, N_F, N_s, N_E, interfaces, ElementMap, closures, h_map, h_invmap);
+  //////////////////////////////////////////////////////////////////////////   
+  // 
+  // Build the map
+  //
+  //////////////////////////////////////////////////////////////////////////
+  int* h_map = new int[M_s*M_T*N_F*2];
+  int* h_invmap = new int[N_s*N_E*N_F*2];
+  dg_mappings(myid, M_s, M_T, N_F, N_s, N_E, interfaces, ElementMap, closures, h_map, h_invmap);
   
 //   //==========================================================================
 //   //
@@ -936,6 +957,9 @@ int main (int argc, char **argv)
 //   // Free stuff on the host
 //   //
 //   //////////////////////////////////////////////////////////////////////////   
+  delete[] h_ghostInterfaces;
+  delete[] h_ghostElementSend;
+  delete[] h_ghostElementRecv;
 
 //   delete[] h_boundaryMap;
 //   delete[] h_boundaryIdx;

@@ -61,6 +61,24 @@ bool pairPeriodic(const fullMatrix<double> &meshNodes, std::vector<int> nodes1, 
   return paired;  
 }
 
+
+int uniqueTag(int id1, int id2){
+  /* Given two numbers (the global id of el1 and el2 of an interface),
+     create a unique number based on Cantor's pairing function that
+     will be used as a tag in MPI communication*/
+
+  // Sort the ids to make sure you always get the same unique tag
+  // regardless of the order of id1 and id2
+  // I have a problem... http://stackoverflow.com/questions/919612/mapping-two-integers-to-one-in-a-unique-and-deterministic-way
+
+  // I need a 64bit integer to map two 32 bit integers
+  
+  int k1 = MIN(id1,id2); 
+  int k2 = MAX(id1,id2);
+
+  return 0.5*(k1+k2)*(k1+k2+1)+k2;
+}
+
 void simpleMesh::load (const char *fileName)
 {
   std::ifstream input (fileName);
@@ -319,7 +337,10 @@ void simpleMesh::buildSquareBoundary(int M_s, const fullMatrix<scalar> &XYZNodes
      The matching interface pairs are deduced from the (x,y) start and
      end nodes and their normals (opposite and parallel normals means
      the interfaces face each other).
-     
+
+     This is mostly deprecated bc of the way I've implemented things
+     with MPI. What you need to do now is just account for reflective
+     BC.
   */
 
   int N_I =_interfaces.size(); // number of interfaces
@@ -337,9 +358,10 @@ void simpleMesh::buildSquareBoundary(int M_s, const fullMatrix<scalar> &XYZNodes
   for(int i = 0; i < N_I; i++){
     const simpleInterface &face = _interfaces[i];
     int physical = face.getPhysicalTag();
-    if     (1==physical){ periodic.push_back(face); periodicFaceNumber.push_back(i); }
-    else if(2==physical){ farfield.push_back(face); farfieldFaceNumber.push_back(i); }
-    else if(3==physical){ rflctive.push_back(face); rflctiveFaceNumber.push_back(i); }
+    // if     (1==physical){ periodic.push_back(face); periodicFaceNumber.push_back(i); }
+    // else if(2==physical){ farfield.push_back(face); farfieldFaceNumber.push_back(i); }
+    // else if(3==physical){ rflctive.push_back(face); rflctiveFaceNumber.push_back(i); }
+    if(3==physical){ rflctive.push_back(face); rflctiveFaceNumber.push_back(i); }
   }
 
   //
@@ -556,7 +578,7 @@ void simpleMesh::buildBoundaryElementShift2D(int order, const fullMatrix<scalar>
   delete[] listInterfaces;
 }
 
-void simpleMesh::buildNeighbors(int N_N, int N_E, std::map<int,int> &ElementMap)
+void simpleMesh::buildNeighbors(int N_N, int N_E)
 {
   // Objective: find the neighbors of each element
   // get _neighbors, a N_N x N_E vector:
@@ -576,29 +598,53 @@ void simpleMesh::buildNeighbors(int N_N, int N_E, std::map<int,int> &ElementMap)
     const simpleInterface &face = _interfaces[i];  // get the interface
     const simpleElement *el1 = face.getElement(0); // get the element on one side
     const simpleElement *el2 = face.getElement(1); // get the element on the other side
-    int el1num = ElementMap[el1->getId()];         // element idx in order of the U matrix
+    int el1num = _elementMap.at(el1->getId());         // element idx in order of the U matrix
+    int el2num=0; 
+    if(el2->getPartition()==_myid){el2num = _elementMap.at(el2->getId());}
+    else                          {el2num = _ghostElementMap.at(el2->getId());}
 
-    if(el2!=NULL){
-      int el2num = ElementMap[el2->getId()];
-      //printf("face %2i: el1 = %2i (or %2i) and el2 = %2i (or %2i)\n", i, el1->getId(), el1num, el2->getId(), el2num);
-      _neighbors[el1num*N_N+nn[el1num]] = el2num;
-      _neighbors[el2num*N_N+nn[el2num]] = el1num;
-      nn[el1num]++; // increment the neighbor counter
-      nn[el2num]++; // increment the neighbor counter
+    double eps = 1e-10; // used for comparisons of smallness
+
+    // Not a cartesian mesh
+    if(!_cartesian){
+      _neighbors[el1num*N_N+nn[el1num]] = el2num; nn[el1num]++;
+      // do the reverse if el2 belongs to me
+      if(el2->getPartition()==_myid){ _neighbors[el2num*N_N+nn[el2num]] = el1num; nn[el2num]++;}
     }
-    else{
-      // Find the current interface in the boundaries
-      // and get the other interface related to this interface
-      int t2 = 0;
-      for(int t = 0; t < _N_B; t++) if (_boundary[t*2+0]==i) t2 = _boundary[t*2+1];
-      const simpleInterface &face2 = _interfaces[t2];  // get that other interface
-      const simpleElement *el3 = face2.getElement(0);  // get the element on one side
-      int el3num = ElementMap[el3->getId()];
-      //printf("face %2i: el1 = %2i (or %2i) and el3 = %2i (or %2i)\n", i, el1->getId(), el1num, el3->getId(), el3num);
-      _neighbors[el1num*N_N+nn[el1num]] = el3num;
-      nn[el1num]++; // increment the neighbor counter
-    }
-  }
+    else if (_cartesian){ // sort in LRDU order
+      double nx = _normals(0,i); double ny = _normals(1,i);
+
+      // normal pointing to the left: el2 is at left of el1
+      if     ((fabs(ny)<eps)&&(nx<0)){
+	_neighbors[el1num*N_N+0] = el2num; nn[el1num]++;
+	// do the reverse if el2 belongs to me
+	if(el2->getPartition()==_myid){ _neighbors[el2num*N_N+1] = el1num; nn[el2num]++;}
+      }
+
+      // normal pointing to the right: el2 is at right of el1
+      else if((fabs(ny)<eps)&&(nx>0)){
+	_neighbors[el1num*N_N+1] = el2num; nn[el1num]++;
+	if(el2->getPartition()==_myid){ _neighbors[el2num*N_N+0] = el1num; nn[el2num]++;}
+      }
+
+      // normal pointing down: el2 is below el1
+      else if((fabs(nx)<eps)&&(ny<0)){
+	_neighbors[el1num*N_N+2] = el2num; nn[el1num]++;
+	if(el2->getPartition()==_myid){ _neighbors[el2num*N_N+3] = el1num; nn[el2num]++;}
+      }
+
+      // normal pointing up: el2 is above el1
+      else if((fabs(nx)<eps)&&(ny>0)){
+	_neighbors[el1num*N_N+3] = el2num; nn[el1num]++;
+	if(el2->getPartition()==_myid){ _neighbors[el2num*N_N+2] = el1num; nn[el2num]++;}
+      }
+
+      else{
+	printf("Error in neighbor creation!!\n");
+	exit(1);
+      }
+    } // end if cartesian
+  } // end loop on interfaces
 
   // Free some stuff
   delete[] nn;
@@ -745,7 +791,7 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
 	// farfield or reflective BC, copy my element to my neighbor
 	if ((interfaceFound.getPhysicalTag()==2)||(interfaceFound.getPhysicalTag()==3)){ 
 	  interfaceFound._elements[1] = &el;
-	  interfaceFound._closureId[1] = j+nsides;
+	  interfaceFound._closureId[1] = j;
 	}
 	else{	  
 	  interfaceFound._elements[1] = NULL;
@@ -803,9 +849,27 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
 
 
   //
+  // Classify all periodic BC that are not in my partition
+  //
+  std::map<std::vector<int>, simpleInterface> ghostPeriodicMap;
+  const std::vector<simpleElement> ghostPreElements = mesh.getOtherElements(typeInterface);
+  for(int i = 0; i < ghostPreElements.size();i++){
+    const simpleElement &el = ghostPreElements[i];
+    if(el.getPhysicalTag()==1){ // periodic boundary
+      nodes.clear();
+      for (int k = 0; k < el.getNbNodes(); k++) {
+	nodes.push_back(el.getNode(k));
+      }
+      std::sort(nodes.begin(), nodes.end());
+      ghostPeriodicMap[nodes] = simpleInterface(el.getPhysicalTag());
+    } // end if periodic
+  } // end loop on other interfaces
+
+  //
   // Now take care of all the inner boundaries (the interfaces
   // directly connected to elements on another partition). Very
-  // similar to first interface-element matching
+  // similar to first interface-element matching. Also deal with all
+  // the periodic boundaries which have pairs in other partitions
   //
   const std::vector<simpleElement> &otherElements = mesh.getOtherElements(typeElement);
   for (int i = 0; i < otherElements.size(); i++) {
@@ -827,12 +891,42 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
 	  interfaceFound._closureId[1] = j+nsides;
 	}
       }
-      catch(const std::out_of_range &oor){continue;}
+      catch(const std::out_of_range &oor){
+	// See if this interface is in the ghostPeriodicMap
+	try{
+	  simpleInterface &periodicFound = ghostPeriodicMap.at(nodes);
+	  // Loop on all the interfaces in my partition
+	  for (std::map<std::vector<int>, simpleInterface>::iterator it = interfacesMap.begin(); it != interfacesMap.end(); ++it) {
+	    std::vector<int> nodes1 = it -> first;
+	    simpleInterface & interface1 = it -> second;
+	    // If it's a periodic BC and we haven't found a partner element yet
+	    if ((interface1.getPhysicalTag()==1)&&(interface1.getElement(1)==NULL)){
+	      // Check if they are paired
+	      bool paired = pairPeriodic(meshNodes, nodes1, nodes);
+	      if(paired){
+		interface1._elements[1] = &el;
+		interface1._closureId[1] = j+nsides;
+	      }
+	    } // end if periodic
+	  } // end loop on interfaces
+	} // end try
+	catch(const std::out_of_range &oor){ continue;} // this interface is not in my partition AND in ghostPeriodic
+      } // end catch
     }
   }
   
-
-  
+  //
+  // Check to make sure there are no errors. All interfaces should
+  // have neighbors on the right and left.
+  //
+  for (std::map<std::vector<int>, simpleInterface>::iterator it = interfacesMap.begin(); it != interfacesMap.end(); ++it) {
+    simpleInterface & interface = it -> second;
+    if((interface.getElement(0)==NULL)&&(interface.getElement(1)==NULL)){
+      printf("error in interfaces creation !!!\n");
+      exit(1);
+    }
+  }
+    
   //
   // Store the interfaces into the interface vector
   //  
@@ -841,8 +935,93 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
   for (std::map<std::vector<int>, simpleInterface>::iterator it = interfacesMap.begin(); it != interfacesMap.end(); ++it) {
     interfaces.push_back(it->second);
   }
+
+  
 }
 
+void simpleMesh::buildElementMap(int elem_type){
+  /* Build a map: element ID -> element index in order of the U
+     matrix */
+  const std::vector<simpleElement> &elements = getElements(elem_type);
+  for(int e = 0; e <elements.size(); e++){
+    const simpleElement &el = elements[e];
+    //printf("e:%i, id:%i\n", e, el.getId());
+    _elementMap[el.getId()] = e;
+  }
+}
+				      
+void simpleMesh::buildCommunicators(int elem_type){
+
+  /* Build the necessary maps and matrices to communicate between
+     processes.
+
+     Create ghostElementMap. If el2 of an interface belongs to another
+     partition, store a unique number. This will be used to access
+     back columns of U/A in the limiting procedure (using the
+     neighbors vector)
+
+     Create ghostInterfaces matrix of size 3 X # ghost interfaces. It
+     stores the local interface index, the partition where el2 lives,
+     and a unique tag to reference this interface during MPI
+     communication.
+
+     Create ghostElementSend matrix containing the element index to
+     send to other partitions, the number of that partition to send
+     to, and its global id (as tag for communication).
+
+     Create ghostElementRecv matrix containing the element index to
+     store an element from another partition, the source partition of
+     that element, and its global id (as tag for communication).
+
+  */
+
+  // Count the number of interfaces which have el1 and el2 on different partitions
+  int count = 0;
+  const std::vector<simpleElement> &elements = getElements(elem_type);
+  int N_E = elements.size(); // number of elements in my partition
+  for(int i = 0; i < _interfaces.size(); i++){
+    const simpleInterface &face = _interfaces[i];  // get the interface
+    const simpleElement *el1 = face.getElement(0); // get the element on one side
+    const simpleElement *el2 = face.getElement(1); // get the element on the other side
+    if( el1->getPartition() != el2->getPartition()){
+      _ghostElementMap[el2->getId()] = N_E + count;
+      count++;}
+  }
+  _N_ghosts = count;
+  
+  // initialize the vectors
+  _ghostInterfaces  = new int[3*_N_ghosts];
+  _ghostElementSend = new int[3*_N_ghosts];
+  _ghostElementRecv = new int[3*_N_ghosts];
+  
+  count = 0;
+  for(int t = 0; t < _interfaces.size(); t++){
+    const simpleInterface &face = _interfaces[t];  // get the interface
+    const simpleElement *el1 = face.getElement(0); // get the element on one side
+    const simpleElement *el2 = face.getElement(1); // get the element on the other side
+    int partition1 = el1->getPartition();
+    int id1 = el1->getId();
+    int partition2 = el2->getPartition();
+    int id2 = el2->getId();
+    if( partition1 != partition2){
+
+      _ghostInterfaces[count*3+0] = t;
+      _ghostInterfaces[count*3+1] = partition2; // dest/source partition
+      _ghostInterfaces[count*3+2] = uniqueTag(id1,id2);
+
+      _ghostElementSend[count*3+0] = _elementMap.at(id1);
+      _ghostElementSend[count*3+1] = partition2;
+      _ghostElementSend[count*3+2] = id1;
+
+      _ghostElementRecv[count*3+0] = _ghostElementMap.at(id2);
+      _ghostElementRecv[count*3+1] = partition2;
+      _ghostElementRecv[count*3+2] = id2;      
+      
+      count++;	
+    } // end if condition on partitions
+  } // end for loop
+}
+				      
 
 // Return a matrix which is N_E x D containing the element centroids
 fullMatrix<scalar> simpleMesh::getElementCentroids(const int N_E, const int D, const int ncorners, const fullMatrix<scalar> XYZNodes){
@@ -887,6 +1066,9 @@ bool simpleMesh::iscartesian(std::string typeElement, const int elem_type){
     }
   }
 
+  // set the local bool
+  _cartesian = cartesian;
+  
   return cartesian;
 }
 
