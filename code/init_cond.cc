@@ -882,14 +882,14 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar A02 = 0.00183;                 // initial amplitude
   scalar yshck = 0.025; // initial shock location
   scalar Lx = 0.089*2.0/3.0;
-  scalar K = 1.5;
+  scalar K = 0.5;
   scalar h = K*Lx;
-  scalar yinterface1 = 0; // first interface location
-  scalar yinterface2 =-h; // second interface location
+  scalar yinterface1 =-h; // first interface location
+  scalar yinterface2 =-10*Lx; // second interface location
   scalar delta=0.005;    // The diffusion layer thickness
     
   // Velocities/pressures in all materials
-  scalar vcoord = 134; // coordinate shift upwards
+  scalar vcoord = 72.9; // coordinate shift upwards
   scalar u = 0.0;
   scalar v = 0.0+vcoord;
   scalar p = 1e5;
@@ -1099,11 +1099,12 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar alpha02 = 1/(gamma02-1);
 
   // Initialize by setting the explosion energy
-  scalar ps = 1.6e11;  // pressure at shock in Pa
+  scalar ps = 1.98e11;  // pressure at shock in Pa
   scalar t0 = 25*1e-9; // time = 25ns
   scalar R0 = sqrt(0.5*(gamma02+1)*ps/rho02)/(alpha*pow(t0,alpha-1));
 
   scalar Ex  = rho02*pow(Q,3)*pow(R0,3); // explosion energy
+  rho02 = 50;
   scalar Dxx = 0.00005; // energy initially deposited in Dxx
 
   for(int e = 0; e < N_E; e++){
@@ -1164,10 +1165,10 @@ void init_dg_rarec2d_multifluid(const int N_s, const int N_E, const int N_F, con
   // Initialize
   scalar A0 = 0.00183;
   scalar Lx = 0.089*2.0/3.0;
-  scalar vcoord = 0;//72; // coordinate shift upwards
+  scalar vcoord =-115.26;//-115.26;//72; // coordinate shift upwards
   scalar delta=0.005;   // The diffusion layer thickness
   scalar u = 0;
-  scalar v = 0;
+  scalar v = 0+vcoord;
   scalar p = 1e5;
 
   // left state 
@@ -1179,7 +1180,7 @@ void init_dg_rarec2d_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar ML     = 146.05;         // Molecular weight
 
   // Contact discontinuity
-  scalar ycon = -0.05;
+  scalar ycon = -0.02;
   scalar rhoC = 1.351;
   scalar gammaC = 1.6;
   scalar alphaC = 1.0/(gammaC-1);
@@ -1189,7 +1190,7 @@ void init_dg_rarec2d_multifluid(const int N_s, const int N_E, const int N_F, con
   // Right state
   scalar rhoR = 1;
   scalar uR   = 0;
-  scalar vR   = 0;
+  scalar vR   = 0+vcoord;
   scalar pR   = 1e4;
   scalar gammaR= 1.4;
   scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*(uR*uR+vR*vR);
