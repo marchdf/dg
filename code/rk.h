@@ -10,6 +10,9 @@
 #include <limiting.h>
 #include <dg_solver.h>
 #include <print_sol.h>
+#ifdef USE_MPI
+#include "mpi.h"
+#endif
 
 class RK
 {
@@ -111,10 +114,14 @@ class RK
     dgsolver.conservation(h_U,0.0);
 	   
     // Time integration
-    while (!done){ 
+    while (!done){
 
       // Find new Dt
       Dt = DtFromCFL(N_s, N_E, N_F, CFL, arch(U),_UPA); output = false;
+#ifdef USE_MPI // Make sure everyone is at the same time
+      MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
+      MPI_Allreduce(MPI_IN_PLACE, &Dt, 1, MPI_SCALAR, MPI_MIN, MPI_COMM_WORLD);
+#endif
       if(Dt<1e-14){ printf("Next time step is too small (%e<1e-14). Exiting.\n",Dt); exit(1);}
       if     (Dt>(Tf  -T)){ DtCFL = Dt; Dt = Tf  -T; output = true; done = true;}
       else if(Dt>(Tout-T)){ DtCFL = Dt; Dt = Tout-T; output = true;}
@@ -183,7 +190,7 @@ class RK
 #ifdef  USE_GPU
 	CUDA_SAFE_CALL(cudaMemcpy(h_U, d_U, N_s*N_F*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
 #endif
-     
+
 	printf("Solution written to output file at step %7i and time %e (current CFL time step:%e).\n",n,T,DtCFL);
 	print_dg(N_s, N_E, N_F, h_U, m, elem_type, count, T, 1);
 	Tout = T + DtOut; // update the new output time

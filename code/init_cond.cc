@@ -272,7 +272,9 @@ void init_dg_sinegam_multifluid(const int N_s, const int N_E, const int N_F, con
 #endif
 #elif TWOD
       if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
-      scalar v = 0;
+      scalar y = XYZNodes(i,e*D+1);
+      sinerho = sinerho+Arho*sin(4*M_PI*y);
+      scalar v = 1;
       Q[0] = rho+sinerho;
       Q[1] = (rho+sinerho)*u;
       Q[2] = (rho+sinerho)*v;

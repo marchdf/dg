@@ -246,21 +246,22 @@ void simpleMesh::buildNormals (int typeInterface, int typeElement, int D)
 }
 
 
-void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, char *filename, const char *name, int step, double time, int append) const
+void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, std::string filename, const char *name, int step, double time, int append) const
 {
 
 
-// #ifdef USE_MPI
-//   printf("CPU id: %i and last letter of filename is %s",_myid,filename[4]);
-//   srtcat(filename,sprintf("%i",_myid));
-//   printf("CPU id: %i and filename is %s",_myid);
-// #endif  
+#ifdef USE_MPI
+  char numstr[21]; // enough to hold all numbers up to 64-bits
+  sprintf(numstr, "%d", _myid);
+  filename += numstr;
+#endif
+  
   const std::vector<simpleElement> &list = _elements[type];
   if (list.size() != solution.size2())
     printf("bad solution for this element\n");
   std::ofstream output;
-  if (append == 1)  output.open(filename,std::ios_base::app);
-  else output.open(filename);
+  if (append == 1)  output.open(filename.c_str(),std::ios_base::app);
+  else output.open(filename.c_str());
   output.precision(20);
   output << "$MeshFormat\n2.1 0 8\n$EndMeshFormat\n";
   output << "$ElementNodeData\n";
@@ -358,9 +359,9 @@ void simpleMesh::buildSquareBoundary(int M_s, const fullMatrix<scalar> &XYZNodes
   for(int i = 0; i < N_I; i++){
     const simpleInterface &face = _interfaces[i];
     int physical = face.getPhysicalTag();
-    // if     (1==physical){ periodic.push_back(face); periodicFaceNumber.push_back(i); }
-    // else if(2==physical){ farfield.push_back(face); farfieldFaceNumber.push_back(i); }
-    // else if(3==physical){ rflctive.push_back(face); rflctiveFaceNumber.push_back(i); }
+    //if     (1==physical){ periodic.push_back(face); periodicFaceNumber.push_back(i); }
+    //else if(2==physical){ farfield.push_back(face); farfieldFaceNumber.push_back(i); }
+    //else if(3==physical){ rflctive.push_back(face); rflctiveFaceNumber.push_back(i); }
     if(3==physical){ rflctive.push_back(face); rflctiveFaceNumber.push_back(i); }
   }
 
@@ -592,7 +593,7 @@ void simpleMesh::buildNeighbors(int N_N, int N_E)
 
   // A neighbor counter for each element, set to zero
   int* nn = new int[N_E];  for(int k=0; k<N_E; k++){ nn[k]=0;} 
-  
+  N_I = 0;
   // Loop through each interface in the mesh
   for(int i = 0; i < N_I; i++){
     const simpleInterface &face = _interfaces[i];  // get the interface
@@ -788,7 +789,7 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
       if (interfaceFound._elements[0] == NULL) {
         interfaceFound._elements[0] = &el;
         interfaceFound._closureId[0] = j;
-	// farfield or reflective BC, copy my element to my neighbor
+	//farfield or reflective BC, copy my element to my neighbor
 	if ((interfaceFound.getPhysicalTag()==2)||(interfaceFound.getPhysicalTag()==3)){ 
 	  interfaceFound._elements[1] = &el;
 	  interfaceFound._closureId[1] = j;
@@ -827,22 +828,22 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
   
       // Now loop on all the other interfaces to find the match
       for (std::map<std::vector<int>, simpleInterface>::iterator it2 = interfacesMap.begin(); it2 != interfacesMap.end(); ++it2) {
-	std::vector<int> nodes2 = it2 -> first;
-	simpleInterface & interface2 = it2 -> second;
+  	std::vector<int> nodes2 = it2 -> first;
+  	simpleInterface & interface2 = it2 -> second;
 
-	// If it's a periodic BC and we haven't found a partner element yet
-	if ((interface2.getPhysicalTag()==1)&&(interface2.getElement(1)==NULL)){
+  	// If it's a periodic BC and we haven't found a partner element yet
+  	if ((interface2.getPhysicalTag()==1)&&(interface2.getElement(1)==NULL)){
 
-	  // Check if they are paired
-	  bool paired = pairPeriodic(meshNodes, nodes1, nodes2);
-	  if(paired){
-	    interface1._elements[1] = interface2.getElement(0);
-	    interface1._closureId[1] = interface2.getClosureId(0)+nsides;
-	    interface2._elements[1] = interface1.getElement(0);
-	    interface2._closureId[1] = interface1.getClosureId(0)+nsides;
-	  }
+  	  // Check if they are paired
+  	  bool paired = pairPeriodic(meshNodes, nodes1, nodes2);
+  	  if(paired){
+  	    interface1._elements[1] = interface2.getElement(0);
+  	    interface1._closureId[1] = interface2.getClosureId(0)+nsides;
+  	    interface2._elements[1] = interface1.getElement(0);
+  	    interface2._closureId[1] = interface1.getClosureId(0)+nsides;
+  	  }
 
-	} // end second if condition on periodic
+  	} // end second if condition on periodic
       } // end second loop on interfaceMap
     } // end first if condition on periodic
   }// end first loop on interfaceMap
@@ -858,7 +859,7 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
     if(el.getPhysicalTag()==1){ // periodic boundary
       nodes.clear();
       for (int k = 0; k < el.getNbNodes(); k++) {
-	nodes.push_back(el.getNode(k));
+  	nodes.push_back(el.getNode(k));
       }
       std::sort(nodes.begin(), nodes.end());
       ghostPeriodicMap[nodes] = simpleInterface(el.getPhysicalTag());
@@ -884,37 +885,37 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
       
       // If found in the map, use it. If not, move on (do not add to the map)
       try{
-	simpleInterface &interfaceFound = interfacesMap.at(nodes);
-	// If this interface has a first element but not a second element
-	if ((interfaceFound._elements[0] != NULL)&&(interfaceFound._elements[1] == NULL)) {
-	  interfaceFound._elements[1] = &el;
-	  interfaceFound._closureId[1] = j+nsides;
-	}
+  	simpleInterface &interfaceFound = interfacesMap.at(nodes);
+  	// If this interface has a first element but not a second element
+  	if ((interfaceFound._elements[0] != NULL)&&(interfaceFound._elements[1] == NULL)) {
+  	  interfaceFound._elements[1] = &el;
+  	  interfaceFound._closureId[1] = interfaceFound._closureId[0]+nsides;
+  	}
       }
       catch(const std::out_of_range &oor){
-	// See if this interface is in the ghostPeriodicMap
-	try{
-	  simpleInterface &periodicFound = ghostPeriodicMap.at(nodes);
-	  // Loop on all the interfaces in my partition
-	  for (std::map<std::vector<int>, simpleInterface>::iterator it = interfacesMap.begin(); it != interfacesMap.end(); ++it) {
-	    std::vector<int> nodes1 = it -> first;
-	    simpleInterface & interface1 = it -> second;
-	    // If it's a periodic BC and we haven't found a partner element yet
-	    if ((interface1.getPhysicalTag()==1)&&(interface1.getElement(1)==NULL)){
-	      // Check if they are paired
-	      bool paired = pairPeriodic(meshNodes, nodes1, nodes);
-	      if(paired){
-		interface1._elements[1] = &el;
-		interface1._closureId[1] = j+nsides;
-	      }
-	    } // end if periodic
-	  } // end loop on interfaces
-	} // end try
-	catch(const std::out_of_range &oor){ continue;} // this interface is not in my partition AND in ghostPeriodic
+  	// See if this interface is in the ghostPeriodicMap
+  	try{
+  	  simpleInterface &periodicFound = ghostPeriodicMap.at(nodes);
+  	  // Loop on all the interfaces in my partition
+  	  for (std::map<std::vector<int>, simpleInterface>::iterator it = interfacesMap.begin(); it != interfacesMap.end(); ++it) {
+  	    std::vector<int> nodes1 = it -> first;
+  	    simpleInterface & interface1 = it -> second;
+  	    // If it's a periodic BC and we haven't found a partner element yet
+  	    if ((interface1.getPhysicalTag()==1)&&(interface1.getElement(1)==NULL)){
+  	      // Check if they are paired
+  	      bool paired = pairPeriodic(meshNodes, nodes1, nodes);
+  	      if(paired){
+  		interface1._elements[1] = &el;
+  		interface1._closureId[1] = interface1._closureId[0]+nsides;
+  	      }
+  	    } // end if periodic
+  	  } // end loop on interfaces
+  	} // end try
+  	catch(const std::out_of_range &oor){ continue;} // this interface is not in my partition AND in ghostPeriodic
       } // end catch
     }
   }
-  
+
   //
   // Check to make sure there are no errors. All interfaces should
   // have neighbors on the right and left.

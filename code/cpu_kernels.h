@@ -4,13 +4,18 @@
 #include <math.h>
 #include <macros.h>
 
+#ifdef USE_MPI
+#include <mpi.h>
+#endif
+
 // Here I define the gpu kernels I will be using
 extern "C" void Lcpu_equal(int N_s, int N_E, int N_F, scalar* A, scalar* B);
 extern "C" void Lcpu_add(int N_s, int N_E, int N_F, scalar* A, scalar* B, scalar c); // A = A + c*B
 extern "C" void Lcpu_mapToFace_shallow(int M_s, int M_T, int N_F, int* map, scalar* U, scalar* UF);
 extern "C" void Lcpu_mapToFace_mhd(int M_s, int M_T, int N_F, int* map, scalar* U, scalar* UF);
 extern "C" void Lcpu_mapToFace(int M_s, int M_T, int N_F, int N_s, int* map, scalar* U, scalar* UF);
-extern "C" void Lcpu_mapToElement(int N_s, int N_E, int N_F, int* invmapx, scalar* Q, scalar* q);
+extern "C" void Lcpu_mapGhostFace(int M_s, int M_ghosts, int N_F, int* ghostInterfaces, scalar* UF);
+extern "C" void Lcpu_mapToElement(int N_s, int N_E, int N_F, int M_s, int N_N, int* invmapx, scalar* Q, scalar* q);
 extern "C" void Lcpu_collocationU(int D, int N_G, int N_s, int N_E, int N_F, scalar* Ug, scalar* dUg, scalar* phi, scalar* dphi, scalar* U);
 extern "C" void Lcpu_collocationUF(int M_G, int M_s, int M_T, int N_F, scalar* UgF, scalar* psi, scalar* UF);
 extern "C" void Lcpu_redistribute_sf(int D, int N_G, int N_E, int N_F, scalar* sJ, scalar* fJ, scalar* s, scalar* f, scalar* J, scalar* invJac);

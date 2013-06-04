@@ -150,13 +150,12 @@ arch_global void cpu_mapToFace(int M_s, int M_T, int N_F, int N_s, int* map, sca
     int fc= threadIdx.y;
 #endif
 
-	int idx = -1;
 	int face;
 
 	for(int d = 0; d < 2; d++){
-	  face = ((t*N_F+fc)*2+d)*M_s+j; // Get the interface we will operate on
-	  idx  = map[face];              // Relate it to the index of U
-	  if(idx != -1) UF[face] = U[idx];
+	  face = ((t*N_F+fc)*2+d)*M_s+j;
+	  // Get the interface we will operate on and relate it to the index of U
+	  UF[face] = U[map[face]];
 	}
 	
 #ifdef USE_CPU
@@ -166,36 +165,144 @@ arch_global void cpu_mapToFace(int M_s, int M_T, int N_F, int N_s, int* map, sca
   }
 }
 
+//==========================================================================
+arch_global void cpu_mapGhostFace(int M_s, int M_ghosts, int N_F, int* ghostInterfaces, scalar* UF){
+
+  /* Communicate the ghost edges in the mesh to and from the other
+     partitions
+
+     Just CPU version for now
+  */
+
+
+#ifdef USE_MPI
+
+  MPI_Status status[M_ghosts];
+  MPI_Request request[M_ghosts];
+  
+  MPI_Datatype strided; // make a strided datatype to access UF (only access on side of the interface)
+  // from http://stackoverflow.com/questions/15483360/mpi-sending-segments-of-an-array
+  // and http://www.mcs.anl.gov/research/projects/mpi/www/www3/MPI_Type_vector.html
+  MPI_Type_vector (N_F, M_s, 2*M_s, MPI_SCALAR, &strided);
+  MPI_Type_commit(&strided);
+
+  // Allocate a buffer for buffered send
+  int bufsize =  M_ghosts * (MPI_BSEND_OVERHEAD + N_F*M_s) + MPI_BSEND_OVERHEAD;
+  scalar *buf = new scalar[bufsize];
+  MPI_Buffer_attach( buf, bufsize );
+  
+  int t, dest_source, tag,id;
+  //MPI_Comm_rank(MPI_COMM_WORLD,&id);
+  //printf("M_ghosts=%i\n",M_ghosts);
+  for(int k = 0; k < M_ghosts; k++){
+    t           = ghostInterfaces[k*3+0];
+    dest_source = ghostInterfaces[k*3+1];
+    tag         = ghostInterfaces[k*3+2];
+
+    //printf("CPU id %i is sending/receiving interface %i to proc %i with tag %i\n",id,t,dest_source,tag);
+
+    // VERSION 1: non-blocking send and receive
+    // Non-blocking send of my interface
+    //MPI_Isend(&UF[t*N_F*2*M_s], 1, strided, dest_source, tag, MPI_COMM_WORLD, &request[2*k+0]);
+    // Non-blocking receive of the other side of that interface
+    //MPI_Irecv(&UF[t*N_F*2*M_s+M_s], 1, strided, dest_source, tag, MPI_COMM_WORLD, &request[2*k+1]);
+
+    // VERSION 2: buffered send and non-blocking receive
+    MPI_Bsend(&UF[t*N_F*2*M_s+M_s], 1, strided, dest_source, tag, MPI_COMM_WORLD);
+    MPI_Irecv(&UF[t*N_F*2*M_s+M_s], 1, strided, dest_source, tag, MPI_COMM_WORLD, &request[k]);
+  }
+
+  // Wait for all communications to end
+  MPI_Waitall(M_ghosts, request, status);
+  //printf("Sending/Receiving done by cpu %i\n",id);
+
+  // Detach the buffer
+  MPI_Buffer_detach( &buf, &bufsize);
+  
+  MPI_Type_free(&strided);
+#endif
+}
 
 //==========================================================================
-arch_global void cpu_mapToElement(int N_s, int N_E, int N_F, int* invmap, scalar* Q, scalar* Qtcj){
+arch_global void cpu_mapToElement(int N_s, int N_E, int N_F, int M_s, int N_N, int* invmap, scalar* Q, scalar* Qtcj){
 
 #ifdef USE_CPU
+  int blk=0;
   for(int e = 0; e < N_E; e++){
-    for(int i = 0; i < N_s; i++){
-      for(int fc = 0; fc < N_F; fc++){
+    scalar* sol = new scalar[N_F*N_s]; // holds the solution until we update Q
+    for(int fc = 0; fc < N_F; fc++){
 #elif USE_GPU
-  int e = blockIdx.x*blkE+threadIdx.z;
+  int blk = threadIdx.z; // sol needs room for all the elements in the block
+  int e = blockIdx.x*blkE+blk;
   if (e < N_E){
     int i = threadIdx.x;
     int fc= threadIdx.y;
+    extern __shared__ scalar sol[];
 #endif
-	int idx = 0;
-	scalar sol = 0;
-	for(int k = 0; k < 2; k++){
-	  idx = invmap[((e*N_F+fc)*2+k)*N_s+i];
-	  if(idx != -1){
-	    sol += Qtcj[idx];
-	  }
-	}
-	Q[(e*N_F+fc)*N_s+i] = sol;
+
+    // initialize sol to zero
+#ifdef USE_CPU
+    for(int i = 0; i < N_s; i++)
+#elif USE_GPU
+    if(i<N_s)
+#endif
+      sol[(blk*N_F+fc)*N_s+i] = 0;
+
+    // Get the values of Q from the interfaces
+#ifdef USE_CPU
+    for(int i = 0; i < M_s*N_N; i++){
+#elif USE_GPU
+    if(i<M_s*N_N){
+#endif
+      int solidx = invmap[((e*N_F+fc)*M_s*N_N+i)*2+0];
+      int qidx   = invmap[((e*N_F+fc)*M_s*N_N+i)*2+1];
+      sol[(blk*N_F+fc)*N_s+solidx] += Qtcj[qidx];
+    }
+
+    // Push sol to Q
+#ifdef USE_CPU
+    for(int i = 0; i < N_s; i++)
+#elif USE_GPU
+    if(i<N_s)
+#endif
+      Q[(e*N_F+fc)*N_s+i] = sol[(blk*N_F+fc)*N_s+i];
 
 #ifdef USE_CPU
-      }
-    }
+    }// end loop on fields
+    delete[] sol;
+  } // end loop on elements
 #endif
-  }
 }
+   
+//   //==========================================================================
+// arch_global void cpu_mapToElement(int N_s, int N_E, int N_F, int* invmap, scalar* Q, scalar* Qtcj){
+
+// #ifdef USE_CPU
+//   for(int e = 0; e < N_E; e++){
+//     for(int i = 0; i < N_s; i++){
+//       for(int fc = 0; fc < N_F; fc++){
+// #elif USE_GPU
+//   int e = blockIdx.x*blkE+threadIdx.z;
+//   if (e < N_E){
+//     int i = threadIdx.x;
+//     int fc= threadIdx.y;
+// #endif
+// 	int idx = 0;
+// 	scalar sol = 0;
+// 	for(int k = 0; k < 2; k++){
+// 	  idx = invmap[((e*N_F+fc)*2+k)*N_s+i];
+// 	  if(idx != -1){
+// 	    sol += Qtcj[idx];
+// 	  }
+// 	}
+// 	Q[(e*N_F+fc)*N_s+i] = sol;
+
+// #ifdef USE_CPU
+//       }
+//     }
+// #endif
+//   }
+// }
 
 //==========================================================================
 arch_global void cpu_collocationU(int D, int N_G, int N_s, int N_E, int N_F, scalar* Ug, scalar* dUg, scalar* phi, scalar* dphi, scalar* U){
@@ -930,18 +1037,33 @@ void Lcpu_mapToFace(int M_s, int M_T, int N_F, int N_s, int* map, scalar* U, sca
   cpu_mapToFace arch_args (M_s, M_T, N_F, N_s, map, U, UF);
 }
 
+extern "C"
+void Lcpu_mapGhostFace(int M_s, int M_ghosts, int N_F, int* ghostInterfaces, scalar* UF){
+
+#ifdef USE_GPU
+  int div = M_ghosts/blkT;
+  int mod = 0;
+  if (M_ghosts%blkT != 0) mod = 1;
+  dim3 dimBlock(M_s,N_F,blkT);
+  dim3 dimGrid(div+mod,1);
+#endif
+
+  cpu_mapGhostFace arch_args (M_s, M_ghosts, N_F, ghostInterfaces, UF);
+
+}
+
 extern "C" 
-void Lcpu_mapToElement(int N_s, int N_E, int N_F, int* invmap, scalar* Q, scalar* q){
+void Lcpu_mapToElement(int N_s, int N_E, int N_F, int M_s, int N_N, int* invmap, scalar* Q, scalar* q){
 
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
   if (N_E%blkE != 0) mod = 1;
-  dim3 dimBlock(N_s,N_F,blkE);
+  dim3 dimBlock(MAX(N_s,M_s*N_N),N_F,blkE);
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_mapToElement arch_args (N_s, N_E, N_F, invmap, Q, q);
+  cpu_mapToElement arch_args_array(blkE*N_F*N_s*sizeof(scalar)) (N_s, N_E, N_F, M_s, N_N, invmap, Q, q);
 }
 
 extern "C" 

@@ -113,7 +113,7 @@ int main (int argc, char **argv)
 #endif
 
   // Remove later! 
-  sleep(myid*3);
+  //sleep(myid*3);
   
   ////////////////////////////////////////////////////////////////////////////
   //
@@ -260,21 +260,21 @@ int main (int argc, char **argv)
   //   printf("CPU id=%i : ol id=%i, partition=%i\n",myid,el.getId(),el.getPartition());
   // }
 
+  
   // Get the nodes, elements, interfaces, normals
   const fullMatrix<double> &nodes = m.getNodes();
   const std::vector<simpleElement> &elements = m.getElements(elem_type);
   m.buildInterfaces(face_type, elem_type,nsides);
   const std::vector<simpleInterface> &interfaces = m.getInterfaces();
 
-  for(int i=0; i<interfaces.size();i++){
-    const simpleInterface &face = interfaces[i];
-    const simpleElement *el1 = face.getElement(0); // get the element of face 1
-    const simpleElement *el2 = face.getElement(1); // get the element of face 2
-    if (el2!=NULL) printf("CPU id=%i : face=%i, physical=%i, el1 id=%i, el2 id=%i\n",myid,i,face.getPhysicalTag(),el1->getId(),el2->getId());
-    else printf("CPU id=%i : face=%i, physical=%i, el1 id=%i\n",myid,i,face.getPhysicalTag(),el1->getId());
-  }
-
-   
+  // for(int i=0; i<interfaces.size();i++){
+  //   const simpleInterface &face = interfaces[i];
+  //   const simpleElement *el1 = face.getElement(0); // get the element of face 1
+  //   const simpleElement *el2 = face.getElement(1); // get the element of face 2
+  //   if (el2!=NULL) printf("CPU id=%i : face=%i, physical=%i, el1 id=%i, el2 id=%i\n",myid,i,face.getPhysicalTag(),el1->getId(),el2->getId());
+  //   else printf("CPU id=%i : face=%i, physical=%i, el1 id=%i\n",myid,i,face.getPhysicalTag(),el1->getId());
+  // }
+ 
   m.buildNormals(face_type, elem_type, D);
   const fullMatrix<scalar> &normals = m.getNormals();
 
@@ -287,12 +287,6 @@ int main (int argc, char **argv)
   int* h_ghostElementSend = m.getGhostElementSend();
   int* h_ghostElementRecv = m.getGhostElementRecv();
 
-  for(int k=0; k<6;k++){
-    printf("send %i, to cpu=%i, tag=%i\n",h_ghostInterfaces[k*3+0],h_ghostInterfaces[k*3+1],h_ghostInterfaces[k*3+2]);
-    printf("    send el %i, to cpu=%i, tag=%i\n",h_ghostElementSend[k*3+0],h_ghostElementSend[k*3+1],h_ghostElementSend[k*3+2]);
-    printf("    recv el %i, from cpu=%i, tag=%i\n",h_ghostElementRecv[k*3+0],h_ghostElementRecv[k*3+1],h_ghostElementRecv[k*3+2]);
-  }
-  
   
   ////////////////////////////////////////////////////////////////////////////   
   //
@@ -351,7 +345,13 @@ int main (int argc, char **argv)
   printf("N_G %i\n",N_G);
   printf("M_G %i\n",M_G);
   printf("N_ghosts %i\n",N_ghosts);
- 
+
+  // for(int k=0; k<N_ghosts;k++){
+  //   printf("send %i, to cpu=%i, tag=%i\n",h_ghostInterfaces[k*3+0],h_ghostInterfaces[k*3+1],h_ghostInterfaces[k*3+2]);
+  //   printf("    send el %i, to cpu=%i, tag=%i\n",h_ghostElementSend[k*3+0],h_ghostElementSend[k*3+1],h_ghostElementSend[k*3+2]);
+  //   printf("    recv el %i, from cpu=%i, tag=%i\n",h_ghostElementRecv[k*3+0],h_ghostElementRecv[k*3+1],h_ghostElementRecv[k*3+2]);
+  // }
+  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Calcul de la valeur des fonctions de formes aux points d'integration
@@ -466,6 +466,7 @@ int main (int argc, char **argv)
     for(int d = 0; d < 2; d++){
       const simpleElement *el = face.getElement(d);
       if(el->getPartition()==myid){
+	//if(el!=NULL){
   	int id = face.getClosureId(d);
   	const std::vector<int> &cl = closures[id];
   	for(int j = 0; j < M_s; j++){
@@ -483,16 +484,6 @@ int main (int argc, char **argv)
       }
     }
   }
-
-  // for (int t = 0; t < M_T; t++) {
-  //   for(int d = 0; d < 2; d++){
-  //     for(int j = 0; j < M_s; j++){
-  // 	printf("(x,y) = (%f,%f)\n",XYZNodesF(j,(t*2+d)*D+0),XYZNodesF(j,(t*2+d)*D+1));
-  //     }
-  //   }
-  //   printf("\n");
-  // }
-	
   XYZGF.gemm (psi, XYZNodesF);
 
   
@@ -531,7 +522,6 @@ int main (int argc, char **argv)
   //if(cartesian) m.sortNeighbors(N_E,N_N, XYZCen);
   int* h_neighbors = m.getNeighbors();
 
-  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Monomial to Lagrange basis transforms
@@ -565,6 +555,7 @@ int main (int argc, char **argv)
     LagMono2DTransformsCartesian(order, msh_lin, Px, Py, Lag2MonoX, MonoX2MonoY, MonoY2Lag);
     monovandermonde1d(order, pointsF, monoV);
   }
+
 
   // //
   // // Unstructured mesh limiting
@@ -668,7 +659,7 @@ int main (int argc, char **argv)
   // Calculate the jacobian matrix for each integration point
   //
   //////////////////////////////////////////////////////////////////////////
-  
+
   // Elements
   fullMatrix<scalar> Jac(N_E*D,N_G*D);
   fullMatrix<scalar> invJac(N_E*D,N_G*D); // Inverse Jacobian matrix: dxi/dx
@@ -687,7 +678,7 @@ int main (int argc, char **argv)
   // Calculate the inverse mass matrices
   //
   //////////////////////////////////////////////////////////////////////////
-  
+
   scalar* h_Minv = new scalar[N_s*N_s*N_E];
   dg_inverse_mass_matrix(order, elem_type, inputs.getElemType(), N_s, N_E, D, XYZNodes, h_Minv);
 
@@ -697,288 +688,305 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
   int* h_map = new int[M_s*M_T*N_F*2];
-  int* h_invmap = new int[N_s*N_E*N_F*2];
-  dg_mappings(myid, M_s, M_T, N_F, N_s, N_E, interfaces, ElementMap, closures, h_map, h_invmap);
+  int* h_invmap = new int[M_s*N_N*N_E*N_F*2];
+  dg_mappings(myid, M_s, M_T, N_F, N_s, N_E, N_N, interfaces, ElementMap, closures, h_map, h_invmap);
+
+  // FILE * mappings;
+  // int kk=0;
+  // char buffer[50];
+  // kk=sprintf(buffer,"map%i.dat",myid);
+  // mappings = fopen(buffer,"w");
+  // for(int t=0; t<M_T; t++){
+  //   for(int d=0; d<2; d++){
+  //     for(int j=0; j<M_s; j++){
+  // 	fprintf(mappings,"%5i ",h_map[((t*N_F+0)*2+d)*M_s+j]);
+  //     }
+  //   }
+  //   fprintf(mappings,"\n");
+  // }
+  // for(int k =0; k< M_s*N_N*N_E*N_F*2; k++){fprintf(mappings,"%5i\n",h_invmap[k]);}
+  // fclose(mappings);
   
-//   //==========================================================================
-//   //
-//   //   GPU calculations
-//   //
-//   //==========================================================================
-// #ifdef USE_GPU
-//   // Choose the device
-//   CUDA_SAFE_CALL(cudaSetDevice(0));
+  //==========================================================================
+  //
+  //   GPU calculations
+  //
+  //==========================================================================
+#ifdef USE_GPU
+  // Choose the device
+  CUDA_SAFE_CALL(cudaSetDevice(0));
 
-//   // Use cublas or not
-//   cublasStatus status;
-//   status = cublasInit();
-// #endif
+  // Use cublas or not
+  cublasStatus status;
+  status = cublasInit();
+#endif
 
-//   //////////////////////////////////////////////////////////////////////////   
-//   //
-//   // Initialize some stuff on the host
-//   //
-//   //////////////////////////////////////////////////////////////////////////   
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Initialize some stuff on the host
+  //
+  //////////////////////////////////////////////////////////////////////////   
 
-//   //
-//   //  We need to transform the data in fullMatrix to a pointer form to
-//   //  transfer to GPU note: it's got to be column major sorted
-//   //
-//   scalar* h_phi     = new scalar[N_G*N_s];          makeZero(h_phi,N_G*N_s);
-//   scalar* h_phi_w   = new scalar[N_G*N_s];          makeZero(h_phi_w,N_G*N_s);          
-//   scalar* h_dphi    = new scalar[D*N_G*N_s];	    makeZero(h_dphi,D*N_G*N_s);	 
-//   scalar* h_dphi_w  = new scalar[D*N_G*N_s];	    makeZero(h_dphi_w,D*N_G*N_s);
-//   scalar* h_psi     = new scalar[M_G*M_s];	    makeZero(h_psi,M_G*M_s);	 
-//   scalar* h_psi_w   = new scalar[M_G*M_s];	    makeZero(h_psi_w,M_G*M_s);	 
-//   scalar* h_J       = new scalar[N_E];              makeZero(h_J,N_E);                                 // not same as J!!
-//   scalar* h_invJac  = new scalar[N_G*D*N_E*D];      makeZero(h_invJac,N_G*D*N_E*D);                    // not same as invJac!!
-//   scalar* h_JF      = new scalar[2*M_T];            makeZero(h_JF, D*M_T);
-//   scalar* h_normals = new scalar[D*M_T];	    makeZero(h_normals,D*M_T);	 
-//   scalar* h_U       = new scalar[N_s*N_E*N_F];	    makeZero(h_U,N_s*N_E*N_F);
+  //
+  //  We need to transform the data in fullMatrix to a pointer form to
+  //  transfer to GPU note: it's got to be column major sorted
+  //
+  scalar* h_phi     = new scalar[N_G*N_s];          makeZero(h_phi,N_G*N_s);
+  scalar* h_phi_w   = new scalar[N_G*N_s];          makeZero(h_phi_w,N_G*N_s);          
+  scalar* h_dphi    = new scalar[D*N_G*N_s];	    makeZero(h_dphi,D*N_G*N_s);	 
+  scalar* h_dphi_w  = new scalar[D*N_G*N_s];	    makeZero(h_dphi_w,D*N_G*N_s);
 
-//   // copy from the fullMatrix to the pointer format (column major)
-//   phi.copyMatrixToPointer(h_phi);
-//   phi_w.copyMatrixToPointer(h_phi_w);
-//   dphi.copyMatrixToPointer(h_dphi);
-//   dphi_w.copyMatrixToPointer(h_dphi_w);
-//   psi.copyMatrixToPointer(h_psi);
-//   psi_w.copyMatrixToPointer(h_psi_w);
-//   for(int e = 0; e < N_E; e++){
-//     h_J[e] = J(e,0);
-//   }
-//   for(int e = 0; e < N_E; e++){
-//     for(int g = 0; g < N_G; g++){
-//       for(int alpha = 0; alpha < D; alpha++){
-//   	for(int a = 0; a < D; a++){
-//   	  h_invJac[((e*N_G+g)*D+alpha)*D+a] = invJac(e*D+alpha,g*D+a);
-//   	}
-//       }
-//     }
-//   }
-//   for(int t = 0; t < M_T; t++){
-//     for(int d = 0; d < 2; d++){
-//       h_JF[t*2+d] = JF(t*2+d,0);
-//     }
-//   }
-//   normals.copyMatrixToPointer(h_normals);
-//   for(int e = 0; e < N_E; e++){
-//     for(int fc = 0; fc < N_F; fc++){
-//       for(int i = 0; i < N_s; i++){
-//   	h_U[(e*N_F+fc)*N_s+i]= U(i,e*N_F+fc);
-//       }
-//     }
-//   }
+  scalar* h_psi     = new scalar[M_G*M_s];	    makeZero(h_psi,M_G*M_s);	 
+  scalar* h_psi_w   = new scalar[M_G*M_s];	    makeZero(h_psi_w,M_G*M_s);	 
+  scalar* h_J       = new scalar[N_E];              makeZero(h_J,N_E);               // not same as J!!
+  scalar* h_invJac  = new scalar[N_G*D*N_E*D];      makeZero(h_invJac,N_G*D*N_E*D);  // not same as invJac!!
+  scalar* h_JF      = new scalar[2*M_T];            makeZero(h_JF, D*M_T);
+  scalar* h_normals = new scalar[D*M_T];	    makeZero(h_normals,D*M_T);	 
+  scalar* h_U       = new scalar[N_s*N_E*N_F];	    makeZero(h_U,N_s*N_E*N_F);
+
+  // copy from the fullMatrix to the pointer format (column major)
+  phi.copyMatrixToPointer(h_phi);
+  phi_w.copyMatrixToPointer(h_phi_w);
+  dphi.copyMatrixToPointer(h_dphi);
+  dphi_w.copyMatrixToPointer(h_dphi_w);
+  psi.copyMatrixToPointer(h_psi);
+  psi_w.copyMatrixToPointer(h_psi_w);
+  for(int e = 0; e < N_E; e++){
+    h_J[e] = J(e,0);
+  }
+  for(int e = 0; e < N_E; e++){
+    for(int g = 0; g < N_G; g++){
+      for(int alpha = 0; alpha < D; alpha++){
+  	for(int a = 0; a < D; a++){
+  	  h_invJac[((e*N_G+g)*D+alpha)*D+a] = invJac(e*D+alpha,g*D+a);
+  	}
+      }
+    }
+  }
+  for(int t = 0; t < M_T; t++){
+    for(int d = 0; d < 2; d++){
+      h_JF[t*2+d] = JF(t*2+d,0);
+    }
+  }
+  normals.copyMatrixToPointer(h_normals);
+  for(int e = 0; e < N_E; e++){
+    for(int fc = 0; fc < N_F; fc++){
+      for(int i = 0; i < N_s; i++){
+  	h_U[(e*N_F+fc)*N_s+i]= U(i,e*N_F+fc);
+      }
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Setup the limiter
+  //
+  //////////////////////////////////////////////////////////////////////////
+  scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++) h_weight[g] = (scalar)weight(g,0);  
+#ifdef ONED
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, N_N, h_neighbors, Lag2Mono, Mono2Lag, monoV, h_weight);
+#elif TWOD
+
+  //
+  // Structured mesh
+  //
+  //if(cartesian){
+  scalar* h_weightF  = new scalar[M_G]; makeZero(h_weightF,M_G); for(int g=0; g<M_G; g++) h_weightF[g] = (scalar)weightF(g,0);  
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, order, cartesian, N_N, h_neighbors, Lag2MonoX, MonoX2MonoY, MonoY2Lag, monoV, h_weightF);
+  delete[] h_weightF;
+  //}
+  
+  // //
+  // // Unstructured mesh
+  // //
+  // if(!cartesian){
+  //   int L = getTaylorDerIdx2DLength(order);
+  //   int* h_TaylorDxIdx = new int[L];
+  //   int* h_TaylorDyIdx = new int[L];
+  //   getTaylorDerIdx2D(order, h_TaylorDxIdx, h_TaylorDyIdx);
+  //   Limiting Limiter = Limiting(limiterMethod, D, N_s, N_E, N_F, N_G, N_N, L, order, L2Msize1, L2Msize2, h_neighbors, Lag2Mono, Mono2Lag, XYZCen, h_powersXYZG, h_weight, refArea, h_TaylorDxIdx, h_TaylorDyIdx);
+  //   delete[] h_TaylorDxIdx; delete[] h_TaylorDyIdx;
+  //   delete[] h_powersXYZG;
+  // }
  
-//   //////////////////////////////////////////////////////////////////////////   
-//   //
-//   // Setup the limiter
-//   //
-//   //////////////////////////////////////////////////////////////////////////
-//   scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++) h_weight[g] = (scalar)weight(g,0);  
-// #ifdef ONED
-//   Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, N_N, h_neighbors, Lag2Mono, Mono2Lag, monoV, h_weight);
-// #elif TWOD
+#endif
 
-//   //
-//   // Structured mesh
-//   //
-//   //if(cartesian){
-//   scalar* h_weightF  = new scalar[M_G]; makeZero(h_weightF,M_G); for(int g=0; g<M_G; g++) h_weightF[g] = (scalar)weightF(g,0);  
-//   Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, order, cartesian, N_N, h_neighbors, Lag2MonoX, MonoX2MonoY, MonoY2Lag, monoV, h_weightF);
-//   delete[] h_weightF;
-//   //}
-  
-//   // //
-//   // // Unstructured mesh
-//   // //
-//   // if(!cartesian){
-//   //   int L = getTaylorDerIdx2DLength(order);
-//   //   int* h_TaylorDxIdx = new int[L];
-//   //   int* h_TaylorDyIdx = new int[L];
-//   //   getTaylorDerIdx2D(order, h_TaylorDxIdx, h_TaylorDyIdx);
-//   //   Limiting Limiter = Limiting(limiterMethod, D, N_s, N_E, N_F, N_G, N_N, L, order, L2Msize1, L2Msize2, h_neighbors, Lag2Mono, Mono2Lag, XYZCen, h_powersXYZG, h_weight, refArea, h_TaylorDxIdx, h_TaylorDyIdx);
-//   //   delete[] h_TaylorDxIdx; delete[] h_TaylorDyIdx;
-//   //   delete[] h_powersXYZG;
-//   // }
- 
-// #endif
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Solve the problem on the CPU/GPU.
+  //
+  //////////////////////////////////////////////////////////////////////////   
+  double DtOut = inputs.getOutputTimeStep(); 
+  double Tf    = inputs.getFinalTime();
+  m.setDx(N_N,N_E,D,XYZCen,XYZNodes);
+  scalar CFL   = inputs.getCFL()*m.getDx()/(2*order+1);
 
-//   //////////////////////////////////////////////////////////////////////////   
-//   //
-//   // Solve the problem on the CPU/GPU.
-//   //
-//   //////////////////////////////////////////////////////////////////////////   
-//   double DtOut = inputs.getOutputTimeStep(); 
-//   double Tf    = inputs.getFinalTime();
-//   m.setDx(N_N,N_E,D,XYZCen,XYZNodes);
-//   scalar CFL   = inputs.getCFL()*m.getDx()/(2*order+1);
-  
-  // printf("==== Now RK 4 steps =====\n");
-  // DG_SOLVER dgsolver = DG_SOLVER(D, N_F, N_E, N_s, N_G, M_T, M_s, M_G, M_B,
-  // 				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, h_J, h_invJac, h_JF, h_weight, h_normals,
-  // 				 h_boundaryMap, h_boundaryIdx);
-  // RK rk4 = RK(4);
-  // rk4.RK_integration(DtOut, Tf, CFL,
-  // 		     D, N_F, N_E, N_s, N_G, M_T, M_s,
-  // 		     h_Minv, 
-  // 		     h_U,
-  // 		     Limiter, order0, dgsolver,
-  // 		     elem_type, m);
+  printf("==== Now RK 4 steps =====\n");
+  DG_SOLVER dgsolver = DG_SOLVER(D, N_F, N_E, N_s, N_G, N_N, M_T, M_s, M_G, M_B, N_ghosts,
+  				 h_map, h_invmap, h_ghostInterfaces, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, h_J, h_invJac, h_JF, h_weight, h_normals,
+  				 h_boundaryMap, h_boundaryIdx);
+  RK rk4 = RK(4);
+  rk4.RK_integration(DtOut, Tf, CFL,
+  		     D, N_F, N_E, N_s, N_G, M_T, M_s,
+  		     h_Minv, 
+  		     h_U,
+  		     Limiter, order0, dgsolver,
+  		     elem_type, m);
 
-//   //////////////////////////////////////////////////////////////////////////   
-//   //
-//   // Error calcuations
-//   //
-//   //////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Error calcuations
+  //
+  //////////////////////////////////////////////////////////////////////////
 
-//   // Initial condition
-//   fullMatrix<scalar> Uinit(N_s, N_E*N_F);
-// #ifdef MULTIFLUID
-//   if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-//   else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-//   else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-//   else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-//   else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-//   else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-//   else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-//   else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-//   else if(rarecon) init_dg_rarecon_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
-//   else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
-//   else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
-//   else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
-//   else if(khblast) init_dg_khblast_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
-//   else if(rarec2d) init_dg_rarec2d_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
-// #elif PASSIVE
-//   if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
-//   if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
-// #endif
-//   scalar* h_Uinit = new scalar[N_s*N_E*N_F];  makeZero(h_Uinit,N_s*N_E*N_F);
-//   for(int e = 0; e < N_E; e++){
-//     for(int fc = 0; fc < N_F; fc++){
-//       for(int i = 0; i < N_s; i++){
-// 	h_Uinit[(e*N_F+fc)*N_s+i] = Uinit(i,e*N_F+fc);}}}
+  // Initial condition
+  fullMatrix<scalar> Uinit(N_s, N_E*N_F);
+#ifdef MULTIFLUID
+  if     (simplew) init_dg_simplew_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(contact) init_dg_contact_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(expogam) init_dg_expogam_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(shckint) init_dg_shckint_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(rarecon) init_dg_rarecon_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
+  else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
+  else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
+  else if(khblast) init_dg_khblast_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
+  else if(rarec2d) init_dg_rarec2d_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
+#elif PASSIVE
+  if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
+  if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
+#endif
+  scalar* h_Uinit = new scalar[N_s*N_E*N_F];  makeZero(h_Uinit,N_s*N_E*N_F);
+  for(int e = 0; e < N_E; e++){
+    for(int fc = 0; fc < N_F; fc++){
+      for(int i = 0; i < N_s; i++){
+	h_Uinit[(e*N_F+fc)*N_s+i] = Uinit(i,e*N_F+fc);}}}
 
-//   // Change to primitive variables
-//   for(int e = 0; e < N_E; e++){
-//     for(int i = 0; i < N_s; i++){
-//       // velocity
-//       h_Uinit[(e*N_F+1)*N_s+i] = h_Uinit[(e*N_F+1)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; 
-//       h_U    [(e*N_F+1)*N_s+i] = h_U    [(e*N_F+1)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
-// #ifdef MULTIFLUID
-//       // gamma: get everything in terms of 1/(gamma-1)
-// #ifdef GAMCONS
-//       h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i];
-//       h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
-// #elif GAMNCON
-//       h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i];
-//       h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i];
-// #endif
-//       // pressure = (gamma-1)*(E-0.5 rho*v*v)
-//       h_Uinit[(e*N_F+2)*N_s+i] = 1.0/h_Uinit[(e*N_F+3)*N_s+i]*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
-//       h_U    [(e*N_F+2)*N_s+i] = 1.0/h_U    [(e*N_F+3)*N_s+i]*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
-// #elif PASSIVE
-//       // pressure = (gamma-1)*(E-0.5 rho*v*v)
-//       scalar gamma = constants::GLOBAL_GAMMA;
-//       h_Uinit[(e*N_F+2)*N_s+i] = (gamma-1)*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
-//       h_U    [(e*N_F+2)*N_s+i] = (gamma-1)*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
-//       // conservative phi
-//       h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; 
-//       h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
-// #endif
-//     }
-//   }
+  // Change to primitive variables
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+      // velocity
+      h_Uinit[(e*N_F+1)*N_s+i] = h_Uinit[(e*N_F+1)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; 
+      h_U    [(e*N_F+1)*N_s+i] = h_U    [(e*N_F+1)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
+#ifdef MULTIFLUID
+      // gamma: get everything in terms of 1/(gamma-1)
+#ifdef GAMCONS
+      h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i];
+      h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
+#elif GAMNCON
+      h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i];
+      h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i];
+#endif
+      // pressure = (gamma-1)*(E-0.5 rho*v*v)
+      h_Uinit[(e*N_F+2)*N_s+i] = 1.0/h_Uinit[(e*N_F+3)*N_s+i]*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
+      h_U    [(e*N_F+2)*N_s+i] = 1.0/h_U    [(e*N_F+3)*N_s+i]*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
+#elif PASSIVE
+      // pressure = (gamma-1)*(E-0.5 rho*v*v)
+      scalar gamma = constants::GLOBAL_GAMMA;
+      h_Uinit[(e*N_F+2)*N_s+i] = (gamma-1)*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
+      h_U    [(e*N_F+2)*N_s+i] = (gamma-1)*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
+      // conservative phi
+      h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; 
+      h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
+#endif
+    }
+  }
 
     
-//   // Collocate the solution to the integration points
-//   scalar* h_Uinitg = new scalar[N_G*N_E*N_F];  makeZero(h_Uinitg,N_G*N_E*N_F);
-//   scalar* h_Ug     = new scalar[N_G*N_E*N_F];  makeZero(h_Ug    ,N_G*N_E*N_F);
-//   hostblasGemm('N','N', N_G, N_E*N_F, N_s, 1, h_phi, N_G, h_Uinit, N_s, 0.0, h_Uinitg, N_G);
-//   hostblasGemm('N','N', N_G, N_E*N_F, N_s, 1, h_phi, N_G, h_U    , N_s, 0.0, h_Ug    , N_G);
+  // Collocate the solution to the integration points
+  scalar* h_Uinitg = new scalar[N_G*N_E*N_F];  makeZero(h_Uinitg,N_G*N_E*N_F);
+  scalar* h_Ug     = new scalar[N_G*N_E*N_F];  makeZero(h_Ug    ,N_G*N_E*N_F);
+  hostblasGemm('N','N', N_G, N_E*N_F, N_s, 1, h_phi, N_G, h_Uinit, N_s, 0.0, h_Uinitg, N_G);
+  hostblasGemm('N','N', N_G, N_E*N_F, N_s, 1, h_phi, N_G, h_U    , N_s, 0.0, h_Ug    , N_G);
 
-//   // Take the cell average of the solution
-//   scalar* h_UinitAvg = new scalar[N_E*N_F];  makeZero(h_UinitAvg,N_E*N_F);
-//   scalar* h_UAvg     = new scalar[N_E*N_F];  makeZero(h_UAvg    ,N_E*N_F);
-//   scalar dx = XYZNodes(1,0*D+0)-XYZNodes(0,0*D+0);
-//   for(int e = 0; e < N_E; e++){
-//     for(int fc = 0; fc < N_F; fc++){
-//       for(int g = 0; g < N_G; g++){
-// 	h_UinitAvg[e*N_F+fc] += h_Uinitg[(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
-// 	h_UAvg    [e*N_F+fc] += h_Ug    [(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
-//       }
-//     }
-//   }
+  // Take the cell average of the solution
+  scalar* h_UinitAvg = new scalar[N_E*N_F];  makeZero(h_UinitAvg,N_E*N_F);
+  scalar* h_UAvg     = new scalar[N_E*N_F];  makeZero(h_UAvg    ,N_E*N_F);
+  scalar dx = XYZNodes(1,0*D+0)-XYZNodes(0,0*D+0);
+  for(int e = 0; e < N_E; e++){
+    for(int fc = 0; fc < N_F; fc++){
+      for(int g = 0; g < N_G; g++){
+	h_UinitAvg[e*N_F+fc] += h_Uinitg[(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
+	h_UAvg    [e*N_F+fc] += h_Ug    [(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
+      }
+    }
+  }
 
-//   // Calculate the different norms of the error
-//   scalar E = 0;
-//   scalar EMod = 0;
-//   scalar* h_Err1      = new scalar[N_F]; makeZero(h_Err1   , N_F);
-//   scalar* h_Err2      = new scalar[N_F]; makeZero(h_Err2   , N_F);
-//   scalar* h_ErrInf    = new scalar[N_F]; makeZero(h_ErrInf   , N_F);
-//   for(int e = 0; e < N_E; e++){
-//     for(int fc = 0; fc < N_F; fc++){
-//       E    = h_UinitAvg   [e*N_F+fc]-h_UAvg   [e*N_F+fc];
-//       h_Err1[fc]    += fabs(E);
-//       h_Err2[fc]    += E   *E;
-//       if (h_ErrInf[fc]    < fabs(E   ))  h_ErrInf   [fc] = fabs(E);
-//     }
-//   }
+  // Calculate the different norms of the error
+  scalar E = 0;
+  scalar EMod = 0;
+  scalar* h_Err1      = new scalar[N_F]; makeZero(h_Err1   , N_F);
+  scalar* h_Err2      = new scalar[N_F]; makeZero(h_Err2   , N_F);
+  scalar* h_ErrInf    = new scalar[N_F]; makeZero(h_ErrInf   , N_F);
+  for(int e = 0; e < N_E; e++){
+    for(int fc = 0; fc < N_F; fc++){
+      E    = h_UinitAvg   [e*N_F+fc]-h_UAvg   [e*N_F+fc];
+      h_Err1[fc]    += fabs(E);
+      h_Err2[fc]    += E   *E;
+      if (h_ErrInf[fc]    < fabs(E   ))  h_ErrInf   [fc] = fabs(E);
+    }
+  }
   
-//   // Output some stuff in a file to read by post-proc
-//   std::string error = "error.dat"; 
-//   FILE *f = fopen(error.c_str(),"w");
-//   fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_Err1[fc]/N_E);          fprintf(f,"\n");
-//   fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", sqrt(h_Err2[fc]/N_E));    fprintf(f,"\n");
-//   fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_ErrInf[fc]);            fprintf(f,"\n");
-//   fclose(f);
+  // Output some stuff in a file to read by post-proc
+  std::string error = "error.dat"; 
+  FILE *f = fopen(error.c_str(),"w");
+  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_Err1[fc]/N_E);          fprintf(f,"\n");
+  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", sqrt(h_Err2[fc]/N_E));    fprintf(f,"\n");
+  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_ErrInf[fc]);            fprintf(f,"\n");
+  fclose(f);
   
-  // // Free some stuff
-  // delete[] h_Uinit;
-  // delete[] h_Uinitg;
-  // delete[] h_UinitAvg;
-  // delete[] h_Ug;
-  // delete[] h_UAvg;
-  // delete[] h_Err1;
-  // delete[] h_Err2;
-  // delete[] h_ErrInf;
+  // Free some stuff
+  delete[] h_Uinit;
+  delete[] h_Uinitg;
+  delete[] h_UinitAvg;
+  delete[] h_Ug;
+  delete[] h_UAvg;
+  delete[] h_Err1;
+  delete[] h_Err2;
+  delete[] h_ErrInf;
 
 
-//   //////////////////////////////////////////////////////////////////////////   
-//   //
-//   // Free stuff on the device
-//   //
-//   //////////////////////////////////////////////////////////////////////////   
-// #ifdef USE_GPU
-//   status = cublasShutdown();
-// #endif
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Free stuff on the device
+  //
+  //////////////////////////////////////////////////////////////////////////   
+#ifdef USE_GPU
+  status = cublasShutdown();
+#endif
   
   
-//   //////////////////////////////////////////////////////////////////////////   
-//   //
-//   // Free stuff on the host
-//   //
-//   //////////////////////////////////////////////////////////////////////////   
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Free stuff on the host
+  //
+  //////////////////////////////////////////////////////////////////////////   
   delete[] h_ghostInterfaces;
   delete[] h_ghostElementSend;
   delete[] h_ghostElementRecv;
 
-//   delete[] h_boundaryMap;
-//   delete[] h_boundaryIdx;
-//   delete[] h_neighbors;
-//   delete[] h_Minv;
-//   delete[] h_map;
-//   delete[] h_invmap;
-//   delete[] h_phi;
-//   delete[] h_phi_w;
-//   delete[] h_dphi;
-//   delete[] h_dphi_w;
-//   delete[] h_psi;
-//   delete[] h_psi_w;
-//   delete[] h_weight;
-//   delete[] h_J;
-//   delete[] h_JF;
-//   delete[] h_invJac;
-//   delete[] h_normals;
-//   delete[] h_U;
+  delete[] h_boundaryMap;
+  delete[] h_boundaryIdx;
+  delete[] h_neighbors;
+  delete[] h_Minv;
+  delete[] h_map;
+  delete[] h_invmap;
+  delete[] h_phi;
+  delete[] h_phi_w;
+  delete[] h_dphi;
+  delete[] h_dphi_w;
+  delete[] h_psi;
+  delete[] h_psi_w;
+  delete[] h_weight;
+  delete[] h_J;
+  delete[] h_JF;
+  delete[] h_invJac;
+  delete[] h_normals;
+  delete[] h_U;
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -986,6 +994,7 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
 #ifdef USE_MPI
+  MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
   MPI_Finalize();
 #endif
 
@@ -1352,13 +1361,13 @@ void LagMono2DTransformsCartesian(const int order, const int msh_lin, const full
   for(int g = 0; g < N_G1D; g++)
     for(int i = 0; i < N_s1D; i++)
       phi(g,i) = (scalar)phiD(g,i);
-  
+
   // Vandermonde matrix and inverse
   fullMatrix<scalar> V;
   fullMatrix<scalar> Vinv;
   monovandermonde1d(order, points, V);
   V.invert(Vinv);
-
+  
   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
   fullMatrix<scalar> Transform1D(order+1,order+1);
   Transform1D.gemm(Vinv, phi);
@@ -1369,13 +1378,13 @@ void LagMono2DTransformsCartesian(const int order, const int msh_lin, const full
     for(int i=0;i<order+1;i++)
       for(int j=0;j<order+1;j++)
 	DiagVinv(i+p*(order+1),j+p*(order+1)) = Transform1D(i,j);
-
+  
   // Lag2MonoX = diag(monoVinv,order+1) X Px
   Lag2MonoX.resize(N_s,N_s);
   Lag2MonoX.gemm(DiagVinv,Px);
   fullMatrix<scalar> MonoX2Lag(N_s,N_s);
   Lag2MonoX.invert(MonoX2Lag);
-
+  
   // Lag2MonoY = diag(monoVinv,order+1) X Py
   fullMatrix<scalar> Lag2MonoY(N_s,N_s);
   Lag2MonoY.gemm(DiagVinv,Py);
