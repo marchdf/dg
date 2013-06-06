@@ -15,18 +15,19 @@ class DG_SOLVER
   int _N_E;
   int _N_s;
   int _N_G;
+  int _N_N;
   int _M_T;
   int _M_s;
   int _M_G;
   int _M_B;
+  int _M_ghosts;
   int* _map;
   int* _invmap;
+  int* _ghostInterfaces;
   int* _boundaryMap;
-  int _periodicIdx;
-  int _farfieldIdx;
   int _rflctiveIdx;
-  int _farfieldstart;
-  int _rflctivestart;
+  int _otheroneIdx;
+  int _otheronestart;
   scalar* _phi     ; 
   scalar* _phi_w   ; 
   scalar* _dphi    ; 
@@ -63,23 +64,24 @@ class DG_SOLVER
   
  public:
   // constructor
- DG_SOLVER(int D, int N_F, int N_E, int N_s, int N_G, int M_T, int M_s, int M_G, int M_B,
-	   int* map, int* invmap, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* psi, scalar* psi_w, scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals, int* boundaryMap, int* boundaryIdx) :
-  _D(D), _N_F(N_F), _N_E(N_E), _N_s(N_s), _N_G(N_G), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B) {
+ DG_SOLVER(int D, int N_F, int N_E, int N_s, int N_G,  int N_N, int M_T, int M_s, int M_G, int M_B, int M_ghosts,
+	   int* map, int* invmap, int* ghostInterfaces, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* psi, scalar* psi_w, scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals, int* boundaryMap, int* boundaryIdx) :
+  _D(D), _N_F(N_F), _N_E(N_E), _N_s(N_s), _N_G(N_G), _N_N(N_N), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B), _M_ghosts(M_ghosts){
 
 
     // Indexes for boundary conditions
-    _periodicIdx = (boundaryIdx[0]-0)/2;              // number of periodic interfaces
-    _farfieldIdx = (boundaryIdx[1]-boundaryIdx[0])/2; // number of farfield interfaces
-    _rflctiveIdx = _M_B-boundaryIdx[1]/2;             // number of rflctive interfaces
-    _farfieldstart = boundaryIdx[0];
-    _rflctivestart = boundaryIdx[1];
+    _rflctiveIdx = boundaryIdx[0];       // number of reflective interfaces
+    _otheroneIdx = _M_B-boundaryIdx[0];  // number of otherone interfaces
+    _otheronestart = boundaryIdx[0];
+    //_farfieldIdx = boundaryIdx[1]-boundaryIdx[0]; // number of farfield interfaces
+    //_farfieldstart = boundaryIdx[1]; 
     
 #ifdef USE_CPU
 
     _map     = new int[M_s*M_T*N_F*2];       
-    _invmap  = new int[N_s*N_E*N_F*2];
-    _boundaryMap  = new int[M_B*2];
+    _invmap  = new int[M_s*N_N*N_E*N_F*2];
+    _ghostInterfaces = new int[3*M_ghosts];
+    _boundaryMap  = new int[M_B];
     _phi     = new scalar[N_G*N_s];          makeZero(_phi,N_G*N_s);
     _phi_w   = new scalar[N_G*N_s];          makeZero(_phi_w,N_G*N_s);          
     _dphi    = new scalar[D*N_G*N_s];	     makeZero(_dphi,D*N_G*N_s);	 
@@ -106,8 +108,9 @@ class DG_SOLVER
     _Q       = new scalar[N_s*N_E*N_F];      makeZero(_Q,N_s*N_E*N_F);   
 
     memcpy(_map        , map        , M_s*M_T*N_F*2*sizeof(int));
-    memcpy(_invmap     , invmap     , N_s*N_E*N_F*2*sizeof(int));
-    memcpy(_boundaryMap, boundaryMap, M_B*2*sizeof(int));
+    memcpy(_invmap     , invmap     , M_s*N_N*N_E*N_F*2*sizeof(int));
+    memcpy(_ghostInterfaces, ghostInterfaces, 3*M_ghosts*sizeof(int));
+    memcpy(_boundaryMap, boundaryMap, M_B*sizeof(int));
     memcpy(_phi        , phi        , N_G*N_s*sizeof(scalar));
     memcpy(_phi_w      , phi_w      , N_G*N_s*sizeof(scalar));
     memcpy(_dphi       , dphi       , D*N_G*N_s*sizeof(scalar));
@@ -122,8 +125,9 @@ class DG_SOLVER
 #elif USE_GPU
     // Allocate space on the GPU
     CUDA_SAFE_CALL(cudaMalloc((void**) &_map        , M_s*M_T*N_F*2*sizeof(int)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_invmap     , N_s*N_E*N_F*2*sizeof(int)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_boundaryMap, M_B*2*sizeof(int)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_invmap     , M_s*N_N*N_E*N_F*2*sizeof(int)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_ghostInterfaces, 3*M_ghosts*sizeof(int)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_boundaryMap, M_B*sizeof(int)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_phi        , N_G*N_s*sizeof(scalar)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_phi_w      , N_G*N_s*sizeof(scalar)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_dphi       , D*N_G*N_s*sizeof(scalar)));
@@ -171,8 +175,9 @@ class DG_SOLVER
 
     // Send the stuff to the device
     CUDA_SAFE_CALL(cudaMemcpy(_map        , map        , M_s*M_T*N_F*2*sizeof(int) , cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_invmap     , invmap     , N_s*N_E*N_F*2*sizeof(int) , cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_boundaryMap, boundaryMap, M_B*2*sizeof(int)         , cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_invmap     , invmap     , M_s*N_N*N_E*N_F*2*sizeof(int) , cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_ghostInterfaces, ghostInterfaces, 3*M_ghosts*sizeof(int) , cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_boundaryMap, boundaryMap, M_B*sizeof(int)         , cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_phi        , phi        , N_G*N_s*sizeof(scalar)    , cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_phi_w      , phi_w      , N_G*N_s*sizeof(scalar)    , cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_dphi       , dphi       , D*N_G*N_s*sizeof(scalar)  , cudaMemcpyHostToDevice));
@@ -200,6 +205,7 @@ class DG_SOLVER
   ~DG_SOLVER(){
     del(_map);
     del(_invmap);
+    del(_ghostInterfaces);
     del(_boundaryMap);
     del(_phi);
     del(_phi_w);
@@ -239,11 +245,15 @@ class DG_SOLVER
     // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
     Lcpu_mapToFace(_M_s, _M_T, _N_F, _N_s, _map, U, _UF);
 
-    // Apply boundary conditions
-    LperiodicBoundary(_M_s,_N_F,_periodicIdx,_boundaryMap,0,             _UF);
-    LfarfieldBoundary(_M_s,_N_F,_farfieldIdx,_boundaryMap,_farfieldstart,_UF);
-    LrflctiveBoundary(_M_s,_N_F,_rflctiveIdx,_boundaryMap,_rflctivestart,_UF);
+    // Do the necessary MPI communications
+#ifdef USE_MPI
+    MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
+    Lcpu_mapGhostFace(_M_s, _M_ghosts, _N_F, _ghostInterfaces, _UF);
+    MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
+#endif
 
+    // Apply special boundary conditions
+    LrflctiveBoundary(_M_s,_N_F,_rflctiveIdx,_boundaryMap,0,_UF);
     
     // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes
 #ifdef HAVE_BLAS
@@ -286,7 +296,7 @@ class DG_SOLVER
 #endif
     
     // map_q: requires map, Qtcj, Q (might want to do this in the previous step)
-    Lcpu_mapToElement(_N_s, _N_E, _N_F, _invmap, _Q, _Qtcj);
+    Lcpu_mapToElement(_N_s, _N_E, _N_F, _M_s, _N_N, _invmap, _Q, _Qtcj);
 
     // Make f_rk = S+F+Q
     Lcpu_addSFQ(_N_s, _N_E, _N_F, f_rk, _S, _F, _Q);

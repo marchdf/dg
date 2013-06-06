@@ -3,6 +3,7 @@
 
 #ifdef USE_FLOAT
 typedef float scalar;
+#define MPI_SCALAR MPI_FLOAT
 #define hostblasGemm blasSgemm // To make sure that there is a gemm blas only on the cpu
 #ifdef USE_CPU
 #define blasGemm blasSgemm
@@ -21,6 +22,7 @@ typedef float scalar;
 
 #ifdef USE_DOUBLE
 typedef double scalar;
+#define MPI_SCALAR MPI_DOUBLE
 #define hostblasGemm blasDgemm  // To make sure that there is a gemm blas only on the cpu
 #ifdef USE_CPU
 #define blasGemm blasDgemm

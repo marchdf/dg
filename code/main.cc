@@ -7,6 +7,9 @@
 #include <cutil_inline.h>
 #include <cublas.h>
 #endif
+#ifdef USE_MPI
+#include "mpi.h"
+#endif
 #include <time.h>
 #include "fullMatrix.h"
 #include "polynomialBasis.h"
@@ -22,7 +25,6 @@
 #include <misc.h>
 #include <limiting.h>
 #include <dg_solver.h>
-
 
 //
 // Function prototypes
@@ -59,6 +61,18 @@ void LagMono2DTransformsCartesian(const int order, const int msh_lin, const full
 int main (int argc, char **argv)
 {
 
+  ////////////////////////////////////////////////////////////////////////////
+  //
+  // Initialize MPI if you need
+  //
+  ////////////////////////////////////////////////////////////////////////////
+  int myid = 0; int numprocs = 1;
+#ifdef USE_MPI
+  MPI_Init(&argc,&argv);
+  MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
+  MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+  printf("Total number of processors=%i and I am number %i\n",numprocs,myid);
+#endif
 
   ////////////////////////////////////////////////////////////////////////////
   //
@@ -170,13 +184,12 @@ int main (int argc, char **argv)
   //
   //==========================================================================
 
-
   ////////////////////////////////////////////////////////////////////////////
   //
   // Load the mesh, node coordinates, elements, interfaces, normals
   //
   ////////////////////////////////////////////////////////////////////////////   
-  simpleMesh m;
+  simpleMesh m(myid,numprocs);
   m.load(fileName.c_str());
   int elem_type;
   int face_type;
@@ -187,26 +200,30 @@ int main (int argc, char **argv)
   int N_N;    // number of neighbors to an element
   scalar refArea; // area of reference element
   get_element_types(order, msh_qua, msh_tri, msh_lin);
-  if     (inputs.getElemType() == "lin"){face_type = 0      , elem_type = msh_lin; nsides = 0; N_N = 2;}
+  if     (inputs.getElemType() == "lin"){face_type = MSH_PNT, elem_type = msh_lin; nsides = 0; N_N = 2;}
   else if(inputs.getElemType() == "tri"){face_type = msh_lin, elem_type = msh_tri; nsides = 3; N_N = 3; refArea = 0.5;}
   else if(inputs.getElemType() == "qua"){face_type = msh_lin, elem_type = msh_qua; nsides = 4; N_N = 4; refArea = 4;} 
   else printf("Invalid element type in deck");
-    
+
   // Get the nodes, elements, interfaces, normals
   const fullMatrix<double> &nodes = m.getNodes();
   const std::vector<simpleElement> &elements = m.getElements(elem_type);
   m.buildInterfaces(face_type, elem_type,nsides);
   const std::vector<simpleInterface> &interfaces = m.getInterfaces();
+
   m.buildNormals(face_type, elem_type, D);
   const fullMatrix<scalar> &normals = m.getNormals();
-  //Build a map: element ID -> element index in order of the U matrix
-  std::map<int,int> ElementMap;
-  for(int e = 0; e < elements.size(); e++){
-    const simpleElement &el = elements[e];
-    //printf("e:%i, id:%i\n", e, el.getId());
-    ElementMap[el.getId()] = e;
-  }
 
+  m.buildElementMap(elem_type);
+  const std::map<int,int> &ElementMap = m.getElementMap();
+
+  m.buildCommunicators(elem_type); // build the indexes to map the ghost elements to my partition
+  const std::map<int,int> & ghostElementMap = m.getGhostElementMap();
+  int* h_ghostInterfaces  = m.getGhostInterfaces();
+  int* h_ghostElementSend = m.getGhostElementSend();
+  int* h_ghostElementRecv = m.getGhostElementRecv();
+
+ 
   ////////////////////////////////////////////////////////////////////////////   
   //
   // Generer les fonctions de formes, get integration points, weights
@@ -253,7 +270,8 @@ int main (int argc, char **argv)
   int N_G = points.size1();           // number of integration points           (g index)
   int M_G = pointsF.size1();          // number of integration points on a face (g index)
   int N_F = inputs.getNumFields();    // number of unknown fields               (h, u_x, u_y with fc index)
-
+  int N_ghosts = m.getNbGhostInterfaces();
+  
   if(order0) printf("order %i\n",0); else printf("order %i\n",order);
   printf("N_s %i\n",N_s);
   printf("M_s %i\n",M_s);
@@ -262,8 +280,8 @@ int main (int argc, char **argv)
   printf("M_T %i\n",M_T);
   printf("N_G %i\n",N_G);
   printf("M_G %i\n",M_G);
+  printf("N_ghosts %i\n",N_ghosts);
 
- 
   //////////////////////////////////////////////////////////////////////////   
   //
   // Calcul de la valeur des fonctions de formes aux points d'integration
@@ -377,16 +395,17 @@ int main (int argc, char **argv)
     const simpleInterface &face = interfaces[t];
     for(int d = 0; d < 2; d++){
       const simpleElement *el = face.getElement(d);
-      if(el!=NULL){
+      if(el->getPartition()==myid){
+	//if(el!=NULL){
   	int id = face.getClosureId(d);
   	const std::vector<int> &cl = closures[id];
   	for(int j = 0; j < M_s; j++){
   	  for(int alpha = 0; alpha < D; alpha++){
-  	    XYZNodesF(j,(t*2+d)*D+alpha) = XYZNodes(cl[j],ElementMap[el->getId()]*D+alpha);
+  	    XYZNodesF(j,(t*2+d)*D+alpha) = XYZNodes(cl[j],ElementMap.at(el->getId())*D+alpha);
   	  }
   	}
       }
-      else if (el==NULL){
+      else{
 	for(int j = 0; j < M_s; j++){
   	  for(int alpha = 0; alpha < D; alpha++){
 	    XYZNodesF(j,(t*2+1)*D+alpha) = XYZNodesF(j,(t*2+0)*D+alpha);
@@ -403,17 +422,11 @@ int main (int argc, char **argv)
   // Build the boundary map (must be done after the normals)
   //
   //////////////////////////////////////////////////////////////////////////
-#ifdef ONED
-  m.buildLineBoundary(boundaryType);
-#elif TWOD
-  m.buildSquareBoundary(M_s, XYZNodesF, D);
-#endif
+  m.buildBoundary();
   int* h_boundaryMap = m.getBoundaryMap();
   int* h_boundaryIdx = m.getBoundaryIdx();
   int M_B = m.getBoundarySize();
   printf("M_B %i\n",M_B);
-
-
   
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -424,15 +437,14 @@ int main (int argc, char **argv)
   // Get the coordinate shifts to bring the neighbors of the elements
   // on the boundaries to the correct (x,y) location. This is used
   // when evaluating polynomials in neighboring elements.
-#ifdef ONED
-  m.buildBoundaryElementShift1D(N_s, D, N_E, XYZNodes);
-#elif TWOD
-  m.buildBoundaryElementShift2D(order, XYZNodesF, D, ElementMap);
-#endif
-  fullMatrix<scalar> shifts = m.getShifts();
+// #ifdef ONED
+//   m.buildBoundaryElementShift1D(N_s, D, N_E, XYZNodes);
+// #elif TWOD
+//   m.buildBoundaryElementShift2D(order, XYZNodesF, D, ElementMap);
+// #endif
+//   fullMatrix<scalar> shifts = m.getShifts();
 
-  m.buildNeighbors(N_N, N_E, ElementMap);
-  if(cartesian) m.sortNeighbors(N_E,N_N, XYZCen);
+  m.buildNeighbors(N_N, N_E);
   int* h_neighbors = m.getNeighbors();
 
   //////////////////////////////////////////////////////////////////////////   
@@ -469,27 +481,28 @@ int main (int argc, char **argv)
     monovandermonde1d(order, pointsF, monoV);
   }
 
-  //
-  // Unstructured mesh limiting
-  //
-  int L2Msize1, L2Msize2; // number of rows and columns in Lag2Mono transforms
-  if     (inputs.getElemType()== "tri"){L2Msize1 = N_s; L2Msize2 = N_s;}
-  else if(inputs.getElemType()== "qua"){L2Msize1 = (2*order+1)*(order+1); L2Msize2 = N_s;}
-  fullMatrix<scalar> Lag2Mono(N_E, L2Msize1*L2Msize2);
-  fullMatrix<scalar> Mono2Lag(N_E, L2Msize2*L2Msize1);
-  scalar* h_powersXYZG;
-  if(!cartesian){   // Go from lagrange to monomial basis (in physical space)
-    LagMono2DTransforms(N_E, D, N_s, order, L2Msize1, L2Msize2, inputs.getElemType(), XYZNodes, XYZCen, Lag2Mono, Mono2Lag);
+
+  // //
+  // // Unstructured mesh limiting
+  // //
+  // int L2Msize1, L2Msize2; // number of rows and columns in Lag2Mono transforms
+  // if     (inputs.getElemType()== "tri"){L2Msize1 = N_s; L2Msize2 = N_s;}
+  // else if(inputs.getElemType()== "qua"){L2Msize1 = (2*order+1)*(order+1); L2Msize2 = N_s;}
+  // fullMatrix<scalar> Lag2Mono(N_E, L2Msize1*L2Msize2);
+  // fullMatrix<scalar> Mono2Lag(N_E, L2Msize2*L2Msize1);
+  // scalar* h_powersXYZG;
+  // if(!cartesian){   // Go from lagrange to monomial basis (in physical space)
+  //   LagMono2DTransforms(N_E, D, N_s, order, L2Msize1, L2Msize2, inputs.getElemType(), XYZNodes, XYZCen, Lag2Mono, Mono2Lag);
   
-    // Get the powers of the physical nodes and neighbors
-    // required for limiting in 2D
-    if     (inputs.getElemType() == "tri"){
-      h_powersXYZG = new scalar[N_s*N_G*(N_N+1)*N_E];
-      getPowersXYZG(N_E, D, N_s, N_G, N_N, M_B, order, XYZG, XYZCen, h_neighbors, shifts, h_powersXYZG);}
-    else if(inputs.getElemType() == "qua"){
-      h_powersXYZG = new scalar[L2Msize1*N_G*(N_N+1)*N_E];
-      getPowersXYZG(N_E, D, L2Msize1, N_G, N_N, M_B, 2*order, XYZG, XYZCen, h_neighbors, shifts, h_powersXYZG);}
-  }
+  //   // Get the powers of the physical nodes and neighbors
+  //   // required for limiting in 2D
+  //   if     (inputs.getElemType() == "tri"){
+  //     h_powersXYZG = new scalar[N_s*N_G*(N_N+1)*N_E];
+  //     getPowersXYZG(N_E, D, N_s, N_G, N_N, M_B, order, XYZG, XYZCen, h_neighbors, shifts, h_powersXYZG);}
+  //   else if(inputs.getElemType() == "qua"){
+  //     h_powersXYZG = new scalar[L2Msize1*N_G*(N_N+1)*N_E];
+  //     getPowersXYZG(N_E, D, L2Msize1, N_G, N_N, M_B, 2*order, XYZG, XYZCen, h_neighbors, shifts, h_powersXYZG);}
+  // }
   
 #endif
     
@@ -571,7 +584,7 @@ int main (int argc, char **argv)
   // Calculate the jacobian matrix for each integration point
   //
   //////////////////////////////////////////////////////////////////////////
-  
+
   // Elements
   fullMatrix<scalar> Jac(N_E*D,N_G*D);
   fullMatrix<scalar> invJac(N_E*D,N_G*D); // Inverse Jacobian matrix: dxi/dx
@@ -590,7 +603,7 @@ int main (int argc, char **argv)
   // Calculate the inverse mass matrices
   //
   //////////////////////////////////////////////////////////////////////////
-  
+
   scalar* h_Minv = new scalar[N_s*N_s*N_E];
   dg_inverse_mass_matrix(order, elem_type, inputs.getElemType(), N_s, N_E, D, XYZNodes, h_Minv);
 
@@ -600,8 +613,8 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
   int* h_map = new int[M_s*M_T*N_F*2];
-  int* h_invmap = new int[N_s*N_E*N_F*2];
-  dg_mappings(M_s, M_T, N_F, N_s, N_E, interfaces, ElementMap, closures, h_map, h_invmap);
+  int* h_invmap = new int[M_s*N_N*N_E*N_F*2];
+  dg_mappings(myid, M_s, M_T, N_F, N_s, N_E, N_N, interfaces, ElementMap, closures, h_map, h_invmap);
   
   //==========================================================================
   //
@@ -631,10 +644,11 @@ int main (int argc, char **argv)
   scalar* h_phi_w   = new scalar[N_G*N_s];          makeZero(h_phi_w,N_G*N_s);          
   scalar* h_dphi    = new scalar[D*N_G*N_s];	    makeZero(h_dphi,D*N_G*N_s);	 
   scalar* h_dphi_w  = new scalar[D*N_G*N_s];	    makeZero(h_dphi_w,D*N_G*N_s);
+
   scalar* h_psi     = new scalar[M_G*M_s];	    makeZero(h_psi,M_G*M_s);	 
   scalar* h_psi_w   = new scalar[M_G*M_s];	    makeZero(h_psi_w,M_G*M_s);	 
-  scalar* h_J       = new scalar[N_E];              makeZero(h_J,N_E);                                 // not same as J!!
-  scalar* h_invJac  = new scalar[N_G*D*N_E*D];      makeZero(h_invJac,N_G*D*N_E*D);                    // not same as invJac!!
+  scalar* h_J       = new scalar[N_E];              makeZero(h_J,N_E);               // not same as J!!
+  scalar* h_invJac  = new scalar[N_G*D*N_E*D];      makeZero(h_invJac,N_G*D*N_E*D);  // not same as invJac!!
   scalar* h_JF      = new scalar[2*M_T];            makeZero(h_JF, D*M_T);
   scalar* h_normals = new scalar[D*M_T];	    makeZero(h_normals,D*M_T);	 
   scalar* h_U       = new scalar[N_s*N_E*N_F];	    makeZero(h_U,N_s*N_E*N_F);
@@ -671,7 +685,7 @@ int main (int argc, char **argv)
       }
     }
   }
- 
+
   //////////////////////////////////////////////////////////////////////////   
   //
   // Setup the limiter
@@ -687,7 +701,7 @@ int main (int argc, char **argv)
   //
   //if(cartesian){
   scalar* h_weightF  = new scalar[M_G]; makeZero(h_weightF,M_G); for(int g=0; g<M_G; g++) h_weightF[g] = (scalar)weightF(g,0);  
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, order, cartesian, N_N, h_neighbors, Lag2MonoX, MonoX2MonoY, MonoY2Lag, monoV, h_weightF);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, order, cartesian, N_N, N_ghosts, h_neighbors, Lag2MonoX, MonoX2MonoY, MonoY2Lag, monoV, h_ghostElementSend, h_ghostElementRecv, h_weightF);
   delete[] h_weightF;
   //}
   
@@ -715,10 +729,10 @@ int main (int argc, char **argv)
   double Tf    = inputs.getFinalTime();
   m.setDx(N_N,N_E,D,XYZCen,XYZNodes);
   scalar CFL   = inputs.getCFL()*m.getDx()/(2*order+1);
-  
+
   printf("==== Now RK 4 steps =====\n");
-  DG_SOLVER dgsolver = DG_SOLVER(D, N_F, N_E, N_s, N_G, M_T, M_s, M_G, M_B,
-  				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, h_J, h_invJac, h_JF, h_weight, h_normals,
+  DG_SOLVER dgsolver = DG_SOLVER(D, N_F, N_E, N_s, N_G, N_N, M_T, M_s, M_G, M_B, N_ghosts,
+  				 h_map, h_invmap, h_ghostInterfaces, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, h_J, h_invJac, h_JF, h_weight, h_normals,
   				 h_boundaryMap, h_boundaryIdx);
   RK rk4 = RK(4);
   rk4.RK_integration(DtOut, Tf, CFL,
@@ -860,6 +874,9 @@ int main (int argc, char **argv)
   // Free stuff on the host
   //
   //////////////////////////////////////////////////////////////////////////   
+  delete[] h_ghostInterfaces;
+  delete[] h_ghostElementSend;
+  delete[] h_ghostElementRecv;
 
   delete[] h_boundaryMap;
   delete[] h_boundaryIdx;
@@ -879,6 +896,19 @@ int main (int argc, char **argv)
   delete[] h_invJac;
   delete[] h_normals;
   delete[] h_U;
+
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Finalize MPI
+  //
+  //////////////////////////////////////////////////////////////////////////
+#ifdef USE_MPI
+  MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
+  MPI_Finalize();
+#endif
+
+
+  return 0;
 }// end main
 
 
@@ -1240,13 +1270,13 @@ void LagMono2DTransformsCartesian(const int order, const int msh_lin, const full
   for(int g = 0; g < N_G1D; g++)
     for(int i = 0; i < N_s1D; i++)
       phi(g,i) = (scalar)phiD(g,i);
-  
+
   // Vandermonde matrix and inverse
   fullMatrix<scalar> V;
   fullMatrix<scalar> Vinv;
   monovandermonde1d(order, points, V);
   V.invert(Vinv);
-
+  
   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
   fullMatrix<scalar> Transform1D(order+1,order+1);
   Transform1D.gemm(Vinv, phi);
@@ -1257,13 +1287,13 @@ void LagMono2DTransformsCartesian(const int order, const int msh_lin, const full
     for(int i=0;i<order+1;i++)
       for(int j=0;j<order+1;j++)
 	DiagVinv(i+p*(order+1),j+p*(order+1)) = Transform1D(i,j);
-
+  
   // Lag2MonoX = diag(monoVinv,order+1) X Px
   Lag2MonoX.resize(N_s,N_s);
   Lag2MonoX.gemm(DiagVinv,Px);
   fullMatrix<scalar> MonoX2Lag(N_s,N_s);
   Lag2MonoX.invert(MonoX2Lag);
-
+  
   // Lag2MonoY = diag(monoVinv,order+1) X Py
   fullMatrix<scalar> Lag2MonoY(N_s,N_s);
   Lag2MonoY.gemm(DiagVinv,Py);

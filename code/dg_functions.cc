@@ -128,32 +128,48 @@ void dg_inverse_mass_matrix(const int order, const int elem_type, const std::str
   }
 }
 
-void dg_mappings(const int M_s, const int M_T, const int N_F, const int N_s, const int N_E, const std::vector<simpleInterface> &interfaces, std::map<int,int> &ElementMap, const std::vector<std::vector<int> > &closures, int* map, int* invmap){
 
-  for(int k = 0; k < M_s*M_T*N_F*2 ; k++) { map[k] = -1;}
-  for(int k = 0; k < N_s*N_E*N_F*2 ; k++) { invmap[k] = -1;}
+void dg_mappings(const int myid, const int M_s, const int M_T, const int N_F, const int N_s, const int N_E, const int N_N, const std::vector<simpleInterface> &interfaces, const std::map<int,int> &ElementMap, const std::vector<std::vector<int> > &closures, int* map, int* invmap){
+  /* Map the element matrix to the interfaces matrix and
+     vice-versa. This is a modified version of what I had
+     previously. I think it works better and is more efficient.*/
 
+  // Initialize a counter for the inverse map
+  int* cnt = new int[N_F*N_E]; for(int k=0;k<N_E*N_F;k++){cnt[k]=0;}
+
+  // Loop over all the interfaces
   for(int t = 0; t < M_T; t++){
-    const simpleInterface &face = interfaces[t];    // get the interface
-    for(int d = 0; d < 2; d++){
-      const simpleElement *el = face.getElement(d); // get the element to the right/left
-      if(el!=NULL){                                 // as long as there is a element to the right/left
-  	int id = face.getClosureId(d);
-  	const std::vector<int> &cl = closures[id];
-	for(int fc = 0; fc < N_F; fc++){
-	  for(int j = 0; j < M_s; j++){
-	    map[((t*N_F+fc)*2+d)*M_s+j] = (ElementMap[el->getId()]*N_F+fc)*N_s+cl[j];
-	    if (invmap[((ElementMap[el->getId()]*N_F+fc)*2+0)*N_s+cl[j]] == -1){
-	      invmap[((ElementMap[el->getId()]*N_F+fc)*2+0)*N_s+cl[j]] = ((t*N_F+fc)*2+d)*M_s+j;
-	    }
-	    else if(invmap[((ElementMap[el->getId()]*N_F+fc)*2+0)*N_s+cl[j]] != -1){
-	      invmap[((ElementMap[el->getId()]*N_F+fc)*2+1)*N_s+cl[j]] = ((t*N_F+fc)*2+d)*M_s+j;
-	    }
-	  }
+    const simpleInterface &face = interfaces[t];   // get the interface
+    const simpleElement *el1 = face.getElement(0); // get the element to the left
+    const simpleElement *el2 = face.getElement(1); // get the element to the right
+    int e1 = ElementMap.at(el1->getId());
+    int id1 = face.getClosureId(0);
+    int id2 = face.getClosureId(1);
+    const std::vector<int> &cl1 = closures[id1];
+    const std::vector<int> &cl2 = closures[id2];
+    for(int fc = 0; fc < N_F; fc++){
+      for(int j = 0; j < M_s; j++){
+
+	// Map from U to UF
+	map[((t*N_F+fc)*2+0)*M_s+j] = (e1*N_F+fc)*N_s+cl1[j];
+	if(el2->getPartition()==myid)  map[((t*N_F+fc)*2+1)*M_s+j] = ((ElementMap.at(el2->getId()))*N_F+fc)*N_s+cl2[j];
+	else                           map[((t*N_F+fc)*2+1)*M_s+j] = ((ElementMap.at(el1->getId()))*N_F+fc)*N_s+cl2[j];
+
+	// Inverse map
+	invmap[((e1*N_F+fc)*M_s*N_N+cnt[e1*N_F+fc])*2+0] = cl1[j];
+	invmap[((e1*N_F+fc)*M_s*N_N+cnt[e1*N_F+fc])*2+1] = ((t*N_F+fc)*2+0)*M_s+j;
+	cnt[e1*N_F+fc]++;
+	// If this face is not on the boundary (belongs to my
+	// partition and physical==0), then you can use the interface
+	// to map to an element on my partition	
+	if((face.getPhysicalTag()==0)&&(el2->getPartition()==myid)){
+	  int e2 = ElementMap.at(el2->getId());
+	  invmap[((e2*N_F+fc)*M_s*N_N+cnt[e2*N_F+fc])*2+0] = cl2[j];
+	  invmap[((e2*N_F+fc)*M_s*N_N+cnt[e2*N_F+fc])*2+1] = ((t*N_F+fc)*2+1)*M_s+j;
+	  cnt[e2*N_F+fc]++;
 	}
       }
     }
-  }    
+  }
+  delete[] cnt;
 }
-
-

@@ -1,5 +1,6 @@
 # defaults
 ARCH=USE_CPU
+PARA=NO_MPI
 PREC=USE_DOUBLE
 DIMS=ONED
 PROB=MULTIFLUID
@@ -21,12 +22,15 @@ endif
 # compilers
 NVCC              := nvcc
 CXX               := gcc
+ifeq ($(PARA),USE_MPI)
+CXX               := mpicc
+endif
 ifeq ($(LIEU),NYX)
 CXX               := icc
 endif
 
 # defines
-DEFINES           := -DHAVE_BLAS -DHAVE_LAPACK -D$(ARCH) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS)
+DEFINES           := -DHAVE_BLAS -DHAVE_LAPACK -D$(ARCH) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS) -D$(PARA)
 
 # blas libs
 BLAS_INC          := 
