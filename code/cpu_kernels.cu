@@ -218,6 +218,7 @@ arch_global void cpu_mapGhostFace(int M_s, int M_ghosts, int N_F, int* ghostInte
 
   // Detach the buffer
   MPI_Buffer_detach( &buf, &bufsize);
+  delete[] buf;
   
   MPI_Type_free(&strided);
 #endif
@@ -603,7 +604,43 @@ arch_global void cpu_hsl(int N_s, int N_E, int N_F, int boundaryMap, scalar* U, 
   
 }
 
+//==========================================================================
+arch_global void cpu_CommunicateGhosts(int N_s, int N_E, int N_F, int N_ghosts, int* ghostElementSend, int* ghostElementRecv, scalar* A){
 
+  /* This function, used by the limiting procedure, communicates the
+     elements which are not in my partition. Basically you send the
+     elements of A that other partitions need and you receive the
+     elements from other partitions that you will need. You store
+     these in the back columns of A.*/
+
+#ifdef USE_MPI
+  MPI_Status status[2*N_ghosts];
+  MPI_Request request[2*N_ghosts];
+  int e, dest, source, tag;
+
+  for(int k=0; k<N_ghosts; k++){
+
+    // Send info 
+    e   = ghostElementSend[k*3+0]; // local index of A to send
+    dest = ghostElementSend[k*3+1]; // destination processor
+    tag = ghostElementSend[k*3+2]; // global idx of element
+    MPI_Isend(&A[e*N_F*N_s], N_F*N_s, MPI_SCALAR, dest, tag, MPI_COMM_WORLD, &request[2*k+0]);
+    
+    // Recv info
+    e      = ghostElementRecv[k*3+0]; // local index of A to recv (back columns)
+    source = ghostElementRecv[k*3+1]; // destination processor
+    tag    = ghostElementRecv[k*3+2]; // global idx of element
+    MPI_Irecv(&A[e*N_F*N_s], N_F*N_s, MPI_SCALAR, source, tag, MPI_COMM_WORLD, &request[2*k+1]);
+  }
+
+  // Wait for communication to end
+  MPI_Waitall(2*N_ghosts, request, status);
+
+#endif
+
+
+}
+ 
 //==========================================================================
 arch_global void cpu_hrl1D(int N_s, int N_E, int N_F, int N_G, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim){
 
@@ -1231,7 +1268,23 @@ void Lcpu_Cons2Half(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool 
 }
 
 extern "C"
+void Lcpu_CommunicateGhosts(int N_s, int N_E, int N_F, int N_ghosts, int* ghostElementSend, int* ghostElementRecv, scalar* A){
+
+#ifdef USE_GPU
+  int div = N_ghosts/blkE;
+  int mod = 0;
+  if (N_ghosts%blkE != 0) mod = 1;
+  dim3 dimBlock(N_s,N_F,blkE);
+  dim3 dimGrid(div+mod,1);
+#endif
+
+  cpu_CommunicateGhosts arch_args (N_s, N_E, N_F, N_ghosts, ghostElementSend, ghostElementRecv, A);
+
+}
+  
+extern "C"
 void Lcpu_hrl1D(int N_s, int N_E, int N_F, int N_G, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim){
+
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;

@@ -33,6 +33,7 @@ class Limiting
   int     _N_F;
   int     _N_G;
   int     _N_N;
+  int     _N_ghosts;
   int     _L;  // size of TaylorDxIdx
   int     _order;
   int     _N_s1D;
@@ -41,6 +42,8 @@ class Limiting
   int     _L2Msize2;
   int     _boundaryMap;
   int*    _neighbors;
+  int*    _ghostElementSend;
+  int*    _ghostElementRecv;
   int*    _TaylorDxIdx;
   int*    _TaylorDyIdx;
   scalar _refArea;
@@ -71,6 +74,8 @@ class Limiting
     _uMono=NULL;
     _uLim=NULL;
     _neighbors=NULL;
+    _ghostElementSend=NULL;
+    _ghostElementRecv=NULL;
     _TaylorDxIdx=NULL;
     _TaylorDyIdx=NULL;
 
@@ -157,7 +162,7 @@ class Limiting
   } // end 1D constructor
 
   // 2D limiting constructor for structured mesh
- Limiting(int method, int N_s, int N_E, int N_F, int N_G, int order, bool cartesian, int N_N, int* neighbors, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, fullMatrix<scalar> &V1D, scalar* weight) : _method(method), _N_s(N_s), _N_E(N_E), _N_F(N_F), _N_G(N_G), _order(order), _cartesian(cartesian), _N_N(N_N){
+ Limiting(int method, int N_s, int N_E, int N_F, int N_G, int order, bool cartesian, int N_N, int M_ghosts, int* neighbors, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, fullMatrix<scalar> &V1D, int* ghostElementSend, int* ghostElementRecv, scalar* weight) : _method(method), _N_s(N_s), _N_E(N_E), _N_F(N_F), _N_G(N_G), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(M_ghosts){
 
     _N_s1D = (order+1);
     _N_G1D = (order+1), 
@@ -179,6 +184,8 @@ class Limiting
     _uMono=NULL;
     _uLim=NULL;
     _neighbors=NULL;
+    _ghostElementSend=NULL;
+    _ghostElementRecv=NULL;
     _TaylorDxIdx=NULL;
     _TaylorDyIdx=NULL;
 
@@ -192,11 +199,12 @@ class Limiting
       _MonoY2Lag   = new scalar[_N_s*_N_s];     MonoY2Lag.copyMatrixToPointer(_MonoY2Lag);
       _V1D      = new scalar[_N_G1D*_N_s1D];    V1D.copyMatrixToPointer(_V1D);
       _weight   = new scalar[_N_G1D];           memcpy(_weight,weight,_N_G1D*sizeof(scalar));
-      _A        = new scalar[_N_s*_N_E*N_F];    makeZero(_A,    _N_s*_N_E*_N_F);
-      _Alim     = new scalar[_N_s*_N_E*N_F];    makeZero(_Alim,    _N_s*_N_E*_N_F);
-      _neighbors  = new int[_N_N*_N_E];
-      memcpy(_neighbors,   neighbors,   _N_N*_N_E*sizeof(int));
-
+      _A        = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_A,     _N_s*(_N_E+_N_ghosts)*_N_F);
+      _Alim     = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_Alim,  _N_s*(_N_E+_N_ghosts)*_N_F);
+      _neighbors  = new int[_N_N*_N_E]; memcpy(_neighbors,   neighbors,   _N_N*_N_E*sizeof(int));
+      _neighbors  = new int[_N_N*_N_E]; memcpy(_neighbors,   neighbors,   _N_N*_N_E*sizeof(int));
+      _ghostElementSend  = new int[_N_ghosts*3]; memcpy(_ghostElementSend,   ghostElementSend,   _N_ghosts*3*sizeof(int));
+      _ghostElementRecv  = new int[_N_ghosts*3]; memcpy(_ghostElementRecv,   ghostElementRecv,   _N_ghosts*3*sizeof(int));
      
 #elif USE_GPU
       // tmp host pointers to copy data to gpu
@@ -211,8 +219,8 @@ class Limiting
       CUDA_SAFE_CALL(cudaMalloc((void**) &_MonoY2Lag  ,_N_s*_N_s*sizeof(scalar)));
       CUDA_SAFE_CALL(cudaMalloc((void**) &_V1D        ,_N_G1D*_N_s1D*sizeof(scalar)));
       CUDA_SAFE_CALL(cudaMalloc((void**) &_weight     ,_N_G1D*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_A          ,_N_s*_N_E*_N_F*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_Alim       ,_N_s*_N_E*_N_F*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_A          ,_N_s*(_N_E+_N_ghosts)*_N_F*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_Alim       ,_N_s*(_N_E+_N_ghosts)*_N_F*sizeof(scalar)));
       CUDA_SAFE_CALL(cudaMalloc((void**) &_neighbors  ,_N_N*_N_E*sizeof(int)));
 	    
       // Copy data to GPU
@@ -421,6 +429,8 @@ class Limiting
     if(_XYZCen)       del(_XYZCen);
     if(_powersXYZG)   del(_powersXYZG);
     if(_neighbors)    del(_neighbors);
+    if(_ghostElementRecv) del(_ghostElementRecv);
+    if(_ghostElementSend) del(_ghostElementSend);
     if(_TaylorDxIdx)  del(_TaylorDxIdx);
     if(_TaylorDyIdx)  del(_TaylorDyIdx);
     if(_pressure)     del(_pressure);
@@ -448,11 +458,23 @@ class Limiting
       // Go from lagrange to monomial representation wrt x
       blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Lag2MonoX, _N_s, U, _N_s, 0.0, _A, _N_s);
 
+      // Communicate the elements on different partitions
+#ifdef USE_MPI
+      MPI_Barrier(MPI_COMM_WORLD);
+      Lcpu_CommunicateGhosts(_N_s, _N_E, _N_F, _N_ghosts, _ghostElementSend, _ghostElementRecv, _A);
+#endif
+      
       // Limit the solution according to Liu (for each x slice)
       Lcpu_hrl1D(_N_s1D, _N_E, _N_F, _N_G1D, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _A, _Alim);
       
       // Go to the monomial representation wrt y
       blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _MonoX2MonoY, _N_s, _Alim, _N_s, 0.0, _A, _N_s);
+
+      // Communicate the elements on different partitions
+#ifdef USE_MPI
+      MPI_Barrier(MPI_COMM_WORLD);
+      Lcpu_CommunicateGhosts(_N_s, _N_E, _N_F, _N_ghosts, _ghostElementSend, _ghostElementRecv, _A);
+#endif
 
       // Limit the solution according to Liu (for each y slice)
       Lcpu_hrl1D(_N_s1D, _N_E, _N_F, _N_G1D, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _A, _Alim);

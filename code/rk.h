@@ -219,13 +219,15 @@ class RK
     LfindUPA(N_s, N_E, N_F, U, UPA);
     int maxUPAIdx;
     maxUPAIdx = blasIamax(N_E*N_s,UPA,1)-1; // Fortran starts numbering at 1
-    scalar* maxUPA = new scalar[1];
+    scalar* maxUPA;// = new scalar[1];
 #ifdef USE_CPU
     maxUPA = &UPA[maxUPAIdx];
 #elif USE_GPU
     CUDA_SAFE_CALL(cudaMemcpy(maxUPA, &UPA[maxUPAIdx], sizeof(scalar), cudaMemcpyDeviceToHost));
 #endif
-    return CFL/maxUPA[0];
+    scalar Dt = CFL/maxUPA[0];
+    maxUPA=NULL;
+    return Dt;
   }
 
   

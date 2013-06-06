@@ -36,6 +36,7 @@ class simpleInterface {
 
 class simpleMesh {
   int _myid; // CPU identity for MPI
+  int _numprocs; // total number of processors in use
   std::vector<std::vector<simpleElement> > _elements;      // holds elements in my partition
   std::vector<std::vector<simpleElement> > _otherElements; // holds elements in other partitions
   std::vector<simpleInterface> _interfaces;
@@ -55,7 +56,7 @@ class simpleMesh {
   fullMatrix<scalar> _shifts;
   scalar _Dx;
  public:
-  simpleMesh(int myid=0) : _myid (myid) {}
+ simpleMesh(int myid=0, int numprocs=1) : _myid (myid), _numprocs(numprocs){}
   inline const std::vector<simpleInterface> & getInterfaces () const {return  _interfaces;}
   inline const std::vector<simpleElement> & getElements (int type) const {return  _elements[type];}
   inline const std::vector<simpleElement> & getOtherElements (int type) const {return  _otherElements[type];}
@@ -77,8 +78,7 @@ class simpleMesh {
   int* getGhostElementSend()const {return _ghostElementSend;}
   int* getGhostElementRecv()const {return _ghostElementRecv;}
   
-  void buildLineBoundary(int boundaryType);
-  void buildSquareBoundary(int M_s, const fullMatrix<scalar> &XYZNodesF, const int D);
+  void buildBoundary();
   int  getBoundarySize()  const {return _N_B;}
   int* getBoundaryMap()const {return _boundary;}
   int* getBoundaryIdx()const {return _boundaryIdx;}

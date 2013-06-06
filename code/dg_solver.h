@@ -25,11 +25,9 @@ class DG_SOLVER
   int* _invmap;
   int* _ghostInterfaces;
   int* _boundaryMap;
-  int _periodicIdx;
-  int _farfieldIdx;
   int _rflctiveIdx;
-  int _farfieldstart;
-  int _rflctivestart;
+  int _otheroneIdx;
+  int _otheronestart;
   scalar* _phi     ; 
   scalar* _phi_w   ; 
   scalar* _dphi    ; 
@@ -72,18 +70,18 @@ class DG_SOLVER
 
 
     // Indexes for boundary conditions
-    _periodicIdx = (boundaryIdx[0]-0)/2;              // number of periodic interfaces
-    _farfieldIdx = (boundaryIdx[1]-boundaryIdx[0])/2; // number of farfield interfaces
-    _rflctiveIdx = _M_B-boundaryIdx[1]/2;             // number of rflctive interfaces
-    _farfieldstart = boundaryIdx[0];
-    _rflctivestart = boundaryIdx[1];
+    _rflctiveIdx = boundaryIdx[0];       // number of reflective interfaces
+    _otheroneIdx = _M_B-boundaryIdx[0];  // number of otherone interfaces
+    _otheronestart = boundaryIdx[0];
+    //_farfieldIdx = boundaryIdx[1]-boundaryIdx[0]; // number of farfield interfaces
+    //_farfieldstart = boundaryIdx[1]; 
     
 #ifdef USE_CPU
 
     _map     = new int[M_s*M_T*N_F*2];       
     _invmap  = new int[M_s*N_N*N_E*N_F*2];
     _ghostInterfaces = new int[3*M_ghosts];
-    _boundaryMap  = new int[M_B*2];
+    _boundaryMap  = new int[M_B];
     _phi     = new scalar[N_G*N_s];          makeZero(_phi,N_G*N_s);
     _phi_w   = new scalar[N_G*N_s];          makeZero(_phi_w,N_G*N_s);          
     _dphi    = new scalar[D*N_G*N_s];	     makeZero(_dphi,D*N_G*N_s);	 
@@ -112,7 +110,7 @@ class DG_SOLVER
     memcpy(_map        , map        , M_s*M_T*N_F*2*sizeof(int));
     memcpy(_invmap     , invmap     , M_s*N_N*N_E*N_F*2*sizeof(int));
     memcpy(_ghostInterfaces, ghostInterfaces, 3*M_ghosts*sizeof(int));
-    memcpy(_boundaryMap, boundaryMap, M_B*2*sizeof(int));
+    memcpy(_boundaryMap, boundaryMap, M_B*sizeof(int));
     memcpy(_phi        , phi        , N_G*N_s*sizeof(scalar));
     memcpy(_phi_w      , phi_w      , N_G*N_s*sizeof(scalar));
     memcpy(_dphi       , dphi       , D*N_G*N_s*sizeof(scalar));
@@ -129,7 +127,7 @@ class DG_SOLVER
     CUDA_SAFE_CALL(cudaMalloc((void**) &_map        , M_s*M_T*N_F*2*sizeof(int)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_invmap     , M_s*N_N*N_E*N_F*2*sizeof(int)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_ghostInterfaces, 3*M_ghosts*sizeof(int)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_boundaryMap, M_B*2*sizeof(int)));
+    CUDA_SAFE_CALL(cudaMalloc((void**) &_boundaryMap, M_B*sizeof(int)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_phi        , N_G*N_s*sizeof(scalar)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_phi_w      , N_G*N_s*sizeof(scalar)));
     CUDA_SAFE_CALL(cudaMalloc((void**) &_dphi       , D*N_G*N_s*sizeof(scalar)));
@@ -179,7 +177,7 @@ class DG_SOLVER
     CUDA_SAFE_CALL(cudaMemcpy(_map        , map        , M_s*M_T*N_F*2*sizeof(int) , cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_invmap     , invmap     , M_s*N_N*N_E*N_F*2*sizeof(int) , cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_ghostInterfaces, ghostInterfaces, 3*M_ghosts*sizeof(int) , cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_boundaryMap, boundaryMap, M_B*2*sizeof(int)         , cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMemcpy(_boundaryMap, boundaryMap, M_B*sizeof(int)         , cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_phi        , phi        , N_G*N_s*sizeof(scalar)    , cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_phi_w      , phi_w      , N_G*N_s*sizeof(scalar)    , cudaMemcpyHostToDevice));
     CUDA_SAFE_CALL(cudaMemcpy(_dphi       , dphi       , D*N_G*N_s*sizeof(scalar)  , cudaMemcpyHostToDevice));
@@ -244,53 +242,9 @@ class DG_SOLVER
   // Main solver function
   void dg_solver(scalar* U, scalar* f_rk){
 
-    /* FILE * UF; */
-    /* int kk=0; */
-    /* char buffer[50]; */
-    /* int myid; */
-    /* MPI_Comm_rank(MPI_COMM_WORLD,&myid); */
-    /* kk=sprintf(buffer,"UF%i.dat",myid); */
-    /* UF = fopen(buffer,"w"); */
-
-    /* for(int t=0; t<_M_T; t++){ */
-    /*   for(int j=0; j<_M_s; j++){ */
-    /* 	for(int fc=0; fc<_N_F; fc++){ */
-    /* 	  _UF[((t*_N_F+fc)*2+0)*_M_s+j] = (myid+1); */
-    /* 	  _UF[((t*_N_F+fc)*2+1)*_M_s+j] = -(myid+1); */
-    /* 	} */
-    /*   } */
-    /* } */
-
-    /* fprintf(UF,"Before mapping:\n"); */
-    /* for(int t=1; t<2; t++){ */
-    /*   for(int j=0; j<_M_s; j++){ */
-    /* 	for(int fc=0; fc<_N_F; fc++){ */
-    /* 	  for(int d=0; d<2; d++){ */
-    /* 	    fprintf(UF,"%5.5f ",_UF[((t*_N_F+fc)*2+d)*_M_s+j]); */
-    /* 	  } */
-    /* 	  fprintf(UF," | "); */
-    /* 	} */
-    /* 	fprintf(UF,"\n"); */
-    /*   } */
-    /* } */
-
     // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
     Lcpu_mapToFace(_M_s, _M_T, _N_F, _N_s, _map, U, _UF);
 
-    /* fprintf(UF,"After mapping/before message passing:\n"); */
-    /* for(int t=1; t<2; t++){ */
-    /*   for(int j=0; j<_M_s; j++){ */
-    /* 	for(int fc=0; fc<_N_F; fc++){ */
-    /* 	  for(int d=0; d<2; d++){ */
-    /* 	    fprintf(UF,"%5.5f ",_UF[((t*_N_F+fc)*2+d)*_M_s+j]); */
-    /* 	  } */
-    /* 	  fprintf(UF," | "); */
-    /* 	} */
-    /* 	fprintf(UF,"\n"); */
-    /*   } */
-    /* } */
-
-    
     // Do the necessary MPI communications
 #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
@@ -298,26 +252,8 @@ class DG_SOLVER
     MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
 #endif
 
-    /* fprintf(UF,"After message passing:\n"); */
-    /* for(int t=1; t<2; t++){ */
-    /*   for(int j=0; j<_M_s; j++){ */
-    /* 	for(int fc=0; fc<_N_F; fc++){ */
-    /* 	  for(int d=0; d<2; d++){ */
-    /* 	    fprintf(UF,"%5.5f ",_UF[((t*_N_F+fc)*2+d)*_M_s+j]); */
-    /* 	  } */
-    /* 	  fprintf(UF," | "); */
-    /* 	} */
-    /* 	fprintf(UF,"\n"); */
-    /*   } */
-    /* } */
-    /* fclose(UF); */
-    /* exit(1); */
-    
-    // Apply boundary conditions
-    LperiodicBoundary(_M_s,_N_F,_periodicIdx,_boundaryMap,0,             _UF);
-    LfarfieldBoundary(_M_s,_N_F,_farfieldIdx,_boundaryMap,_farfieldstart,_UF);
-    LrflctiveBoundary(_M_s,_N_F,_rflctiveIdx,_boundaryMap,_rflctivestart,_UF);
-
+    // Apply special boundary conditions
+    LrflctiveBoundary(_M_s,_N_F,_rflctiveIdx,_boundaryMap,0,_UF);
     
     // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes
 #ifdef HAVE_BLAS

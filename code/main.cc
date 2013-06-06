@@ -61,60 +61,19 @@ void LagMono2DTransformsCartesian(const int order, const int msh_lin, const full
 int main (int argc, char **argv)
 {
 
-
-  // // Testing blas
-  // printf("Testing something in blas\n");
-  // scalar* a = new double[3*4];
-  // for(int i = 0; i< 12; i++){a[i]=i+1;}
-
-  // scalar* b = new double[4*4];
-  // for(int i = 0; i< 16; i++){b[i]=i+1;}
-
-  // scalar* c = new double[3*6];
-  // for(int i = 0; i< 18; i++){c[i]=0;}
-  // blasGemm('N','N', 3, 4, 4, 1, a, 3, b, 4, 0.0, c, 3);
-  
-  // for(int i=0; i<3; i++){
-  //   for(int j=0; j<4; j++){
-  //     printf("%f ",a[j*3+i]);
-  //   }
-  //   printf("\n");
-  // }
-  // for(int i=0; i<4; i++){
-  //   for(int j=0; j<4; j++){
-  //     printf("%f ",b[j*4+i]);
-  //   }
-  //   printf("\n");
-  // }
-
-  // for(int i=0; i<3; i++){
-  //   for(int j=0; j<6; j++){
-  //     printf("%f ",c[j*3+i]);
-  //   }
-  //   printf("\n");
-  // }
-
-  // delete[] a;
-  // delete[] b;
-  // delete[] c;
-
   ////////////////////////////////////////////////////////////////////////////
   //
   // Initialize MPI if you need
   //
   ////////////////////////////////////////////////////////////////////////////
-  int myid = 0;
+  int myid = 0; int numprocs = 1;
 #ifdef USE_MPI
-  int numprocs;
   MPI_Init(&argc,&argv);
   MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
   MPI_Comm_rank(MPI_COMM_WORLD,&myid);
   printf("Total number of processors=%i and I am number %i\n",numprocs,myid);
 #endif
 
-  // Remove later! 
-  //sleep(myid*3);
-  
   ////////////////////////////////////////////////////////////////////////////
   //
   // Read arguments from deck
@@ -225,13 +184,12 @@ int main (int argc, char **argv)
   //
   //==========================================================================
 
-
   ////////////////////////////////////////////////////////////////////////////
   //
   // Load the mesh, node coordinates, elements, interfaces, normals
   //
   ////////////////////////////////////////////////////////////////////////////   
-  simpleMesh m(myid);
+  simpleMesh m(myid,numprocs);
   m.load(fileName.c_str());
   int elem_type;
   int face_type;
@@ -242,39 +200,17 @@ int main (int argc, char **argv)
   int N_N;    // number of neighbors to an element
   scalar refArea; // area of reference element
   get_element_types(order, msh_qua, msh_tri, msh_lin);
-  if     (inputs.getElemType() == "lin"){face_type = 0      , elem_type = msh_lin; nsides = 0; N_N = 2;}
+  if     (inputs.getElemType() == "lin"){face_type = MSH_PNT, elem_type = msh_lin; nsides = 0; N_N = 2;}
   else if(inputs.getElemType() == "tri"){face_type = msh_lin, elem_type = msh_tri; nsides = 3; N_N = 3; refArea = 0.5;}
   else if(inputs.getElemType() == "qua"){face_type = msh_lin, elem_type = msh_qua; nsides = 4; N_N = 4; refArea = 4;} 
   else printf("Invalid element type in deck");
 
-  const std::vector<simpleElement> &Elements = m.getElements(elem_type);
-  const std::vector<simpleElement> &Olements = m.getOtherElements(elem_type);
-
-  // for(int i=0; i<Elements.size();i++){
-  //   const simpleElement &el = Elements[i];
-  //   printf("CPU id=%i : el id=%i, partition=%i\n",myid,el.getId(),el.getPartition());
-  // }
-
-  // for(int i=0; i<Olements.size();i++){
-  //   const simpleElement &el = Olements[i];
-  //   printf("CPU id=%i : ol id=%i, partition=%i\n",myid,el.getId(),el.getPartition());
-  // }
-
-  
   // Get the nodes, elements, interfaces, normals
   const fullMatrix<double> &nodes = m.getNodes();
   const std::vector<simpleElement> &elements = m.getElements(elem_type);
   m.buildInterfaces(face_type, elem_type,nsides);
   const std::vector<simpleInterface> &interfaces = m.getInterfaces();
 
-  // for(int i=0; i<interfaces.size();i++){
-  //   const simpleInterface &face = interfaces[i];
-  //   const simpleElement *el1 = face.getElement(0); // get the element of face 1
-  //   const simpleElement *el2 = face.getElement(1); // get the element of face 2
-  //   if (el2!=NULL) printf("CPU id=%i : face=%i, physical=%i, el1 id=%i, el2 id=%i\n",myid,i,face.getPhysicalTag(),el1->getId(),el2->getId());
-  //   else printf("CPU id=%i : face=%i, physical=%i, el1 id=%i\n",myid,i,face.getPhysicalTag(),el1->getId());
-  // }
- 
   m.buildNormals(face_type, elem_type, D);
   const fullMatrix<scalar> &normals = m.getNormals();
 
@@ -287,7 +223,7 @@ int main (int argc, char **argv)
   int* h_ghostElementSend = m.getGhostElementSend();
   int* h_ghostElementRecv = m.getGhostElementRecv();
 
-  
+ 
   ////////////////////////////////////////////////////////////////////////////   
   //
   // Generer les fonctions de formes, get integration points, weights
@@ -346,12 +282,6 @@ int main (int argc, char **argv)
   printf("M_G %i\n",M_G);
   printf("N_ghosts %i\n",N_ghosts);
 
-  // for(int k=0; k<N_ghosts;k++){
-  //   printf("send %i, to cpu=%i, tag=%i\n",h_ghostInterfaces[k*3+0],h_ghostInterfaces[k*3+1],h_ghostInterfaces[k*3+2]);
-  //   printf("    send el %i, to cpu=%i, tag=%i\n",h_ghostElementSend[k*3+0],h_ghostElementSend[k*3+1],h_ghostElementSend[k*3+2]);
-  //   printf("    recv el %i, from cpu=%i, tag=%i\n",h_ghostElementRecv[k*3+0],h_ghostElementRecv[k*3+1],h_ghostElementRecv[k*3+2]);
-  // }
-  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Calcul de la valeur des fonctions de formes aux points d'integration
@@ -492,11 +422,7 @@ int main (int argc, char **argv)
   // Build the boundary map (must be done after the normals)
   //
   //////////////////////////////////////////////////////////////////////////
-#ifdef ONED
-  m.buildLineBoundary(boundaryType);
-#elif TWOD
-  m.buildSquareBoundary(M_s, XYZNodesF, D);
-#endif
+  m.buildBoundary();
   int* h_boundaryMap = m.getBoundaryMap();
   int* h_boundaryIdx = m.getBoundaryIdx();
   int M_B = m.getBoundarySize();
@@ -519,7 +445,6 @@ int main (int argc, char **argv)
 //   fullMatrix<scalar> shifts = m.getShifts();
 
   m.buildNeighbors(N_N, N_E);
-  //if(cartesian) m.sortNeighbors(N_E,N_N, XYZCen);
   int* h_neighbors = m.getNeighbors();
 
   //////////////////////////////////////////////////////////////////////////   
@@ -690,22 +615,6 @@ int main (int argc, char **argv)
   int* h_map = new int[M_s*M_T*N_F*2];
   int* h_invmap = new int[M_s*N_N*N_E*N_F*2];
   dg_mappings(myid, M_s, M_T, N_F, N_s, N_E, N_N, interfaces, ElementMap, closures, h_map, h_invmap);
-
-  // FILE * mappings;
-  // int kk=0;
-  // char buffer[50];
-  // kk=sprintf(buffer,"map%i.dat",myid);
-  // mappings = fopen(buffer,"w");
-  // for(int t=0; t<M_T; t++){
-  //   for(int d=0; d<2; d++){
-  //     for(int j=0; j<M_s; j++){
-  // 	fprintf(mappings,"%5i ",h_map[((t*N_F+0)*2+d)*M_s+j]);
-  //     }
-  //   }
-  //   fprintf(mappings,"\n");
-  // }
-  // for(int k =0; k< M_s*N_N*N_E*N_F*2; k++){fprintf(mappings,"%5i\n",h_invmap[k]);}
-  // fclose(mappings);
   
   //==========================================================================
   //
@@ -792,7 +701,7 @@ int main (int argc, char **argv)
   //
   //if(cartesian){
   scalar* h_weightF  = new scalar[M_G]; makeZero(h_weightF,M_G); for(int g=0; g<M_G; g++) h_weightF[g] = (scalar)weightF(g,0);  
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, order, cartesian, N_N, h_neighbors, Lag2MonoX, MonoX2MonoY, MonoY2Lag, monoV, h_weightF);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, order, cartesian, N_N, N_ghosts, h_neighbors, Lag2MonoX, MonoX2MonoY, MonoY2Lag, monoV, h_ghostElementSend, h_ghostElementRecv, h_weightF);
   delete[] h_weightF;
   //}
   

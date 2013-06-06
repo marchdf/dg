@@ -889,10 +889,10 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar A02 = 0.00183;                 // initial amplitude
   scalar yshck = 0.025; // initial shock location
   scalar Lx = 0.089*2.0/3.0;
-  scalar K = 1.5;
+  scalar K = 1;
   scalar h = K*Lx;
   scalar yinterface1 = 0; // first interface location
-  scalar yinterface2 =-h; // second interface location
+  scalar yinterface2 =-10*h; // second interface location
   scalar delta=0.005;    // The diffusion layer thickness
     
   // Velocities/pressures in all materials
