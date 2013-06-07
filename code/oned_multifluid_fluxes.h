@@ -195,6 +195,10 @@ arch_device void oned_multifluid_roe(scalar rhoL,
 				     scalar EtR,
 				     scalar alphaL,
 				     scalar alphaR,
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)                     scalar YL, YR,
+#include "loop.h"
 				     scalar nx,
 				     int N_F,
 				     scalar* F, scalar* ncterm){

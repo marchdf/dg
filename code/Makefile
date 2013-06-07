@@ -7,6 +7,7 @@ PROB=MULTIFLUID
 GAMM=GAMNCON
 FLUX=ROE
 LIEU=HOME
+N_Y=2
 
 # configuration
 directories       := . quadratures
@@ -30,7 +31,7 @@ CXX               := icc
 endif
 
 # defines
-DEFINES           := -DHAVE_BLAS -DHAVE_LAPACK -D$(ARCH) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS) -D$(PARA)
+DEFINES           := -DHAVE_BLAS -DHAVE_LAPACK -D$(ARCH) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS) -D$(PARA) -DN_Y=3
 
 # blas libs
 BLAS_INC          := 

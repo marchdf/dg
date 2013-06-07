@@ -7,6 +7,10 @@
 //===========================================
 #ifdef ONED
 #ifdef MULTIFLUID
+
+// Used to define dynamically variables
+#define NUMVAR(x) Y ##x 
+
 void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simpleMesh m, const int elem_type, const int step, const double time, const int append){
 
   fullMatrix<scalar> Rho(N_s, N_E);
@@ -19,6 +23,13 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simp
   scalar ux  = 0;
   scalar et  = 0;
   scalar gamma = 0;
+  
+  // Mass fractions
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) fullMatrix<scalar> NUMVAR(x)(N_s,N_E); 
+#include "loop.h"
+ 
   for (int e = 0; e < N_E; e++){
     for (int i = 0; i < N_s; i++){
 
@@ -42,6 +53,12 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simp
       Ux (i,e) = ux;
       G  (i,e) = gamma;
       P  (i,e) = (gamma-1)*(et - 0.5*ux*ux*rho);
+
+      // Mass fractions
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) NUMVAR(x)(i,e) = U[(e*N_F+x)*N_s+i]/rho; // not quite right with the field counting here
+#include "loop.h"
     }
   }
 
@@ -50,6 +67,14 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simp
   m.writeSolution(  Ux,  elem_type,  "ux.pos",  "Ux", step, time, append);
   m.writeSolution(   G,  elem_type,   "g.pos",   "G", step, time, append);
   m.writeSolution(   P,  elem_type,   "p.pos",   "P", step, time, append);
+
+  // Mass fractions output to file
+  char buffer1 [5]; char buffer2 [2];
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) sprintf(buffer1, "y%i.pos", x); sprintf(buffer2, "Y%i", x); m.writeSolution(NUMVAR(x), elem_type, buffer1, buffer2, step, time, append);
+#include "loop.h"
+
 }
 #endif
 #endif

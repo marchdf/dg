@@ -289,6 +289,10 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 			  UgF[((t*N_F+2)*2+1)*M_G+g],                            // EtR
 			  UgF[((t*N_F+3)*2+0)*M_G+g],                            // alphaL
 			  UgF[((t*N_F+3)*2+1)*M_G+g],                            // alphaR
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)          UgF[((t*N_F+0)*2+0)*M_G+g], UgF[((t*N_F+0)*2+1)*M_G+g],// YL, YR
+#include "loop.h"
 			  normals[t*D+0],                                        // nx
 			  N_F,
 			  &buffer[Fidx],&buffer[ncidx]);
