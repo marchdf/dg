@@ -24,13 +24,10 @@ LIMITING
   - idea to clean: instead of different constructors, have one main constructor and extra functions to set the parts that are different (eg. Limiter.setNeighbors(neighbors))
 
 PARALLEL
-  - Make MPI capable
+  - Play with buffered send, isend, send, sendrecv_replace?
 
 2D PHYSICS
   - passive/multifluid HLL
-
-BC
-  - make the 1D ones similar to 2D implementation (where you define the BC in the mesh, not the deck)
 
 BASIS TRANSFORMS (for HR)
   - put in a separate class
@@ -48,5 +45,5 @@ OTHER
   - Remove cpu_ in the function names (not necessary now)
   - Does shifts works in 1D? It does not!
   - get rid of N_F as input (define it with IC)
-  - Determine as many of the constants (N_F, N_s, D, DF, order, M_s, div, mod, etc) at compile time (loop unrolling?)
+  - Determine as many of the constants (N_F, N_s, D, DF, order, M_s, div, mod, etc) at compile time (loop unrolling?): N_F, D, DF, order, N_Y
   - clean the deletes in main. Only have the class deleting the vectors it creates. (eg. in main I delete arrays created in simpleMesh)

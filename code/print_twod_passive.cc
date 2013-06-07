@@ -12,7 +12,6 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simp
   fullMatrix<scalar> Rho(N_s, N_E);
   fullMatrix<scalar> Ux(N_s, N_E);
   fullMatrix<scalar> Uy(N_s, N_E);
-  fullMatrix<scalar> Et(N_s, N_E);
   fullMatrix<scalar> P(N_s, N_E);
   scalar gamma = constants::GLOBAL_GAMMA;
   fullMatrix<scalar> PhiC(N_s, N_E)  ;
@@ -41,7 +40,6 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simp
       Rho(i,e) = rho;
       Ux (i,e) = ux;
       Uy (i,e) = uy;
-      Et (i,e) = et;
       PhiC  (i,e) = U[(e*N_F+4)*N_s+i]/rho;
       PhiNC (i,e) = U[(e*N_F+5)*N_s+i];
       P     (i,e) = (gamma-1)*(et - 0.5*(ux*ux+uy*uy)*rho);
@@ -52,7 +50,6 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simp
   m.writeSolution(  Rho,  elem_type,  "rho.pos",  "Rho", step, time, append);
   m.writeSolution(   Ux,  elem_type,   "ux.pos",   "Ux", step, time, append);
   m.writeSolution(   Uy,  elem_type,   "uy.pos",   "Uy", step, time, append);
-  m.writeSolution(   Et,  elem_type,   "et.pos",   "Et", step, time, append);
   m.writeSolution( PhiC,  elem_type, "phic.pos", "PhiC", step, time, append);
   m.writeSolution(PhiNC,  elem_type,"phinc.pos","PhiNC", step, time, append);
   m.writeSolution(    P,  elem_type,    "p.pos",    "P", step, time, append);

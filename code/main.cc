@@ -147,6 +147,7 @@ int main (int argc, char **argv)
   bool khinstb = false;
   bool khblast = false;
   bool rarec2d = false;
+  bool blastrm = false;
   bool sinephi = false;
   bool sodmono = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
@@ -166,6 +167,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="khinstb") khinstb = true;
   else if (inputs.getInitialCondition()=="khblast") khblast = true;
   else if (inputs.getInitialCondition()=="rarec2d") rarec2d = true;
+  else if (inputs.getInitialCondition()=="blastrm") blastrm = true;
   else if (inputs.getInitialCondition()=="sinephi") sinephi = true;
   else if (inputs.getInitialCondition()=="sodmono") sodmono = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
@@ -571,6 +573,7 @@ int main (int argc, char **argv)
   else if(khinstb) init_dg_khinstb_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
   else if(khblast) init_dg_khblast_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
   else if(rarec2d) init_dg_rarec2d_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
+  else if(blastrm) init_dg_blastrm_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, U);
 #elif PASSIVE
   if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, U);
   if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, U);
@@ -765,6 +768,7 @@ int main (int argc, char **argv)
   else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
   else if(khblast) init_dg_khblast_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
   else if(rarec2d) init_dg_rarec2d_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
+  else if(blastrm) init_dg_blastrm_multifluid(N_s, N_E, N_F, D, XYZNodes, XYZCen, Uinit);
 #elif PASSIVE
   if (sinephi) init_dg_sinephi_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);
   if (sodmono) init_dg_sodmono_passive(N_s, N_E, N_F, D, XYZNodes, Uinit);

@@ -1254,6 +1254,131 @@ void init_dg_rarec2d_multifluid(const int N_s, const int N_E, const int N_F, con
 }
 
 
+void init_dg_blastrm_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+
+  if ((N_F!=5)&&(N_F!=4)) printf("You are setting up the wrong problem. N_F =%i != 5 or 4.\n",N_F);
+
+  // Initialize
+  scalar A0 = 0.00183;
+  scalar Lx = 0.089*2.0/3.0;
+  scalar vcoord =0; //-115.26;//72; // coordinate shift upwards
+  scalar K = 0.5;
+  scalar h = K*Lx;
+  scalar yinterface =-h; // first interface location
+  scalar delta=0.005;   // The diffusion layer thickness
+  scalar u = 0;
+  scalar v = 0+vcoord;
+  scalar p = 1e5;
+
+  // Top material: blast initialized here
+  scalar rho01   = 5.494;
+  scalar u01     = u;
+  scalar v01     = v;  
+  scalar gamma01 = 1.4;
+  scalar alpha01 = 1/(gamma01-1);
+  scalar M02      = 146.05;
+
+  // Bottom material (material 2)
+  scalar rho02   = 1.351;
+  scalar u02     = u;
+  scalar v02     = v;  
+  scalar gamma02 = 1.4;
+  scalar alpha02 = 1/(gamma02-1);
+  scalar M01      = 34.76; // molecular weight
+  
+  // Explosion energy parameters
+  scalar blstpos = 0.0;
+  scalar alpha = 2./3.; // = 2/3 for planar, 1/2 for cyl, 2/5 for sph.
+  scalar Q = 0.66927; // for alpha = 2/3 and gamma = 5/3
+  scalar Ms = 3;    // Mach number when blast front gets to interface
+  scalar ps = p*((2.0*gamma01*Ms*Ms-(gamma01-1))/(gamma01+1));  // pressure at shock in Pa
+  scalar xi = fabs(blstpos-yinterface); // distance btw blast initial position and interface
+  scalar Ex  = pow(Q,2.0/alpha)*0.5*(gamma01+1)*ps/(alpha*alpha)*pow(xi,2.0/alpha-2.0);
+  scalar Dxx = 0.0001; // energy initially deposited in Dxx
+
+  scalar xc=0, yc=0, x=0, y=0;
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+#ifdef ONED
+      A0 = 0;
+      yc = XYZCen(e,0);
+      y = XYZNodes(i,e*D+0);
+#elif TWOD
+      xc = XYZCen(e,0);
+      x = XYZNodes(i,e*D+0);
+      yc = XYZCen(e,1);
+      y = XYZNodes(i,e*D+1);
+#endif
+      
+      if((y<=blstpos+Dxx)&&(yc >= blstpos)){ // blast region
+
+#ifdef ONED
+	U(i,e*N_F+0) = rho01;
+	U(i,e*N_F+1) = rho01*v01;
+	U(i,e*N_F+2) = Ex/Dxx;
+#ifdef GAMCONS
+	U(i,e*N_F+3) = rho01/(gamma01-1);
+#elif GAMNCON
+	U(i,e*N_F+3) = 1.0/(gamma01-1);
+#endif
+
+#elif TWOD
+	U(i,e*N_F+0) = rho01;
+	U(i,e*N_F+1) = rho01*u01;
+	U(i,e*N_F+2) = rho01*v01;
+	U(i,e*N_F+3) = Ex/Dxx;
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rho01/(gamma01-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gamma01-1);
+#endif
+#endif
+      }
+      else{
+	// vertical distance from interface
+	scalar d = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterface)/(2*delta);
+	
+	// Calculate volume fractions
+	scalar vol=0;
+	if      ((d<1)&&(d>0)) vol = exp(log(1e-16)*pow(fabs(d),8));
+	else if (d<=0)         vol = 1;
+	else                   vol = 0;
+
+	scalar jx  = 1-vol;
+	scalar rho = jx*rho02+(1-jx)*rho01;
+	scalar jy  = jx*rho02/(jx*rho02+(1-jx)*rho01);       // mass fraction
+	scalar jM  = 1/(jy/M02+(1-jy)/M01);                 // total molecular weight
+
+	scalar alpha = jy*alpha02*jM/M02+(1-jy)*alpha01*jM/M01;
+	scalar gamma = 1+1.0/alpha;
+
+#ifdef ONED
+	U(i,e*N_F+0) = rho;
+	U(i,e*N_F+1) = rho*v;
+	U(i,e*N_F+2) = p/(gamma-1)+ 0.5*rho*(u*u+v*v);
+#ifdef GAMCONS
+	U(i,e*N_F+3) = rho/(gamma-1);
+#elif GAMNCON
+	U(i,e*N_F+3) = 1.0/(gamma-1);
+#endif
+#elif TWOD
+	U(i,e*N_F+0) = rho;
+	U(i,e*N_F+1) = rho*u;
+	U(i,e*N_F+2) = rho*v;
+	U(i,e*N_F+3) = p/(gamma-1)+ 0.5*rho*(u*u+v*v);
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rho/(gamma-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gamma-1);
+#endif
+#endif
+      }
+    }
+  }
+}
+
+
 void init_dg_sinephi_passive(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   scalar rho     = 1.0;

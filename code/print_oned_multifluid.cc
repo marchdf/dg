@@ -11,7 +11,6 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simp
 
   fullMatrix<scalar> Rho(N_s, N_E);
   fullMatrix<scalar> Ux(N_s, N_E);
-  fullMatrix<scalar> Et(N_s, N_E);
   fullMatrix<scalar> P(N_s, N_E);
   fullMatrix<scalar> G(N_s, N_E)  ;
 
@@ -41,7 +40,6 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simp
 
       Rho(i,e) = rho;
       Ux (i,e) = ux;
-      Et (i,e) = et;
       G  (i,e) = gamma;
       P  (i,e) = (gamma-1)*(et - 0.5*ux*ux*rho);
     }
@@ -50,7 +48,6 @@ void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simp
   // print to the output file
   m.writeSolution( Rho,  elem_type, "rho.pos", "Rho", step, time, append);
   m.writeSolution(  Ux,  elem_type,  "ux.pos",  "Ux", step, time, append);
-  m.writeSolution(  Et,  elem_type,  "et.pos",  "Et", step, time, append);
   m.writeSolution(   G,  elem_type,   "g.pos",   "G", step, time, append);
   m.writeSolution(   P,  elem_type,   "p.pos",   "P", step, time, append);
 }
