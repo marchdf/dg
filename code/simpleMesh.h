@@ -71,7 +71,7 @@ class simpleMesh {
   }
   void buildElementMap(int elem_type);
   void buildCommunicators(int elem_type);
-  void buildNormals(int typeInterface, int typeElement, const int D);
+  void buildNormals(int typeInterface, int typeElement);
 
   int getNbGhostInterfaces() const {return _N_ghosts;}
   int* getGhostInterfaces()const {return _ghostInterfaces;}
@@ -86,13 +86,13 @@ class simpleMesh {
   void buildNeighbors(int N_N, int N_E);
   void sortNeighbors(const int N_E, const int N_N, const fullMatrix<scalar> XYZCen);
   int* getNeighbors()const {return _neighbors;}
-  void buildBoundaryElementShift1D(const int N_s, const int D, const int N_E, const fullMatrix<scalar> &XYZNodes);
-  void buildBoundaryElementShift2D(int order, const fullMatrix<scalar> &XYZNodesF, const int D, std::map<int,int> &ElementMap);
+  void buildBoundaryElementShift1D(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes);
+  void buildBoundaryElementShift2D(int order, const fullMatrix<scalar> &XYZNodesF, std::map<int,int> &ElementMap);
   inline const fullMatrix<scalar> & getShifts() const {return _shifts;}
 
-  fullMatrix<scalar> getElementCentroids(const int N_E, const int D, const int ncorners, const fullMatrix<scalar> XYZNodes);
+  fullMatrix<scalar> getElementCentroids(const int N_E, const int ncorners, const fullMatrix<scalar> XYZNodes);
   bool iscartesian(std::string typeElement, const int elem_type);
-  void setDx(const int N_N, const int N_E, const int D, const fullMatrix<scalar> &XYZCen, const fullMatrix<scalar> &XYZNodes);
+  void setDx(const int N_N, const int N_E, const fullMatrix<scalar> &XYZCen, const fullMatrix<scalar> &XYZNodes);
   scalar getDx()const {return _Dx;}
   inline scalar distance_to_edge(scalar x0,scalar y0,scalar x1,scalar y1,scalar x2,scalar y2);
     

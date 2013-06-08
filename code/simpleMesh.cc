@@ -163,7 +163,7 @@ void simpleMesh::load (const char *fileName)
     printf("invalid file format\n");
 }
 
-void simpleMesh::buildNormals (int typeInterface, int typeElement, int D)
+void simpleMesh::buildNormals (int typeInterface, int typeElement)
 {
   
   //
@@ -377,7 +377,7 @@ void simpleMesh::buildBoundary(){
 }
 
 
-void simpleMesh::buildBoundaryElementShift1D(const int N_s, const int D, const int N_E, const fullMatrix<scalar> &XYZNodes){ 
+void simpleMesh::buildBoundaryElementShift1D(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes){ 
   // Objective: create BoundaryElemShift
   // elem1         | elem2         | xshift 
   // (tgt element)   his neighbor    shifts to bring elem2 next to elem1
@@ -407,7 +407,7 @@ void simpleMesh::buildBoundaryElementShift1D(const int N_s, const int D, const i
 
 }
   
-void simpleMesh::buildBoundaryElementShift2D(int order, const fullMatrix<scalar> &XYZNodesF, const int D, std::map<int,int> &ElementMap)
+void simpleMesh::buildBoundaryElementShift2D(int order, const fullMatrix<scalar> &XYZNodesF, std::map<int,int> &ElementMap)
 {
   // Objective: create BoundaryElemShift
   // elem1         | elem2         | xshift | yshift
@@ -880,7 +880,7 @@ void simpleMesh::buildCommunicators(int elem_type){
 				      
 
 // Return a matrix which is N_E x D containing the element centroids
-fullMatrix<scalar> simpleMesh::getElementCentroids(const int N_E, const int D, const int ncorners, const fullMatrix<scalar> XYZNodes){
+fullMatrix<scalar> simpleMesh::getElementCentroids(const int N_E, const int ncorners, const fullMatrix<scalar> XYZNodes){
 
   fullMatrix<scalar> XYZCen(N_E,D);
   scalar cen =0;
@@ -928,7 +928,7 @@ bool simpleMesh::iscartesian(std::string typeElement, const int elem_type){
   return cartesian;
 }
 
-void simpleMesh::setDx(const int N_N, const int N_E, const int D, const fullMatrix<scalar> &XYZCen, const fullMatrix<scalar> &XYZNodes){
+void simpleMesh::setDx(const int N_N, const int N_E, const fullMatrix<scalar> &XYZCen, const fullMatrix<scalar> &XYZNodes){
   /* This function finds the minium Dx of all the elements in the
      mesh. It is later used for the CFL condition and the adaptive
      time-stepping.

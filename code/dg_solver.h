@@ -10,8 +10,6 @@
 class DG_SOLVER
 {
  private:
-  int _D;
-  int _N_F;
   int _N_E;
   int _N_s;
   int _N_G;
@@ -64,9 +62,9 @@ class DG_SOLVER
   
  public:
   // constructor
- DG_SOLVER(int D, int N_F, int N_E, int N_s, int N_G,  int N_N, int M_T, int M_s, int M_G, int M_B, int M_ghosts,
+ DG_SOLVER(int N_E, int N_s, int N_G,  int N_N, int M_T, int M_s, int M_G, int M_B, int M_ghosts,
 	   int* map, int* invmap, int* ghostInterfaces, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* psi, scalar* psi_w, scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals, int* boundaryMap, int* boundaryIdx) :
-  _D(D), _N_F(N_F), _N_E(N_E), _N_s(N_s), _N_G(N_G), _N_N(N_N), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B), _M_ghosts(M_ghosts){
+  _N_E(N_E), _N_s(N_s), _N_G(N_G), _N_N(N_N), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B), _M_ghosts(M_ghosts){
 
 
     // Indexes for boundary conditions
@@ -243,63 +241,63 @@ class DG_SOLVER
   void dg_solver(scalar* U, scalar* f_rk){
 
     // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
-    Lcpu_mapToFace(_M_s, _M_T, _N_F, _N_s, _map, U, _UF);
+    Lcpu_mapToFace(_M_s, _M_T, _N_s, _map, U, _UF);
 
     // Do the necessary MPI communications
 #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
-    Lcpu_mapGhostFace(_M_s, _M_ghosts, _N_F, _ghostInterfaces, _UF);
+    Lcpu_mapGhostFace(_M_s, _M_ghosts, _ghostInterfaces, _UF);
     MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
 #endif
 
     // Apply special boundary conditions
-    LrflctiveBoundary(_M_s,_N_F,_rflctiveIdx,_boundaryMap,0,_UF);
+    LrflctiveBoundary(_M_s, _rflctiveIdx,_boundaryMap,0,_UF);
     
     // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes
 #ifdef HAVE_BLAS
-    blasGemm('N','N', _N_G   , _N_E*_N_F, _N_s, 1, _phi,  _N_G   , U, _N_s, 0.0, _Uinteg, _N_G);
-    blasGemm('N','N', _N_G*_D, _N_E*_N_F, _N_s, 1, _dphi, _N_G*_D, U, _N_s, 0.0, _dUinteg, _N_G*_D);
+    blasGemm('N','N', _N_G   , _N_E*N_F, _N_s, 1, _phi,  _N_G   , U, _N_s, 0.0, _Uinteg, _N_G);
+    blasGemm('N','N', _N_G*D, _N_E*N_F, _N_s, 1, _dphi, _N_G*D, U, _N_s, 0.0, _dUinteg, _N_G*D);
 #else
-    Lcpu_collocationU(_D, _N_G, _N_s, _N_E, _N_F, _Uinteg, _dUinteg, _phi, _dphi, U);
+    Lcpu_collocationU(D, _N_G, _N_s, _N_E, _Uinteg, _dUinteg, _phi, _dphi, U);
 #endif
     
     // collocationUF: requires psi, UF, UintegF and some sizes
 #ifdef HAVE_BLAS
-    blasGemm('N','N', _M_G, _M_T*_N_F*2, _M_s, 1, _psi, _M_G, _UF, _M_s, 0.0, _UintegF, _M_G);
+    blasGemm('N','N', _M_G, _M_T*N_F*2, _M_s, 1, _psi, _M_G, _UF, _M_s, 0.0, _UintegF, _M_G);
 #else
-    Lcpu_collocationUF(_M_G, _M_s, _M_T, _N_F, _UintegF, _psi, _UF);
+    Lcpu_collocationUF(_M_G, _M_s, _M_T, _UintegF, _psi, _UF);
 #endif
 
     // Physics
-    Levaluate_sf(_D, _N_G, _N_E, _N_F,  _s, _f, _Uinteg, _dUinteg, _invJac);
-    Levaluate_q(_M_G, _M_T, _N_F, _D, _q, _UintegF, _normals);
+    Levaluate_sf(_N_G, _N_E, _s, _f, _Uinteg, _dUinteg, _invJac);
+    Levaluate_q(_M_G, _M_T, _q, _UintegF, _normals);
     
     // redistribute_sf: requires J, invJac, s, f, phi_w, dphi_w, sJ, fJ, S, F
-    Lcpu_redistribute_sf(_D, _N_G, _N_E, _N_F, _sJ, _fJ, _s, _f, _J, _invJac);
+    Lcpu_redistribute_sf(_N_G, _N_E, _sJ, _fJ, _s, _f, _J, _invJac);
       
     // matrix-matrix multiply for sf
 #ifdef HAVE_BLAS
-    blasGemm('T','N', _N_s, _N_E*_N_F, _N_G   , 1, _phi_w , _N_G   , _sJ, _N_G  , 0.0, _S, _N_s);
-    blasGemm('T','N', _N_s, _N_E*_N_F, _N_G*_D, 1, _dphi_w, _N_G*_D, _fJ, _N_G*_D, 0.0, _F, _N_s);
+    blasGemm('T','N', _N_s, _N_E*N_F, _N_G   , 1, _phi_w , _N_G   , _sJ, _N_G  , 0.0, _S, _N_s);
+    blasGemm('T','N', _N_s, _N_E*N_F, _N_G*D, 1, _dphi_w, _N_G*D, _fJ, _N_G*D, 0.0, _F, _N_s);
 #else
-    Lcpu_gemm_sf(_D, _N_G, _N_s, _N_E, _N_F, _S, _F, _sJ, _fJ, _phi_w, _dphi_w);
+    Lcpu_gemm_sf(D, _N_G, _N_s, _N_E, _S, _F, _sJ, _fJ, _phi_w, _dphi_w);
 #endif
 
     // redistribute_q: requires JF, q, qJ, psi_w, Qtcj,
-    Lcpu_redistribute_q(_M_G, _M_T, _N_F, _qJ, _q, _JF);
+    Lcpu_redistribute_q(_M_G, _M_T, _qJ, _q, _JF);
     
     // matrix-matrix multiply for q
 #ifdef HAVE_BLAS
-    blasGemm('T','N', _M_s, _M_T*_N_F*2, _M_G, 1, _psi_w , _M_G, _qJ, _M_G, 0.0, _Qtcj, _M_s);
+    blasGemm('T','N', _M_s, _M_T*N_F*2, _M_G, 1, _psi_w , _M_G, _qJ, _M_G, 0.0, _Qtcj, _M_s);
 #else
-    Lcpu_gemm_q(_M_G, _M_s, _M_T, _N_F, _Qtcj, _qJ, _psi_w);
+    Lcpu_gemm_q(_M_G, _M_s, _M_T, _Qtcj, _qJ, _psi_w);
 #endif
     
     // map_q: requires map, Qtcj, Q (might want to do this in the previous step)
-    Lcpu_mapToElement(_N_s, _N_E, _N_F, _M_s, _N_N, _invmap, _Q, _Qtcj);
+    Lcpu_mapToElement(_N_s, _N_E, _M_s, _N_N, _invmap, _Q, _Qtcj);
 
     // Make f_rk = S+F+Q
-    Lcpu_addSFQ(_N_s, _N_E, _N_F, f_rk, _S, _F, _Q);
+    Lcpu_addSFQ(_N_s, _N_E, f_rk, _S, _F, _Q);
     
   }; // end solver function
 
@@ -309,22 +307,22 @@ class DG_SOLVER
 
     // Collocate the solution to the integration points
 #ifdef HAVE_BLAS
-    hostblasGemm('N','N', _N_G, _N_E*_N_F, _N_s, 1, _phiC, _N_G, U, _N_s, 0.0, _UgC, _N_G);
+    hostblasGemm('N','N', _N_G, _N_E*N_F, _N_s, 1, _phiC, _N_G, U, _N_s, 0.0, _UgC, _N_G);
 #else
     printf("Need BLAS library to calculate conservation.\n")
 #endif
     
     // Take the cell average of the solution
-    makeZero(_I, _N_F);
-    for(int fc = 0; fc < _N_F; fc++){
+    makeZero(_I, N_F);
+    for(int fc = 0; fc < N_F; fc++){
       for(int e = 0; e < _N_E; e++){
     	for(int g = 0; g < _N_G; g++){
-    	  _I[fc] += _UgC[(e*_N_F+fc)*_N_G+g]*_JC[e]*_weight[g];
+    	  _I[fc] += _UgC[(e*N_F+fc)*_N_G+g]*_JC[e]*_weight[g];
     	}
       }
     }
     // write to file
-    fprintf(consf,"%20.16E\t", time); for(int fc = 0; fc < _N_F; fc++) fprintf(consf,"%20.16E\t", _I[fc]); fprintf(consf,"\n");
+    fprintf(consf,"%20.16E\t", time); for(int fc = 0; fc < N_F; fc++) fprintf(consf,"%20.16E\t", _I[fc]); fprintf(consf,"\n");
 
   };//end conservation function
 

@@ -27,7 +27,6 @@ arch_device void twod_multifluid_rusanov(scalar rhoL,
 					 scalar alphaR,
 					 scalar nx,
 					 scalar ny,
-					 int N_F,
 					 scalar* F, scalar* ncterm){
 
   scalar vnL = vxL*nx+vyL*ny;
@@ -106,7 +105,6 @@ arch_device void twod_multifluid_hll(scalar rhoL,
 				     scalar alphaR,
 				     scalar nx,
 				     scalar ny,
-				     int N_F,
 				     scalar* F, scalar* ncterm){
 
 #ifdef USE_CPU
@@ -135,7 +133,6 @@ arch_device void twod_multifluid_roe(scalar rhoL,
 				     scalar alphaR,
 				     scalar nx,
 				     scalar ny,
-				     int N_F,
 				     scalar* F, scalar* ncterm){
 
   scalar tx = -ny;

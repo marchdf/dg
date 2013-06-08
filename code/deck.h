@@ -14,7 +14,6 @@ class deck {
   std::string _meshfile;
   std::string _elemType;
   std::string _limiter;
-  int _nf;
   std::string _ic;
   std::string _bc;
   
@@ -27,7 +26,6 @@ class deck {
   inline std::string getMeshfile() { return _meshfile;}
   inline std::string getElemType() { return _elemType;}
   inline std::string getLimiter() { return _limiter;}
-  inline int getNumFields() {return _nf;}
   inline std::string getInitialCondition() { return _ic;}
   inline std::string getBoundaryCondition() { return _bc;}
   void readDeck(const char *fileName);

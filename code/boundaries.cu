@@ -10,7 +10,7 @@
 //==========================================================================
 
 //==========================================================================
-arch_global void rflctive(int M_s, int N_F, int M_B, int* boundaryMap, int start, scalar* UF){
+arch_global void rflctive(int M_s, int M_B, int* boundaryMap, int start, scalar* UF){
 #ifdef USE_CPU
   for(int k = 0; k < M_B; k++){
     int t = boundaryMap[start+k];
@@ -42,14 +42,14 @@ arch_global void rflctive(int M_s, int N_F, int M_B, int* boundaryMap, int start
 //
 //==========================================================================
 extern "C"
-void LrflctiveBoundary(int M_s, int N_F, int M_B, int* boundaryMap, int start, scalar* UF){
+void LrflctiveBoundary(int M_s, int M_B, int* boundaryMap, int start, scalar* UF){
 
 #ifdef USE_GPU
   dim3 dimBlock(M_s,1,1);
   dim3 dimGrid(M_B,1);
 #endif
 
-  rflctive arch_args (M_s, N_F, M_B, boundaryMap, start, UF);
+  rflctive arch_args (M_s, M_B, boundaryMap, start, UF);
 }
 
 

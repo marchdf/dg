@@ -30,7 +30,6 @@ arch_device void twod_passive_rusanov(scalar rhoL,
 				      scalar phincR,
 				      scalar nx,
 				      scalar ny,
-				      int N_F,
 				      scalar* F, scalar* ncterm){
 
   scalar vnL = vxL*nx+vyL*ny;
@@ -107,7 +106,6 @@ arch_device void twod_passive_hll(scalar rhoL,
 				  scalar phincR,
 				  scalar nx,
 				  scalar ny,
-				  int N_F,
 				  scalar* F, scalar* ncterm){
 
   scalar vnL = vxL*nx+vyL*ny;
@@ -202,7 +200,6 @@ arch_device void twod_passive_roe(scalar rhoL,
 				  scalar phincR,
 				  scalar nx,
 				  scalar ny,
-				  int N_F,
 				  scalar* F, scalar* ncterm){
 
   scalar tx = -ny;

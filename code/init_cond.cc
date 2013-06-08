@@ -1,7 +1,7 @@
 #include <init_cond.h>
 #include <stdlib.h>
 
-void init_dg_shallow(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_shallow(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   if (N_F!=3) printf("You are setting up the wrong problem. N_F =%i != 3.\n",N_F);
   
@@ -19,7 +19,7 @@ void init_dg_shallow(const int N_s, const int N_E, const int N_F, const int D, c
 }
 
 
-void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_simplew_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 8.\n",N_F);
   
@@ -82,7 +82,7 @@ void init_dg_simplew_multifluid(const int N_s, const int N_E, const int N_F, con
   }
 }
 
-void buildLRstates_multifluid(scalar rhoL, scalar uL, scalar EtL, scalar gammaL, scalar rhoR, scalar uR, scalar EtR, scalar gammaR, const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void buildLRstates_multifluid(scalar rhoL, scalar uL, scalar EtL, scalar gammaL, scalar rhoR, scalar uR, scalar EtR, scalar gammaR, const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   scalar* L = new scalar[N_F];
   scalar* R = new scalar[N_F];
@@ -131,7 +131,7 @@ void buildLRstates_multifluid(scalar rhoL, scalar uL, scalar EtL, scalar gammaL,
 
 }
 
-void init_dg_sodtube_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_sodtube_multifluid(const int N_s, const int N_E,const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   // Initial conditions
   // U = (  rho, rho ux, rho uy, rho uz,   Bx, By, Bz,    E,   ee)
@@ -153,10 +153,10 @@ void init_dg_sodtube_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar gammaR= 1.6;
   scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
   
-  buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, N_F, D, XYZNodes, U);
+  buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, XYZNodes, U);
 }
 
-void init_dg_sodmono_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_sodmono_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   // Initial conditions
   // U = (  rho, rho ux, rho uy, rho uz,   Bx, By, Bz,    E,   ee)
@@ -178,11 +178,11 @@ void init_dg_sodmono_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar gammaR= 1.4;
   scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
   
-  buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, N_F, D, XYZNodes, U);
+  buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, XYZNodes, U);
 }
 
 
-void init_dg_contact_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_contact_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   // Left state
   scalar rhoL  = 1.0;
@@ -198,11 +198,11 @@ void init_dg_contact_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar pR     = 1.0;
   scalar EtR    = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
 
-  buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, N_F, D, XYZNodes, U);
+  buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, XYZNodes, U);
 
 }
 
-void init_dg_rhotact_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_rhotact_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
   
   // Left state
   scalar rhoL  = 1.0;
@@ -218,11 +218,11 @@ void init_dg_rhotact_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar pR     = 1.0;
   scalar EtR    = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
 
-  buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, N_F, D, XYZNodes, U);
+  buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, XYZNodes, U);
 }
 
 
-void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   // Left state
   scalar rhoL  = 1.0;
@@ -238,11 +238,11 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const int N_F, con
   scalar pR     = 1.0;
   scalar EtR    = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
 
-  buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, N_F, D, XYZNodes, U);
+  buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, XYZNodes, U);
   
 }
 
-void init_dg_sinegam_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_sinegam_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   scalar rho     = 1.0;
   scalar u       = 1.0;
@@ -292,7 +292,7 @@ void init_dg_sinegam_multifluid(const int N_s, const int N_E, const int N_F, con
   delete[] Q;
 }
              
-void init_dg_expogam_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_expogam_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
 
@@ -339,7 +339,7 @@ void init_dg_expogam_multifluid(const int N_s, const int N_E, const int N_F, con
   delete[] Q;
 }
 
-void init_dg_shckint_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_shckint_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   // Pre-shock state (material 1)
   scalar rho02   = 0.1;
@@ -410,7 +410,7 @@ void init_dg_shckint_multifluid(const int N_s, const int N_E, const int N_F, con
   }
 }
 
-void init_dg_multint_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+void init_dg_multint_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
 #ifdef TWOD
   printf("multint problem can only be run in 1D. Exiting");
@@ -519,7 +519,7 @@ void init_dg_multint_multifluid(const int N_s, const int N_E, const int N_F, con
   }
 }
 
-void init_dg_blast1d_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+void init_dg_blast1d_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
 #ifdef TWOD
   printf("blast1d problem can only be run in 1D. Exiting");
@@ -633,7 +633,7 @@ void init_dg_blast1d_multifluid(const int N_s, const int N_E, const int N_F, con
 //   }
 }
 
-void init_dg_rarecon_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
 #ifdef TWOD
   printf("rarecon problem can only be run in 1D. Exiting");
@@ -712,7 +712,7 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const int N_F, con
 }
 
 
-void init_dg_sodcirc_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_sodcirc_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
 #ifdef ONED
   printf("sodcirc problem can only be run in 2D. Exiting");
@@ -772,7 +772,7 @@ void init_dg_sodcirc_multifluid(const int N_s, const int N_E, const int N_F, con
 #endif
 }
 
-void init_dg_rminstb_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+void init_dg_rminstb_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
 #ifdef ONED
   printf("rminstb problem can only be run in 2D. Exiting");
@@ -875,7 +875,7 @@ void init_dg_rminstb_multifluid(const int N_s, const int N_E, const int N_F, con
 #endif
 }
 
-void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
 #ifdef ONED
   printf("rmmulti problem can only be run in 2D. Exiting");
@@ -994,7 +994,7 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const int N_F, con
 }
 
 
-void init_dg_khinstb_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+void init_dg_khinstb_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
 #ifdef ONED
   printf("khinstb problem can only be run in 2D. Exiting");
@@ -1075,7 +1075,7 @@ void init_dg_khinstb_multifluid(const int N_s, const int N_E, const int N_F, con
 #endif
 }
 
-void init_dg_khblast_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+void init_dg_khblast_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
 #ifdef ONED
   printf("khblast problem can only be run in 2D. Exiting");
@@ -1159,7 +1159,7 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const int N_F, con
 #endif
 }
 
-void init_dg_rarec2d_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+void init_dg_rarec2d_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
 #ifdef ONED
   printf("rarec2d problem can only be run in 2D. Exiting");
@@ -1254,7 +1254,7 @@ void init_dg_rarec2d_multifluid(const int N_s, const int N_E, const int N_F, con
 }
 
 
-void init_dg_blastrm_multifluid(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
   if ((N_F!=5)&&(N_F!=4)) printf("You are setting up the wrong problem. N_F =%i != 5 or 4.\n",N_F);
 
@@ -1379,7 +1379,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const int N_F, con
 }
 
 
-void init_dg_sinephi_passive(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_sinephi_passive(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   scalar rho     = 1.0;
   scalar u       = 1.0;
@@ -1431,7 +1431,7 @@ void init_dg_sinephi_passive(const int N_s, const int N_E, const int N_F, const 
 }
 
 
-void init_dg_sodmono_passive(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_sodmono_passive(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   scalar gamma = constants::GLOBAL_GAMMA;
   // Left state
@@ -1484,7 +1484,7 @@ void init_dg_sodmono_passive(const int N_s, const int N_E, const int N_F, const 
 
 
 
-void init_dg_euler1D_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
+void init_dg_euler1D_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
 
   if (N_F!=6) printf("You are setting up the wrong problem. N_F =%i != 8.\n",N_F);
   
@@ -1556,7 +1556,7 @@ void init_dg_euler1D_mhd(const int N_s, const int N_E, const int N_F, const int 
   }
 }
 
-void init_dg_euler2D_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
+void init_dg_euler2D_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
 
   if (N_F!=6) printf("You are setting up the wrong problem. N_F =%i != 8.\n",N_F);
   
@@ -1593,7 +1593,7 @@ void init_dg_euler2D_mhd(const int N_s, const int N_E, const int N_F, const int 
   }
 }
 
-void init_dg_sodtube_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
+void init_dg_sodtube_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
 
   if (N_F!=6) printf("You are setting up the wrong problem. N_F =%i != 8.\n",N_F);
   
@@ -1645,7 +1645,7 @@ void init_dg_sodtube_mhd(const int N_s, const int N_E, const int N_F, const int 
 }
 
 
-void init_dg_explode_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
+void init_dg_explode_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
 
   if (N_F!=6) printf("You are setting up the wrong problem. N_F =%i != 8.\n",N_F);
   
@@ -1698,7 +1698,7 @@ void init_dg_explode_mhd(const int N_s, const int N_E, const int N_F, const int 
 
 
 
-void init_dg_brio_wu_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, scalar &gamma, fullMatrix<scalar> &U){
+void init_dg_brio_wu_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, scalar &gamma, fullMatrix<scalar> &U){
 
   if (N_F!=6) printf("You are setting up the wrong problem. N_F =%i != 8.\n",N_F);
   
@@ -1751,7 +1751,7 @@ void init_dg_brio_wu_mhd(const int N_s, const int N_E, const int N_F, const int 
   }
 }
 
-void init_dg_alfvenw_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, scalar &gamma, fullMatrix<scalar> &U){
+void init_dg_alfvenw_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, scalar &gamma, fullMatrix<scalar> &U){
 
   if (N_F!=6) printf("You are setting up the wrong problem. N_F =%i != 8.\n",N_F);
   
@@ -1803,7 +1803,7 @@ void init_dg_alfvenw_mhd(const int N_s, const int N_E, const int N_F, const int 
   }
 }
 
-void init_dg_fastshk_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, scalar &gamma, fullMatrix<scalar> &U){
+void init_dg_fastshk_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, scalar &gamma, fullMatrix<scalar> &U){
 
   if (N_F!=6) printf("You are setting up the wrong problem. N_F =%i != 8.\n",N_F);
   
@@ -1854,7 +1854,7 @@ void init_dg_fastshk_mhd(const int N_s, const int N_E, const int N_F, const int 
   }
 }
 
-void init_dg_slowshk_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, scalar &gamma, fullMatrix<scalar> &U){
+void init_dg_slowshk_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, scalar &gamma, fullMatrix<scalar> &U){
 
   if (N_F!=6) printf("You are setting up the wrong problem. N_F =%i != 8.\n",N_F);
   
@@ -1905,7 +1905,7 @@ void init_dg_slowshk_mhd(const int N_s, const int N_E, const int N_F, const int 
   }
 }
 
-void init_dg_fastrar_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, scalar &gamma, fullMatrix<scalar> &U){
+void init_dg_fastrar_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, scalar &gamma, fullMatrix<scalar> &U){
 
   if (N_F!=6) printf("You are setting up the wrong problem. N_F =%i != 8.\n",N_F);
   
@@ -1956,7 +1956,7 @@ void init_dg_fastrar_mhd(const int N_s, const int N_E, const int N_F, const int 
   }
 }
 
-void init_dg_slowrar_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, scalar &gamma, fullMatrix<scalar> &U){
+void init_dg_slowrar_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, scalar &gamma, fullMatrix<scalar> &U){
 
   if (N_F!=6) printf("You are setting up the wrong problem. N_F =%i != 8.\n",N_F);
   
@@ -2008,7 +2008,7 @@ void init_dg_slowrar_mhd(const int N_s, const int N_E, const int N_F, const int 
 }
 
 
-void init_dg_ovortex_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
+void init_dg_ovortex_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
 
   // http://www.astro.princeton.edu/~jstone/Athena/tests/orszag-tang/pagesource.html
   // http://www.astro.virginia.edu/VITA/ATHENA/ot.html
@@ -2038,7 +2038,7 @@ void init_dg_ovortex_mhd(const int N_s, const int N_E, const int N_F, const int 
   }
 }
 
-void init_dg_mhdroto_mhd(const int N_s, const int N_E, const int N_F, const int D, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
+void init_dg_mhdroto_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
 
   // http://flash.uchicago.edu/site/flashcode/user_support/flash4_ug/node33.html#SECTION08122000000000000000
   

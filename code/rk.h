@@ -48,7 +48,7 @@ class RK
   
   // main RK integration function
   void RK_integration(double DtOut, double Tf, scalar CFL,
-		      int D, int N_F, int N_E, int N_s, int N_G, int M_T, int M_s,
+		      int N_E, int N_s, int N_G, int M_T, int M_s,
 		      scalar* h_Minv, 
 		      scalar* h_U,
 		      Limiting &Limiter, bool order0, DG_SOLVER &dgsolver,
@@ -108,7 +108,7 @@ class RK
 
     // print the initial condition to the file
     printf("Initial condition written to output file.\n");
-    print_dg(N_s, N_E, N_F, h_U, m, elem_type, 0, 0, 0);
+    print_dg(N_s, N_E, h_U, m, elem_type, 0, 0, 0);
 
     // Output conservation of the fields
     dgsolver.conservation(h_U,0.0);
@@ -117,7 +117,7 @@ class RK
     while (!done){
 
       // Find new Dt
-      Dt = DtFromCFL(N_s, N_E, N_F, CFL, arch(U),_UPA); output = false;
+      Dt = DtFromCFL(N_s, N_E, CFL, arch(U),_UPA); output = false;
 #ifdef USE_MPI // Make sure everyone is at the same time
       MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
       MPI_Allreduce(MPI_IN_PLACE, &Dt, 1, MPI_SCALAR, MPI_MIN, MPI_COMM_WORLD);
@@ -160,10 +160,10 @@ class RK
 	dgsolver.dg_solver(_Ustar,_f);
 	
 	// Solve: DU = Dt*Minv*f(Ustar)
-	Lsolver(N_s, N_E, N_F, Dt, _Minv, _f, _DU);
+	Lsolver(N_s, N_E, Dt, _Minv, _f, _DU);
 
 	// if 0-order average the solution in the cells
-	if (order0){Laverage_cell_p0(N_s, N_E, N_F, _DU);}
+	if (order0){Laverage_cell_p0(N_s, N_E, _DU);}
 
 	// U = U + gamma*DU
 #ifdef HAVE_BLAS
@@ -192,7 +192,7 @@ class RK
 #endif
 
 	printf("Solution written to output file at step %7i and time %e (current CFL time step:%e).\n",n,T,DtCFL);
-	print_dg(N_s, N_E, N_F, h_U, m, elem_type, count, T, 1);
+	print_dg(N_s, N_E, h_U, m, elem_type, count, T, 1);
 	Tout = T + DtOut; // update the new output time
 	count++;
 
@@ -214,9 +214,9 @@ class RK
 #endif
   }; //end main RK function
 
-  scalar DtFromCFL(const int N_s, const int N_E, const int N_F, const scalar CFL, scalar* U, scalar* UPA){
+  scalar DtFromCFL(const int N_s, const int N_E, const scalar CFL, scalar* U, scalar* UPA){
 
-    LfindUPA(N_s, N_E, N_F, U, UPA);
+    LfindUPA(N_s, N_E, U, UPA);
     int maxUPAIdx;
     maxUPAIdx = blasIamax(N_E*N_s,UPA,1)-1; // Fortran starts numbering at 1
     scalar* maxUPA;// = new scalar[1];

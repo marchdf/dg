@@ -29,7 +29,7 @@ arch_device scalar CellAvg(int N_G, int ioff, scalar* weight, scalar refArea, sc
 //==========================================================================
 
 //==========================================================================
-arch_global void cpu_equal(int N_s, int N_E, int N_F, scalar* A, scalar* B){
+arch_global void cpu_equal(int N_s, int N_E, scalar* A, scalar* B){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -48,7 +48,7 @@ arch_global void cpu_equal(int N_s, int N_E, int N_F, scalar* A, scalar* B){
 }
 
 //==========================================================================
-arch_global void cpu_add(int N_s, int N_E, int N_F, scalar* A, scalar* B, scalar c){
+arch_global void cpu_add(int N_s, int N_E, scalar* A, scalar* B, scalar c){
 
   // A = A + c*B
 #ifdef USE_CPU
@@ -69,7 +69,7 @@ arch_global void cpu_add(int N_s, int N_E, int N_F, scalar* A, scalar* B, scalar
 
 
 //==========================================================================
-arch_global void cpu_mapToFace_shallow(int M_s, int M_T, int N_F, int* map, scalar* U, scalar* UF){
+arch_global void cpu_mapToFace_shallow(int M_s, int M_T, int* map, scalar* U, scalar* UF){
 
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
@@ -105,7 +105,7 @@ arch_global void cpu_mapToFace_shallow(int M_s, int M_T, int N_F, int* map, scal
 }
 
 //==========================================================================
-arch_global void cpu_mapToFace_mhd(int M_s, int M_T, int N_F, int* map, scalar* U, scalar* UF){
+arch_global void cpu_mapToFace_mhd(int M_s, int M_T, int* map, scalar* U, scalar* UF){
 
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
@@ -137,7 +137,7 @@ arch_global void cpu_mapToFace_mhd(int M_s, int M_T, int N_F, int* map, scalar* 
 }
 
 //==========================================================================
-arch_global void cpu_mapToFace(int M_s, int M_T, int N_F, int N_s, int* map, scalar* U, scalar* UF){
+arch_global void cpu_mapToFace(int M_s, int M_T, int N_s, int* map, scalar* U, scalar* UF){
 
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
@@ -166,7 +166,7 @@ arch_global void cpu_mapToFace(int M_s, int M_T, int N_F, int N_s, int* map, sca
 }
 
 //==========================================================================
-arch_global void cpu_mapGhostFace(int M_s, int M_ghosts, int N_F, int* ghostInterfaces, scalar* UF){
+arch_global void cpu_mapGhostFace(int M_s, int M_ghosts, int* ghostInterfaces, scalar* UF){
 
   /* Communicate the ghost edges in the mesh to and from the other
      partitions
@@ -225,7 +225,7 @@ arch_global void cpu_mapGhostFace(int M_s, int M_ghosts, int N_F, int* ghostInte
 }
 
 //==========================================================================
-arch_global void cpu_mapToElement(int N_s, int N_E, int N_F, int M_s, int N_N, int* invmap, scalar* Q, scalar* Qtcj){
+arch_global void cpu_mapToElement(int N_s, int N_E, int M_s, int N_N, int* invmap, scalar* Q, scalar* Qtcj){
 
 #ifdef USE_CPU
   int blk=0;
@@ -276,7 +276,7 @@ arch_global void cpu_mapToElement(int N_s, int N_E, int N_F, int M_s, int N_N, i
 }
    
 //   //==========================================================================
-// arch_global void cpu_mapToElement(int N_s, int N_E, int N_F, int* invmap, scalar* Q, scalar* Qtcj){
+// arch_global void cpu_mapToElement(int N_s, int N_E, int* invmap, scalar* Q, scalar* Qtcj){
 
 // #ifdef USE_CPU
 //   for(int e = 0; e < N_E; e++){
@@ -306,7 +306,7 @@ arch_global void cpu_mapToElement(int N_s, int N_E, int N_F, int M_s, int N_N, i
 // }
 
 //==========================================================================
-arch_global void cpu_collocationU(int D, int N_G, int N_s, int N_E, int N_F, scalar* Ug, scalar* dUg, scalar* phi, scalar* dphi, scalar* U){
+arch_global void cpu_collocationU(int N_G, int N_s, int N_E, scalar* Ug, scalar* dUg, scalar* phi, scalar* dphi, scalar* U){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -342,7 +342,7 @@ arch_global void cpu_collocationU(int D, int N_G, int N_s, int N_E, int N_F, sca
 }
 
 //==========================================================================
-arch_global void cpu_collocationUF(int M_G, int M_s, int M_T, int N_F, scalar* UgF, scalar* psi, scalar* UF){
+arch_global void cpu_collocationUF(int M_G, int M_s, int M_T, scalar* UgF, scalar* psi, scalar* UF){
 
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
@@ -374,7 +374,7 @@ arch_global void cpu_collocationUF(int M_G, int M_s, int M_T, int N_F, scalar* U
 
 
 //==========================================================================
-arch_global void cpu_redistribute_sf(int D, int N_G, int N_E, int N_F, scalar* sJ, scalar* fJ, scalar* s, scalar* f, scalar* J, scalar* invJac){
+arch_global void cpu_redistribute_sf(int N_G, int N_E, scalar* sJ, scalar* fJ, scalar* s, scalar* f, scalar* J, scalar* invJac){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -408,7 +408,7 @@ arch_global void cpu_redistribute_sf(int D, int N_G, int N_E, int N_F, scalar* s
 }
 
 //==========================================================================
-arch_global void cpu_gemm_sf(int D, int N_G, int N_s, int N_E, int N_F, scalar* S, scalar* F, scalar* sJ, scalar* fJ, scalar* phi_w, scalar* dphi_w){
+arch_global void cpu_gemm_sf(int N_G, int N_s, int N_E, scalar* S, scalar* F, scalar* sJ, scalar* fJ, scalar* phi_w, scalar* dphi_w){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -449,7 +449,7 @@ arch_global void cpu_gemm_sf(int D, int N_G, int N_s, int N_E, int N_F, scalar* 
 }
 
 //==========================================================================
-arch_global void cpu_redistribute_q(int M_G, int M_T, int N_F, scalar* qJ, scalar* q, scalar* JF){
+arch_global void cpu_redistribute_q(int M_G, int M_T, scalar* qJ, scalar* q, scalar* JF){
 
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
@@ -474,7 +474,7 @@ arch_global void cpu_redistribute_q(int M_G, int M_T, int N_F, scalar* qJ, scala
 
  
 //==========================================================================
-arch_global void cpu_gemm_q(int M_G, int M_s, int M_T, int N_F, scalar* Qtcj, scalar* qJ, scalar* psi_w){
+arch_global void cpu_gemm_q(int M_G, int M_s, int M_T, scalar* Qtcj, scalar* qJ, scalar* psi_w){
 
 #ifdef USE_CPU  
   for(int t = 0; t < M_T; t++){
@@ -506,7 +506,7 @@ arch_global void cpu_gemm_q(int M_G, int M_s, int M_T, int N_F, scalar* Qtcj, sc
 }
 
 //==========================================================================
-arch_global void cpu_addSFQ(int N_s, int N_E, int N_F, scalar* A, scalar* S, scalar* F, scalar* Q){
+arch_global void cpu_addSFQ(int N_s, int N_E, scalar* A, scalar* S, scalar* F, scalar* Q){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -530,7 +530,7 @@ arch_global void cpu_addSFQ(int N_s, int N_E, int N_F, scalar* A, scalar* S, sca
 }
 
 //==========================================================================
-arch_global void cpu_zeroVector(int N_s, int N_E, int N_F, scalar* Q){
+arch_global void cpu_zeroVector(int N_s, int N_E, scalar* Q){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -549,7 +549,7 @@ arch_global void cpu_zeroVector(int N_s, int N_E, int N_F, scalar* Q){
 }
 
 //==========================================================================
-arch_global void cpu_hsl(int N_s, int N_E, int N_F, int boundaryMap, scalar* U, scalar* UNew){
+arch_global void cpu_hsl(int N_s, int N_E, int boundaryMap, scalar* U, scalar* UNew){
 
   // scalar* c = new scalar[3];
   
@@ -605,7 +605,7 @@ arch_global void cpu_hsl(int N_s, int N_E, int N_F, int boundaryMap, scalar* U, 
 }
 
 //==========================================================================
-arch_global void cpu_CommunicateGhosts(int N_s, int N_E, int N_F, int N_ghosts, int* ghostElementSend, int* ghostElementRecv, scalar* A){
+arch_global void cpu_CommunicateGhosts(int N_s, int N_E, int N_ghosts, int* ghostElementSend, int* ghostElementRecv, scalar* A){
 
   /* This function, used by the limiting procedure, communicates the
      elements which are not in my partition. Basically you send the
@@ -642,7 +642,7 @@ arch_global void cpu_CommunicateGhosts(int N_s, int N_E, int N_F, int N_ghosts, 
 }
  
 //==========================================================================
-arch_global void cpu_hrl1D(int N_s, int N_E, int N_F, int N_G, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim){
+arch_global void cpu_hrl1D(int N_s, int N_E, int N_G, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim){
 
 #ifdef USE_CPU
   int blk = 0;
@@ -725,7 +725,7 @@ arch_global void cpu_hrl1D(int N_s, int N_E, int N_F, int N_G, int N_N, int slic
 }
 
 //==========================================================================
-arch_global void cpu_hrl2D(int N_s, int N_E, int N_F, int N_G, int N_N, int D, int order, scalar* XYZCen, scalar* powersXYZG, int* neighbors, int* TaylorDxIdx, int* TaylorDyIdx, scalar* weight, scalar refArea, scalar* A, scalar* Alim){
+arch_global void cpu_hrl2D(int N_s, int N_E, int N_G, int N_N, int order, scalar* XYZCen, scalar* powersXYZG, int* neighbors, int* TaylorDxIdx, int* TaylorDyIdx, scalar* weight, scalar refArea, scalar* A, scalar* Alim){
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
     for(int fc = 0; fc < N_F; fc++){
@@ -854,7 +854,7 @@ arch_global void cpu_hrl2D(int N_s, int N_E, int N_F, int N_G, int N_N, int D, i
 }
 
 //==========================================================================
-arch_global void ChangeBasis(int size1, int size2, int N_E, int N_F, scalar* Transform, scalar* U, scalar* Unew){
+arch_global void ChangeBasis(int size1, int size2, int N_E, scalar* Transform, scalar* U, scalar* Unew){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -884,7 +884,7 @@ arch_global void ChangeBasis(int size1, int size2, int N_E, int N_F, scalar* Tra
 
 
 //==========================================================================
-arch_global void cpu_Prim2Cons(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
+arch_global void cpu_Prim2Cons(int N_s, int N_E, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
   // Go from primitive to conservative variables
 
 #ifdef USE_CPU
@@ -920,7 +920,7 @@ arch_global void cpu_Prim2Cons(int N_s, int N_E, int N_F, scalar* U, bool multif
 }
 
 //==========================================================================
-arch_global void cpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
+arch_global void cpu_Cons2Prim(int N_s, int N_E, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
   // Go from conservative to primitive variables
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -957,7 +957,7 @@ arch_global void cpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multif
 }
 
 //==========================================================================
-arch_global void cpu_Half2Cons(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
+arch_global void cpu_Half2Cons(int N_s, int N_E, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
   // Go from primitive to conservative variables
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -978,7 +978,7 @@ arch_global void cpu_Half2Cons(int N_s, int N_E, int N_F, scalar* U, bool multif
 }
 
 //==========================================================================
-arch_global void cpu_Cons2Half(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
+arch_global void cpu_Cons2Half(int N_s, int N_E, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
   // Go from conservative to primitive variables
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -1005,7 +1005,7 @@ arch_global void cpu_Cons2Half(int N_s, int N_E, int N_F, scalar* U, bool multif
 //==========================================================================
 
 extern "C" 
-void Lcpu_equal(int N_s, int N_E, int N_F, scalar* A, scalar* B){
+void Lcpu_equal(int N_s, int N_E, scalar* A, scalar* B){
 
 #ifdef USE_GPU
   int div = N_E/blkE;
@@ -1015,11 +1015,11 @@ void Lcpu_equal(int N_s, int N_E, int N_F, scalar* A, scalar* B){
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_equal arch_args (N_s, N_E, N_F, A, B);
+  cpu_equal arch_args (N_s, N_E, A, B);
 }
 
 extern "C" 
-void Lcpu_add(int N_s, int N_E, int N_F, scalar* A, scalar* B, scalar c){
+void Lcpu_add(int N_s, int N_E, scalar* A, scalar* B, scalar c){
 
 #ifdef USE_GPU
   int div = N_E/blkE;
@@ -1029,11 +1029,11 @@ void Lcpu_add(int N_s, int N_E, int N_F, scalar* A, scalar* B, scalar c){
   dim3 dimGrid(div+mod,1);
 #endif 
 
-  cpu_add arch_args (N_s, N_E, N_F, A, B, c);
+  cpu_add arch_args (N_s, N_E, A, B, c);
 }
 
 extern "C" 
-void Lcpu_mapToFace_shallow(int M_s, int M_T, int N_F, int* map, scalar* U, scalar* UF){
+void Lcpu_mapToFace_shallow(int M_s, int M_T, int* map, scalar* U, scalar* UF){
 
 #ifdef USE_GPU
   int div = M_T/blkT;
@@ -1043,11 +1043,11 @@ void Lcpu_mapToFace_shallow(int M_s, int M_T, int N_F, int* map, scalar* U, scal
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_mapToFace_shallow arch_args (M_s, M_T, N_F, map, U, UF);
+  cpu_mapToFace_shallow arch_args (M_s, M_T, map, U, UF);
 }
 
 extern "C" 
-void Lcpu_mapToFace_mhd(int M_s, int M_T, int N_F, int* map, scalar* U, scalar* UF){
+void Lcpu_mapToFace_mhd(int M_s, int M_T, int* map, scalar* U, scalar* UF){
 
 #ifdef USE_GPU
   int div = M_T/blkT;
@@ -1057,11 +1057,11 @@ void Lcpu_mapToFace_mhd(int M_s, int M_T, int N_F, int* map, scalar* U, scalar* 
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_mapToFace_mhd arch_args (M_s, M_T, N_F, map, U, UF);
+  cpu_mapToFace_mhd arch_args (M_s, M_T, map, U, UF);
 }
 
 extern "C" 
-void Lcpu_mapToFace(int M_s, int M_T, int N_F, int N_s, int* map, scalar* U, scalar* UF){
+void Lcpu_mapToFace(int M_s, int M_T, int N_s, int* map, scalar* U, scalar* UF){
 
 #ifdef USE_GPU
   int div = M_T/blkT;
@@ -1071,11 +1071,11 @@ void Lcpu_mapToFace(int M_s, int M_T, int N_F, int N_s, int* map, scalar* U, sca
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_mapToFace arch_args (M_s, M_T, N_F, N_s, map, U, UF);
+  cpu_mapToFace arch_args (M_s, M_T, N_s, map, U, UF);
 }
 
 extern "C"
-void Lcpu_mapGhostFace(int M_s, int M_ghosts, int N_F, int* ghostInterfaces, scalar* UF){
+void Lcpu_mapGhostFace(int M_s, int M_ghosts, int* ghostInterfaces, scalar* UF){
 
 #ifdef USE_GPU
   int div = M_ghosts/blkT;
@@ -1085,12 +1085,12 @@ void Lcpu_mapGhostFace(int M_s, int M_ghosts, int N_F, int* ghostInterfaces, sca
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_mapGhostFace arch_args (M_s, M_ghosts, N_F, ghostInterfaces, UF);
+  cpu_mapGhostFace arch_args (M_s, M_ghosts, ghostInterfaces, UF);
 
 }
 
 extern "C" 
-void Lcpu_mapToElement(int N_s, int N_E, int N_F, int M_s, int N_N, int* invmap, scalar* Q, scalar* q){
+void Lcpu_mapToElement(int N_s, int N_E, int M_s, int N_N, int* invmap, scalar* Q, scalar* q){
 
 #ifdef USE_GPU
   int div = N_E/blkE;
@@ -1100,11 +1100,11 @@ void Lcpu_mapToElement(int N_s, int N_E, int N_F, int M_s, int N_N, int* invmap,
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_mapToElement arch_args_array(blkE*N_F*N_s*sizeof(scalar)) (N_s, N_E, N_F, M_s, N_N, invmap, Q, q);
+  cpu_mapToElement arch_args_array(blkE*N_F*N_s*sizeof(scalar)) (N_s, N_E, M_s, N_N, invmap, Q, q);
 }
 
 extern "C" 
-void Lcpu_collocationU(int D, int N_G, int N_s, int N_E, int N_F, scalar* Ug, scalar* dUg, scalar* phi, scalar* dphi, scalar* U){
+void Lcpu_collocationU(int N_G, int N_s, int N_E, scalar* Ug, scalar* dUg, scalar* phi, scalar* dphi, scalar* U){
 
 #ifdef USE_GPU
   int div = N_E/blkE;
@@ -1114,11 +1114,11 @@ void Lcpu_collocationU(int D, int N_G, int N_s, int N_E, int N_F, scalar* Ug, sc
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_collocationU arch_args (D, N_G, N_s, N_E, N_F, Ug, dUg, phi, dphi, U);
+  cpu_collocationU arch_args (N_G, N_s, N_E, Ug, dUg, phi, dphi, U);
 }
 
 extern "C" 
-void Lcpu_collocationUF(int M_G, int M_s, int M_T, int N_F, scalar* UgF, scalar* psi, scalar* UF){
+void Lcpu_collocationUF(int M_G, int M_s, int M_T, scalar* UgF, scalar* psi, scalar* UF){
 
 #ifdef USE_GPU
   int div = M_T/blkT;
@@ -1128,11 +1128,11 @@ void Lcpu_collocationUF(int M_G, int M_s, int M_T, int N_F, scalar* UgF, scalar*
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_collocationUF arch_args (M_G, M_s, M_T, N_F, UgF, psi, UF);
+  cpu_collocationUF arch_args (M_G, M_s, M_T, UgF, psi, UF);
 }
 
 extern "C" 
-void Lcpu_redistribute_sf(int D, int N_G, int N_E, int N_F, scalar* sJ, scalar* fJ, scalar* s, scalar* f, scalar* J, scalar* invJac){
+void Lcpu_redistribute_sf(int N_G, int N_E, scalar* sJ, scalar* fJ, scalar* s, scalar* f, scalar* J, scalar* invJac){
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
@@ -1141,11 +1141,11 @@ void Lcpu_redistribute_sf(int D, int N_G, int N_E, int N_F, scalar* sJ, scalar* 
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_redistribute_sf arch_args (D, N_G, N_E, N_F, sJ, fJ, s, f, J, invJac);
+  cpu_redistribute_sf arch_args (N_G, N_E, sJ, fJ, s, f, J, invJac);
 }
 
 extern "C" 
-void Lcpu_gemm_sf(int D, int N_G, int N_s, int N_E, int N_F, scalar* S, scalar* F, scalar* sJ, scalar* fJ, scalar* phi_w, scalar* dphi_w){
+void Lcpu_gemm_sf(int N_G, int N_s, int N_E, scalar* S, scalar* F, scalar* sJ, scalar* fJ, scalar* phi_w, scalar* dphi_w){
 
 #ifdef USE_GPU
   int div = N_E/blkE;
@@ -1155,11 +1155,11 @@ void Lcpu_gemm_sf(int D, int N_G, int N_s, int N_E, int N_F, scalar* S, scalar* 
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_gemm_sf arch_args (D, N_G, N_s, N_E, N_F, S, F, sJ, fJ, phi_w, dphi_w);
+  cpu_gemm_sf arch_args (N_G, N_s, N_E, S, F, sJ, fJ, phi_w, dphi_w);
 }
 
 extern "C"
-void Lcpu_redistribute_q(int M_G, int M_T, int N_F, scalar* qJ, scalar* q, scalar* JF){
+void Lcpu_redistribute_q(int M_G, int M_T, scalar* qJ, scalar* q, scalar* JF){
 
 #ifdef USE_GPU
   int div = M_T/blkT;
@@ -1169,11 +1169,11 @@ void Lcpu_redistribute_q(int M_G, int M_T, int N_F, scalar* qJ, scalar* q, scala
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_redistribute_q arch_args (M_G, M_T, N_F, qJ, q, JF);
+  cpu_redistribute_q arch_args (M_G, M_T, qJ, q, JF);
 }
 
 extern "C" 
-void Lcpu_gemm_q(int M_G, int M_s, int M_T, int N_F, scalar* Qtcj, scalar* qJ, scalar* psi_w){
+void Lcpu_gemm_q(int M_G, int M_s, int M_T, scalar* Qtcj, scalar* qJ, scalar* psi_w){
 
 #ifdef USE_GPU
   int div = M_T/blkT;
@@ -1183,11 +1183,11 @@ void Lcpu_gemm_q(int M_G, int M_s, int M_T, int N_F, scalar* Qtcj, scalar* qJ, s
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_gemm_q arch_args (M_G, M_s, M_T, N_F, Qtcj, qJ, psi_w);
+  cpu_gemm_q arch_args (M_G, M_s, M_T, Qtcj, qJ, psi_w);
 }
 
 extern "C" 
-void Lcpu_addSFQ(int N_s, int N_E, int N_F, scalar* A, scalar* S, scalar* F, scalar* Q){
+void Lcpu_addSFQ(int N_s, int N_E, scalar* A, scalar* S, scalar* F, scalar* Q){
 
 #ifdef USE_GPU
   int div = N_E/blkE;
@@ -1197,11 +1197,11 @@ void Lcpu_addSFQ(int N_s, int N_E, int N_F, scalar* A, scalar* S, scalar* F, sca
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_addSFQ arch_args (N_s, N_E, N_F, A, S, F, Q);
+  cpu_addSFQ arch_args (N_s, N_E, A, S, F, Q);
 }
 
 extern "C"
-void Lcpu_hsl(int N_s, int N_E, int N_F, int boundaryMap, scalar* U, scalar* UNew){
+void Lcpu_hsl(int N_s, int N_E, int boundaryMap, scalar* U, scalar* UNew){
 
 #ifdef USE_GPU
   int div = N_E/blkE;
@@ -1211,11 +1211,11 @@ void Lcpu_hsl(int N_s, int N_E, int N_F, int boundaryMap, scalar* U, scalar* UNe
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_hsl arch_args (N_s, N_E, N_F, boundaryMap, U, UNew);
+  cpu_hsl arch_args (N_s, N_E, boundaryMap, U, UNew);
 }
 
 extern "C"
-void Lcpu_Prim2Cons(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
+void Lcpu_Prim2Cons(int N_s, int N_E, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
@@ -1224,11 +1224,11 @@ void Lcpu_Prim2Cons(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool 
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_Prim2Cons arch_args (N_s, N_E, N_F, U, multifluid, passive, model, gamma0);
+  cpu_Prim2Cons arch_args (N_s, N_E, U, multifluid, passive, model, gamma0);
 }
 
 extern "C"
-void Lcpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
+void Lcpu_Cons2Prim(int N_s, int N_E, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
 
 #ifdef USE_GPU
   int div = N_E/blkE;
@@ -1238,11 +1238,11 @@ void Lcpu_Cons2Prim(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool 
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_Cons2Prim arch_args (N_s, N_E, N_F, U, multifluid, passive, model, gamma0);
+  cpu_Cons2Prim arch_args (N_s, N_E, U, multifluid, passive, model, gamma0);
 }
 
 extern "C"
-void Lcpu_Half2Cons(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
+void Lcpu_Half2Cons(int N_s, int N_E, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
@@ -1251,11 +1251,11 @@ void Lcpu_Half2Cons(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool 
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_Half2Cons arch_args (N_s, N_E, N_F, U, multifluid, passive, model, gamma0);
+  cpu_Half2Cons arch_args (N_s, N_E, U, multifluid, passive, model, gamma0);
 }
 
 extern "C"
-void Lcpu_Cons2Half(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
+void Lcpu_Cons2Half(int N_s, int N_E, scalar* U, bool multifluid, bool passive, int model, scalar gamma0){
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
@@ -1264,11 +1264,11 @@ void Lcpu_Cons2Half(int N_s, int N_E, int N_F, scalar* U, bool multifluid, bool 
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_Cons2Half arch_args (N_s, N_E, N_F, U, multifluid, passive, model, gamma0);
+  cpu_Cons2Half arch_args (N_s, N_E, U, multifluid, passive, model, gamma0);
 }
 
 extern "C"
-void Lcpu_CommunicateGhosts(int N_s, int N_E, int N_F, int N_ghosts, int* ghostElementSend, int* ghostElementRecv, scalar* A){
+void Lcpu_CommunicateGhosts(int N_s, int N_E, int N_ghosts, int* ghostElementSend, int* ghostElementRecv, scalar* A){
 
 #ifdef USE_GPU
   int div = N_ghosts/blkE;
@@ -1278,12 +1278,12 @@ void Lcpu_CommunicateGhosts(int N_s, int N_E, int N_F, int N_ghosts, int* ghostE
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_CommunicateGhosts arch_args (N_s, N_E, N_F, N_ghosts, ghostElementSend, ghostElementRecv, A);
+  cpu_CommunicateGhosts arch_args (N_s, N_E, N_ghosts, ghostElementSend, ghostElementRecv, A);
 
 }
   
 extern "C"
-void Lcpu_hrl1D(int N_s, int N_E, int N_F, int N_G, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim){
+void Lcpu_hrl1D(int N_s, int N_E, int N_G, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim){
 
 #ifdef USE_GPU
   int div = N_E/blkE;
@@ -1293,11 +1293,11 @@ void Lcpu_hrl1D(int N_s, int N_E, int N_F, int N_G, int N_N, int slicenum, int* 
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_hrl1D arch_args_array(blkE*slicenum*N_F*2*sizeof(scalar)) (N_s, N_E, N_F, N_G, N_N, slicenum, neighbors, offxy, weight, V, A, Alim);
+  cpu_hrl1D arch_args_array(blkE*slicenum*N_F*2*sizeof(scalar)) (N_s, N_E, N_G, N_N, slicenum, neighbors, offxy, weight, V, A, Alim);
 }
 
 extern "C"
-void Lcpu_hrl2D(int N_s, int N_E, int N_F, int N_G, int N_N, int D, int order, scalar* XYZCen, scalar* powersXYZG, int* neighbors, int* TaylorDxIdx, int* TaylorDyIdx, scalar* weight, scalar refArea, scalar* A, scalar* Alim){
+void Lcpu_hrl2D(int N_s, int N_E, int N_G, int N_N, int order, scalar* XYZCen, scalar* powersXYZG, int* neighbors, int* TaylorDxIdx, int* TaylorDyIdx, scalar* weight, scalar refArea, scalar* A, scalar* Alim){
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
@@ -1306,11 +1306,11 @@ void Lcpu_hrl2D(int N_s, int N_E, int N_F, int N_G, int N_N, int D, int order, s
   dim3 dimGrid(div+mod,1);
 #endif
   
-  cpu_hrl2D arch_args (N_s, N_E, N_F, N_G, N_N, D, order, XYZCen, powersXYZG, neighbors, TaylorDxIdx, TaylorDyIdx, weight, refArea, A, Alim);
+  cpu_hrl2D arch_args (N_s, N_E, N_G, N_N, order, XYZCen, powersXYZG, neighbors, TaylorDxIdx, TaylorDyIdx, weight, refArea, A, Alim);
 }
 
 extern "C"
-void LChangeBasis(int size1, int size2, int N_E, int N_F, scalar* Transform, scalar* U, scalar* Unew){
+void LChangeBasis(int size1, int size2, int N_E, scalar* Transform, scalar* U, scalar* Unew){
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
@@ -1319,7 +1319,7 @@ void LChangeBasis(int size1, int size2, int N_E, int N_F, scalar* Transform, sca
   dim3 dimGrid(div+mod,1);
 #endif
 
-  ChangeBasis arch_args (size1, size2, N_E, N_F, Transform, U, Unew);
+  ChangeBasis arch_args (size1, size2, N_E, Transform, U, Unew);
 }
 
 //==========================================================================

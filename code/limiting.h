@@ -30,7 +30,6 @@ class Limiting
   int     _D;
   int     _N_s;
   int     _N_E;
-  int     _N_F;
   int     _N_G;
   int     _N_N;
   int     _N_ghosts;
@@ -53,8 +52,8 @@ class Limiting
  Limiting(int method,bool cartesian) : _method(method), _cartesian(cartesian){}
 
   // 1D limiting constructor
- Limiting(int method, int N_s, int N_E, int N_F, int N_G, int N_N, int* neighbors, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, fullMatrix<scalar> &V1D, scalar* weight)
-   : _method(method), _N_s(N_s), _N_E(N_E), _N_F(N_F), _N_G(N_G), _N_N(N_N){
+ Limiting(int method, int N_s, int N_E, int N_G, int N_N, int* neighbors, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, fullMatrix<scalar> &V1D, scalar* weight)
+   : _method(method), _N_s(N_s), _N_E(N_E), _N_G(N_G), _N_N(N_N){
 
     _Lag2Mono=NULL;
     _Mono2Lag=NULL;
@@ -104,8 +103,8 @@ class Limiting
       CUDA_SAFE_CALL(cudaMalloc((void**) &_Mono2Lag,_N_s*_N_s*sizeof(scalar)));
       CUDA_SAFE_CALL(cudaMalloc((void**) &_V1D,_N_G*_N_s*sizeof(scalar)));
       CUDA_SAFE_CALL(cudaMalloc((void**) &_weight,_N_G*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_A,_N_s*_N_E*_N_F*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_Alim,_N_s*_N_E*_N_F*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_A,_N_s*_N_E*N_F*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_Alim,_N_s*_N_E*N_F*sizeof(scalar)));
       CUDA_SAFE_CALL(cudaMalloc((void**) &_neighbors  ,_N_N*_N_E*sizeof(int)));
 
       // Copy data to GPU
@@ -162,7 +161,7 @@ class Limiting
   } // end 1D constructor
 
   // 2D limiting constructor for structured mesh
- Limiting(int method, int N_s, int N_E, int N_F, int N_G, int order, bool cartesian, int N_N, int M_ghosts, int* neighbors, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, fullMatrix<scalar> &V1D, int* ghostElementSend, int* ghostElementRecv, scalar* weight) : _method(method), _N_s(N_s), _N_E(N_E), _N_F(N_F), _N_G(N_G), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(M_ghosts){
+ Limiting(int method, int N_s, int N_E, int N_G, int order, bool cartesian, int N_N, int M_ghosts, int* neighbors, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, fullMatrix<scalar> &V1D, int* ghostElementSend, int* ghostElementRecv, scalar* weight) : _method(method), _N_s(N_s), _N_E(N_E), _N_G(N_G), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(M_ghosts){
 
     _N_s1D = (order+1);
     _N_G1D = (order+1), 
@@ -199,8 +198,8 @@ class Limiting
       _MonoY2Lag   = new scalar[_N_s*_N_s];     MonoY2Lag.copyMatrixToPointer(_MonoY2Lag);
       _V1D      = new scalar[_N_G1D*_N_s1D];    V1D.copyMatrixToPointer(_V1D);
       _weight   = new scalar[_N_G1D];           memcpy(_weight,weight,_N_G1D*sizeof(scalar));
-      _A        = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_A,     _N_s*(_N_E+_N_ghosts)*_N_F);
-      _Alim     = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_Alim,  _N_s*(_N_E+_N_ghosts)*_N_F);
+      _A        = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_A,     _N_s*(_N_E+_N_ghosts)*N_F);
+      _Alim     = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_Alim,  _N_s*(_N_E+_N_ghosts)*N_F);
       _neighbors  = new int[_N_N*_N_E]; memcpy(_neighbors,   neighbors,   _N_N*_N_E*sizeof(int));
       _neighbors  = new int[_N_N*_N_E]; memcpy(_neighbors,   neighbors,   _N_N*_N_E*sizeof(int));
       _ghostElementSend  = new int[_N_ghosts*3]; memcpy(_ghostElementSend,   ghostElementSend,   _N_ghosts*3*sizeof(int));
@@ -219,8 +218,8 @@ class Limiting
       CUDA_SAFE_CALL(cudaMalloc((void**) &_MonoY2Lag  ,_N_s*_N_s*sizeof(scalar)));
       CUDA_SAFE_CALL(cudaMalloc((void**) &_V1D        ,_N_G1D*_N_s1D*sizeof(scalar)));
       CUDA_SAFE_CALL(cudaMalloc((void**) &_weight     ,_N_G1D*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_A          ,_N_s*(_N_E+_N_ghosts)*_N_F*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_Alim       ,_N_s*(_N_E+_N_ghosts)*_N_F*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_A          ,_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_Alim       ,_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar)));
       CUDA_SAFE_CALL(cudaMalloc((void**) &_neighbors  ,_N_N*_N_E*sizeof(int)));
 	    
       // Copy data to GPU
@@ -279,8 +278,8 @@ class Limiting
   }// end 2D constructor for structured mesh
   
   // 2D limiting constructor for unstructured mesh
- Limiting(int method, int D, int N_s, int N_E, int N_F, int N_G, int N_N, int L, int order, int L2Msize1, int L2Msize2, int* neighbors, fullMatrix<scalar> Lag2Mono, fullMatrix<scalar> Mono2Lag, fullMatrix<scalar> XYZCen, scalar* powersXYZG, scalar* weight, scalar refArea, int* TaylorDxIdx, int* TaylorDyIdx)
-   : _method(method), _D(D),_N_s(N_s), _N_E(N_E), _N_F(N_F), _N_G(N_G), _N_N(N_N), _L(L), _order(order), _L2Msize1(L2Msize1), _L2Msize2(L2Msize2), _refArea(refArea){
+ Limiting(int method, int N_s, int N_E, int N_G, int N_N, int L, int order, int L2Msize1, int L2Msize2, int* neighbors, fullMatrix<scalar> Lag2Mono, fullMatrix<scalar> Mono2Lag, fullMatrix<scalar> XYZCen, scalar* powersXYZG, scalar* weight, scalar refArea, int* TaylorDxIdx, int* TaylorDyIdx)
+   : _method(method), _D(D),_N_s(N_s), _N_E(N_E), _N_G(N_G), _N_N(N_N), _L(L), _order(order), _L2Msize1(L2Msize1), _L2Msize2(L2Msize2), _refArea(refArea){
 
     _Lag2Mono=NULL;
     _Mono2Lag=NULL;
@@ -317,8 +316,8 @@ class Limiting
       _weight     = new scalar[_N_G];
       _TaylorDxIdx= new int[_L];
       _TaylorDyIdx= new int[_L];
-      _A          = new scalar[_L2Msize1*_N_E*_N_F]; makeZero(_A,    _L2Msize1*_N_E*_N_F);
-      _Alim       = new scalar[_L2Msize1*_N_E*_N_F]; makeZero(_Alim, _L2Msize1*_N_E*_N_F);
+      _A          = new scalar[_L2Msize1*_N_E*N_F]; makeZero(_A,    _L2Msize1*_N_E*N_F);
+      _Alim       = new scalar[_L2Msize1*_N_E*N_F]; makeZero(_Alim, _L2Msize1*_N_E*N_F);
 
       // Copy the data to these new pointers
       for(int e = 0; e < _N_E; e++){
@@ -354,8 +353,8 @@ class Limiting
       CUDA_SAFE_CALL(cudaMalloc((void**) &_weight,_N_G*sizeof(scalar)));
       CUDA_SAFE_CALL(cudaMalloc((void**) &_TaylorDxIdx,_L*sizeof(int)));
       CUDA_SAFE_CALL(cudaMalloc((void**) &_TaylorDyIdx,_L*sizeof(int)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_A,_L2Msize1*_N_E*_N_F*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_Alim,_L2Msize1*_N_E*_N_F*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_A,_L2Msize1*_N_E*N_F*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_Alim,_L2Msize1*_N_E*N_F*sizeof(scalar)));
 
       // Copy data to GPU
       CUDA_SAFE_CALL(cudaMemcpy(_Lag2Mono,   tmpLag2Mono, _L2Msize1*_L2Msize2*_N_E*sizeof(scalar), cudaMemcpyHostToDevice));
@@ -366,8 +365,8 @@ class Limiting
       CUDA_SAFE_CALL(cudaMemcpy(_weight,     weight,      _N_G*sizeof(scalar), cudaMemcpyHostToDevice));
       CUDA_SAFE_CALL(cudaMemcpy(_TaylorDxIdx,TaylorDxIdx, _L*sizeof(int), cudaMemcpyHostToDevice));
       CUDA_SAFE_CALL(cudaMemcpy(_TaylorDyIdx,TaylorDyIdx, _L*sizeof(int), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemset(_A,    (scalar)0.0, _L2Msize1*_N_E*_N_F*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMemset(_Alim, (scalar)0.0, _L2Msize1*_N_E*_N_F*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMemset(_A,    (scalar)0.0, _L2Msize1*_N_E*N_F*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMemset(_Alim, (scalar)0.0, _L2Msize1*_N_E*N_F*sizeof(scalar)));
       
       delete[] tmpLag2Mono;
       delete[] tmpMono2Lag;
@@ -446,87 +445,87 @@ class Limiting
   void HRlimiting(scalar* U){
 #ifdef ONED
     // Go from lagrange to monomial representation
-    blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);
+    blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);
     // Limit the solution according to Liu
-    Lcpu_hrl1D(_N_s, _N_E, _N_F, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _A, _Alim);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _A, _Alim);
     
     // Go back to lagrange representation
-    blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
+    blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
 #elif TWOD
 
     if(_cartesian){
       // Go from lagrange to monomial representation wrt x
-      blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Lag2MonoX, _N_s, U, _N_s, 0.0, _A, _N_s);
+      blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Lag2MonoX, _N_s, U, _N_s, 0.0, _A, _N_s);
 
       // Communicate the elements on different partitions
 #ifdef USE_MPI
       MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, _N_F, _N_ghosts, _ghostElementSend, _ghostElementRecv, _A);
+      Lcpu_CommunicateGhosts(_N_s, _N_E, _N_ghosts, _ghostElementSend, _ghostElementRecv, _A);
 #endif
       
       // Limit the solution according to Liu (for each x slice)
-      Lcpu_hrl1D(_N_s1D, _N_E, _N_F, _N_G1D, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _A, _Alim);
+      Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _A, _Alim);
       
       // Go to the monomial representation wrt y
-      blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _MonoX2MonoY, _N_s, _Alim, _N_s, 0.0, _A, _N_s);
+      blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _MonoX2MonoY, _N_s, _Alim, _N_s, 0.0, _A, _N_s);
 
       // Communicate the elements on different partitions
 #ifdef USE_MPI
       MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, _N_F, _N_ghosts, _ghostElementSend, _ghostElementRecv, _A);
+      Lcpu_CommunicateGhosts(_N_s, _N_E, _N_ghosts, _ghostElementSend, _ghostElementRecv, _A);
 #endif
 
       // Limit the solution according to Liu (for each y slice)
-      Lcpu_hrl1D(_N_s1D, _N_E, _N_F, _N_G1D, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _A, _Alim);
+      Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _A, _Alim);
       
       // Go back to lagrange
-      blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _MonoY2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
+      blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _MonoY2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
       
     }
     
     if(!_cartesian){
       /* for(int e=0; e<_N_E;e++){ */
-      /*   for(int fc=0;fc<_N_F;fc++){ */
-      /* 	U[(e*_N_F+fc)*_N_s+0] = 2; */
-      /* 	U[(e*_N_F+fc)*_N_s+1] = 3; */
-      /* 	U[(e*_N_F+fc)*_N_s+2] = 3; */
-      /* 	U[(e*_N_F+fc)*_N_s+3] = 3; */
-      /* 	U[(e*_N_F+fc)*_N_s+4] = 3; */
-      /* 	U[(e*_N_F+fc)*_N_s+5] = 3; */
+      /*   for(int fc=0;fc<N_F;fc++){ */
+      /* 	U[(e*N_F+fc)*_N_s+0] = 2; */
+      /* 	U[(e*N_F+fc)*_N_s+1] = 3; */
+      /* 	U[(e*N_F+fc)*_N_s+2] = 3; */
+      /* 	U[(e*N_F+fc)*_N_s+3] = 3; */
+      /* 	U[(e*N_F+fc)*_N_s+4] = 3; */
+      /* 	U[(e*N_F+fc)*_N_s+5] = 3; */
       /*   } */
       /* } */
       /* printf("Before limiting:\n"); */
       /* for(int i = 0; i < _N_s; i++){ */
-      /*   printf("U(e=%i,i=%i) = %f\n",8,i,U[(8*_N_F+0)*_N_s+i]); */
+      /*   printf("U(e=%i,i=%i) = %f\n",8,i,U[(8*N_F+0)*_N_s+i]); */
       /* } */
 
       // Go from lagrange to monomial representation
-      LChangeBasis(_L2Msize1, _L2Msize2, _N_E, _N_F, _Lag2Mono, U, _A);
+      LChangeBasis(_L2Msize1, _L2Msize2, _N_E, _Lag2Mono, U, _A);
       
       /* for(int i = 0; i < _N_s; i++){ */
-      /*   printf("A(e=%i,i=%i) = %.12f\n",8,i,_A[(8*_N_F+0)*_N_s+i]); */
+      /*   printf("A(e=%i,i=%i) = %.12f\n",8,i,_A[(8*N_F+0)*_N_s+i]); */
       /* } */
       /* for(int i = 0; i < _N_s; i++){ */
-      /*   printf("A(e=%i,i=%i) = %.12f\n",5,i,_A[(5*_N_F+0)*_N_s+i]); */
+      /*   printf("A(e=%i,i=%i) = %.12f\n",5,i,_A[(5*N_F+0)*_N_s+i]); */
       /* } */
       /* for(int i = 0; i < _N_s; i++){ */
-      /*   printf("A(e=%i,i=%i) = %.12f\n",13,i,_A[(13*_N_F+0)*_N_s+i]); */
+      /*   printf("A(e=%i,i=%i) = %.12f\n",13,i,_A[(13*N_F+0)*_N_s+i]); */
       /* } */
       /* for(int i = 0; i < _N_s; i++){ */
-      /*   printf("A(e=%i,i=%i) = %.12f\n",1,i,_A[(1*_N_F+0)*_N_s+i]); */
+      /*   printf("A(e=%i,i=%i) = %.12f\n",1,i,_A[(1*N_F+0)*_N_s+i]); */
       /* } */
   
       // Limit the solution according to Liu
-      Lcpu_hrl2D(_L2Msize1, _N_E, _N_F, _N_G, _N_N, _D, _order, _XYZCen, _powersXYZG, _neighbors, _TaylorDxIdx, _TaylorDyIdx, _weight, _refArea, _A, _Alim);
+      Lcpu_hrl2D(_L2Msize1, _N_E, _N_G, _N_N, _D, _order, _XYZCen, _powersXYZG, _neighbors, _TaylorDxIdx, _TaylorDyIdx, _weight, _refArea, _A, _Alim);
 
       /* printf("After limiting:\n"); */
       /* for(int i = 0; i < _N_s; i++){ */
-      /* 	printf("Alim(e=%i,i=%i) = %f\n",8,i,_Alim[(8*_N_F+0)*_N_s+i]); */
+      /* 	printf("Alim(e=%i,i=%i) = %f\n",8,i,_Alim[(8*N_F+0)*_N_s+i]); */
       /* } */
       // Go back to lagrange representation
-      LChangeBasis(_L2Msize2, _L2Msize1, _N_E, _N_F, _Mono2Lag, _Alim, U);
+      LChangeBasis(_L2Msize2, _L2Msize1, _N_E, _Mono2Lag, _Alim, U);
       /* for(int i = 0; i < _N_s; i++){ */
-      /*   printf("U(e=%i,i=%i) = %f\n",8,i,U[(8*_N_F+0)*_N_s+i]); */
+      /*   printf("U(e=%i,i=%i) = %f\n",8,i,U[(8*N_F+0)*_N_s+i]); */
       /* } */
     }
 #endif
@@ -536,47 +535,47 @@ class Limiting
   void MYlimiting(scalar* U){
 
     // Get the pressure field
-    Lpressure(_N_s, _N_E, _N_F, U, _pressure);
+    Lpressure(_N_s, _N_E, U, _pressure);
 
     // Limit pressure
     blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
-    Lcpu_hrl1D(_N_s, _N_E, 1, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
 
     // Go from lagrange to monomial representation
-    blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);
+    blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);
     // Limit the solution according to Liu
-    Lcpu_hrl1D(_N_s, _N_E, _N_F, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _A, _Alim);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _A, _Alim);
 
     // My modification
-    Llimmodif(_N_s, _N_E, _N_F, _A, _pressureLim, _Alim);
+    Llimmodif(_N_s, _N_E, _A, _pressureLim, _Alim);
     
     // Go back to lagrange representation
-    blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
+    blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
 
   }
 
   void M2limiting(scalar* U){
 
     // Get the pressure and velocity fields
-    Lpressure_u(_N_s, _N_E, _N_F, U, _pressure, _u);
+    Lpressure_u(_N_s, _N_E, U, _pressure, _u);
 
     // Limit pressure
     blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
-    Lcpu_hrl1D(_N_s, _N_E, 1, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
 
     // Limit velocity
     blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _u, _N_s, 0.0, _uMono, _N_s);
-    Lcpu_hrl1D(_N_s, _N_E, 1, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _uMono, _uLim);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _uMono, _uLim);
 
     // Limit the other variables
-    blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);
-    Lcpu_hrl1D(_N_s, _N_E, _N_F, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _A, _Alim);
+    blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _A, _Alim);
 
     // My modification
-    Llimmodif2(_N_s, _N_E, _N_F, _A, _pressureLim, _uLim, _Alim);
+    Llimmodif2(_N_s, _N_E, _A, _pressureLim, _uLim, _Alim);
     
     // Go back to lagrange representation
-    blasGemm('N','N', _N_s, _N_E*_N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
+    blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
 
   }
 };

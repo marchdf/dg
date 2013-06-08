@@ -12,7 +12,7 @@
 //==========================================================================
 
 //==========================================================================
-arch_global void evaluate_sf(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
+arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -186,7 +186,7 @@ arch_global void evaluate_sf(int D, int N_G, int N_E, int N_F, scalar* s, scalar
 
 
 //==========================================================================
-arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar* UgF, scalar* normals){
+arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* normals){
  
 #ifdef USE_CPU
   int blk = 0;
@@ -222,7 +222,6 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 			   UgF[((t*N_F+4)*2+0)*M_G+g],                            // phincL
 			   UgF[((t*N_F+4)*2+1)*M_G+g],                            // phincR
 			   normals[t*D+0],                                        // nx
-			   N_F,
 			   &buffer[Fidx],&buffer[ncidx]);
 #elif HLL
       oned_passive_hll(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
@@ -236,7 +235,6 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 		       UgF[((t*N_F+4)*2+0)*M_G+g],                            // phincL
 		       UgF[((t*N_F+4)*2+1)*M_G+g],                            // phincR
 		       normals[t*D+0],                                        // nx
-		       N_F,
 		       &buffer[Fidx],&buffer[ncidx]);
 #elif ROE
       oned_passive_roe(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
@@ -250,7 +248,6 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 		       UgF[((t*N_F+4)*2+0)*M_G+g],                            // phincL
 		       UgF[((t*N_F+4)*2+1)*M_G+g],                            // phincR
 		       normals[t*D+0],                                        // nx
-		       N_F,
 		       &buffer[Fidx],&buffer[ncidx]);
 #endif // flux if
 
@@ -266,7 +263,6 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 			      UgF[((t*N_F+3)*2+0)*M_G+g],                            // alphaL
 			      UgF[((t*N_F+3)*2+1)*M_G+g],                            // alphaR
 			      normals[t*D+0],                                        // nx
-			      N_F,
 			      &buffer[Fidx],&buffer[ncidx]);
 #elif HLL
       oned_multifluid_hll(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
@@ -278,7 +274,6 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 			  UgF[((t*N_F+3)*2+0)*M_G+g],                            // alphaL
 			  UgF[((t*N_F+3)*2+1)*M_G+g],                            // alphaR
 			  normals[t*D+0],                                        // nx
-			  N_F,
 			  &buffer[Fidx],&buffer[ncidx]);
 #elif ROE
       oned_multifluid_roe(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
@@ -294,7 +289,6 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 #define MACRO(x)          UgF[((t*N_F+0)*2+0)*M_G+g], UgF[((t*N_F+0)*2+1)*M_G+g],// YL, YR
 #include "loop.h"
 			  normals[t*D+0],                                        // nx
-			  N_F,
 			  &buffer[Fidx],&buffer[ncidx]);
 #endif // flux if
 
@@ -319,7 +313,6 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 			   UgF[((t*N_F+5)*2+1)*M_G+g],                            // phincR
 			   normals[t*D+0],                                        // nx
 			   normals[t*D+1],                                        // ny
-			   N_F,
 			   &buffer[Fidx],&buffer[ncidx]);
 #elif HLL
       twod_passive_hll(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
@@ -336,7 +329,6 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 		       UgF[((t*N_F+5)*2+1)*M_G+g],                            // phincR
 		       normals[t*D+0],                                        // nx
 		       normals[t*D+1],                                        // ny
-		       N_F,
 		       &buffer[Fidx],&buffer[ncidx]);
 #elif ROE
       twod_passive_roe(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
@@ -353,7 +345,6 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 		       UgF[((t*N_F+5)*2+1)*M_G+g],                            // phincR
 		       normals[t*D+0],                                        // nx
 		       normals[t*D+1],                                        // ny
-		       N_F,
 		       &buffer[Fidx],&buffer[ncidx]);
 #endif // flux if
 
@@ -372,7 +363,6 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 			      UgF[((t*N_F+4)*2+1)*M_G+g],                            // alphaR
 			      normals[t*D+0],                                        // nx
 			      normals[t*D+1],                                        // ny
-			      N_F,
 			      &buffer[Fidx],&buffer[ncidx]);
 #elif HLL
       twod_multifluid_hll(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
@@ -387,7 +377,6 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 			  UgF[((t*N_F+4)*2+1)*M_G+g],                            // alphaR
 			  normals[t*D+0],                                        // nx
 			  normals[t*D+1],                                        // ny
-			  N_F,
 			  &buffer[Fidx],&buffer[ncidx]);
 #elif ROE
       twod_multifluid_roe(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
@@ -402,7 +391,6 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 			  UgF[((t*N_F+4)*2+1)*M_G+g],                            // alphaR
 			  normals[t*D+0],                                        // nx
 			  normals[t*D+1],                                        // ny
-			  N_F,
 			  &buffer[Fidx],&buffer[ncidx]);
 #endif // flux if
 
@@ -424,7 +412,7 @@ arch_global void evaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar*
 }
 
 //==========================================================================
-arch_global void pressure(int N_s, int N_E, int N_F, scalar* U, scalar* p){
+arch_global void pressure(int N_s, int N_E, scalar* U, scalar* p){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -457,7 +445,7 @@ arch_global void pressure(int N_s, int N_E, int N_F, scalar* U, scalar* p){
 }
 
 //==========================================================================
-arch_global void pressure_u(int N_s, int N_E, int N_F, scalar* U, scalar* p, scalar* u){
+arch_global void pressure_u(int N_s, int N_E, scalar* U, scalar* p, scalar* u){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -492,7 +480,7 @@ arch_global void pressure_u(int N_s, int N_E, int N_F, scalar* U, scalar* p, sca
 
 
 //==========================================================================
-arch_global void limmodif(int N_s, int N_E, int N_F, scalar* A, scalar* plim, scalar* Alim){
+arch_global void limmodif(int N_s, int N_E, scalar* A, scalar* plim, scalar* Alim){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -591,7 +579,7 @@ arch_global void limmodif(int N_s, int N_E, int N_F, scalar* A, scalar* plim, sc
 }
 
 //==========================================================================
-arch_global void limmodif2(int N_s, int N_E, int N_F, scalar* A, scalar* plim, scalar* ulim, scalar* Alim){
+arch_global void limmodif2(int N_s, int N_E, scalar* A, scalar* plim, scalar* ulim, scalar* Alim){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -732,7 +720,7 @@ arch_global void limmodif2(int N_s, int N_E, int N_F, scalar* A, scalar* plim, s
 //
 //==========================================================================
 extern "C" 
-void Levaluate_sf(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
+void Levaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
 
 #ifdef USE_GPU
   int div = N_E/blkE;
@@ -742,11 +730,11 @@ void Levaluate_sf(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar
   dim3 dimGrid(div+mod,1);
 #endif
 
-  evaluate_sf arch_args (D, N_G, N_E, N_F, s, f, Ug, dUg, invJac);
+  evaluate_sf arch_args (N_G, N_E, s, f, Ug, dUg, invJac);
 }
 
 extern "C" 
-void Levaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar* UgF, scalar* normals){
+void Levaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* normals){
 
 #ifdef USE_GPU
   int div = M_T/blkT;
@@ -756,11 +744,11 @@ void Levaluate_q(int M_G, int M_T, int N_F, int D, scalar* q, scalar* UgF, scala
   dim3 dimGrid(div+mod,1);
 #endif
 
-  evaluate_q arch_args_array(blkT*M_G*2*N_F*sizeof(scalar)) (M_G, M_T, N_F, D, q, UgF, normals);
+  evaluate_q arch_args_array(blkT*M_G*2*N_F*sizeof(scalar)) (M_G, M_T, q, UgF, normals);
 }
 
 extern "C"
-void Lpressure(int N_s, int N_E, int N_F, scalar* U, scalar* p){
+void Lpressure(int N_s, int N_E, scalar* U, scalar* p){
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
@@ -769,11 +757,11 @@ void Lpressure(int N_s, int N_E, int N_F, scalar* U, scalar* p){
   dim3 dimGrid(div+mod,1);
 #endif
 
-  pressure arch_args (N_s, N_E, N_F, U, p);
+  pressure arch_args (N_s, N_E, U, p);
 }
 
 extern "C"
-void Lpressure_u(int N_s, int N_E, int N_F, scalar* U, scalar* p, scalar* u){
+void Lpressure_u(int N_s, int N_E, scalar* U, scalar* p, scalar* u){
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
@@ -782,12 +770,12 @@ void Lpressure_u(int N_s, int N_E, int N_F, scalar* U, scalar* p, scalar* u){
   dim3 dimGrid(div+mod,1);
 #endif
 
-  pressure_u arch_args (N_s, N_E, N_F, U, p, u);
+  pressure_u arch_args (N_s, N_E, U, p, u);
 }
 
 
 extern "C"
-void Llimmodif(int N_s, int N_E, int N_F, scalar* A, scalar* plim, scalar* Alim){
+void Llimmodif(int N_s, int N_E, scalar* A, scalar* plim, scalar* Alim){
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
@@ -796,11 +784,11 @@ void Llimmodif(int N_s, int N_E, int N_F, scalar* A, scalar* plim, scalar* Alim)
   dim3 dimGrid(div+mod,1);
 #endif
 
-  limmodif arch_args (N_s, N_E, N_F, A, plim, Alim);
+  limmodif arch_args (N_s, N_E, A, plim, Alim);
 }
 
 extern "C"
-void Llimmodif2(int N_s, int N_E, int N_F, scalar* A, scalar* plim, scalar* ulim, scalar* Alim){
+void Llimmodif2(int N_s, int N_E, scalar* A, scalar* plim, scalar* ulim, scalar* Alim){
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
@@ -809,7 +797,7 @@ void Llimmodif2(int N_s, int N_E, int N_F, scalar* A, scalar* plim, scalar* ulim
   dim3 dimGrid(div+mod,1);
 #endif
 
-  limmodif2 arch_args (N_s, N_E, N_F, A, plim, ulim, Alim);
+  limmodif2 arch_args (N_s, N_E, A, plim, ulim, Alim);
 }
 
 
@@ -818,7 +806,7 @@ void Llimmodif2(int N_s, int N_E, int N_F, scalar* A, scalar* plim, scalar* ulim
 // Possibly broken
 // 
 //==========================================================================
-arch_global void cpu_evaluate_sf_shallow(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar H0, scalar G0){
+arch_global void cpu_evaluate_sf_shallow(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar H0, scalar G0){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -857,7 +845,7 @@ arch_device scalar cpu_flux4_mhd(scalar u, scalar By, scalar v, scalar Bx){retur
 arch_device scalar cpu_flux5_mhd(scalar EtplusPbar, scalar u, scalar vdotB, scalar Bx) {return EtplusPbar*u - vdotB*Bx;} // for f7X, f7Y, f7Z
 
 //==========================================================================
-arch_global void cpu_evaluate_sf_mhd(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac, scalar gamma){
+arch_global void cpu_evaluate_sf_mhd(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac, scalar gamma){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -915,7 +903,7 @@ arch_global void cpu_evaluate_sf_mhd(int D, int N_G, int N_E, int N_F, scalar* s
 }
 
 //==========================================================================
-arch_global void cpu_evaluate_q_shallow(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scalar H0, scalar G0, scalar* normals){
+arch_global void cpu_evaluate_q_shallow(int M_G, int M_T, scalar* q, scalar* UgF, scalar H0, scalar G0, scalar* normals){
 
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
@@ -956,7 +944,7 @@ arch_global void cpu_evaluate_q_shallow(int M_G, int M_T, int N_F, scalar* q, sc
 
 
 //==========================================================================
-arch_global void cpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scalar gamma, scalar* normals){
+arch_global void cpu_evaluate_q_mhd(int M_G, int M_T, scalar* q, scalar* UgF, scalar gamma, scalar* normals){
   
 #ifdef USE_CPU
   for(int t = 0; t < M_T; t++){
@@ -1098,45 +1086,45 @@ arch_global void cpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar
 }
 
 extern "C" 
-void Lcpu_evaluate_sf_shallow(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar H0, scalar G0){
+void Lcpu_evaluate_sf_shallow(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar H0, scalar G0){
 
 #ifdef USE_GPU
   dim3 dimBlock(N_G,1,1);
   dim3 dimGrid(N_E,1);
 #endif
 
-  cpu_evaluate_sf_shallow arch_args (D, N_G, N_E, N_F, s, f, Ug, H0, G0);
+  cpu_evaluate_sf_shallow arch_args (N_G, N_E, s, f, Ug, H0, G0);
 }
 
 extern "C" 
-void Lcpu_evaluate_sf_mhd(int D, int N_G, int N_E, int N_F, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac, scalar gamma){
+void Lcpu_evaluate_sf_mhd(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac, scalar gamma){
 
 #ifdef USE_GPU
   dim3 dimBlock(N_G,1,1);
   dim3 dimGrid(N_E,1);
 #endif
 
-  cpu_evaluate_sf_mhd arch_args (D, N_G, N_E, N_F, s, f, Ug, dUg, invJac, gamma);
+  cpu_evaluate_sf_mhd arch_args (N_G, N_E, s, f, Ug, dUg, invJac, gamma);
 }
 
 extern "C" 
-void Lcpu_evaluate_q_shallow(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scalar H0, scalar G0, scalar* normals){
+void Lcpu_evaluate_q_shallow(int M_G, int M_T, scalar* q, scalar* UgF, scalar H0, scalar G0, scalar* normals){
 
 #ifdef USE_GPU
   dim3 dimBlock(M_G,1,1);
   dim3 dimGrid(M_T,1);
 #endif
 
-  cpu_evaluate_q_shallow arch_args (M_G, M_T, N_F, q, UgF, H0, G0, normals);
+  cpu_evaluate_q_shallow arch_args (M_G, M_T, q, UgF, H0, G0, normals);
 }
 
 extern "C" 
-void Lcpu_evaluate_q_mhd(int M_G, int M_T, int N_F, scalar* q, scalar* UgF, scalar gamma, scalar* normals){
+void Lcpu_evaluate_q_mhd(int M_G, int M_T, scalar* q, scalar* UgF, scalar gamma, scalar* normals){
 
 #ifdef USE_GPU
   dim3 dimBlock(M_G,1,1);
   dim3 dimGrid(M_T,1);
 #endif
 
-  cpu_evaluate_q_mhd arch_args_array(M_G*2*8*sizeof(scalar)) (M_G, M_T, N_F, q, UgF, gamma, normals);
+  cpu_evaluate_q_mhd arch_args_array(M_G*2*8*sizeof(scalar)) (M_G, M_T, q, UgF, gamma, normals);
 }

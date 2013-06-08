@@ -3,7 +3,7 @@
 // //===========================================
 // // Output Shallow Water solutions
 // //===========================================
-// void print_dg_shallow(const int N_s, const int N_E, const int N_F, const fullMatrix<scalar> &U, const simpleMesh m, const int msh_tri, const int step, const double time, const int append){
+// void print_dg_shallow(const int N_s, const int N_E,  const fullMatrix<scalar> &U, const simpleMesh m, const int msh_tri, const int step, const double time, const int append){
 
  
 //   fullMatrix<scalar> H (N_s, N_E);
@@ -24,7 +24,7 @@
 //   m.writeSolution(Uy, msh_tri, "uy.pos", "Uy", step, time, append);
 // }
 
-// void print_dg_shallow(const int N_s, const int N_E, const int N_F, scalar* U, const simpleMesh m, const int msh_tri, const int step, const double time, const int append){
+// void print_dg_shallow(const int N_s, const int N_E,  scalar* U, const simpleMesh m, const int msh_tri, const int step, const double time, const int append){
 
  
 //   fullMatrix<scalar> H (N_s, N_E);
@@ -48,7 +48,7 @@
 // //===========================================
 // // Output MHD solutions
 // //===========================================
-// void print_dg_mhd(const int N_s, const int N_E, const int N_F, const fullMatrix<scalar> &U, const simpleMesh m, const int msh_tri, const int step, const double time, const int append, const int all, const scalar gamma){
+// void print_dg_mhd(const int N_s, const int N_E,  const fullMatrix<scalar> &U, const simpleMesh m, const int msh_tri, const int step, const double time, const int append, const int all, const scalar gamma){
 
  
 //   fullMatrix<scalar> Rho;
@@ -90,7 +90,7 @@
 //   if((all==-1)||(all==6)) m.writeSolution( P,  msh_tri,  "p.pos",   "P", step, time, append);
 // }
 
-// void print_dg_mhd(const int N_s, const int N_E, const int N_F, scalar* U, const simpleMesh m, const int msh_tri, const int step, const double time, const int append, const int all, const scalar gamma){
+// void print_dg_mhd(const int N_s, const int N_E,  scalar* U, const simpleMesh m, const int msh_tri, const int step, const double time, const int append, const int all, const scalar gamma){
 
 //   fullMatrix<scalar> Rho;
 //   fullMatrix<scalar> Ux ;

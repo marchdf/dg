@@ -26,7 +26,6 @@ arch_device void oned_passive_rusanov(scalar rhoL,
 				      scalar phincL,
 				      scalar phincR,
 				      scalar nx,
-				      int N_F,
 				      scalar* F, scalar* ncterm){
 
   scalar gamma = constants::GLOBAL_GAMMA;
@@ -92,7 +91,6 @@ arch_device void oned_passive_hll(scalar rhoL,
 				  scalar phincL,
 				  scalar phincR,
 				  scalar nx,
-				  int N_F,
 				  scalar* F, scalar* ncterm){
 
   scalar gamma = constants::GLOBAL_GAMMA;
@@ -177,7 +175,6 @@ arch_device void oned_passive_roe(scalar rhoL,
 				  scalar phincL,
 				  scalar phincR,
 				  scalar nx,
-				  int N_F,
 				  scalar* F, scalar* ncterm){
 
   scalar gamma = constants::GLOBAL_GAMMA;

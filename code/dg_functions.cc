@@ -1,5 +1,5 @@
 #include <dg_functions.h>
-void dg_jac_elements_fast(const int N_G, const int N_E, const int D, fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &dphi, fullMatrix<scalar> &J){
+void dg_jac_elements_fast(const int N_G, const int N_E, fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &dphi, fullMatrix<scalar> &J){
   fullMatrix<scalar> Jac(N_E*D,N_G*D);
 
   Jac.gemm(XYZNodes.transpose(),dphi.transpose());
@@ -15,7 +15,7 @@ void dg_jac_elements_fast(const int N_G, const int N_E, const int D, fullMatrix<
   }
 }
 
-void dg_jacobians_elements(const int N_G, const int N_E, const int D, fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &dphi, fullMatrix<scalar> &Jac, fullMatrix<scalar> &invJac, fullMatrix<scalar> &J, fullMatrix<scalar> &invJ){
+void dg_jacobians_elements(const int N_G, const int N_E, fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &dphi, fullMatrix<scalar> &Jac, fullMatrix<scalar> &invJac, fullMatrix<scalar> &J, fullMatrix<scalar> &invJ){
 
   Jac.gemm(XYZNodes.transpose(),dphi.transpose());
   scalar det = 0.0;
@@ -42,7 +42,7 @@ void dg_jacobians_elements(const int N_G, const int N_E, const int D, fullMatrix
 }
 
 
-void dg_jacobians_face(const int M_T, const int D, fullMatrix<scalar> &XYZNodesF, fullMatrix<scalar> &dpsi, fullMatrix<scalar> &JacF, fullMatrix<scalar> &JF, fullMatrix<scalar> &invJF){
+void dg_jacobians_face(const int M_T, fullMatrix<scalar> &XYZNodesF, fullMatrix<scalar> &dpsi, fullMatrix<scalar> &JacF, fullMatrix<scalar> &JF, fullMatrix<scalar> &invJF){
 
   JacF.gemm(XYZNodesF.transpose(),dpsi.transpose());
   for(int t = 0; t < M_T; t++){
@@ -60,7 +60,7 @@ void dg_jacobians_face(const int M_T, const int D, fullMatrix<scalar> &XYZNodesF
 }
 
 
-void dg_inverse_mass_matrix(const int order, const int elem_type, const std::string getElemType, const int N_s, const int N_E, const int D, fullMatrix<scalar> &XYZNodes, scalar* Minv){
+void dg_inverse_mass_matrix(const int order, const int elem_type, const std::string getElemType, const int N_s, const int N_E, fullMatrix<scalar> &XYZNodes, scalar* Minv){
 
   const polynomialBasis *basis  = polynomialBases::find (elem_type);  // for the element
   fullMatrix<double> points, weight;
@@ -101,7 +101,7 @@ void dg_inverse_mass_matrix(const int order, const int elem_type, const std::str
 
   // Calculate the jacobians
   fullMatrix<scalar> J(N_E,1);            // determinant of the Jacobian
-  dg_jac_elements_fast(N_G, N_E, D, XYZNodes, dphi, J);
+  dg_jac_elements_fast(N_G, N_E, XYZNodes, dphi, J);
 
   for(int e = 0; e < N_E; e++){
     // Init de psi_w_Jac qui va etre construit pour chaque element
@@ -129,7 +129,7 @@ void dg_inverse_mass_matrix(const int order, const int elem_type, const std::str
 }
 
 
-void dg_mappings(const int myid, const int M_s, const int M_T, const int N_F, const int N_s, const int N_E, const int N_N, const std::vector<simpleInterface> &interfaces, const std::map<int,int> &ElementMap, const std::vector<std::vector<int> > &closures, int* map, int* invmap){
+void dg_mappings(const int myid, const int M_s, const int M_T, const int N_s, const int N_E, const int N_N, const std::vector<simpleInterface> &interfaces, const std::map<int,int> &ElementMap, const std::vector<std::vector<int> > &closures, int* map, int* invmap){
   /* Map the element matrix to the interfaces matrix and
      vice-versa. This is a modified version of what I had
      previously. I think it works better and is more efficient.*/

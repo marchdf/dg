@@ -7,7 +7,7 @@
 //==========================================
 #ifdef ONED
 #ifdef PASSIVE
-void print_dg(const int N_s, const int N_E, const int N_F, scalar* U, const simpleMesh m, const int elem_type, const int step, const double time, const int append){
+void print_dg(const int N_s, const int N_E, scalar* U, const simpleMesh m, const int elem_type, const int step, const double time, const int append){
 
   fullMatrix<scalar> Rho(N_s, N_E);
   fullMatrix<scalar> Ux(N_s, N_E);

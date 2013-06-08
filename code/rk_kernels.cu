@@ -11,7 +11,7 @@
 //==========================================================================
 
 //==========================================================================
-arch_global void solve(int N_s, int N_E, int N_F, scalar Dt, scalar* Minv, scalar* f, scalar* DU){
+arch_global void solve(int N_s, int N_E, scalar Dt, scalar* Minv, scalar* f, scalar* DU){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -41,7 +41,7 @@ arch_global void solve(int N_s, int N_E, int N_F, scalar Dt, scalar* Minv, scala
 
 
 //==========================================================================
-arch_global void average_cell_p0(const int N_s, const int N_E, const int N_F, scalar* DU){
+arch_global void average_cell_p0(const int N_s, const int N_E,  scalar* DU){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -67,7 +67,7 @@ arch_global void average_cell_p0(const int N_s, const int N_E, const int N_F, sc
   }
 }
 
-arch_global void findUPA(const int N_s, const int N_E, const int N_F, scalar* U, scalar* UPA){
+arch_global void findUPA(const int N_s, const int N_E,  scalar* U, scalar* UPA){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -119,7 +119,7 @@ arch_global void findUPA(const int N_s, const int N_E, const int N_F, scalar* U,
 //==========================================================================
 
 extern "C" 
-void Lsolver(int N_s, int N_E, int N_F, scalar Dt, scalar* Minv, scalar* f, scalar* DU){
+void Lsolver(int N_s, int N_E, scalar Dt, scalar* Minv, scalar* f, scalar* DU){
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
@@ -128,11 +128,11 @@ void Lsolver(int N_s, int N_E, int N_F, scalar Dt, scalar* Minv, scalar* f, scal
   dim3 dimGrid(div+mod,1);
 #endif
 
-  solve arch_args (N_s, N_E, N_F, Dt, Minv, f, DU);
+  solve arch_args (N_s, N_E, Dt, Minv, f, DU);
 };
 
 extern "C"
-void Laverage_cell_p0(const int N_s, const int N_E, const int N_F, scalar* DU){
+void Laverage_cell_p0(const int N_s, const int N_E,  scalar* DU){
 
 #ifdef USE_GPU
   int div = N_E/blkE;
@@ -142,11 +142,11 @@ void Laverage_cell_p0(const int N_s, const int N_E, const int N_F, scalar* DU){
   dim3 dimGrid(div+mod,1);
 #endif
 
-  average_cell_p0 arch_args (N_s, N_E, N_F, DU);
+  average_cell_p0 arch_args (N_s, N_E, DU);
 }
 
 extern "C"
-void LfindUPA(const int N_s, const int N_E, const int N_F, scalar* U, scalar* UPA){
+void LfindUPA(const int N_s, const int N_E, scalar* U, scalar* UPA){
 
 #ifdef USE_GPU
   int div = N_E/blkE;
@@ -156,5 +156,5 @@ void LfindUPA(const int N_s, const int N_E, const int N_F, scalar* U, scalar* UP
   dim3 dimGrid(div+mod,1);
 #endif
     
-    findUPA arch_args (N_s, N_E, N_F, U, UPA);
+    findUPA arch_args (N_s, N_E, U, UPA);
 }

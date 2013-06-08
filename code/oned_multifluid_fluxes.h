@@ -24,7 +24,6 @@ arch_device void oned_multifluid_rusanov(scalar rhoL,
 					 scalar alphaL,
 					 scalar alphaR,
 					 scalar nx,
-					 int N_F,
 					 scalar* F, scalar* ncterm){
 
 #ifdef GAMCONS
@@ -94,7 +93,6 @@ arch_device void oned_multifluid_hll(scalar rhoL,
 				     scalar alphaL,
 				     scalar alphaR,
 				     scalar nx,
-				     int N_F,
 				     scalar* F, scalar* ncterm){
 #ifdef GAMCONS
   alphaL = alphaL/rhoL;
@@ -197,10 +195,9 @@ arch_device void oned_multifluid_roe(scalar rhoL,
 				     scalar alphaR,
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x)                     scalar YL, YR,
+#define MACRO(x)                     scalar YL, scalar YR,
 #include "loop.h"
 				     scalar nx,
-				     int N_F,
 				     scalar* F, scalar* ncterm){
 
 #ifdef GAMCONS

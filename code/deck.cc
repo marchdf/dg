@@ -47,10 +47,6 @@ void deck::readDeck(const char *fileName)
     printf("Invalid file format (at limiter)\n");
   getline(input,_limiter);
   getline(input,line);
-  if (line!="#number of fields")
-    printf("Invalid file format (at number of fields)\n");
-  input>>_nf;  
-  getline(input,line); getline(input,line);
   if (line!="#initial condition")
     printf("Invalid file format (at initial condition)\n");
   getline(input,_ic);
