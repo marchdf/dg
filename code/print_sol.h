@@ -5,7 +5,6 @@
 #include <scalar_def.h>
 #include <stdlib.h>
 #include <constants.h>
-  
 
 void print_dg(const int N_s, const int N_E, scalar* U, const simpleMesh m, const int elem_type, const int step, const double time, const int append);
 

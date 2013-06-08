@@ -1322,7 +1322,8 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #elif GAMNCON
 	U(i,e*N_F+3) = 1.0/(gamma01-1);
 #endif
-
+	// Mass fractions
+	U(i,e*N_F+4) = rho01;
 #elif TWOD
 	U(i,e*N_F+0) = rho01;
 	U(i,e*N_F+1) = rho01*u01;
@@ -1333,6 +1334,8 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #elif GAMNCON
 	U(i,e*N_F+4) = 1.0/(gamma01-1);
 #endif
+	// Mass fractions
+	U(i,e*N_F+5) = rho01;
 #endif
       }
       else{
@@ -1362,6 +1365,8 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #elif GAMNCON
 	U(i,e*N_F+3) = 1.0/(gamma-1);
 #endif
+	// Mass fractions
+	U(i,e*N_F+4) = rho01*(1-jx); // jy is mass fraction of 2
 #elif TWOD
 	U(i,e*N_F+0) = rho;
 	U(i,e*N_F+1) = rho*u;
@@ -1372,6 +1377,8 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #elif GAMNCON
 	U(i,e*N_F+4) = 1.0/(gamma-1);
 #endif
+	// Mass fractions
+	U(i,e*N_F+5) = rho01*(1-jx);
 #endif
       }
     }

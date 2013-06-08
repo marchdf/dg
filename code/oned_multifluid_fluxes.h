@@ -6,6 +6,9 @@
 #include <macros.h>
 #include <basic_fluxes.h>
 
+// Used to define dynamically mass fraction variables
+#define YL(x) YL ##x
+#define YR(x) YR ##x 
 
 //*****************************************************************************
 //* --- Rusanov's Flux Function ---
@@ -23,6 +26,10 @@ arch_device void oned_multifluid_rusanov(scalar rhoL,
 					 scalar EtR,
 					 scalar alphaL,
 					 scalar alphaR,
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)                     scalar YL(x), scalar YR(x),
+#include "loop.h"
 					 scalar nx,
 					 scalar* F, scalar* ncterm){
 
@@ -61,6 +68,13 @@ arch_device void oned_multifluid_rusanov(scalar rhoL,
   ncterm[3] = -0.5*0.5*(vxL+vxR)*(alphaR-alphaL)*nx;
 #endif
 
+    //mass fractions
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) F[4+x] = 0.5*(flux_ab(YL(x),vxL) + flux_ab(YR(x),vxR))*nx \
+    -maxvap*(YR(x)-YL(x));
+#include "loop.h"
+  
 } // end Rusanov function
 
 
@@ -92,6 +106,10 @@ arch_device void oned_multifluid_hll(scalar rhoL,
 				     scalar EtR,
 				     scalar alphaL,
 				     scalar alphaR,
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)                     scalar YL(x), scalar YR(x),
+#include "loop.h"
 				     scalar nx,
 				     scalar* F, scalar* ncterm){
 #ifdef GAMCONS
@@ -148,6 +166,11 @@ arch_device void oned_multifluid_hll(scalar rhoL,
 #elif  GAMNCON
     F[3] = -0.5*vncabs;
 #endif
+    //mass fractions
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) F[4+x] = flux_ab(YL(x),vxL)*nx;
+#include "loop.h"
   }
   else if ((SL < 0)&&(SR > 0)){
     F[0] = fhll(rhoL, SL, flux_ab(rhoL,vxL)*nx,   rhoR, SR, flux_ab(rhoR,vxR)*nx);
@@ -158,6 +181,11 @@ arch_device void oned_multifluid_hll(scalar rhoL,
 #elif  GAMNCON
     F[3] = fhll(alphaL, SL, 0, alphaR, SR, 0) - 0.5*fabs(SR+SL)/fabs(SR-SL)*vncabs;
 #endif
+    //mass fractions
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) F[4+x] = fhll(YL(x), SL, flux_ab(YL(x),vxL)*nx,   YR(x), SR, flux_ab(YR(x),vxR)*nx);
+#include "loop.h"
   }
   else if (SR < 0){
     F[0] = flux_ab(rhoR,vxR)*nx;
@@ -168,6 +196,11 @@ arch_device void oned_multifluid_hll(scalar rhoL,
 #elif  GAMNCON
     F[3] = 0.5*vncabs;
 #endif
+    //mass fractions
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) F[4+x] = flux_ab(YR(x),vxR)*nx;
+#include "loop.h"
   }
 
 #ifdef GAMNCON
@@ -195,7 +228,7 @@ arch_device void oned_multifluid_roe(scalar rhoL,
 				     scalar alphaR,
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x)                     scalar YL, scalar YR,
+#define MACRO(x)                     scalar YL(x), scalar YR(x),
 #include "loop.h"
 				     scalar nx,
 				     scalar* F, scalar* ncterm){
@@ -298,9 +331,19 @@ arch_device void oned_multifluid_roe(scalar rhoL,
   ncterm[3] = -0.5*v*(alphaR-alphaL)*nx;
 #endif
   F[3] += -0.5*(ws0*dV0*R03+
-		     ws1*dV1*R13+
-		     ws2*dV2*R23+
-		     ws3*dV3*R33);
+		ws1*dV1*R13+
+		ws2*dV2*R23+
+		ws3*dV3*R33);
+
+  //mass fractions
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) F[4+x] = 0.5*(flux_ab(YL(x),vxL) + flux_ab(YR(x),vxR))*nx \
+    -0.5*(ws0*dV0*R00+							\
+	  ws1*dV1*R10+							\
+	  ws2*dV2*R20+							\
+	  ws3*dV3*R30);
+#include "loop.h"  
 
 } // end Roe function
 #endif

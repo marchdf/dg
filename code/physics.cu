@@ -80,6 +80,13 @@ arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug,
       f[((e*N_F+3)*N_G+g)*D+0] = 0;
 #endif
 
+      // Mass fractions
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) s[(e*N_F+4+x)*N_G+g] = 0; \
+    f[((e*N_F+4+x)*N_G+g)*D+0] = flux_ab(Ug[(e*N_F+4+x)*N_G+g],u); // Ug contains rho
+#include "loop.h"
+      
 #endif // end ifs on physics
 
 
@@ -174,6 +181,14 @@ arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug,
       f[((e*N_F+4)*N_G+g)*D+1] = 0;// flux wrt y
 #endif
 
+      // Mass fractions
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) s[(e*N_F+5+x)*N_G+g] = 0; \
+    f[((e*N_F+5+x)*N_G+g)*D+0] = flux_ab(Ug[(e*N_F+5+x)*N_G+g],u);	\
+    f[((e*N_F+5+x)*N_G+g)*D+1] = flux_ab(Ug[(e*N_F+5+x)*N_G+g],v);	
+#include "loop.h"
+
 #endif // end ifs on physics
 
 #endif // end ifs on dimensions
@@ -262,6 +277,10 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
 			      UgF[((t*N_F+2)*2+1)*M_G+g],                            // EtR
 			      UgF[((t*N_F+3)*2+0)*M_G+g],                            // alphaL
 			      UgF[((t*N_F+3)*2+1)*M_G+g],                            // alphaR
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)              UgF[((t*N_F+4+x)*2+0)*M_G+g], UgF[((t*N_F+4+x)*2+1)*M_G+g],// rhoL*YL, rhoR*YR
+#include "loop.h"
 			      normals[t*D+0],                                        // nx
 			      &buffer[Fidx],&buffer[ncidx]);
 #elif HLL
@@ -273,6 +292,10 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
 			  UgF[((t*N_F+2)*2+1)*M_G+g],                            // EtR
 			  UgF[((t*N_F+3)*2+0)*M_G+g],                            // alphaL
 			  UgF[((t*N_F+3)*2+1)*M_G+g],                            // alphaR
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)          UgF[((t*N_F+4+x)*2+0)*M_G+g], UgF[((t*N_F+4+x)*2+1)*M_G+g],// rhoL*YL, rhoR*YR
+#include "loop.h"
 			  normals[t*D+0],                                        // nx
 			  &buffer[Fidx],&buffer[ncidx]);
 #elif ROE
@@ -286,7 +309,7 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
 			  UgF[((t*N_F+3)*2+1)*M_G+g],                            // alphaR
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x)          UgF[((t*N_F+0)*2+0)*M_G+g], UgF[((t*N_F+0)*2+1)*M_G+g],// YL, YR
+#define MACRO(x)          UgF[((t*N_F+4+x)*2+0)*M_G+g], UgF[((t*N_F+4+x)*2+1)*M_G+g],// rhoL*YL, rhoR*YR
 #include "loop.h"
 			  normals[t*D+0],                                        // nx
 			  &buffer[Fidx],&buffer[ncidx]);
@@ -361,6 +384,10 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
 			      UgF[((t*N_F+3)*2+1)*M_G+g],                            // EtR
 			      UgF[((t*N_F+4)*2+0)*M_G+g],                            // alphaL
 			      UgF[((t*N_F+4)*2+1)*M_G+g],                            // alphaR
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)              UgF[((t*N_F+5+x)*2+0)*M_G+g], UgF[((t*N_F+5+x)*2+1)*M_G+g],// rhoL*YL, rhoR*YR
+#include "loop.h"
 			      normals[t*D+0],                                        // nx
 			      normals[t*D+1],                                        // ny
 			      &buffer[Fidx],&buffer[ncidx]);
@@ -375,6 +402,10 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
 			  UgF[((t*N_F+3)*2+1)*M_G+g],                            // EtR
 			  UgF[((t*N_F+4)*2+0)*M_G+g],                            // alphaL
 			  UgF[((t*N_F+4)*2+1)*M_G+g],                            // alphaR
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)          UgF[((t*N_F+5+x)*2+0)*M_G+g], UgF[((t*N_F+5+x)*2+1)*M_G+g],// rhoL*YL, rhoR*YR
+#include "loop.h"
 			  normals[t*D+0],                                        // nx
 			  normals[t*D+1],                                        // ny
 			  &buffer[Fidx],&buffer[ncidx]);
@@ -389,6 +420,10 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
 			  UgF[((t*N_F+3)*2+1)*M_G+g],                            // EtR
 			  UgF[((t*N_F+4)*2+0)*M_G+g],                            // alphaL
 			  UgF[((t*N_F+4)*2+1)*M_G+g],                            // alphaR
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)          UgF[((t*N_F+5+x)*2+0)*M_G+g], UgF[((t*N_F+5+x)*2+1)*M_G+g],// rhoL*YL, rhoR*YR
+#include "loop.h"
 			  normals[t*D+0],                                        // nx
 			  normals[t*D+1],                                        // ny
 			  &buffer[Fidx],&buffer[ncidx]);

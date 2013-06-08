@@ -9,7 +9,7 @@
 #ifdef MULTIFLUID
 
 // Used to define dynamically variables
-#define NUMVAR(x) Y ##x 
+#define Y(x) Y ##x 
 
 void print_dg(const int N_s, const int N_E, scalar* U, const simpleMesh m, const int elem_type, const int step, const double time, const int append){
 
@@ -27,7 +27,7 @@ void print_dg(const int N_s, const int N_E, scalar* U, const simpleMesh m, const
   // Mass fractions
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) fullMatrix<scalar> NUMVAR(x)(N_s,N_E); 
+#define MACRO(x) fullMatrix<scalar> Y(x)(N_s,N_E); 
 #include "loop.h"
  
   for (int e = 0; e < N_E; e++){
@@ -57,7 +57,7 @@ void print_dg(const int N_s, const int N_E, scalar* U, const simpleMesh m, const
       // Mass fractions
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) NUMVAR(x)(i,e) = U[(e*N_F+x)*N_s+i]/rho; // not quite right with the field counting here
+#define MACRO(x) Y(x)(i,e) = U[(e*N_F+4+x)*N_s+i]/rho;
 #include "loop.h"
     }
   }
@@ -72,7 +72,7 @@ void print_dg(const int N_s, const int N_E, scalar* U, const simpleMesh m, const
   char buffer1 [5]; char buffer2 [2];
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) sprintf(buffer1, "y%i.pos", x); sprintf(buffer2, "Y%i", x); m.writeSolution(NUMVAR(x), elem_type, buffer1, buffer2, step, time, append);
+#define MACRO(x) sprintf(buffer1, "y%i.pos", x); sprintf(buffer2, "Y%i", x); m.writeSolution(Y(x), elem_type, buffer1, buffer2, step, time, append);
 #include "loop.h"
 
 }

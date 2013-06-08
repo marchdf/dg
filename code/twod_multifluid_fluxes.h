@@ -25,6 +25,10 @@ arch_device void twod_multifluid_rusanov(scalar rhoL,
 					 scalar EtR,
 					 scalar alphaL,
 					 scalar alphaR,
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)                         scalar YL(x), scalar YR(x),
+#include "loop.h"
 					 scalar nx,
 					 scalar ny,
 					 scalar* F, scalar* ncterm){
@@ -71,6 +75,13 @@ arch_device void twod_multifluid_rusanov(scalar rhoL,
   ncterm[4] = -0.5*0.5*(vnL+vnR)*(alphaR-alphaL);
 #endif
 
+  //mass fractions
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) F[5+x] = 0.5*(flux_ab(YL(x),vnL) + flux_ab(YR(x),vnR)) \
+    -maxvap*(YR(x)-YL(x));
+#include "loop.h"
+
 } // end Rusanov function
 
 //*****************************************************************************
@@ -103,6 +114,10 @@ arch_device void twod_multifluid_hll(scalar rhoL,
 				     scalar EtR,
 				     scalar alphaL,
 				     scalar alphaR,
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)                     scalar YL(x), scalar YR(x),
+#include "loop.h"
 				     scalar nx,
 				     scalar ny,
 				     scalar* F, scalar* ncterm){
@@ -131,6 +146,10 @@ arch_device void twod_multifluid_roe(scalar rhoL,
 				     scalar EtR,
 				     scalar alphaL,
 				     scalar alphaR,
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)                     scalar YL(x), scalar YR(x),
+#include "loop.h"
 				     scalar nx,
 				     scalar ny,
 				     scalar* F, scalar* ncterm){
@@ -271,6 +290,17 @@ arch_device void twod_multifluid_roe(scalar rhoL,
 		     ws2*dV2*R24+
 		     ws3*dV3*R34+
 		     ws4*dV4*R44);
+
+  //mass fractions
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) F[5+x] = 0.5*(flux_ab(YL(x),vnL) + flux_ab(YR(x),vnR)) \
+    -0.5*(ws0*dV0*R00+							\
+	  ws1*dV1*R10+							\
+	  ws2*dV2*R20+							\
+    	  ws3*dV3*R30+							\
+	  ws4*dV4*R40);
+#include "loop.h"
 
 } // end Roe function
 #endif
