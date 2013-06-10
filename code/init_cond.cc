@@ -1096,8 +1096,8 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar Q = 0.66927; // for alpha = 2/3 and gamma = 5/3
 
   // pre-shock density (material 1)
-  scalar rho01   = 2800;
-  scalar gamma01 = gamma;
+  scalar rho01   = 1400;
+  scalar gamma01 = 3;
   scalar alpha01 = 1/(gamma01-1);
   
   // pre-shock density (material 2)
@@ -1112,7 +1112,7 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar R0 = sqrt(0.5*(gamma02+1)*ps/rho02)/(alpha*pow(t0,alpha-1));
 
   scalar Ex  = rho02*pow(Q,3)*pow(R0,3); // explosion energy
-  rho02 = 50;
+  //rho02 = 50;
   scalar Dxx = 0.00005; // energy initially deposited in Dxx
 
   for(int e = 0; e < N_E; e++){
