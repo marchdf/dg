@@ -516,7 +516,7 @@ class Limiting
       /* } */
   
       // Limit the solution according to Liu
-      Lcpu_hrl2D(_L2Msize1, _N_E, _N_G, _N_N, _D, _order, _XYZCen, _powersXYZG, _neighbors, _TaylorDxIdx, _TaylorDyIdx, _weight, _refArea, _A, _Alim);
+      Lcpu_hrl2D(_L2Msize1, _N_E, _N_G, _N_N, _order, _XYZCen, _powersXYZG, _neighbors, _TaylorDxIdx, _TaylorDyIdx, _weight, _refArea, _A, _Alim);
 
       /* printf("After limiting:\n"); */
       /* for(int i = 0; i < _N_s; i++){ */
