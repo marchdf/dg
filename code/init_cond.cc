@@ -154,6 +154,7 @@ void init_dg_sodtube_multifluid(const int N_s, const int N_E,const fullMatrix<sc
   scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
   
   buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, XYZNodes, U);
+
 }
 
 void init_dg_sodmono_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
