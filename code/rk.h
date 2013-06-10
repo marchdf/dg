@@ -219,8 +219,7 @@ class RK
     int maxUPAIdx;
     maxUPAIdx = blasIamax(N_E*N_s,UPA,1)-1; // Fortran starts numbering at 1
 #ifdef USE_CPU
-    scalar maxUPA;
-    maxUPA = &UPA[maxUPAIdx];
+    scalar maxUPA = UPA[maxUPAIdx];
     scalar Dt = CFL/maxUPA;
 #elif USE_GPU
     scalar* maxUPA = new scalar[1];
