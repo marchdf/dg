@@ -130,7 +130,7 @@ class RK
       /* if ((n+1)%100==0){output=true;} */
       /* else {output=false;} */
       /* if ((n+1)==1000) {done = true;} */
-      
+
       // Us = U
 #ifdef HAVE_BLAS
       blasCopy(N_F*N_s*N_E, arch(U), 1, _Us, 1);
@@ -215,18 +215,18 @@ class RK
   }; //end main RK function
 
   scalar DtFromCFL(const int N_s, const int N_E, const scalar CFL, scalar* U, scalar* UPA){
-
     LfindUPA(N_s, N_E, U, UPA);
     int maxUPAIdx;
     maxUPAIdx = blasIamax(N_E*N_s,UPA,1)-1; // Fortran starts numbering at 1
-    scalar* maxUPA;// = new scalar[1];
 #ifdef USE_CPU
+    scalar maxUPA;
     maxUPA = &UPA[maxUPAIdx];
+    scalar Dt = CFL/maxUPA;
 #elif USE_GPU
+    scalar* maxUPA = new scalar[1];
     CUDA_SAFE_CALL(cudaMemcpy(maxUPA, &UPA[maxUPAIdx], sizeof(scalar), cudaMemcpyDeviceToHost));
-#endif
     scalar Dt = CFL/maxUPA[0];
-    maxUPA=NULL;
+#endif
     return Dt;
   }
 
