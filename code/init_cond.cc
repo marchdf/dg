@@ -1265,7 +1265,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar vcoord =0; //-115.26;//72; // coordinate shift upwards
   scalar K = 0.5;
   scalar h = K*Lx;
-  scalar yinterface =-h; // first interface location
+  scalar yinterface =-0.03; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
   scalar u = 0;
   scalar v = 0+vcoord;
@@ -1290,13 +1290,15 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // Explosion energy parameters
   scalar blstpos = 0.0;
   scalar alpha = 2./3.; // = 2/3 for planar, 1/2 for cyl, 2/5 for sph.
-  scalar Q = 0.66927; // for alpha = 2/3 and gamma = 5/3
-  scalar Ms = 3;    // Mach number when blast front gets to interface
+  scalar Q = 0.8119080; // for gamma = 1.4 //0.66927; // for alpha = 2/3 and gamma = 5/3
+  scalar Ms = 10;    // Mach number when blast front gets to interface
   scalar ps = p*((2.0*gamma01*Ms*Ms-(gamma01-1))/(gamma01+1));  // pressure at shock in Pa
   scalar xi = fabs(blstpos-yinterface); // distance btw blast initial position and interface
   scalar Ex  = pow(Q,2.0/alpha)*0.5*(gamma01+1)*ps/(alpha*alpha)*pow(xi,2.0/alpha-2.0);
   scalar Dxx = 0.0001; // energy initially deposited in Dxx
 
+  printf("xi=%f and ps=%e and Ex=%e\n",xi, ps, Ex);
+  
   scalar xc=0, yc=0, x=0, y=0;
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
