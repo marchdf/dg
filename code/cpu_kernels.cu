@@ -271,8 +271,8 @@ arch_global void cpu_mapToElement(int N_s, int N_E, int N_F, int M_s, int N_N, i
 #ifdef USE_CPU
     }// end loop on fields
     delete[] sol;
-  } // end loop on elements
 #endif
+  } // end loop on elements
 }
    
 //   //==========================================================================
