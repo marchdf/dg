@@ -109,15 +109,15 @@ class RK
     // print the initial condition to the file
     printf("Initial condition written to output file.\n");
     print_dg(N_s, N_E, h_U, m, elem_type, 0, 0, 0);
-
+    
     // Output conservation of the fields
     dgsolver.conservation(h_U,0.0);
 	   
     // Time integration
     while (!done){
-
       // Find new Dt
       Dt = DtFromCFL(N_s, N_E, CFL, arch(U),_UPA); output = false;
+      printf("helloS Dt = %e\n",Dt);
 #ifdef USE_MPI // Make sure everyone is at the same time
       MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
       MPI_Allreduce(MPI_IN_PLACE, &Dt, 1, MPI_SCALAR, MPI_MIN, MPI_COMM_WORLD);
@@ -200,6 +200,7 @@ class RK
 	dgsolver.conservation(h_U,T);
 	
       }// end output steps
+      printf("helloE\n");
     }// end loop on time
     
     // Free some stuff
@@ -225,6 +226,7 @@ class RK
     scalar* maxUPA = new scalar[1];
     CUDA_SAFE_CALL(cudaMemcpy(maxUPA, &UPA[maxUPAIdx], sizeof(scalar), cudaMemcpyDeviceToHost));
     scalar Dt = CFL/maxUPA[0];
+    delete[] maxUPA;
 #endif
     return Dt;
   }

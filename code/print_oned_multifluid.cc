@@ -16,7 +16,7 @@ void print_dg(const int N_s, const int N_E, scalar* U, const simpleMesh m, const
   fullMatrix<scalar> Rho(N_s, N_E);
   fullMatrix<scalar> Ux(N_s, N_E);
   fullMatrix<scalar> P(N_s, N_E);
-  fullMatrix<scalar> G(N_s, N_E)  ;
+  fullMatrix<scalar> G(N_s, N_E);
 
   // separate the fields
   scalar rho = 0;
@@ -29,7 +29,7 @@ void print_dg(const int N_s, const int N_E, scalar* U, const simpleMesh m, const
 #define LOOP_END N_Y
 #define MACRO(x) fullMatrix<scalar> Y(x)(N_s,N_E); 
 #include "loop.h"
- 
+
   for (int e = 0; e < N_E; e++){
     for (int i = 0; i < N_s; i++){
 
@@ -57,11 +57,12 @@ void print_dg(const int N_s, const int N_E, scalar* U, const simpleMesh m, const
       // Mass fractions
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) Y(x)(i,e) = U[(e*N_F+4+x)*N_s+i]/rho;
+#define MACRO(x) printf("hello1 %i and x =%i\n",LOOP_END,x); Y(x)(i,e) = U[(e*N_F+4+x)*N_s+i]/rho;
 #include "loop.h"
     }
   }
 
+ 
   // print to the output file
   m.writeSolution( Rho,  elem_type, "rho.pos", "Rho", step, time, append);
   m.writeSolution(  Ux,  elem_type,  "ux.pos",  "Ux", step, time, append);

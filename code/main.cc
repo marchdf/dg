@@ -870,7 +870,6 @@ int main (int argc, char **argv)
   delete[] h_ghostInterfaces;
   delete[] h_ghostElementSend;
   delete[] h_ghostElementRecv;
-  
   delete[] h_boundaryMap;
   delete[] h_boundaryIdx;
   delete[] h_neighbors;

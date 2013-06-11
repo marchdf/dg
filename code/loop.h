@@ -14,6 +14,7 @@
 #error Loop Counter Too Big
 #endif
 
+#if(LOOP_END != 0)
 MACRO(LOOP_START) 
 
 #if(LOOP_START == 0)
@@ -50,4 +51,6 @@ MACRO(LOOP_START)
 
 #if(LOOP_START < LOOP_END)
 #include "loop.h"
+#endif
+
 #endif

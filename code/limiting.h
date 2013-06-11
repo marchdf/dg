@@ -201,7 +201,6 @@ class Limiting
       _A        = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_A,     _N_s*(_N_E+_N_ghosts)*N_F);
       _Alim     = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_Alim,  _N_s*(_N_E+_N_ghosts)*N_F);
       _neighbors  = new int[_N_N*_N_E]; memcpy(_neighbors,   neighbors,   _N_N*_N_E*sizeof(int));
-      _neighbors  = new int[_N_N*_N_E]; memcpy(_neighbors,   neighbors,   _N_N*_N_E*sizeof(int));
       _ghostElementSend  = new int[_N_ghosts*3]; memcpy(_ghostElementSend,   ghostElementSend,   _N_ghosts*3*sizeof(int));
       _ghostElementRecv  = new int[_N_ghosts*3]; memcpy(_ghostElementRecv,   ghostElementRecv,   _N_ghosts*3*sizeof(int));
      
@@ -231,9 +230,9 @@ class Limiting
       CUDA_SAFE_CALL(cudaMemcpy(_neighbors,  neighbors,_N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice));
 
       delete[] tmpLag2MonoX;
-      delete[] tmpMonoX2MonoY;	
-      delete[] tmpMonoY2Lag;	
-      delete[] tmpV1D;	
+      delete[] tmpMonoX2MonoY;
+      delete[] tmpMonoY2Lag;
+      delete[] tmpV1D;
 #endif
       }
       break;

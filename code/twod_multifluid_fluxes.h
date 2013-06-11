@@ -7,6 +7,10 @@
 #include <basic_fluxes.h>
 #include <stdio.h>
 
+// Used to define dynamically mass fraction variables
+#define YL(x) YL ##x
+#define YR(x) YR ##x 
+
 //*****************************************************************************
 //* --- Rusanov's Flux Function ---
 //*
