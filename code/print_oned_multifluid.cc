@@ -57,7 +57,7 @@ void print_dg(const int N_s, const int N_E, scalar* U, const simpleMesh m, const
       // Mass fractions
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) printf("hello1 %i and x =%i\n",LOOP_END,x); Y(x)(i,e) = U[(e*N_F+4+x)*N_s+i]/rho;
+#define MACRO(x) Y(x)(i,e) = U[(e*N_F+4+x)*N_s+i]/rho;
 #include "loop.h"
     }
   }

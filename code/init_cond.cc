@@ -535,15 +535,16 @@ void init_dg_blast1d_multifluid(const int N_s, const int N_E, const fullMatrix<s
 
   // Initialize by setting the explosion energy
   scalar patm = 1e5;
-  scalar p0 = 1.98e11; //1.6e11  // pressure at shock in Pa
-  scalar t0 = 25*1e-9; // time = 25ns
-  scalar rho0 = 100; // density of unshocked material (100 kg/m^3 = 0.1 g/cc)
   scalar u0  = 0;    // velocity of unshocked material
-  scalar R0 = sqrt(0.5*(gamma+1)*p0/rho0)/(alpha*pow(t0,alpha-1));
 
-  scalar Ex = rho0*pow(Q,3)*pow(R0,3); // explosion energy
+  //scalar rho0 = 100; // density of unshocked material (100 kg/m^3 = 0.1 g/cc)
+  //scalar p0 = 1.98e11; //1.6e11  // pressure at shock in Pa
+  //scalar t0 = 35*1e-9; // time = 25ns
+  //scalar R0 = sqrt(0.5*(gamma+1)*p0/rho0)/(alpha*pow(t0,alpha-1));
+  //scalar Ex = rho0*pow(Q,3)*pow(R0,3); // explosion energy
+  scalar rho0 = 50;
+  scalar Ex = 1.67e8;
   printf("Explosion energy=%e\n",Ex);
-  rho0 = 50;
   scalar blastpos = 0.0;
   scalar Dxx = 0.00005;
   
@@ -1295,7 +1296,9 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar ps = p*((2.0*gamma01*Ms*Ms-(gamma01-1))/(gamma01+1));  // pressure at shock in Pa
   scalar xi = fabs(blstpos-yinterface); // distance btw blast initial position and interface
   scalar Ex  = pow(Q,2.0/alpha)*0.5*(gamma01+1)*ps/(alpha*alpha)*pow(xi,2.0/alpha-2.0);
-  scalar Dxx = 0.0001; // energy initially deposited in Dxx
+
+  //Ex = 
+  scalar Dxx = 0.001; // energy initially deposited in Dxx
 
   printf("xi=%f and ps=%e and Ex=%e\n",xi, ps, Ex);
   

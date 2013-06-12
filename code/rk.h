@@ -117,7 +117,6 @@ class RK
     while (!done){
       // Find new Dt
       Dt = DtFromCFL(N_s, N_E, CFL, arch(U),_UPA); output = false;
-      printf("helloS Dt = %e\n",Dt);
 #ifdef USE_MPI // Make sure everyone is at the same time
       MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
       MPI_Allreduce(MPI_IN_PLACE, &Dt, 1, MPI_SCALAR, MPI_MIN, MPI_COMM_WORLD);
@@ -200,7 +199,6 @@ class RK
 	dgsolver.conservation(h_U,T);
 	
       }// end output steps
-      printf("helloE\n");
     }// end loop on time
     
     // Free some stuff
