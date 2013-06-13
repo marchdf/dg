@@ -27,6 +27,19 @@ arch_device scalar CellAvg(int N_G, int ioff, scalar* weight, scalar refArea, sc
 // Kernel definitions
 //
 //==========================================================================
+__device__ double atomicAdd(double* address, double val)
+{
+  unsigned long long int* address_as_ull =
+    (unsigned long long int*)address;
+  unsigned long long int old = *address_as_ull, assumed;
+  do {
+    assumed = old;
+    old = atomicCAS(address_as_ull, assumed,
+		    __double_as_longlong(val +
+					 __longlong_as_double(assumed)));
+  } while (assumed != old);
+  return __longlong_as_double(old);
+}
 
 //==========================================================================
 arch_global void cpu_equal(int N_s, int N_E, scalar* A, scalar* B){
@@ -257,7 +270,11 @@ arch_global void cpu_mapToElement(int N_s, int N_E, int M_s, int N_N, int* invma
 #endif
       int solidx = invmap[((e*N_F+fc)*M_s*N_N+i)*2+0];
       int qidx   = invmap[((e*N_F+fc)*M_s*N_N+i)*2+1];
+#ifdef USE_CPU
       sol[(blk*N_F+fc)*N_s+solidx] += Qtcj[qidx];
+#elif USE_GPU
+      atomicAdd(&sol[(blk*N_F+fc)*N_s+solidx], Qtcj[qidx]);
+#endif
     }
 
     // Push sol to Q
