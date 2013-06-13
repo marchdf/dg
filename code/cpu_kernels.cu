@@ -28,6 +28,8 @@ arch_device scalar CellAvg(int N_G, int ioff, scalar* weight, scalar refArea, sc
 //
 //==========================================================================
 
+//==========================================================================
+#ifdef USE_GPU
 __device__ double atomicAdd(double* address, double val)
 {
   unsigned long long int* address_as_ull =
@@ -41,6 +43,7 @@ __device__ double atomicAdd(double* address, double val)
   } while (assumed != old);
   return __longlong_as_double(old);
 }
+#endif 
 
 //==========================================================================
 arch_global void cpu_equal(int N_s, int N_E, scalar* A, scalar* B){
