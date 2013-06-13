@@ -27,6 +27,7 @@ arch_device scalar CellAvg(int N_G, int ioff, scalar* weight, scalar refArea, sc
 // Kernel definitions
 //
 //==========================================================================
+
 __device__ double atomicAdd(double* address, double val)
 {
   unsigned long long int* address_as_ull =
