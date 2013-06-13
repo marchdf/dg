@@ -163,9 +163,6 @@ extern "C" {
   void F77NAME(sgetrf)(int *M, int *N, float *A, int *lda, int *ipiv, int *info);
   void F77NAME(sgetri)(int *M, float *A, int *lda, int *ipiv, float *work, 
                        int *lwork, int *info);
-  void F77NAME(sgetrf)(int *M, int *N, float *A, int *lda, int *ipiv, int *info);
-  void F77NAME(sgetri)(int *M, float *A, int *lda, int *ipiv, float *work, 
-		       int *lwork, int *info);
   void F77NAME(sgesvd)(const char* jobu, const char *jobvt, int *M, int *N,
                        float *A, int *lda, float *S, float* U, int *ldu,
                        float *VT, int *ldvt, float *work, int *lwork, int *info);
@@ -263,7 +260,7 @@ bool fullMatrix<float>::invert(fullMatrix<float> &result) const
   delete [] ipiv;
   if(info == 0) return true;
   else if(info > 0)
-    printf("U(%d,%d)=0 in matrix inversion", info, info);
+    printf("U(%d,%d)=0 in matrix inversion\n", info, info);
   else
     printf("Wrong %d-th argument in matrix inversion", -info);
   return false;
@@ -344,9 +341,6 @@ extern "C" {
                       double *b, int *ldb, int *info);
   void F77NAME(dgetrf)(int *M, int *N, double *A, int *lda, int *ipiv, int *info);
   void F77NAME(dgetri)(int *M, double *A, int *lda, int *ipiv, double *work, 
-                       int *lwork, int *info);
-  void F77NAME(sgetrf)(int *M, int *N, float *A, int *lda, int *ipiv, int *info);
-  void F77NAME(sgetri)(int *M, float *A, int *lda, int *ipiv, float *work, 
                        int *lwork, int *info);
   void F77NAME(dgesvd)(const char* jobu, const char *jobvt, int *M, int *N,
                        double *A, int *lda, double *S, double* U, int *ldu,
@@ -445,7 +439,7 @@ bool fullMatrix<double>::invert(fullMatrix<double> &result) const
   delete [] ipiv;
   if(info == 0) return true;
   else if(info > 0)
-    printf("U(%d,%d)=0 in matrix inversion", info, info);
+    printf("U(%d,%d)=0 in matrix inversion\n", info, info);
   else
     printf("Wrong %d-th argument in matrix inversion", -info);
   return false;

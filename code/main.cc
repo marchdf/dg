@@ -456,7 +456,6 @@ int main (int argc, char **argv)
   Lag2Mono.invert(Mono2Lag);
 
 #elif TWOD
-
   //
   // Structured/uniform mesh
   //
@@ -471,7 +470,6 @@ int main (int argc, char **argv)
     LagMono2DTransformsCartesian(order, msh_lin, Px, Py, Lag2MonoX, MonoX2MonoY, MonoY2Lag);
     monovandermonde1d(order, pointsF, monoV);
   }
-
 
   // //
   // // Unstructured mesh limiting
@@ -969,7 +967,6 @@ void LagMono2DTransforms(const int N_E, const int N_s, const int order, const in
   fullMatrix<scalar> M2L;
   fullMatrix<scalar> L2M;
   fullMatrix<double> points(N_s,D);
-
   // Modifications if you are dealing with a quadrangle Calculate
   // the A matrix to go from partial taylor polynomial to full
   // taylor (T_f = A * T_p) or from full vandermonde matrix to partial
@@ -1249,7 +1246,6 @@ void LagMono2DTransformsCartesian(const int order, const int msh_lin, const full
      U = MonoY2Lag Ay. */
 
   int N_s = (order+1)*(order+1);
-
   // 1D basis: phi and integration points
   const polynomialBasis *basis = polynomialBases::find (msh_lin);
   fullMatrix<double> points, weight;
@@ -1268,7 +1264,7 @@ void LagMono2DTransformsCartesian(const int order, const int msh_lin, const full
   fullMatrix<scalar> Vinv;
   monovandermonde1d(order, points, V);
   V.invert(Vinv);
-  
+
   // Calculate the complete nodal to modal transform = V1Dinv*phiGL
   fullMatrix<scalar> Transform1D(order+1,order+1);
   Transform1D.gemm(Vinv, phi);
@@ -1284,14 +1280,14 @@ void LagMono2DTransformsCartesian(const int order, const int msh_lin, const full
   Lag2MonoX.resize(N_s,N_s);
   Lag2MonoX.gemm(DiagVinv,Px);
   fullMatrix<scalar> MonoX2Lag(N_s,N_s);
-  Lag2MonoX.invert(MonoX2Lag);
-  
+  Lag2MonoX.invert(MonoX2Lag); // This breaks for floats
+
   // Lag2MonoY = diag(monoVinv,order+1) X Py
   fullMatrix<scalar> Lag2MonoY(N_s,N_s);
   Lag2MonoY.gemm(DiagVinv,Py);
   MonoY2Lag.resize(N_s,N_s);
-  Lag2MonoY.invert(MonoY2Lag);
-
+  Lag2MonoY.invert(MonoY2Lag); // This breaks for floats
+    
   // MonoX2MonoY = Lag2MonoY X MonoX2Lag
   MonoX2MonoY.resize(N_s,N_s);
   MonoX2MonoY.gemm(Lag2MonoY,MonoX2Lag);
