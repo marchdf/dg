@@ -898,7 +898,7 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar delta=0.005;    // The diffusion layer thickness
     
   // Velocities/pressures in all materials
-  scalar vcoord = 72.9; // coordinate shift upwards
+  scalar vcoord = 0;//72.9; // coordinate shift upwards
   scalar u = 0.0;
   scalar v = 0.0+vcoord;
   scalar p = 1e5;
@@ -1010,7 +1010,7 @@ void init_dg_khinstb_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar u = 0.0;
   scalar v = 0.0;
   scalar p = 1e5;
-  scalar shckpos = 0.0;
+  scalar shckpos = 0.0015;
   
   // pre-shock density (material 1)
   scalar rho01   = 1400;//5.494;//2800;
@@ -1027,12 +1027,14 @@ void init_dg_khinstb_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // Post-shock state (material 2) (see p 101 Toro)
   scalar Ms     = 100;//1.21;//100//   // Shock Mach number
   scalar u4     = 0;
-  scalar v4     = -Ms*c02*(2*(Ms*Ms-1))/(gamma02+1)/(Ms*Ms); // shock is moving downwards
-  scalar p4     = p*(1+2*gamma02/(gamma02+1)*(Ms*Ms-1));
+  scalar v4     = -c02*2*(Ms*Ms-1)/((gamma02+1)*Ms); // shock is moving downwards
+  scalar p4     = p*(2.0*gamma02*Ms*Ms - (gamma02-1))/(gamma02+1);
   scalar rho4   = rho02*(gamma02+1)*Ms*Ms/(2+(gamma02-1)*Ms*Ms);
   scalar gamma4 = gamma02;
   scalar Et4    = p4/(gamma4-1.0) + 0.5*rho4*(u4*u4+v4*v4);
 
+  printf("rho4=%g, v4=%g, p4=%g, upa=%f\n",rho4,v4,p4,fabs(v4)+sqrt(gamma02*p4/rho4));
+  
   for(int e = 0; e < N_E; e++){
     scalar xc = XYZCen(e,0);
     scalar yc = XYZCen(e,1);
@@ -1098,7 +1100,7 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const fullMatrix<s
 
   // pre-shock density (material 1)
   scalar rho01   = 1400;
-  scalar gamma01 = 3;
+  scalar gamma01 = gamma;
   scalar alpha01 = 1/(gamma01-1);
   
   // pre-shock density (material 2)
@@ -1113,9 +1115,11 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar R0 = sqrt(0.5*(gamma02+1)*ps/rho02)/(alpha*pow(t0,alpha-1));
 
   scalar Ex  = rho02*pow(Q,3)*pow(R0,3); // explosion energy
+  //Ex = 1.6e5;
   //rho02 = 50;
   scalar Dxx = 0.00005; // energy initially deposited in Dxx
-
+  //scalar Dxx = 0.5;
+  
   for(int e = 0; e < N_E; e++){
     scalar xc = XYZCen(e,0);
     scalar yc = XYZCen(e,1);

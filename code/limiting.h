@@ -450,8 +450,8 @@ class Limiting
     
     // Go back to lagrange representation
     blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
-#elif TWOD
 
+#elif TWOD
     if(_cartesian){
       // Go from lagrange to monomial representation wrt x
       blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Lag2MonoX, _N_s, U, _N_s, 0.0, _A, _N_s);

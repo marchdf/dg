@@ -122,9 +122,10 @@ class RK
       MPI_Allreduce(MPI_IN_PLACE, &Dt, 1, MPI_SCALAR, MPI_MIN, MPI_COMM_WORLD);
 #endif
       if(Dt<1e-14){ printf("Next time step is too small (%e<1e-14). Exiting.\n",Dt); exit(1);}
+      if(Dt!=Dt){ printf("Time step is NaN. Exiting.\n",Dt); exit(1);}
       if     (Dt>(Tf  -T)){ DtCFL = Dt; Dt = Tf  -T; output = true; done = true;}
       else if(Dt>(Tout-T)){ DtCFL = Dt; Dt = Tout-T; output = true;}
-      /* printf("current time=%f, this Dt=%f, next output at %f\n",T+Dt,Dt,Tout); */
+      //printf("current time=%e, this Dt=%e, next output at %e\n",T+Dt,Dt,Tout);
       /* Dt = 1e-7; */
       /* if ((n+1)%100==0){output=true;} */
       /* else {output=false;} */
@@ -215,8 +216,7 @@ class RK
 
   scalar DtFromCFL(const int N_s, const int N_E, const scalar CFL, scalar* U, scalar* UPA){
     LfindUPA(N_s, N_E, U, UPA);
-    int maxUPAIdx;
-    maxUPAIdx = blasIamax(N_E*N_s,UPA,1)-1; // Fortran starts numbering at 1
+    int maxUPAIdx = blasIamax(N_E*N_s,UPA,1)-1; // Fortran starts numbering at 1
 #ifdef USE_CPU
     scalar maxUPA = UPA[maxUPAIdx];
     scalar Dt = CFL/maxUPA;

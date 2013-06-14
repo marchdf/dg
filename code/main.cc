@@ -718,7 +718,7 @@ int main (int argc, char **argv)
   double DtOut = inputs.getOutputTimeStep(); 
   double Tf    = inputs.getFinalTime();
   m.setDx(N_N,N_E,XYZCen,XYZNodes);
-  scalar CFL   = inputs.getCFL()*m.getDx()/(2*order+1);
+  scalar CFL   = inputs.getCFL()*m.getDx()/(2.0*order+1);
 
   printf("==== Now RK 4 steps =====\n");
   DG_SOLVER dgsolver = DG_SOLVER(N_E, N_s, N_G, N_N, M_T, M_s, M_G, M_B, N_ghosts,
