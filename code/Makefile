@@ -24,11 +24,11 @@ endif
 # compilers
 NVCC              := nvcc
 CXX               := gcc
-ifeq ($(PARA),USE_MPI)
-CXX               := mpicc
-endif
 ifeq ($(LIEU),NYX)
 CXX               := icc
+endif
+ifeq ($(PARA),USE_MPI)
+CXX               := mpicc
 endif
 
 # defines
