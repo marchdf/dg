@@ -51,6 +51,10 @@ ifeq ($(LIEU),NYX)
 #BLAS_LINKER       := -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
 BLAS_LINKER       := -openmp -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_intel_thread.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm #you can control the number of threads: export MKL_NUM_THREADS=#
 endif
+ifeq ($(LIEU),ANL)
+BLAS_LIB        := /soft/apps/current/BLAS
+BLAS_LINKER     := -lblas_bgp
+endif
 
 # lapack libs
 LAPACK_INC        := 
@@ -60,7 +64,10 @@ ifeq ($(LIEU),NYX)
 #LAPACK_LINKER     := -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
 LAPACK_LINKER       := -openmp -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_intel_thread.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm #you can control the number of threads: export MKL_NUM_THREADS=#
 endif
-
+ifeq ($(LIEU),ANL)
+LAPACK_LIB        := /soft/apps/current/LAPACK
+LAPACK_LINKER     := -llapack_bgp
+endif
 
 # cuda libs
 CUDA_INC          := $(CUDA_INSTALL_PATH)/include
