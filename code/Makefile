@@ -132,7 +132,8 @@ $(DDIR)/%.d : %.cu
 	@mkdir -p $(@D)
 ifeq ($(ARCH),USE_GPU)
 	@$(NVCC) $(INCLUDES) $(CUFLAGS) -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o $@|'>$@
-else ifeq ($(ARCH),USE_CPU)
+endif
+ifeq ($(ARCH),USE_CPU)
 	@$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$@
 endif
 
@@ -160,13 +161,15 @@ $(ODIR)/%.o : %.cu
 	@mkdir -p $(@D)
 ifeq ($(ARCH),USE_GPU)
 	@$(NVCC) $(INCLUDES) $(CUFLAGS) -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
-else ifeq ($(ARCH),USE_CPU)
+endif
+ifeq ($(ARCH),USE_CPU)
 	@$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
 endif
 	@echo "Compilation of $<"
 ifeq ($(ARCH),USE_GPU)
 	$(NVCC) $(INCLUDES) $(CUFLAGS) -c $< -o $@
-else ifeq ($(ARCH),USE_CPU)
+endif
+ifeq ($(ARCH),USE_CPU)
 	$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ -c $< -o $@
 endif
 
