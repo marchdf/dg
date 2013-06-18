@@ -1165,6 +1165,98 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #endif
 }
 
+void init_dg_khpertu_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+
+#ifdef ONED
+  printf("khpertu problem can only be run in 2D. Exiting");
+  exit(1);
+#elif TWOD
+  
+  if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
+
+  // Initialize
+  // Velocities/pressures in both materials
+  scalar A0 = 0.00183;
+  scalar Lx = 0.089*2.0/3.0;
+  scalar xinterface = 0.0;
+  scalar delta = 0.005;
+  scalar u = 0.0;
+  scalar v = 0.0;
+  scalar p = 1e5;
+
+  // pre-shock density (material 1)
+  scalar rho01   = 5.494;
+  scalar gamma01 = 1.093;
+  scalar alpha01 = 1/(gamma01-1);
+  scalar M1      = 146.05;
+  
+  // pre-shock density (material 2)
+  // The blast is initialized in here
+  scalar rho02   = 1.351;
+  scalar gamma02 = 1.276;
+  scalar alpha02 = 1/(gamma02-1);
+  scalar c02     = sqrt(gamma02*p/rho02); // sound speed
+  scalar M2      = 34.76; // molecular weight
+  
+  // Shock stuff
+  scalar shckpos = 0.0;
+  scalar Ms = 1.21;   // Shock Mach number
+  scalar u4   = 0;
+  scalar v4   =-Ms*c02*(2*(Ms*Ms-1))/(gamma02+1)/(Ms*Ms); // shock is moving downwards
+  scalar p4   = p*(1+2*gamma02/(gamma02+1)*(Ms*Ms-1));
+  scalar rho4 = rho02*(gamma02+1)*Ms*Ms/(2+(gamma02-1)*Ms*Ms);
+  scalar gamma4 = gamma02;
+  scalar Et4    = p4/(gamma4-1.0) + 0.5*rho4*(u4*u4+v4*v4);
+
+  for(int e = 0; e < N_E; e++){
+    scalar xc = XYZCen(e,0);
+    scalar yc = XYZCen(e,1);
+    for(int i = 0; i < N_s; i++){
+      scalar x = XYZNodes(i,e*D+0);
+      scalar y = XYZNodes(i,e*D+1);
+      if((yc>shckpos)&&(xc>0)){ // blast region
+	U(i,e*N_F+0) = rho4;
+	U(i,e*N_F+1) = rho4*u4;
+	U(i,e*N_F+2) = rho4*v4;
+	U(i,e*N_F+3) = Et4;
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rho4/(gamma4-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gamma4-1);
+#endif
+      }
+      else{
+	// horizontal distance from interface
+	scalar d = ((delta+A0*sin(2*M_PI*y/Lx-M_PI/2))-x+xinterface)/(2*delta);
+		// Calculate volume fractions
+	scalar vol=0;
+	if      ((d<1)&&(d>0)) vol = exp(log(1e-16)*pow(fabs(d),8));
+	else if (d<=0)         vol = 1;
+	else                   vol = 0;
+
+	scalar jx  = 1-vol;
+	scalar rho = jx*rho01+(1-jx)*rho02;
+	scalar jy  = jx*rho01/(jx*rho01+(1-jx)*rho02);       // mass fraction
+	scalar jM  = 1/(jy/M1+(1-jy)/M2);                    // total molecular weight
+
+	scalar alpha = jy*alpha01*jM/M1+(1-jy)*alpha02*jM/M2;
+	scalar gamma = 1+1.0/alpha;
+	
+	U(i,e*N_F+0) = rho;
+	U(i,e*N_F+1) = rho*u;
+	U(i,e*N_F+2) = rho*v;
+	U(i,e*N_F+3) = p/(gamma-1)+ 0.5*rho*(u*u+v*v);
+#ifdef GAMCONS
+	U(i,e*N_F+4) = rho/(gamma-1);
+#elif GAMNCON
+	U(i,e*N_F+4) = 1.0/(gamma-1);
+#endif
+      }
+    }
+  }
+#endif
+}
+
 void init_dg_rarec2d_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
 #ifdef ONED
@@ -1301,7 +1393,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar xi = fabs(blstpos-yinterface); // distance btw blast initial position and interface
   scalar Ex  = pow(Q,2.0/alpha)*0.5*(gamma01+1)*ps/(alpha*alpha)*pow(xi,2.0/alpha-2.0);
 
-  Ex = 2e5;
+  Ex = 1e4;
   scalar Dxx = 0.001; // energy initially deposited in Dxx
 
   printf("xi=%f and ps=%e and Ex=%e\n",xi, ps, Ex);
@@ -1313,12 +1405,12 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #ifdef ONED
       A0 = 0;
       yc = XYZCen(e,0);
-      y = XYZNodes(i,e*D+0);
+      y  = XYZNodes(i,e*D+0);
 #elif TWOD
       xc = XYZCen(e,0);
-      x = XYZNodes(i,e*D+0);
+      x  = XYZNodes(i,e*D+0);
       yc = XYZCen(e,1);
-      y = XYZNodes(i,e*D+1);
+      y  = XYZNodes(i,e*D+1);
 #endif
       
       if((y<=blstpos+Dxx)&&(yc >= blstpos)){ // blast region

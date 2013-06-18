@@ -136,6 +136,7 @@ int main (int argc, char **argv)
   bool rmmulti = false;
   bool khinstb = false;
   bool khblast = false;
+  bool khpertu = false;
   bool rarec2d = false;
   bool blastrm = false;
   bool sinephi = false;
@@ -156,6 +157,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="rmmulti") rmmulti = true;
   else if (inputs.getInitialCondition()=="khinstb") khinstb = true;
   else if (inputs.getInitialCondition()=="khblast") khblast = true;
+  else if (inputs.getInitialCondition()=="khpertu") khpertu = true;
   else if (inputs.getInitialCondition()=="rarec2d") rarec2d = true;
   else if (inputs.getInitialCondition()=="blastrm") blastrm = true;
   else if (inputs.getInitialCondition()=="sinephi") sinephi = true;
@@ -559,6 +561,7 @@ int main (int argc, char **argv)
   else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(khinstb) init_dg_khinstb_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(khblast) init_dg_khblast_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
+  else if(khpertu) init_dg_khpertu_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(rarec2d) init_dg_rarec2d_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(blastrm) init_dg_blastrm_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
 #elif PASSIVE
@@ -754,6 +757,7 @@ int main (int argc, char **argv)
   else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(khblast) init_dg_khblast_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
+  else if(khpertu) init_dg_khpertu_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(rarec2d) init_dg_rarec2d_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(blastrm) init_dg_blastrm_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
 #elif PASSIVE

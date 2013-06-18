@@ -517,7 +517,7 @@ void simpleMesh::buildNeighbors(int N_N, int N_E)
     if(el2->getPartition()==_myid){el2num = _elementMap.at(el2->getId());}
     else                          {el2num = _ghostElementMap.at(el2->getId());}
 
-    double eps = 1e-10; // used for comparisons of smallness
+    double eps = 1e-9; // used for comparisons of smallness
 
     // Not a cartesian mesh
     if(!_cartesian){
@@ -532,7 +532,7 @@ void simpleMesh::buildNeighbors(int N_N, int N_E)
 #elif TWOD
       double ny = _normals(1,i);
 #endif
-      //printf("nx=%f, ny=%f\n",nx,ny);
+      // printf("e1=%i, e2=%i, nx=%e, ny=%e\n",el1->getId(),el2->getId(),nx,ny);
       // normal pointing to the left: el2 is at left of el1
       if     ((fabs(ny)<eps)&&(nx<0)){
 	_neighbors[el1num*N_N+0] = el2num; nn[el1num]++;
