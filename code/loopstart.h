@@ -11,6 +11,14 @@
    #include "loop.h"
  */
 
+#ifdef LOOP_START
+#undef LOOP_START
+#endif
+
+#ifdef LOOP_MAX
+#undef LOOP_MAX
+#endif
+
 #define LOOP_START 0
 #define LOOP_MAX 10
 
