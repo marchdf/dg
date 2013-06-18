@@ -1393,7 +1393,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar xi = fabs(blstpos-yinterface); // distance btw blast initial position and interface
   scalar Ex  = pow(Q,2.0/alpha)*0.5*(gamma01+1)*ps/(alpha*alpha)*pow(xi,2.0/alpha-2.0);
 
-  Ex = 1e4;
+  Ex = 2e4;
   scalar Dxx = 0.001; // energy initially deposited in Dxx
 
   printf("xi=%f and ps=%e and Ex=%e\n",xi, ps, Ex);
@@ -1413,7 +1413,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
       y  = XYZNodes(i,e*D+1);
 #endif
       
-      if((y<=blstpos+Dxx)&&(yc >= blstpos)){ // blast region
+      if(yc >= blstpos){ // blast region
 
 #ifdef ONED
 	U(i,e*N_F+0) = rho01;
