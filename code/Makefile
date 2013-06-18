@@ -35,9 +35,11 @@ endif
 DEFINES           := -DHAVE_BLAS -DHAVE_LAPACK -D$(ARCH) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS) -D$(PARA) -DN_Y=$(MASS) -DN_F=$(NFLD)
 ifeq ($(DIMS),ONED)
 DEFINES           := $(DEFINES) -DD=1 -DDF=1
-else ifeq ($(DIMS),TWOD)
+endif
+ifeq ($(DIMS),TWOD)
 DEFINES           := $(DEFINES) -DD=2 -DDF=1
-else ifeq ($(DIMS),THREED)
+endif
+ifeq ($(DIMS),THREED)
 DEFINES           := $(DEFINES) -DD=3 -DDF=2
 endif
 
@@ -130,7 +132,8 @@ $(DDIR)/%.d : %.cu
 	@mkdir -p $(@D)
 ifeq ($(ARCH),USE_GPU)
 	@$(NVCC) $(INCLUDES) $(CUFLAGS) -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o $@|'>$@
-else ifeq ($(ARCH),USE_CPU)
+endif
+ifeq ($(ARCH),USE_CPU)
 	@$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$@
 endif
 
@@ -158,13 +161,15 @@ $(ODIR)/%.o : %.cu
 	@mkdir -p $(@D)
 ifeq ($(ARCH),USE_GPU)
 	@$(NVCC) $(INCLUDES) $(CUFLAGS) -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
-else ifeq ($(ARCH),USE_CPU)
+endif
+ifeq ($(ARCH),USE_CPU)
 	@$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
 endif
 	@echo "Compilation of $<"
 ifeq ($(ARCH),USE_GPU)
 	$(NVCC) $(INCLUDES) $(CUFLAGS) -c $< -o $@
-else ifeq ($(ARCH),USE_CPU)
+endif
+ifeq ($(ARCH),USE_CPU)
 	$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ -c $< -o $@
 endif
 

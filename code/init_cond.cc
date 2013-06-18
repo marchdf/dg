@@ -1413,7 +1413,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
       y  = XYZNodes(i,e*D+1);
 #endif
       
-      if((y<=blstpos+Dxx)&&(yc >= blstpos)){ // blast region
+      if(yc >= blstpos){ // blast region
 
 #ifdef ONED
 	U(i,e*N_F+0) = rho01;
