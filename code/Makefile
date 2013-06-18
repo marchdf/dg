@@ -30,6 +30,11 @@ endif
 ifeq ($(PARA),USE_MPI)
 CXX               := mpicc
 endif
+ifeq ($(LIEU),ANL)
+CXX               := mpixlcxx
+endif
+
+
 
 # defines
 DEFINES           := -DHAVE_BLAS -DHAVE_LAPACK -D$(ARCH) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS) -D$(PARA) -DN_Y=$(MASS) -DN_F=$(NFLD)
