@@ -1369,20 +1369,20 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar p = 1e5;
 
   // Top material: blast initialized here
-  scalar rho01   = 5.494;
+  scalar rho01   = 1.351;//5.494;
   scalar u01     = u;
   scalar v01     = v;  
   scalar gamma01 = 1.4;
   scalar alpha01 = 1/(gamma01-1);
-  scalar M02      = 146.05;
+  scalar M02     = 34.76;//146.05;
 
   // Bottom material (material 2)
-  scalar rho02   = 1.351;
+  scalar rho02   = 5.494;//1.351;
   scalar u02     = u;
   scalar v02     = v;  
   scalar gamma02 = 1.4;
   scalar alpha02 = 1/(gamma02-1);
-  scalar M01      = 34.76; // molecular weight
+  scalar M01     = 146.05;//34.76; // molecular weight
   
   // Explosion energy parameters
   scalar blstpos = 0.0;
