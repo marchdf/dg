@@ -86,7 +86,14 @@ arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug,
 #define MACRO(x) s[(e*N_F+4+x)*N_G+g] = 0; \
     f[((e*N_F+4+x)*N_G+g)*D+0] = flux_ab(Ug[(e*N_F+4+x)*N_G+g],u); // Ug contains rho
 #include "loop.h"
-      
+
+//       // Mass fractions N-C
+// #include "loopstart.h"
+// #define LOOP_END N_Y
+// #define MACRO(x) s[(e*N_F+4+x)*N_G+g] = -u*dUg[(e*N_F+4+x)*N_G+g]*invJac[e*N_G+g];\
+//     f[((e*N_F+4+x)*N_G+g)*D+0] = 0; 
+// #include "loop.h"
+
 #endif // end ifs on physics
 
 
