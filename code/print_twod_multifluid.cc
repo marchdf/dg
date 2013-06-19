@@ -77,7 +77,7 @@ void print_dg(const int N_s, const int N_E, scalar* U, const simpleMesh m, const
   char buffer1 [6]; char buffer2 [2];
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) sprintf(buffer1, "y%i.pos", x); sprintf(buffer2, "Y%i", x); m.writeSolution(Y(x), elem_type, buffer1, buffer2, step, time, append);
+#define MACRO(x) sprintf(buffer1, "y%i.pos", x); std::string fname =buffer1; sprintf(buffer2, "Y%i", x); std::string name =buffer2; m.writeSolution(Y(x), elem_type, fname, name, step, time, append);
 #include "loop.h"
 
 }
