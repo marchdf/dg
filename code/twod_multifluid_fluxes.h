@@ -306,6 +306,17 @@ arch_device void twod_multifluid_roe(scalar rhoL,
 	  ws4*dV4*R40);
 #include "loop.h"
 
+/*   //mass fractions N-C form */
+/* #include "loopstart.h" */
+/* #define LOOP_END N_Y */
+/* #define MACRO(x) F[5+x] = -0.5*(ws0*dV0*R00+				\ */
+/* 				ws1*dV1*R10+				\ */
+/* 				ws2*dV2*R20+				\ */
+/* 				ws3*dV3*R30+				\ */
+/*   				ws4*dV4*R40);				\ */
+/*   ncterm[5+x] = -0.5*vn*(YR(x)/rhoR - YL(x)/rhoL); */
+/* #include "loop.h" */
+  
 } // end Roe function
 #endif
 #endif
