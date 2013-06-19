@@ -23,15 +23,15 @@ endif
 
 # compilers
 NVCC              := nvcc
-CXX               := gcc
+CXX               := gcc -x c++ -ansi
 ifeq ($(LIEU),NYX)
 CXX               := icc
 endif
 ifeq ($(PARA),USE_MPI)
-CXX               := mpicc
+CXX               := mpicc -x c++ -ansi
 endif
 ifeq ($(LIEU),ANL)
-CXX               := mpixlcxx
+CXX               := gcc -x c++ #-ansi#mpicc
 endif
 
 
@@ -96,7 +96,7 @@ INCLUDES          += -I. -I$(BLAS_INC) -I$(LAPACK_INC)
 # flags
 LDFLAGS           := -lrt -lm -lstdc++ $(LAPACK_LINKER) $(BLAS_LINKER)
 CFLAGS 	          := -03
-CXXFLAGS          := -I. -w -O3 -ansi $(DEFINES)
+CXXFLAGS          := -I. -w -O3 $(DEFINES)
 ifeq ($(ARCH),USE_GPU)
 INCLUDES          += -I. -I$(CUDA_INC) -I$(CUDASDK_INC)
 LDFLAGS           := $(LDFLAGS) $(CUDA_LINKER) $(CUBLAS_LINKER)
@@ -146,7 +146,7 @@ ifeq ($(ARCH),USE_GPU)
 	@$(NVCC) $(INCLUDES) $(CUFLAGS) -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o $@|'>$@
 endif
 ifeq ($(ARCH),USE_CPU)
-	@$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$@
+	@$(CXX) $(INCLUDES) $(CXXFLAGS) -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$@
 endif
 
 
@@ -175,14 +175,14 @@ ifeq ($(ARCH),USE_GPU)
 	@$(NVCC) $(INCLUDES) $(CUFLAGS) -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
 endif
 ifeq ($(ARCH),USE_CPU)
-	@$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
+	@$(CXX) $(INCLUDES) $(CXXFLAGS) -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
 endif
 	@echo "Compilation of $<"
 ifeq ($(ARCH),USE_GPU)
 	$(NVCC) $(INCLUDES) $(CUFLAGS) -c $< -o $@
 endif
 ifeq ($(ARCH),USE_CPU)
-	$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ -c $< -o $@
+	$(CXX) $(INCLUDES) $(CXXFLAGS) -c $< -o $@
 endif
 
 $(BINNAME) : $(objs)
