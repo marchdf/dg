@@ -31,7 +31,7 @@ ifeq ($(PARA),USE_MPI)
 CXX               := mpicc -x c++ -ansi
 endif
 ifeq ($(LIEU),ANL)
-CXX               := gcc -x c++ #-ansi#mpicc
+CXX               := gcc -ansi #-x c++ #-ansi#mpicc
 endif
 
 
