@@ -272,9 +272,8 @@ void simpleMesh::buildNormals (int typeInterface, int typeElement)
 }
 
 
-void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, std::string filename, const char *name, int step, double time, int append) const
+void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, std::string filename, std::string name, int step, double time, int append) const
 {
-
 
 #ifdef USE_MPI
   char numstr[21]; // enough to hold all numbers up to 64-bits
