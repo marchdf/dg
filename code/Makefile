@@ -96,7 +96,10 @@ INCLUDES          += -I. -I$(BLAS_INC) -I$(LAPACK_INC)
 # flags
 LDFLAGS           := -lrt -lm -lstdc++ $(LAPACK_LINKER) $(BLAS_LINKER)
 CFLAGS 	          := -03
-CXXFLAGS          := -I. -w -O3 -ansi $(DEFINES)
+CXXFLAGS          := -I. -w -O3 $(DEFINES)
+ifneq ($(LIEU),ANL)
+CXXFLAGS          := $(CXXFLAGS) -ansi
+endif
 ifeq ($(ARCH),USE_GPU)
 INCLUDES          += -I. -I$(CUDA_INC) -I$(CUDASDK_INC)
 LDFLAGS           := $(LDFLAGS) $(CUDA_LINKER) $(CUBLAS_LINKER)
@@ -124,7 +127,9 @@ DDIR:=dependencies
 
 
 srcc:=$(subst ./,,$(basename $(foreach dir,$(directories),$(wildcard $(dir)/*.c) $(wildcard $(dir)/*.cc))))
+ifneq ($(LIEU),ANL)
 srcu:=$(subst ./,,$(basename $(foreach dir,$(directories),$(wildcard $(dir)/*.cu))))
+endif
 srch:=$(foreach dir,$(directories),$(wildcard $(dir)/*.h))
 deps:=$(foreach file,$(srcc) $(srcu),$(DDIR)/$(file).d)
 objs:=$(foreach file,$(srcc) $(srcu),$(ODIR)/$(file).o)
@@ -139,6 +144,7 @@ $(DDIR)/%.d : %.c
 	@mkdir -p $(@D)
 	@$(CC)  $(INCLUDES) $(CXXFLAGS) $(CFLAGS) -M $< |sed 's|$(<F:.c=\.o)|$(ODIR)/$*.o $@|'>$@
 
+ifneq ($(LIEU),ANL)
 $(DDIR)/%.d : %.cu
 	@echo "Dependencies of $<"
 	@mkdir -p $(@D)
@@ -148,7 +154,7 @@ endif
 ifeq ($(ARCH),USE_CPU)
 	@$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ -M $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$@
 endif
-
+endif
 
 all: $(BINNAME)
 
@@ -169,6 +175,7 @@ $(ODIR)/%.o : %.cc
 	@echo "Compilation of $<"
 	$(CXX) $(INCLUDES) $(CXXFLAGS) -c $< -o $@
 
+ifneq ($(LIEU),ANL)
 $(ODIR)/%.o : %.cu
 	@mkdir -p $(@D)
 ifeq ($(ARCH),USE_GPU)
@@ -183,6 +190,7 @@ ifeq ($(ARCH),USE_GPU)
 endif
 ifeq ($(ARCH),USE_CPU)
 	$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ -c $< -o $@
+endif
 endif
 
 $(BINNAME) : $(objs)
