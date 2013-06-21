@@ -57,7 +57,7 @@ ifeq ($(LIEU),NYX)
 BLAS_LINKER       := -openmp -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_intel_thread.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm #you can control the number of threads: export MKL_NUM_THREADS=#
 endif
 ifeq ($(LIEU),ANL)
-BLAS_LIB        := /soft/apps/current/blas-lapack-lib -L/soft/apps/current/BLAS
+BLAS_LIB        := /soft/apps/current/BLAS
 BLAS_LINKER     := -lblas_bgp
 endif
 
