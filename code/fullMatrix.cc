@@ -181,7 +181,7 @@ static void swap(float *a, int inca, float *b, int incb, int n)
   }
 }
 
-static void eigSort(int n, float *wr, float *wi, float *VL, float *VR)
+void eigSort(int n, float *wr, float *wi, float *VL, float *VR)
 {
   // Sort the eigenvalues/vectors in ascending order according to
   // their real part. Warning: this will screw up the ordering if we
@@ -360,7 +360,7 @@ static void swap(double *a, int inca, double *b, int incb, int n)
   }
 }
 
-static void eigSort(int n, double *wr, double *wi, double *VL, double *VR)
+void eigSort(int n, double *wr, double *wi, double *VL, double *VR)
 {
   // Sort the eigenvalues/vectors in ascending order according to
   // their real part. Warning: this will screw up the ordering if we

@@ -416,7 +416,7 @@ void init_dg_multint_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #ifdef TWOD
   printf("multint problem can only be run in 1D. Exiting");
   exit(1);
-#endif TWOD
+#endif
 
   if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
 
@@ -525,7 +525,7 @@ void init_dg_blast1d_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #ifdef TWOD
   printf("blast1d problem can only be run in 1D. Exiting");
   exit(1);
-#endif TWOD
+#endif
 
   if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
 
@@ -640,7 +640,7 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #ifdef TWOD
   printf("rarecon problem can only be run in 1D. Exiting");
   exit(1);
-#endif TWOD
+#endif
 
   if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
 
