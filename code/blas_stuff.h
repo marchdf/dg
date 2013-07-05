@@ -5,7 +5,8 @@
 #include <string.h>
 
 #if !defined(F77NAME)
-#define F77NAME(x) (x##_)
+//#define F77NAME(x) (x##_)
+#define F77NAME(x) (x)
 #endif
 
 
