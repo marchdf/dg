@@ -5,10 +5,12 @@
 #include <string.h>
 
 #if !defined(F77NAME)
-//#define F77NAME(x) (x##_)
+#ifdef ANL
 #define F77NAME(x) (x)
+#else
+#define F77NAME(x) (x##_)
 #endif
-
+#endif
 
 // Specialisation of fullVector/Matrix operations using BLAS and LAPACK
 

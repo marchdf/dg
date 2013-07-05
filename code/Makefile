@@ -23,7 +23,8 @@ endif
 
 # compilers
 NVCC              := nvcc
-CXX               := gcc
+CXX               := g++
+DEPFLAGS          := -M
 ifeq ($(LIEU),NYX)
 CXX               := icc
 endif
@@ -38,7 +39,7 @@ DEPFLAGS          := -M #-qmakedep=gcc
 endif
 
 # defines
-DEFINES           := -DHAVE_BLAS -DHAVE_LAPACK -D$(ARCH) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS) -D$(PARA) -DN_Y=$(MASS) -DN_F=$(NFLD)
+DEFINES           := -DHAVE_BLAS -DHAVE_LAPACK -D$(ARCH) -D$(LIEU) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS) -D$(PARA) -DN_Y=$(MASS) -DN_F=$(NFLD)
 ifeq ($(DIMS),ONED)
 DEFINES           := $(DEFINES) -DD=1 -DDF=1
 endif
@@ -105,17 +106,10 @@ CUBLAS_LINKER     :=-lcublas
 LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) -L$(CUDASDK_LIB)
 INCLUDES          += -I. -I$(BLAS_INC) -I$(LAPACK_INC)
 
-# flags
-# 1) Don't hard-code libm since Intel, IBM and other vendors can give you a faster version if you let them.
-#    Define MATH_LIB = -lm where appropriate.
-# 2) C++ compiler should automatically link to C++ SL
 MATH_LIB          := -lm
 LDFLAGS           := $(LAPACK_LINKER) $(BLAS_LINKER) $(MATH_LIB)	
 CFLAGS 	          := -03
-CXXFLAGS          := -I. -O3 $(DEFINES) # Don't suppress warnings - sometimes they are important
-ifneq ($(LIEU),ANL)
-CXXFLAGS          := $(CXXFLAGS)
-endif
+CXXFLAGS          := -I. -O3 $(DEFINES)
 ifeq ($(ARCH),USE_GPU)
 INCLUDES          += -I. -I$(CUDA_INC) -I$(CUDASDK_INC)
 LDFLAGS           := $(LDFLAGS) $(CUDA_LINKER) $(CUBLAS_LINKER)
