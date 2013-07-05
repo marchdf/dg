@@ -884,7 +884,7 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   exit(1);
 #elif TWOD
   
-  if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
+  if (N_F!=7) printf("You are setting up the wrong problem. N_F =%i != 7.\n",N_F);
 
   // Initialize
   scalar A01 = 0.00183;                 // initial amplitude
@@ -893,12 +893,12 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar Lx = 0.089*2.0/3.0;
   scalar K = 0.5;
   scalar h = K*Lx;
-  scalar yinterface1 =-h; // first interface location
-  scalar yinterface2 =-10*Lx; // second interface location
+  scalar yinterface1 = 0; // first interface location
+  scalar yinterface2 =-h; // second interface location
   scalar delta=0.005;    // The diffusion layer thickness
     
   // Velocities/pressures in all materials
-  scalar vcoord = 0;//72.9; // coordinate shift upwards
+  scalar vcoord = 134;//72.9; // coordinate shift upwards
   scalar u = 0.0;
   scalar v = 0.0+vcoord;
   scalar p = 1e5;
@@ -951,6 +951,9 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #elif GAMNCON
 	U(i,e*N_F+4) = 1.0/(gamma4-1);
 #endif
+ 	// Mass fractions
+	U(i,e*N_F+5) = 1*rho4;
+	U(i,e*N_F+6) = 0;
       }
       else{
 	// vertical distance from interface
@@ -989,6 +992,9 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #elif GAMNCON
 	U(i,e*N_F+4) = 1.0/(gamma-1);
 #endif
+ 	// Mass fractions
+	U(i,e*N_F+5) = Y1*rho;
+	U(i,e*N_F+6) = Y3*rho;
       }
     }
   }
