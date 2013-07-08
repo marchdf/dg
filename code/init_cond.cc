@@ -898,7 +898,7 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar delta=0.005;    // The diffusion layer thickness
     
   // Velocities/pressures in all materials
-  scalar vcoord = 72.9;//134;//72.9; // coordinate shift upwards
+  scalar vcoord = 51.5;//134;//72.9; // coordinate shift upwards
   scalar u = 0.0;
   scalar v = 0.0+vcoord;
   scalar p = 1e5;
@@ -914,16 +914,16 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar M1      = 34.76; // molecular weight
 
   // pre-shock density (material 2)
-  scalar rho02   = 1.351;//5.494;
-  scalar gamma02 = 1.276;//1.093;
+  scalar rho02   = 5.494;//1.351;//5.494;
+  scalar gamma02 = 1.093;//1.276;//1.093;
   scalar alpha02 = 1/(gamma02-1);
-  scalar M2      = 34.76;//146.05;
+  scalar M2      = 146.05;//34.76;//146.05;
 
   // pre-shock density (material 3)
-  scalar rho03   = 5.494;//10;//0.1785;//10;//
-  scalar gamma03 = 1.093;//5.0/3.0;
+  scalar rho03   = 10;//5.494;//10;//0.1785;//10;//
+  scalar gamma03 = 5.0/3.0;//1.093;//5.0/3.0;
   scalar alpha03 = 1/(gamma03-1);
-  scalar M3      = 146.05;//300;//4;//300;//
+  scalar M3      = 300;//146.05;//300;//4;//300;//
 
   // Post-shock state (material 1) (see p 101 Toro)
   scalar Ms = 1.21;   // Shock Mach number
