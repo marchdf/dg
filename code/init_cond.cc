@@ -416,7 +416,7 @@ void init_dg_multint_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #ifdef TWOD
   printf("multint problem can only be run in 1D. Exiting");
   exit(1);
-#endif TWOD
+#endif
 
   if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
 
@@ -525,7 +525,7 @@ void init_dg_blast1d_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #ifdef TWOD
   printf("blast1d problem can only be run in 1D. Exiting");
   exit(1);
-#endif TWOD
+#endif
 
   if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
 
@@ -640,7 +640,7 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #ifdef TWOD
   printf("rarecon problem can only be run in 1D. Exiting");
   exit(1);
-#endif TWOD
+#endif
 
   if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
 
@@ -884,7 +884,7 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   exit(1);
 #elif TWOD
   
-  if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
+  if (N_F!=7) printf("You are setting up the wrong problem. N_F =%i != 7.\n",N_F);
 
   // Initialize
   scalar A01 = 0.00183;                 // initial amplitude
@@ -893,12 +893,12 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar Lx = 0.089*2.0/3.0;
   scalar K = 0.5;
   scalar h = K*Lx;
-  scalar yinterface1 =-h; // first interface location
-  scalar yinterface2 =-10*Lx; // second interface location
+  scalar yinterface1 = 0; // first interface location
+  scalar yinterface2 =-h; // second interface location
   scalar delta=0.005;    // The diffusion layer thickness
     
   // Velocities/pressures in all materials
-  scalar vcoord = 0;//72.9; // coordinate shift upwards
+  scalar vcoord = 51.5;//134;//72.9; // coordinate shift upwards
   scalar u = 0.0;
   scalar v = 0.0+vcoord;
   scalar p = 1e5;
@@ -914,16 +914,16 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar M1      = 34.76; // molecular weight
 
   // pre-shock density (material 2)
-  scalar rho02   = 5.494;
-  scalar gamma02 = 1.093;
+  scalar rho02   = 5.494;//1.351;//5.494;
+  scalar gamma02 = 1.093;//1.276;//1.093;
   scalar alpha02 = 1/(gamma02-1);
-  scalar M2      = 146.05;
+  scalar M2      = 146.05;//34.76;//146.05;
 
   // pre-shock density (material 3)
-  scalar rho03   = 0.1785;//10;//
-  scalar gamma03 = 5.0/3.0;
+  scalar rho03   = 10;//5.494;//10;//0.1785;//10;//
+  scalar gamma03 = 5.0/3.0;//1.093;//5.0/3.0;
   scalar alpha03 = 1/(gamma03-1);
-  scalar M3      = 4;//300;//
+  scalar M3      = 300;//146.05;//300;//4;//300;//
 
   // Post-shock state (material 1) (see p 101 Toro)
   scalar Ms = 1.21;   // Shock Mach number
@@ -951,6 +951,9 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #elif GAMNCON
 	U(i,e*N_F+4) = 1.0/(gamma4-1);
 #endif
+ 	// Mass fractions
+	U(i,e*N_F+5) = 1*rho4;
+	U(i,e*N_F+6) = 0;
       }
       else{
 	// vertical distance from interface
@@ -989,6 +992,9 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #elif GAMNCON
 	U(i,e*N_F+4) = 1.0/(gamma-1);
 #endif
+ 	// Mass fractions
+	U(i,e*N_F+5) = Y1*rho;
+	U(i,e*N_F+6) = Y3*rho;
       }
     }
   }
@@ -1369,20 +1375,20 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar p = 1e5;
 
   // Top material: blast initialized here
-  scalar rho01   = 1.351;//5.494;
+  scalar rho01   = 5.494;//1.351;//5.494;
   scalar u01     = u;
   scalar v01     = v;  
   scalar gamma01 = 1.4;
   scalar alpha01 = 1/(gamma01-1);
-  scalar M02     = 34.76;//146.05;
+  scalar M02     = 146.05;//34.76;//146.05;
 
   // Bottom material (material 2)
-  scalar rho02   = 5.494;//1.351;
+  scalar rho02   = 1.351;//5.494;//1.351;
   scalar u02     = u;
   scalar v02     = v;  
   scalar gamma02 = 1.4;
   scalar alpha02 = 1/(gamma02-1);
-  scalar M01     = 146.05;//34.76; // molecular weight
+  scalar M01     = 34.76;//146.05;//34.76; // molecular weight
   
   // Explosion energy parameters
   scalar blstpos = 0.0;

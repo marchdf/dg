@@ -75,9 +75,11 @@ void print_dg(const int N_s, const int N_E, scalar* U, const simpleMesh m, const
 
   // Mass fractions output to file
   char buffer1 [5]; char buffer2 [2];
+  std::string fname;
+  std::string name;
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) sprintf(buffer1, "y%i.pos", x); std::string fname =buffer1; sprintf(buffer2, "Y%i", x); std::string name =buffer2; m.writeSolution(Y(x), elem_type, fname, name, step, time, append);
+#define MACRO(x) sprintf(buffer1, "y%i.pos", x); fname = buffer1; sprintf(buffer2, "Y%i", x); name = buffer2; m.writeSolution(Y(x), elem_type, fname, name, step, time, append);
 #include "loop.h"
 
 }

@@ -290,10 +290,10 @@ arch_device void twod_multifluid_roe(scalar rhoL,
   ncterm[4] = -0.5*vn*(alphaR-alphaL);
 #endif
   F[4] += -0.5*(ws0*dV0*R04+
-		     ws1*dV1*R14+
-		     ws2*dV2*R24+
-		     ws3*dV3*R34+
-		     ws4*dV4*R44);
+		ws1*dV1*R14+
+		ws2*dV2*R24+
+		ws3*dV3*R34+
+		ws4*dV4*R44);
 
   //mass fractions
 #include "loopstart.h"
