@@ -1100,7 +1100,7 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const fullMatrix<s
 
   // pre-shock density (material 1)
   scalar rho01   = 1400;
-  scalar gamma01 = gamma;
+  scalar gamma01 = 2.1;
   scalar alpha01 = 1/(gamma01-1);
   
   // pre-shock density (material 2)
@@ -1115,7 +1115,7 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar R0 = sqrt(0.5*(gamma02+1)*ps/rho02)/(alpha*pow(t0,alpha-1));
 
   scalar Ex  = rho02*pow(Q,3)*pow(R0,3); // explosion energy
-  //Ex = 1.6e5;
+  Ex = 1.67e8;
   //rho02 = 50;
   scalar Dxx = 0.00005; // energy initially deposited in Dxx
   //scalar Dxx = 0.5;
@@ -1362,7 +1362,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar vcoord =0; //-115.26;//72; // coordinate shift upwards
   scalar K = 0.5;
   scalar h = K*Lx;
-  scalar yinterface =-0.03; // first interface location
+  scalar yinterface =-0.1; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
   scalar u = 0;
   scalar v = 0+vcoord;
@@ -1393,7 +1393,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar xi = fabs(blstpos-yinterface); // distance btw blast initial position and interface
   scalar Ex  = pow(Q,2.0/alpha)*0.5*(gamma01+1)*ps/(alpha*alpha)*pow(xi,2.0/alpha-2.0);
 
-  Ex = 2e4;
+  Ex = 7.5e3;
   scalar Dxx = 0.001; // energy initially deposited in Dxx
 
   printf("xi=%f and ps=%e and Ex=%e\n",xi, ps, Ex);
