@@ -1106,7 +1106,7 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const fullMatrix<s
 
   // pre-shock density (material 1)
   scalar rho01   = 1400;
-  scalar gamma01 = 2.1;
+  scalar gamma01 = gamma;
   scalar alpha01 = 1/(gamma01-1);
   
   // pre-shock density (material 2)
@@ -1116,15 +1116,13 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar alpha02 = 1/(gamma02-1);
 
   // Initialize by setting the explosion energy
-  scalar ps = 1.98e11;  // pressure at shock in Pa
-  scalar t0 = 25*1e-9; // time = 25ns
-  scalar R0 = sqrt(0.5*(gamma02+1)*ps/rho02)/(alpha*pow(t0,alpha-1));
-
-  scalar Ex  = rho02*pow(Q,3)*pow(R0,3); // explosion energy
-  Ex = 1.67e8;
-  //rho02 = 50;
+  // scalar ps = 1.98e11;  // pressure at shock in Pa
+  // scalar t0 = 25*1e-9; // time = 25ns
+  // scalar R0 = sqrt(0.5*(gamma02+1)*ps/rho02)/(alpha*pow(t0,alpha-1));
+  // scalar Ex  = rho02*pow(Q,3)*pow(R0,3); // explosion energy
+  scalar Ex = 1.67e8;
+  printf("Explosion energy=%e\n",Ex);
   scalar Dxx = 0.00005; // energy initially deposited in Dxx
-  //scalar Dxx = 0.5;
   
   for(int e = 0; e < N_E; e++){
     scalar xc = XYZCen(e,0);
@@ -1132,7 +1130,7 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const fullMatrix<s
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
       scalar y = XYZNodes(i,e*D+1);
-      if((yc>(blstpos-1e-6))&&(xc>0)){ // blast region
+      if((yc>blstpos)&&(xc>0)){ // blast region
 	U(i,e*N_F+0) = rho02;
 	U(i,e*N_F+1) = rho02*u;
 	U(i,e*N_F+2) = rho02*v;
