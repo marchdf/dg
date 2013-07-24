@@ -121,7 +121,6 @@ class Limiting
       }
       break;
     default:
-      printf("No limiting.\n");
       _method = 0;
     }
     
@@ -237,7 +236,6 @@ class Limiting
       }
       break;
     default:
-      printf("No limiting.\n");
       _method = 0;
     }
     
@@ -374,7 +372,6 @@ class Limiting
       }
       break;
     default:
-      printf("No limiting.\n");
       _method = 0;
     }
     

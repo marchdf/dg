@@ -29,7 +29,7 @@ ifeq ($(LIEU),NYX)
 CXX               := icc
 endif
 ifeq ($(PARA),USE_MPI)
-CXX               := mpicc
+CXX               := mpicxx
 endif
 ifeq ($(LIEU),ANL)
 CXX               := mpicxx

@@ -259,8 +259,8 @@ void init_dg_sinegam_multifluid(const int N_s, const int N_E, const fullMatrix<s
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
-      sinegam = Agam*sin(M_PI*x);
       sinerho = Arho*sin(4*M_PI*x);
+      sinegam = Agam*sin(2*M_PI*x);
 #ifdef ONED
       if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
       Q[0] = rho+sinerho;
@@ -274,7 +274,9 @@ void init_dg_sinegam_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #elif TWOD
       if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
       scalar y = XYZNodes(i,e*D+1);
-      sinerho = sinerho+Arho*sin(4*M_PI*y);
+      sinerho = Arho*sin(2.0*M_PI*x)*sin(2.0*M_PI*y);
+      sinegam = Agam*sin(2.0*M_PI*x)*sin(2.0*M_PI*y);
+      if (fabs(sinegam)>0.2) printf("sinegam=%f\n",sinegam);
       scalar v = 1;
       Q[0] = rho+sinerho;
       Q[1] = (rho+sinerho)*u;
@@ -694,7 +696,7 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+1) = rhoC*uC;
 	U(i,e*N_F+2) = EtC;
 #ifdef GAMCONS
-	U(i,e*N_F+3) = rho0C/(gammaC-1);
+	U(i,e*N_F+3) = rhoC/(gammaC-1);
 #elif GAMNCON
 	U(i,e*N_F+3) = 1.0/(gammaC-1);
 #endif
@@ -1136,7 +1138,7 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+2) = rho02*v;
 	U(i,e*N_F+3) = Ex/Dxx;
 #ifdef GAMCONS
-	U(i,e*N_F+4) = rh02/(gamma02-1);
+	U(i,e*N_F+4) = rho02/(gamma02-1);
 #elif GAMNCON
 	U(i,e*N_F+4) = 1.0/(gamma02-1);
 #endif
