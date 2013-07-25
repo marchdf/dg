@@ -110,6 +110,9 @@ class RK
     if(CFL>=0){
       printf("Initial condition written to output file.\n");
       print_dg(N_s, N_E, h_U, m, elem_type, 0, 0, 0);
+
+      // Output conservation of the fields
+      dgsolver.conservation(h_U,0.0);
     }
 
     // Get cpu id
@@ -118,15 +121,13 @@ class RK
     MPI_Comm_rank(MPI_COMM_WORLD,&myid);
 #endif
     
-    // Output conservation of the fields
-    dgsolver.conservation(h_U,0.0);
-	   
+   
     // Time integration
     while (!done){
 
       // Give the deck a negative CFL for fixed time step and no output
       if(CFL<0){
-	Dt = DtOut; output = true;
+	Dt = DtOut; output = false;
 	if(Dt>(Tf  -T)){Dt = Tf  -T; done = true;}
       }
       else{
@@ -137,7 +138,7 @@ class RK
 	MPI_Allreduce(MPI_IN_PLACE, &Dt, 1, MPI_SCALAR, MPI_MIN, MPI_COMM_WORLD);
 #endif
 	if(Dt<1e-14){ printf("Next time step is too small (%e<1e-14). Exiting.\n",Dt); exit(1);}
-	if(Dt!=Dt){ printf("Time step is NaN. Exiting.\n",Dt); exit(1);}
+	if(Dt!=Dt){ printf("Time step is NaN. Exiting.\n"); exit(1);}
 	if     (Dt>(Tf  -T)){ DtCFL = Dt; Dt = Tf  -T; output = true; done = true;}
 	else if(Dt>(Tout-T)){ DtCFL = Dt; Dt = Tout-T; output = true;}
 	//printf("current time=%e, this Dt=%e, next output at %e\n",T+Dt,Dt,Tout);

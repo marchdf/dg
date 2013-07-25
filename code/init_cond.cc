@@ -276,7 +276,6 @@ void init_dg_sinegam_multifluid(const int N_s, const int N_E, const fullMatrix<s
       scalar y = XYZNodes(i,e*D+1);
       sinerho = Arho*sin(2.0*M_PI*x)*sin(2.0*M_PI*y);
       sinegam = Agam*sin(2.0*M_PI*x)*sin(2.0*M_PI*y);
-      if (fabs(sinegam)>0.2) printf("sinegam=%f\n",sinegam);
       scalar v = 1;
       Q[0] = rho+sinerho;
       Q[1] = (rho+sinerho)*u;
