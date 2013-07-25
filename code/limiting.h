@@ -123,7 +123,7 @@ class Limiting
     default:
       _method = 0;
     }
-    
+
     // For case specific stuff:
     switch (_method){
     case 2:{
@@ -239,21 +239,21 @@ class Limiting
       _method = 0;
     }
     
-    /* // For case specific stuff: */
-/*     switch (_method){ */
-/*     case 2:{ */
-/* #ifdef USE_CPU */
-/*       _pressure     = new scalar[_N_s*_N_E]; */
-/*       _pressureMono = new scalar[_N_s*_N_E]; */
-/*       _pressureLim  = new scalar[_N_s*_N_E]; */
-/* #elif USE_GPU */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar))); */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar))); */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar))); */
-/* #endif */
-/*       } */
-/*       break; */
-/*     case 3:{ */
+    // For case specific stuff:
+    switch (_method){
+    case 2:{
+#ifdef USE_CPU
+      _pressure     = new scalar[_N_s*(_N_E+_N_ghosts)];
+      _pressureMono = new scalar[_N_s*(_N_E+_N_ghosts)];
+      _pressureLim  = new scalar[_N_s*(_N_E+_N_ghosts)];
+#elif USE_GPU
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar)));
+      CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar)));
+#endif
+      }
+      break;
+    case 3:{
 /* #ifdef USE_CPU */
 /*       _pressure     = new scalar[_N_s*_N_E]; */
 /*       _pressureMono = new scalar[_N_s*_N_E]; */
@@ -269,9 +269,9 @@ class Limiting
 /*       CUDA_SAFE_CALL(cudaMalloc((void**) &_uMono,_N_s*_N_E*sizeof(scalar))); */
 /*       CUDA_SAFE_CALL(cudaMalloc((void**) &_uLim,_N_s*_N_E*sizeof(scalar))); */
 /* #endif */
-/*       } */
-/*       break; */
-/*     } */
+      }
+      break;
+    }
   }// end 2D constructor for structured mesh
   
   // 2D limiting constructor for unstructured mesh
@@ -443,7 +443,7 @@ class Limiting
     // Go from lagrange to monomial representation
     blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);
     // Limit the solution according to Liu
-    Lcpu_hrl1D(_N_s, _N_E, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _A, _Alim);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, N_F, _N_N, 1, _neighbors, 0, _weight, _V1D, _A, _Alim);
     
     // Go back to lagrange representation
     blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
@@ -456,11 +456,11 @@ class Limiting
       // Communicate the elements on different partitions
 #ifdef USE_MPI
       MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, _N_ghosts, _ghostElementSend, _ghostElementRecv, _A);
+      Lcpu_CommunicateGhosts(_N_s, _N_E, N_F, _N_ghosts, _ghostElementSend, _ghostElementRecv, _A);
 #endif
       
       // Limit the solution according to Liu (for each x slice)
-      Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _A, _Alim);
+      Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, N_F, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _A, _Alim);
       
       // Go to the monomial representation wrt y
       blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _MonoX2MonoY, _N_s, _Alim, _N_s, 0.0, _A, _N_s);
@@ -468,15 +468,14 @@ class Limiting
       // Communicate the elements on different partitions
 #ifdef USE_MPI
       MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, _N_ghosts, _ghostElementSend, _ghostElementRecv, _A);
+      Lcpu_CommunicateGhosts(_N_s, _N_E, N_F, _N_ghosts, _ghostElementSend, _ghostElementRecv, _A);
 #endif
 
       // Limit the solution according to Liu (for each y slice)
-      Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _A, _Alim);
+      Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, N_F, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _A, _Alim);
       
       // Go back to lagrange
       blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _MonoY2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
-      
     }
     
     if(!_cartesian){
@@ -530,24 +529,84 @@ class Limiting
 
   void MYlimiting(scalar* U){
 
+#ifdef ONED
     // Get the pressure field
     Lpressure(_N_s, _N_E, U, _pressure);
-
+    
     // Limit pressure
     blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
-    Lcpu_hrl1D(_N_s, _N_E, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, 1, _N_N, 1, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
 
     // Go from lagrange to monomial representation
     blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);
     // Limit the solution according to Liu
-    Lcpu_hrl1D(_N_s, _N_E, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _A, _Alim);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, N_F, _N_N, 1, _neighbors, 0, _weight, _V1D, _A, _Alim);
 
     // My modification
-    Llimmodif(_N_s, _N_E, _A, _pressureLim, _Alim);
+    Llimmodif(_N_s, _N_E, 1, _A, _pressureLim, _Alim);
     
     // Go back to lagrange representation
     blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
+    
+#elif TWOD
+    if(_cartesian){
 
+      //
+      // Limit the pressure field wrt x
+      //
+      Lpressure(_N_s, _N_E, U, _pressure);
+      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
+#ifdef USE_MPI
+      MPI_Barrier(MPI_COMM_WORLD);
+      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _pressureMono);
+#endif
+      Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
+
+      //
+      // Limit U wrt x
+      // 
+      blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Lag2MonoX, _N_s, U, _N_s, 0.0, _A, _N_s);
+#ifdef USE_MPI
+      MPI_Barrier(MPI_COMM_WORLD);
+      Lcpu_CommunicateGhosts(_N_s, _N_E, N_F, _N_ghosts, _ghostElementSend, _ghostElementRecv, _A);
+#endif
+      Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, N_F, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _A, _Alim);
+
+      //
+      // My limiter modifications in 2D
+      //
+      Llimmodif(_N_s1D, _N_E, _N_s1D, _A, _pressureLim, _Alim);
+      
+      //
+      // Limit the pressure field wrt y
+      //
+      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2MonoY, _N_s, _pressureLim, _N_s, 0.0, _pressureMono, _N_s);
+#ifdef USE_MPI
+      MPI_Barrier(MPI_COMM_WORLD);
+      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _pressureMono);
+#endif
+      Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _pressureMono, _pressureLim);
+
+      //
+      // Limit U wrt y
+      // 
+      blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _MonoX2MonoY, _N_s, _Alim, _N_s, 0.0, _A, _N_s);
+#ifdef USE_MPI
+      MPI_Barrier(MPI_COMM_WORLD);
+      Lcpu_CommunicateGhosts(_N_s, _N_E, N_F, _N_ghosts, _ghostElementSend, _ghostElementRecv, _A);
+#endif
+      Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, N_F, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _A, _Alim);
+
+      //
+      // My limiter modifications in 2D
+      //
+      Llimmodif(_N_s1D, _N_E, _N_s1D, _A, _pressureLim, _Alim);
+      
+      // Go back to lagrange
+      blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _MonoY2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
+    }
+
+#endif
   }
 
   void M2limiting(scalar* U){
@@ -557,15 +616,15 @@ class Limiting
 
     // Limit pressure
     blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
-    Lcpu_hrl1D(_N_s, _N_E, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, 1, _N_N, 1, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
 
     // Limit velocity
     blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _u, _N_s, 0.0, _uMono, _N_s);
-    Lcpu_hrl1D(_N_s, _N_E, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _uMono, _uLim);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, 1,_N_N, 1, _neighbors, 0, _weight, _V1D, _uMono, _uLim);
 
     // Limit the other variables
     blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);
-    Lcpu_hrl1D(_N_s, _N_E, _N_G, _N_N, 1, _neighbors, 0, _weight, _V1D, _A, _Alim);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, N_F, _N_N, 1, _neighbors, 0, _weight, _V1D, _A, _Alim);
 
     // My modification
     Llimmodif2(_N_s, _N_E, _A, _pressureLim, _uLim, _Alim);

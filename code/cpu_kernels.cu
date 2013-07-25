@@ -626,13 +626,15 @@ arch_global void cpu_hsl(int N_s, int N_E, int boundaryMap, scalar* U, scalar* U
 }
 
 //==========================================================================
-arch_global void cpu_CommunicateGhosts(int N_s, int N_E, int N_ghosts, int* ghostElementSend, int* ghostElementRecv, scalar* A){
+arch_global void cpu_CommunicateGhosts(int N_s, int N_E, int Nfields, int N_ghosts, int* ghostElementSend, int* ghostElementRecv, scalar* A){
 
   /* This function, used by the limiting procedure, communicates the
      elements which are not in my partition. Basically you send the
      elements of A that other partitions need and you receive the
      elements from other partitions that you will need. You store
-     these in the back columns of A.*/
+     these in the back columns of A.
+
+     Had to declare Nfields when we operate on just one field instead of N_F*/
 
 #ifdef USE_MPI
   MPI_Status status[2*N_ghosts];
@@ -645,13 +647,13 @@ arch_global void cpu_CommunicateGhosts(int N_s, int N_E, int N_ghosts, int* ghos
     e   = ghostElementSend[k*3+0]; // local index of A to send
     dest = ghostElementSend[k*3+1]; // destination processor
     tag = ghostElementSend[k*3+2]; // global idx of element
-    MPI_Isend(&A[e*N_F*N_s], N_F*N_s, MPI_SCALAR, dest, tag, MPI_COMM_WORLD, &request[2*k+0]);
+    MPI_Isend(&A[e*Nfields*N_s], Nfields*N_s, MPI_SCALAR, dest, tag, MPI_COMM_WORLD, &request[2*k+0]);
     
     // Recv info
     e      = ghostElementRecv[k*3+0]; // local index of A to recv (back columns)
     source = ghostElementRecv[k*3+1]; // destination processor
     tag    = ghostElementRecv[k*3+2]; // global idx of element
-    MPI_Irecv(&A[e*N_F*N_s], N_F*N_s, MPI_SCALAR, source, tag, MPI_COMM_WORLD, &request[2*k+1]);
+    MPI_Irecv(&A[e*Nfields*N_s], Nfields*N_s, MPI_SCALAR, source, tag, MPI_COMM_WORLD, &request[2*k+1]);
   }
 
   // Wait for communication to end
@@ -663,14 +665,14 @@ arch_global void cpu_CommunicateGhosts(int N_s, int N_E, int N_ghosts, int* ghos
 }
  
 //==========================================================================
-arch_global void cpu_hrl1D(int N_s, int N_E, int N_G, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim){
-
+arch_global void cpu_hrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim){
+  // Had to declare Nfields when we operate on just one field instead of N_F  
 #ifdef USE_CPU
   int blk = 0;
   for(int e = 0; e < N_E; e++){
-    scalar* c = new scalar[2*N_F*slicenum];
+    scalar* c = new scalar[2*Nfields*slicenum];
     for(int slice = 0; slice < slicenum; slice++){
-      for(int fc = 0; fc < N_F; fc++){
+      for(int fc = 0; fc < Nfields; fc++){
 #elif USE_GPU
   int blk = threadIdx.z; // c needs room for all the elements in the block
   int e = blockIdx.x*blkE+blk;
@@ -703,13 +705,13 @@ arch_global void cpu_hrl1D(int N_s, int N_E, int N_G, int N_N, int slicenum, int
 	    RL  = 0; RC  = 0; RR  = 0;
 
 	    for(int j=0;j<=N-(m-1);j++){
-	      dUL += A[(left *N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
-	      dUC += A[(e    *N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
-	      dUR += A[(right*N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
+	      dUL += A[(left *Nfields+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
+	      dUC += A[(e    *Nfields+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
+	      dUR += A[(right*Nfields+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
 	      if(j>=2){
-	    	RL += Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*pow(V[1*N_G+g]-2,j)/(scalar)cpu_factorial(j);
-	    	RC += Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
-	    	RR += Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*pow(V[1*N_G+g]+2,j)/(scalar)cpu_factorial(j);
+	    	RL += Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*pow(V[1*N_G+g]-2,j)/(scalar)cpu_factorial(j);
+	    	RC += Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
+	    	RR += Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*pow(V[1*N_G+g]+2,j)/(scalar)cpu_factorial(j);
 	      }// end if
 	    }
 	    avgdUL += dUL*weight[g];
@@ -726,13 +728,13 @@ arch_global void cpu_hrl1D(int N_s, int N_E, int N_G, int N_N, int slicenum, int
 	  avgLR = 0.5*(avgdUR - avgRR);
 	
 	  // MUSCL approach to get candidate coefficients
-	  c[((blk*slicenum+slice)*N_F+fc)*2+0] = 0.5*(avgLC - avgLL);  // 1/dx = 1/2 = 0.5
-	  c[((blk*slicenum+slice)*N_F+fc)*2+1] = 0.5*(avgLR - avgLC);
+	  c[((blk*slicenum+slice)*Nfields+fc)*2+0] = 0.5*(avgLC - avgLL);  // 1/dx = 1/2 = 0.5
+	  c[((blk*slicenum+slice)*Nfields+fc)*2+1] = 0.5*(avgLR - avgLC);
 
-	  Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+m] = cpu_minmod(&c[((blk*slicenum+slice)*N_F+fc)*2],2); // give it a subset of c (the part you want minmod to act on)
-	  //Alim[(e*N_F+fc)*N_s*N_s+slice*N_s+m] = cminmod(c,2,0.01);
+	  Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+m] = cpu_minmod(&c[((blk*slicenum+slice)*Nfields+fc)*2],2); // give it a subset of c (the part you want minmod to act on)
+	  //Alim[(e*Nfields+fc)*N_s*N_s+slice*N_s+m] = cminmod(c,2,0.01);
 	  //or use minmod2(c,2), minmod(c,2,eps), cminmod(c,2,0.01); cminmod2(c,2,eps)
-	  if(m==1){Alim[(e*N_F+fc)*N_s*slicenum+slice*N_s+0] = avgLC;}
+	  if(m==1){Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+0] = avgLC;}
 
 	  avgRL=0; avgRC=0; avgRR=0;
 	}// end loop on m
@@ -1289,32 +1291,32 @@ void Lcpu_Cons2Half(int N_s, int N_E, scalar* U, bool multifluid, bool passive, 
 }
 
 extern "C"
-void Lcpu_CommunicateGhosts(int N_s, int N_E, int N_ghosts, int* ghostElementSend, int* ghostElementRecv, scalar* A){
+void Lcpu_CommunicateGhosts(int N_s, int N_E, int Nfields, int N_ghosts, int* ghostElementSend, int* ghostElementRecv, scalar* A){
 
 #ifdef USE_GPU
   int div = N_ghosts/blkE;
   int mod = 0;
   if (N_ghosts%blkE != 0) mod = 1;
-  dim3 dimBlock(N_s,N_F,blkE);
+  dim3 dimBlock(N_s,Nfields,blkE);
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_CommunicateGhosts arch_args (N_s, N_E, N_ghosts, ghostElementSend, ghostElementRecv, A);
+  cpu_CommunicateGhosts arch_args (N_s, N_E, Nfields, N_ghosts, ghostElementSend, ghostElementRecv, A);
 
 }
   
 extern "C"
-void Lcpu_hrl1D(int N_s, int N_E, int N_G, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim){
+void Lcpu_hrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim){
 
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
   if (N_E%blkE != 0) mod = 1;
-  dim3 dimBlock(slicenum,N_F,blkE);
+  dim3 dimBlock(slicenum,Nfields,blkE);
   dim3 dimGrid(div+mod,1);
 #endif
 
-  cpu_hrl1D arch_args_array(blkE*slicenum*N_F*2*sizeof(scalar)) (N_s, N_E, N_G, N_N, slicenum, neighbors, offxy, weight, V, A, Alim);
+  cpu_hrl1D arch_args_array(blkE*slicenum*Nfields*2*sizeof(scalar)) (N_s, N_E, N_G, Nfields, N_N, slicenum, neighbors, offxy, weight, V, A, Alim);
 }
 
 extern "C"
