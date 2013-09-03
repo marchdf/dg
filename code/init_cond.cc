@@ -259,8 +259,8 @@ void init_dg_sinegam_multifluid(const int N_s, const int N_E, const fullMatrix<s
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
-      sinegam = Agam*sin(M_PI*x);
       sinerho = Arho*sin(4*M_PI*x);
+      sinegam = Agam*sin(2*M_PI*x);
 #ifdef ONED
       if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
       Q[0] = rho+sinerho;
@@ -274,7 +274,8 @@ void init_dg_sinegam_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #elif TWOD
       if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
       scalar y = XYZNodes(i,e*D+1);
-      sinerho = sinerho+Arho*sin(4*M_PI*y);
+      sinerho = Arho*sin(2.0*M_PI*x)*sin(2.0*M_PI*y);
+      sinegam = Agam*sin(2.0*M_PI*x)*sin(2.0*M_PI*y);
       scalar v = 1;
       Q[0] = rho+sinerho;
       Q[1] = (rho+sinerho)*u;
@@ -694,7 +695,7 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+1) = rhoC*uC;
 	U(i,e*N_F+2) = EtC;
 #ifdef GAMCONS
-	U(i,e*N_F+3) = rho0C/(gammaC-1);
+	U(i,e*N_F+3) = rhoC/(gammaC-1);
 #elif GAMNCON
 	U(i,e*N_F+3) = 1.0/(gammaC-1);
 #endif
@@ -952,8 +953,8 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+4) = 1.0/(gamma4-1);
 #endif
  	// Mass fractions
-	U(i,e*N_F+5) = 1*rho4;
-	U(i,e*N_F+6) = 0;
+	// U(i,e*N_F+5) = 1*rho4;
+	// U(i,e*N_F+6) = 0;
       }
       else{
 	// vertical distance from interface
@@ -993,8 +994,8 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+4) = 1.0/(gamma-1);
 #endif
  	// Mass fractions
-	U(i,e*N_F+5) = Y1*rho;
-	U(i,e*N_F+6) = Y3*rho;
+	// U(i,e*N_F+5) = Y1*rho;
+	// U(i,e*N_F+6) = Y3*rho;
       }
     }
   }
@@ -1111,20 +1112,18 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const fullMatrix<s
   
   // pre-shock density (material 2)
   // The blast is initialized in here
-  scalar rho02   = 100;
+  scalar rho02   = 50;
   scalar gamma02 = gamma;
   scalar alpha02 = 1/(gamma02-1);
 
   // Initialize by setting the explosion energy
-  scalar ps = 1.98e11;  // pressure at shock in Pa
-  scalar t0 = 25*1e-9; // time = 25ns
-  scalar R0 = sqrt(0.5*(gamma02+1)*ps/rho02)/(alpha*pow(t0,alpha-1));
-
-  scalar Ex  = rho02*pow(Q,3)*pow(R0,3); // explosion energy
-  //Ex = 1.6e5;
-  //rho02 = 50;
+  // scalar ps = 1.98e11;  // pressure at shock in Pa
+  // scalar t0 = 25*1e-9; // time = 25ns
+  // scalar R0 = sqrt(0.5*(gamma02+1)*ps/rho02)/(alpha*pow(t0,alpha-1));
+  // scalar Ex  = rho02*pow(Q,3)*pow(R0,3); // explosion energy
+  scalar Ex = 1.87e8;
+  printf("Explosion energy=%e\n",Ex);
   scalar Dxx = 0.00005; // energy initially deposited in Dxx
-  //scalar Dxx = 0.5;
   
   for(int e = 0; e < N_E; e++){
     scalar xc = XYZCen(e,0);
@@ -1132,13 +1131,13 @@ void init_dg_khblast_multifluid(const int N_s, const int N_E, const fullMatrix<s
     for(int i = 0; i < N_s; i++){
       scalar x = XYZNodes(i,e*D+0);
       scalar y = XYZNodes(i,e*D+1);
-      if((yc>(blstpos-1e-6))&&(xc>0)){ // blast region
+      if((yc>blstpos)&&(xc>0)){ // blast region
 	U(i,e*N_F+0) = rho02;
 	U(i,e*N_F+1) = rho02*u;
 	U(i,e*N_F+2) = rho02*v;
 	U(i,e*N_F+3) = Ex/Dxx;
 #ifdef GAMCONS
-	U(i,e*N_F+4) = rh02/(gamma02-1);
+	U(i,e*N_F+4) = rho02/(gamma02-1);
 #elif GAMNCON
 	U(i,e*N_F+4) = 1.0/(gamma02-1);
 #endif
@@ -1368,7 +1367,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar vcoord =0; //-115.26;//72; // coordinate shift upwards
   scalar K = 0.5;
   scalar h = K*Lx;
-  scalar yinterface =-0.03; // first interface location
+  scalar yinterface =-0.1; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
   scalar u = 0;
   scalar v = 0+vcoord;
@@ -1399,7 +1398,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar xi = fabs(blstpos-yinterface); // distance btw blast initial position and interface
   scalar Ex  = pow(Q,2.0/alpha)*0.5*(gamma01+1)*ps/(alpha*alpha)*pow(xi,2.0/alpha-2.0);
 
-  Ex = 2e4;
+  Ex = 7.5e3;
   scalar Dxx = 0.001; // energy initially deposited in Dxx
 
   printf("xi=%f and ps=%e and Ex=%e\n",xi, ps, Ex);

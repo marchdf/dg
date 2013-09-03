@@ -107,30 +107,47 @@ class RK
     /* else if (Limiter.getLimitingMethod()==3) Limiter.M2limiting(arch(U)); */
 
     // print the initial condition to the file
-    printf("Initial condition written to output file.\n");
-    print_dg(N_s, N_E, h_U, m, elem_type, 0, 0, 0);
+    if(CFL>=0){
+      printf("Initial condition written to output file.\n");
+      print_dg(N_s, N_E, h_U, m, elem_type, 0, 0, 0);
+
+      // Output conservation of the fields
+      dgsolver.conservation(h_U,0.0);
+    }
+
+    // Get cpu id
+    int myid = 0;
+#ifdef USE_MPI 
+    MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+#endif
     
-    // Output conservation of the fields
-    dgsolver.conservation(h_U,0.0);
-	   
+   
     // Time integration
     while (!done){
-      // Find new Dt
-      Dt = DtFromCFL(N_s, N_E, CFL, arch(U),_UPA); output = false;
-#ifdef USE_MPI // Make sure everyone is at the same time
-      MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
-      MPI_Allreduce(MPI_IN_PLACE, &Dt, 1, MPI_SCALAR, MPI_MIN, MPI_COMM_WORLD);
-#endif
-      if(Dt<1e-14){ printf("Next time step is too small (%e<1e-14). Exiting.\n",Dt); exit(1);}
-      if(Dt!=Dt){ printf("Time step is NaN. Exiting.\n",Dt); exit(1);}
-      if     (Dt>(Tf  -T)){ DtCFL = Dt; Dt = Tf  -T; output = true; done = true;}
-      else if(Dt>(Tout-T)){ DtCFL = Dt; Dt = Tout-T; output = true;}
-      //printf("current time=%e, this Dt=%e, next output at %e\n",T+Dt,Dt,Tout);
-      /* Dt = 1e-7; */
-      /* if ((n+1)%100==0){output=true;} */
-      /* else {output=false;} */
-      /* if ((n+1)==1000) {done = true;} */
 
+      // Give the deck a negative CFL for fixed time step and no output
+      if(CFL<0){
+	Dt = DtOut; output = false;
+	if(Dt>(Tf  -T)){Dt = Tf  -T; done = true;}
+      }
+      else{
+	// Find new Dt
+	Dt = DtFromCFL(N_s, N_E, CFL, arch(U),_UPA); output = false;
+#ifdef USE_MPI // Make sure everyone is at the same time
+	MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
+	MPI_Allreduce(MPI_IN_PLACE, &Dt, 1, MPI_SCALAR, MPI_MIN, MPI_COMM_WORLD);
+#endif
+	if(Dt<1e-14){ printf("Next time step is too small (%e<1e-14). Exiting.\n",Dt); exit(1);}
+	if(Dt!=Dt){ printf("Time step is NaN. Exiting.\n"); exit(1);}
+	if     (Dt>(Tf  -T)){ DtCFL = Dt; Dt = Tf  -T; output = true; done = true;}
+	else if(Dt>(Tout-T)){ DtCFL = Dt; Dt = Tout-T; output = true;}
+	//printf("current time=%e, this Dt=%e, next output at %e\n",T+Dt,Dt,Tout);
+	/* Dt = 1e-7; */
+	/* if ((n+1)%100==0){output=true;} */
+	/* else {output=false;} */
+	/* if ((n+1)==1000) {done = true;} */
+      }
+      
       // Us = U
 #ifdef HAVE_BLAS
       blasCopy(N_F*N_s*N_E, arch(U), 1, _Us, 1);
@@ -191,7 +208,7 @@ class RK
 	CUDA_SAFE_CALL(cudaMemcpy(h_U, d_U, N_s*N_F*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
 #endif
 
-	printf("Solution written to output file at step %7i and time %e (current CFL time step:%e).\n",n,T,DtCFL);
+	if(myid==0){printf("Solution written to file at step %7i and time %e (current CFL time step:%e).\n",n,T,DtCFL);}
 	print_dg(N_s, N_E, h_U, m, elem_type, count, T, 1);
 	Tout = T + DtOut; // update the new output time
 	count++;
