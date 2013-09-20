@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include "stdlib.h"
 #ifdef USE_GPU
-#include <cutil.h>
-#include <cutil_inline.h>
 #include <cublas.h>
 #endif
 #ifdef USE_MPI
@@ -629,7 +627,7 @@ int main (int argc, char **argv)
   //==========================================================================
 #ifdef USE_GPU
   // Choose the device
-  CUDA_SAFE_CALL(cudaSetDevice(0));
+  cudaSetDevice(0);
 
   // Use cublas or not
   cublasStatus status;

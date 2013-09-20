@@ -81,24 +81,24 @@ class RK
 #elif USE_GPU
     scalar* d_U;
     // Allocate on device
-    CUDA_SAFE_CALL(cudaMalloc((void**) &d_U   , N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_Us   , N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_Ustar, N_s*N_E*N_F*sizeof(scalar)));  
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_DU   , N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_UPA  , N_s*N_E*sizeof(scalar)));     
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_f    , N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_Minv , N_s*N_s*N_E*sizeof(scalar)));
+    cudaMalloc((void**) &d_U   , N_s*N_E*N_F*sizeof(scalar));
+    cudaMalloc((void**) &_Us   , N_s*N_E*N_F*sizeof(scalar));
+    cudaMalloc((void**) &_Ustar, N_s*N_E*N_F*sizeof(scalar));  
+    cudaMalloc((void**) &_DU   , N_s*N_E*N_F*sizeof(scalar));
+    cudaMalloc((void**) &_UPA  , N_s*N_E*sizeof(scalar));     
+    cudaMalloc((void**) &_f    , N_s*N_E*N_F*sizeof(scalar));
+    cudaMalloc((void**) &_Minv , N_s*N_s*N_E*sizeof(scalar));
 
     // Set to zero
-    CUDA_SAFE_CALL(cudaMemset(_Us   , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_Ustar, (scalar)0.0, N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_DU   , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_UPA  , (scalar)0.0, N_s*N_E*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_f    , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar)));
+    cudaMemset(_Us   , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar));
+    cudaMemset(_Ustar, (scalar)0.0, N_s*N_E*N_F*sizeof(scalar));
+    cudaMemset(_DU   , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar));
+    cudaMemset(_UPA  , (scalar)0.0, N_s*N_E*sizeof(scalar));
+    cudaMemset(_f    , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar));
     
     // Copy info to device
-    CUDA_SAFE_CALL(cudaMemcpy(d_U, h_U, N_s*N_E*N_F*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar), cudaMemcpyHostToDevice));
+    cudaMemcpy(d_U, h_U, N_s*N_E*N_F*sizeof(scalar), cudaMemcpyHostToDevice);
+    cudaMemcpy(_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar), cudaMemcpyHostToDevice);
 #endif
   
     /* // Limit solution */
@@ -178,7 +178,7 @@ class RK
 	
 	// Solve: DU = Dt*Minv*f(Ustar)
 	Lsolver(N_s, N_E, Dt, _Minv, _f, _DU);
-
+	
 	// if 0-order average the solution in the cells
 	if (order0){Laverage_cell_p0(N_s, N_E, _DU);}
 
@@ -205,7 +205,7 @@ class RK
 
 	// Get the solution to the CPU
 #ifdef  USE_GPU
-	CUDA_SAFE_CALL(cudaMemcpy(h_U, d_U, N_s*N_F*N_E*sizeof(scalar), cudaMemcpyDeviceToHost));
+	cudaMemcpy(h_U, d_U, N_s*N_F*N_E*sizeof(scalar), cudaMemcpyDeviceToHost);
 #endif
 
 	if(myid==0){printf("Solution written to file at step %7i and time %e (current CFL time step:%e).\n",n,T,DtCFL);}
@@ -227,7 +227,7 @@ class RK
     del(_f);
     del(_Minv);
 #ifdef USE_GPU
-    CUDA_SAFE_CALL(cudaFree(d_U));
+    cudaFree(d_U);
 #endif
   }; //end main RK function
 
@@ -239,7 +239,7 @@ class RK
     scalar Dt = CFL/maxUPA;
 #elif USE_GPU
     scalar* maxUPA = new scalar[1];
-    CUDA_SAFE_CALL(cudaMemcpy(maxUPA, &UPA[maxUPAIdx], sizeof(scalar), cudaMemcpyDeviceToHost));
+    cudaMemcpy(maxUPA, &UPA[maxUPAIdx], sizeof(scalar), cudaMemcpyDeviceToHost);
     scalar Dt = CFL/maxUPA[0];
     delete[] maxUPA;
 #endif

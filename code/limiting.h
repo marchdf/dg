@@ -99,20 +99,20 @@ class Limiting
       scalar* tmpV1D      = new scalar[_N_G*_N_s];     V1D.copyMatrixToPointer(tmpV1D);
 
       // Allocate on GPU
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_Lag2Mono,_N_s*_N_s*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_Mono2Lag,_N_s*_N_s*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_V1D,_N_G*_N_s*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_weight,_N_G*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_A,_N_s*_N_E*N_F*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_Alim,_N_s*_N_E*N_F*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_neighbors  ,_N_N*_N_E*sizeof(int)));
+      cudaMalloc((void**) &_Lag2Mono,_N_s*_N_s*sizeof(scalar));
+      cudaMalloc((void**) &_Mono2Lag,_N_s*_N_s*sizeof(scalar));
+      cudaMalloc((void**) &_V1D,_N_G*_N_s*sizeof(scalar));
+      cudaMalloc((void**) &_weight,_N_G*sizeof(scalar));
+      cudaMalloc((void**) &_A,_N_s*_N_E*N_F*sizeof(scalar));
+      cudaMalloc((void**) &_Alim,_N_s*_N_E*N_F*sizeof(scalar));
+      cudaMalloc((void**) &_neighbors  ,_N_N*_N_E*sizeof(int));
 
       // Copy data to GPU
-      CUDA_SAFE_CALL(cudaMemcpy(_Lag2Mono, tmpLag2Mono, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_Mono2Lag, tmpMono2Lag, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_V1D, tmpV1D, N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_weight,weight, N_G*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_neighbors,  neighbors,_N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice));
+      cudaMemcpy(_Lag2Mono, tmpLag2Mono, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
+      cudaMemcpy(_Mono2Lag, tmpMono2Lag, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
+      cudaMemcpy(_V1D, tmpV1D, N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
+      cudaMemcpy(_weight,weight, N_G*sizeof(scalar), cudaMemcpyHostToDevice);
+      cudaMemcpy(_neighbors,  neighbors,_N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice);
       
       delete[] tmpLag2Mono;	
       delete[] tmpMono2Lag;	
@@ -132,9 +132,9 @@ class Limiting
       _pressureMono = new scalar[_N_s*_N_E];
       _pressureLim  = new scalar[_N_s*_N_E];
 #elif USE_GPU
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar)));
+      cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar));
 #endif
       }
       break;
@@ -147,12 +147,12 @@ class Limiting
       _uMono        = new scalar[_N_s*_N_E];
       _uLim         = new scalar[_N_s*_N_E];
 #elif USE_GPU
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_u,_N_s*_N_E*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_uMono,_N_s*_N_E*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_uLim,_N_s*_N_E*sizeof(scalar)));
+      cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_u,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_uMono,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_uLim,_N_s*_N_E*sizeof(scalar));
 #endif
       }
       break;
@@ -211,22 +211,22 @@ class Limiting
       scalar* tmpV1D         = new scalar[_N_G1D*_N_s1D]; V1D.copyMatrixToPointer(tmpV1D);
 
       // Allocate on GPU
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_Lag2MonoX  ,_N_s*_N_s*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_MonoX2MonoY,_N_s*_N_s*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_MonoY2Lag  ,_N_s*_N_s*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_V1D        ,_N_G1D*_N_s1D*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_weight     ,_N_G1D*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_A          ,_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_Alim       ,_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_neighbors  ,_N_N*_N_E*sizeof(int)));
+      cudaMalloc((void**) &_Lag2MonoX  ,_N_s*_N_s*sizeof(scalar));
+      cudaMalloc((void**) &_MonoX2MonoY,_N_s*_N_s*sizeof(scalar));
+      cudaMalloc((void**) &_MonoY2Lag  ,_N_s*_N_s*sizeof(scalar));
+      cudaMalloc((void**) &_V1D        ,_N_G1D*_N_s1D*sizeof(scalar));
+      cudaMalloc((void**) &_weight     ,_N_G1D*sizeof(scalar));
+      cudaMalloc((void**) &_A          ,_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar));
+      cudaMalloc((void**) &_Alim       ,_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar));
+      cudaMalloc((void**) &_neighbors  ,_N_N*_N_E*sizeof(int));
 	    
       // Copy data to GPU
-      CUDA_SAFE_CALL(cudaMemcpy(_Lag2MonoX,   tmpLag2MonoX, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_MonoX2MonoY, tmpMonoX2MonoY, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_MonoY2Lag,   tmpMonoY2Lag, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_V1D, tmpV1D, _N_G1D*_N_s1D*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_weight,weight, _N_G1D*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_neighbors,  neighbors,_N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice));
+      cudaMemcpy(_Lag2MonoX,   tmpLag2MonoX, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
+      cudaMemcpy(_MonoX2MonoY, tmpMonoX2MonoY, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
+      cudaMemcpy(_MonoY2Lag,   tmpMonoY2Lag, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
+      cudaMemcpy(_V1D, tmpV1D, _N_G1D*_N_s1D*sizeof(scalar), cudaMemcpyHostToDevice);
+      cudaMemcpy(_weight,weight, _N_G1D*sizeof(scalar), cudaMemcpyHostToDevice);
+      cudaMemcpy(_neighbors,  neighbors,_N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice);
 
       delete[] tmpLag2MonoX;
       delete[] tmpMonoX2MonoY;
@@ -247,9 +247,9 @@ class Limiting
       _pressureMono = new scalar[_N_s*(_N_E+_N_ghosts)];
       _pressureLim  = new scalar[_N_s*(_N_E+_N_ghosts)];
 #elif USE_GPU
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar)));
+      cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar));
 #endif
       }
       break;
@@ -262,12 +262,12 @@ class Limiting
 /*       _uMono        = new scalar[_N_s*_N_E]; */
 /*       _uLim         = new scalar[_N_s*_N_E]; */
 /* #elif USE_GPU */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar))); */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar))); */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar))); */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_u,_N_s*_N_E*sizeof(scalar))); */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_uMono,_N_s*_N_E*sizeof(scalar))); */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_uLim,_N_s*_N_E*sizeof(scalar))); */
+/*       cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_u,_N_s*_N_E*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_uMono,_N_s*_N_E*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_uLim,_N_s*_N_E*sizeof(scalar)); */
 /* #endif */
       }
       break;
@@ -342,28 +342,28 @@ class Limiting
       	    tmpMono2Lag[(e*_L2Msize2+j)*_L2Msize1+i] = Mono2Lag(e,j*_L2Msize1+i);}}}
 
       // Allocate on GPU
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_Lag2Mono,_L2Msize1*_L2Msize2*_N_E*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_Mono2Lag,_L2Msize2*_L2Msize1*_N_E*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_XYZCen,_D*_N_E*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_powersXYZG,_L2Msize1*_N_G*(_N_N+1)*_N_E*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_neighbors,_N_N*_N_E*sizeof(int)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_weight,_N_G*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_TaylorDxIdx,_L*sizeof(int)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_TaylorDyIdx,_L*sizeof(int)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_A,_L2Msize1*_N_E*N_F*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMalloc((void**) &_Alim,_L2Msize1*_N_E*N_F*sizeof(scalar)));
+      cudaMalloc((void**) &_Lag2Mono,_L2Msize1*_L2Msize2*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_Mono2Lag,_L2Msize2*_L2Msize1*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_XYZCen,_D*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_powersXYZG,_L2Msize1*_N_G*(_N_N+1)*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_neighbors,_N_N*_N_E*sizeof(int));
+      cudaMalloc((void**) &_weight,_N_G*sizeof(scalar));
+      cudaMalloc((void**) &_TaylorDxIdx,_L*sizeof(int));
+      cudaMalloc((void**) &_TaylorDyIdx,_L*sizeof(int));
+      cudaMalloc((void**) &_A,_L2Msize1*_N_E*N_F*sizeof(scalar));
+      cudaMalloc((void**) &_Alim,_L2Msize1*_N_E*N_F*sizeof(scalar));
 
       // Copy data to GPU
-      CUDA_SAFE_CALL(cudaMemcpy(_Lag2Mono,   tmpLag2Mono, _L2Msize1*_L2Msize2*_N_E*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_Mono2Lag,   tmpMono2Lag, _L2Msize2*_L2Msize1*_N_E*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_XYZCen,     tmpXYZCen,   _D*_N_E*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_powersXYZG, powersXYZG,  _L2Msize1*_N_G*(_N_N+1)*_N_E*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_neighbors,  neighbors,   _N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_weight,     weight,      _N_G*sizeof(scalar), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_TaylorDxIdx,TaylorDxIdx, _L*sizeof(int), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpy(_TaylorDyIdx,TaylorDyIdx, _L*sizeof(int), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemset(_A,    (scalar)0.0, _L2Msize1*_N_E*N_F*sizeof(scalar)));
-      CUDA_SAFE_CALL(cudaMemset(_Alim, (scalar)0.0, _L2Msize1*_N_E*N_F*sizeof(scalar)));
+      cudaMemcpy(_Lag2Mono,   tmpLag2Mono, _L2Msize1*_L2Msize2*_N_E*sizeof(scalar), cudaMemcpyHostToDevice);
+      cudaMemcpy(_Mono2Lag,   tmpMono2Lag, _L2Msize2*_L2Msize1*_N_E*sizeof(scalar), cudaMemcpyHostToDevice);
+      cudaMemcpy(_XYZCen,     tmpXYZCen,   _D*_N_E*sizeof(scalar), cudaMemcpyHostToDevice);
+      cudaMemcpy(_powersXYZG, powersXYZG,  _L2Msize1*_N_G*(_N_N+1)*_N_E*sizeof(scalar), cudaMemcpyHostToDevice);
+      cudaMemcpy(_neighbors,  neighbors,   _N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice);
+      cudaMemcpy(_weight,     weight,      _N_G*sizeof(scalar), cudaMemcpyHostToDevice);
+      cudaMemcpy(_TaylorDxIdx,TaylorDxIdx, _L*sizeof(int), cudaMemcpyHostToDevice);
+      cudaMemcpy(_TaylorDyIdx,TaylorDyIdx, _L*sizeof(int), cudaMemcpyHostToDevice);
+      cudaMemset(_A,    (scalar)0.0, _L2Msize1*_N_E*N_F*sizeof(scalar));
+      cudaMemset(_Alim, (scalar)0.0, _L2Msize1*_N_E*N_F*sizeof(scalar));
       
       delete[] tmpLag2Mono;
       delete[] tmpMono2Lag;
@@ -383,9 +383,9 @@ class Limiting
 /*       _pressureMono = new scalar[_N_s*_N_E]; */
 /*       _pressureLim  = new scalar[_N_s*_N_E]; */
 /* #elif USE_GPU */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar))); */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar))); */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar))); */
+/*       cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar)); */
 /* #endif */
 /*       } */
 /*       break; */
@@ -398,12 +398,12 @@ class Limiting
 /*       _uMono        = new scalar[_N_s*_N_E]; */
 /*       _uLim         = new scalar[_N_s*_N_E]; */
 /* #elif USE_GPU */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar))); */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar))); */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar))); */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_u,_N_s*_N_E*sizeof(scalar))); */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_uMono,_N_s*_N_E*sizeof(scalar))); */
-/*       CUDA_SAFE_CALL(cudaMalloc((void**) &_uLim,_N_s*_N_E*sizeof(scalar))); */
+/*       cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_u,_N_s*_N_E*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_uMono,_N_s*_N_E*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_uLim,_N_s*_N_E*sizeof(scalar)); */
 /* #endif */
 /*       } */
 /*       break; */

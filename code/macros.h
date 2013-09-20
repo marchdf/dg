@@ -1,7 +1,6 @@
 #ifndef MACROS_H
 #define MACROS_H
 
-
 //
 // Architecture specific macros
 //
@@ -18,7 +17,7 @@
 #define arch_args   <<<dimGrid,dimBlock>>>
 #define arch_args_array(x)   <<<dimGrid,dimBlock,x>>>
 #define arch(x)      d_ ## x
-#define del(x)       CUDA_SAFE_CALL(cudaFree(x));
+#define del(x)       cudaFree(x);
 #endif
 
 // 
