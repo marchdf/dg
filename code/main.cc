@@ -627,7 +627,7 @@ int main (int argc, char **argv)
   //==========================================================================
 #ifdef USE_GPU
   // Choose the device
-  cudaSetDevice(0);
+  //cudaSetDevice(0);
 
   // Use cublas or not
   cublasStatus status;

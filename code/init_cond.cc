@@ -1367,27 +1367,27 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar vcoord =0; //-115.26;//72; // coordinate shift upwards
   scalar K = 0.5;
   scalar h = K*Lx;
-  scalar yinterface =-0.1; // first interface location
+  scalar yinterface =-0.07; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
   scalar u = 0;
   scalar v = 0+vcoord;
   scalar p = 1e5;
 
   // Top material: blast initialized here
-  scalar rho01   = 5.494;//1.351;//5.494;
+  scalar rho01   = 1.351;//5.494;
   scalar u01     = u;
   scalar v01     = v;  
   scalar gamma01 = 1.4;
   scalar alpha01 = 1/(gamma01-1);
-  scalar M02     = 146.05;//34.76;//146.05;
+  scalar M02     = 34.76;//146.05;
 
   // Bottom material (material 2)
-  scalar rho02   = 1.351;//5.494;//1.351;
+  scalar rho02   = 5.494;//1.351;
   scalar u02     = u;
   scalar v02     = v;  
   scalar gamma02 = 1.4;
   scalar alpha02 = 1/(gamma02-1);
-  scalar M01     = 34.76;//146.05;//34.76; // molecular weight
+  scalar M01     = 146.05;//34.76; // molecular weight
   
   // Explosion energy parameters
   scalar blstpos = 0.0;
@@ -1398,7 +1398,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar xi = fabs(blstpos-yinterface); // distance btw blast initial position and interface
   scalar Ex  = pow(Q,2.0/alpha)*0.5*(gamma01+1)*ps/(alpha*alpha)*pow(xi,2.0/alpha-2.0);
 
-  Ex = 7.5e3;
+  Ex = 2e4;
   scalar Dxx = 0.001; // energy initially deposited in Dxx
 
   printf("xi=%f and ps=%e and Ex=%e\n",xi, ps, Ex);
