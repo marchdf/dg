@@ -9,6 +9,7 @@ FLUX=ROE
 LIEU=HOME
 NFLD=4
 MASS=0
+PROF=OFF
 
 # configuration
 directories       := . quadratures
@@ -16,7 +17,7 @@ BINNAME           := dg1d
 
 # paths to libs
 CUDA_INSTALL_PATH := /usr/local/cuda
-CUDA_SDK_PATH     := /home/marchdf/NVIDIA_GPU_Computing_SDK/C
+#CUDA_SDK_PATH     := /home/marchdf/NVIDIA_GPU_Computing_SDK/C
 ifeq ($(LIEU),NYX)
 CUDA_INSTALL_PATH := $(CUDA_ROOT)
 endif
@@ -37,6 +38,12 @@ CXX               := mpicxx
 #CC                := mpixlc_r
 DEPFLAGS          := -M #-qmakedep=gcc
 endif
+
+# Profiling with gprof
+ifeq ($(PROF),ON)
+CXX               := $(CXX) -pg
+endif
+
 
 # defines
 DEFINES           := -DHAVE_BLAS -DHAVE_LAPACK -D$(ARCH) -D$(LIEU) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS) -D$(PARA) -DN_Y=$(MASS) -DN_F=$(NFLD)
@@ -92,18 +99,18 @@ CUDA_INC          := $(CUDA_INSTALL_PATH)/include
 CUDA_LIB          := $(CUDA_INSTALL_PATH)/lib64
 CUDA_LINKER       :=-lcudart
 
-# cuda libs
-CUDASDK_INC       := $(CUDA_SDK_PATH)/common/inc
-CUDASDK_LIB       := $(CUDA_SDK_PATH)/lib
+# cuda sdk libs
+#CUDASDK_INC       := $(CUDA_SDK_PATH)/common/inc
+#CUDASDK_LIB       := $(CUDA_SDK_PATH)/lib
 
 # cutil
-CUTIL_LINKER      :=-lcutil_x86_64
+#CUTIL_LINKER      :=-lcutil_x86_64
 
 # cublas
 CUBLAS_LINKER     :=-lcublas
 
 # All together
-LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) -L$(CUDASDK_LIB)
+LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) #-L$(CUDASDK_LIB)
 INCLUDES          += -I. -I$(BLAS_INC) -I$(LAPACK_INC)
 
 MATH_LIB          := -lm
@@ -111,17 +118,17 @@ LDFLAGS           := $(LAPACK_LINKER) $(BLAS_LINKER) $(MATH_LIB)
 CFLAGS 	          := -03
 CXXFLAGS          := -I. -O3 $(DEFINES)
 ifeq ($(ARCH),USE_GPU)
-INCLUDES          += -I. -I$(CUDA_INC) -I$(CUDASDK_INC)
+INCLUDES          += -I. -I$(CUDA_INC) #-I$(CUDASDK_INC)
 LDFLAGS           := $(LDFLAGS) $(CUDA_LINKER) $(CUBLAS_LINKER)
 CUFLAGS	          := --ptxas-options=-v $(DEFINES)
 endif
-ifeq ($(PREC),USE_DOUBLE)
-ifeq ($(LIEU),HOME)
+
+
+ifeq ($(PREC),USE_FLOAT)
 CUFLAGS	          := $(CUFLAGS) -arch sm_13
 endif
-ifeq ($(LIEU),NYX)
-CUFLAGS	          := $(CUFLAGS) -arch=compute_20
-endif
+ifeq ($(PREC),USE_DOUBLE)
+CUFLAGS	          := $(CUFLAGS) -arch sm_20
 endif
 
 

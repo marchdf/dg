@@ -122,70 +122,70 @@ class DG_SOLVER
 
 #elif USE_GPU
     // Allocate space on the GPU
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_map        , M_s*M_T*N_F*2*sizeof(int)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_invmap     , M_s*N_N*N_E*N_F*2*sizeof(int)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_ghostInterfaces, 3*M_ghosts*sizeof(int)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_boundaryMap, M_B*sizeof(int)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_phi        , N_G*N_s*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_phi_w      , N_G*N_s*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_dphi       , D*N_G*N_s*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_dphi_w     , D*N_G*N_s*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_psi        , M_G*M_s*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_psi_w      , M_G*M_s*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_J          , N_E*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_invJac     , N_G*D*N_E*D*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_JF         , 2*M_T*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_normals    , D*M_T*sizeof(scalar)));
+    cudaMalloc((void**) &_map        , M_s*M_T*N_F*2*sizeof(int));
+    cudaMalloc((void**) &_invmap     , M_s*N_N*N_E*N_F*2*sizeof(int));
+    cudaMalloc((void**) &_ghostInterfaces, 3*M_ghosts*sizeof(int));
+    cudaMalloc((void**) &_boundaryMap, M_B*sizeof(int));
+    cudaMalloc((void**) &_phi        , N_G*N_s*sizeof(scalar));
+    cudaMalloc((void**) &_phi_w      , N_G*N_s*sizeof(scalar));
+    cudaMalloc((void**) &_dphi       , D*N_G*N_s*sizeof(scalar));
+    cudaMalloc((void**) &_dphi_w     , D*N_G*N_s*sizeof(scalar));
+    cudaMalloc((void**) &_psi        , M_G*M_s*sizeof(scalar));
+    cudaMalloc((void**) &_psi_w      , M_G*M_s*sizeof(scalar));
+    cudaMalloc((void**) &_J          , N_E*sizeof(scalar));
+    cudaMalloc((void**) &_invJac     , N_G*D*N_E*D*sizeof(scalar));
+    cudaMalloc((void**) &_JF         , 2*M_T*sizeof(scalar));
+    cudaMalloc((void**) &_normals    , D*M_T*sizeof(scalar));
     
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_UF     , M_s*M_T*N_F*2*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_Uinteg , N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_dUinteg, D*N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_UintegF, M_G*M_T*N_F*2*sizeof(scalar)));
+    cudaMalloc((void**) &_UF     , M_s*M_T*N_F*2*sizeof(scalar));
+    cudaMalloc((void**) &_Uinteg , N_G*N_E*N_F*sizeof(scalar));
+    cudaMalloc((void**) &_dUinteg, D*N_G*N_E*N_F*sizeof(scalar));
+    cudaMalloc((void**) &_UintegF, M_G*M_T*N_F*2*sizeof(scalar));
     
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_s      , N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_sJ     , N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_S      , N_s*N_E*N_F*sizeof(scalar)));
+    cudaMalloc((void**) &_s      , N_G*N_E*N_F*sizeof(scalar));
+    cudaMalloc((void**) &_sJ     , N_G*N_E*N_F*sizeof(scalar));
+    cudaMalloc((void**) &_S      , N_s*N_E*N_F*sizeof(scalar));
     
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_f      , D*N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_fJ     , D*N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_F      , N_s*N_E*N_F*sizeof(scalar)));
+    cudaMalloc((void**) &_f      , D*N_G*N_E*N_F*sizeof(scalar));
+    cudaMalloc((void**) &_fJ     , D*N_G*N_E*N_F*sizeof(scalar));
+    cudaMalloc((void**) &_F      , N_s*N_E*N_F*sizeof(scalar));
     
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_q      , M_G*M_T*N_F*2*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_qJ     , M_G*M_T*N_F*2*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_Qtcj   , M_s*M_T*N_F*2*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMalloc((void**) &_Q      , N_s*N_E*N_F*sizeof(scalar)));  
+    cudaMalloc((void**) &_q      , M_G*M_T*N_F*2*sizeof(scalar));
+    cudaMalloc((void**) &_qJ     , M_G*M_T*N_F*2*sizeof(scalar));
+    cudaMalloc((void**) &_Qtcj   , M_s*M_T*N_F*2*sizeof(scalar));
+    cudaMalloc((void**) &_Q      , N_s*N_E*N_F*sizeof(scalar));  
 
     // Set some stuff to zero
-    CUDA_SAFE_CALL(cudaMemset(_UF     , (scalar)0.0, M_s*M_T*N_F*2*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_Uinteg , (scalar)0.0, N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_dUinteg, (scalar)0.0, D*N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_UintegF, (scalar)0.0, M_G*M_T*N_F*2*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_s      , (scalar)0.0, N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_sJ     , (scalar)0.0, N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_S      , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_f      , (scalar)0.0, D*N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_fJ     , (scalar)0.0, D*N_G*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_F      , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_q      , (scalar)0.0, M_G*M_T*N_F*2*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_qJ     , (scalar)0.0, M_G*M_T*N_F*2*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_Qtcj   , (scalar)0.0, M_s*M_T*N_F*2*sizeof(scalar)));
-    CUDA_SAFE_CALL(cudaMemset(_Q      , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar)));  
+    cudaMemset(_UF     , (scalar)0.0, M_s*M_T*N_F*2*sizeof(scalar));
+    cudaMemset(_Uinteg , (scalar)0.0, N_G*N_E*N_F*sizeof(scalar));
+    cudaMemset(_dUinteg, (scalar)0.0, D*N_G*N_E*N_F*sizeof(scalar));
+    cudaMemset(_UintegF, (scalar)0.0, M_G*M_T*N_F*2*sizeof(scalar));
+    cudaMemset(_s      , (scalar)0.0, N_G*N_E*N_F*sizeof(scalar));
+    cudaMemset(_sJ     , (scalar)0.0, N_G*N_E*N_F*sizeof(scalar));
+    cudaMemset(_S      , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar));
+    cudaMemset(_f      , (scalar)0.0, D*N_G*N_E*N_F*sizeof(scalar));
+    cudaMemset(_fJ     , (scalar)0.0, D*N_G*N_E*N_F*sizeof(scalar));
+    cudaMemset(_F      , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar));
+    cudaMemset(_q      , (scalar)0.0, M_G*M_T*N_F*2*sizeof(scalar));
+    cudaMemset(_qJ     , (scalar)0.0, M_G*M_T*N_F*2*sizeof(scalar));
+    cudaMemset(_Qtcj   , (scalar)0.0, M_s*M_T*N_F*2*sizeof(scalar));
+    cudaMemset(_Q      , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar));  
 
     // Send the stuff to the device
-    CUDA_SAFE_CALL(cudaMemcpy(_map        , map        , M_s*M_T*N_F*2*sizeof(int) , cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_invmap     , invmap     , M_s*N_N*N_E*N_F*2*sizeof(int) , cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_ghostInterfaces, ghostInterfaces, 3*M_ghosts*sizeof(int) , cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_boundaryMap, boundaryMap, M_B*sizeof(int)         , cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_phi        , phi        , N_G*N_s*sizeof(scalar)    , cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_phi_w      , phi_w      , N_G*N_s*sizeof(scalar)    , cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_dphi       , dphi       , D*N_G*N_s*sizeof(scalar)  , cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_dphi_w     , dphi_w     , D*N_G*N_s*sizeof(scalar)  , cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_psi        , psi        , M_G*M_s*sizeof(scalar)    , cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_psi_w      , psi_w      , M_G*M_s*sizeof(scalar)    , cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_J          , J          , N_E*sizeof(scalar)        , cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_invJac     , invJac     , N_G*D*N_E*D*sizeof(scalar), cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_JF         , JF         , 2*M_T*sizeof(scalar)      , cudaMemcpyHostToDevice));
-    CUDA_SAFE_CALL(cudaMemcpy(_normals    , normals    , D*M_T*sizeof(scalar)      , cudaMemcpyHostToDevice));
+    cudaMemcpy(_map        , map        , M_s*M_T*N_F*2*sizeof(int) , cudaMemcpyHostToDevice);
+    cudaMemcpy(_invmap     , invmap     , M_s*N_N*N_E*N_F*2*sizeof(int) , cudaMemcpyHostToDevice);
+    cudaMemcpy(_ghostInterfaces, ghostInterfaces, 3*M_ghosts*sizeof(int) , cudaMemcpyHostToDevice);
+    cudaMemcpy(_boundaryMap, boundaryMap, M_B*sizeof(int)         , cudaMemcpyHostToDevice);
+    cudaMemcpy(_phi        , phi        , N_G*N_s*sizeof(scalar)    , cudaMemcpyHostToDevice);
+    cudaMemcpy(_phi_w      , phi_w      , N_G*N_s*sizeof(scalar)    , cudaMemcpyHostToDevice);
+    cudaMemcpy(_dphi       , dphi       , D*N_G*N_s*sizeof(scalar)  , cudaMemcpyHostToDevice);
+    cudaMemcpy(_dphi_w     , dphi_w     , D*N_G*N_s*sizeof(scalar)  , cudaMemcpyHostToDevice);
+    cudaMemcpy(_psi        , psi        , M_G*M_s*sizeof(scalar)    , cudaMemcpyHostToDevice);
+    cudaMemcpy(_psi_w      , psi_w      , M_G*M_s*sizeof(scalar)    , cudaMemcpyHostToDevice);
+    cudaMemcpy(_J          , J          , N_E*sizeof(scalar)        , cudaMemcpyHostToDevice);
+    cudaMemcpy(_invJac     , invJac     , N_G*D*N_E*D*sizeof(scalar), cudaMemcpyHostToDevice);
+    cudaMemcpy(_JF         , JF         , 2*M_T*sizeof(scalar)      , cudaMemcpyHostToDevice);
+    cudaMemcpy(_normals    , normals    , D*M_T*sizeof(scalar)      , cudaMemcpyHostToDevice);
     
 #endif
 
