@@ -34,14 +34,17 @@ CXX               := mpicxx
 endif
 ifeq ($(LIEU),ANL)
 CXX               := mpicxx
+DEPFLAGS          := -M
+# If you want to use the xl compilers, uncomment these lines
 #CXX               := mpixlcxx_r	
 #CC                := mpixlc_r
-DEPFLAGS          := -M #-qmakedep=gcc
+#DEPFLAGS          := -qmakedep=gcc
 endif
 
 # Profiling with gprof
 ifeq ($(PROF),ON)
 CXX               := $(CXX) -pg
+CC                := $(CC) -pg
 endif
 
 
@@ -109,13 +112,22 @@ CUDA_LINKER       :=-lcudart
 # cublas
 CUBLAS_LINKER     :=-lcublas
 
+
+# For ALCF/ANL HPCTW profiling
+TRACE		  := 
+ifeq ($(LIEU),ANL)
+ifeq ($(PROF),ON)
+TRACE		  := -L/soft/apps/current/ibm-hpct/lib -lmpitrace -llicense -lgetarg -L/soft/apps/ibmcmp-jan2013/vac/bg/9.0/bglib -L/soft/apps/ibmcmp-jan2013/vacpp/bg/9.0/bglib -lxlopt -lxl -libmc++
+endif
+endif
+
 # All together
 LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) #-L$(CUDASDK_LIB)
 INCLUDES          += -I. -I$(BLAS_INC) -I$(LAPACK_INC)
 
 MATH_LIB          := -lm
 LDFLAGS           := $(LAPACK_LINKER) $(BLAS_LINKER) $(MATH_LIB)	
-CFLAGS 	          := -03
+CFLAGS 	          := -O3
 CXXFLAGS          := -I. -O3 $(DEFINES)
 ifeq ($(ARCH),USE_GPU)
 INCLUDES          += -I. -I$(CUDA_INC) #-I$(CUDASDK_INC)
@@ -214,7 +226,7 @@ endif
 $(BINNAME) : $(objs)
 	@echo "Link of $@"
 	@mkdir -p $(@D)
-	$(CXX) -o$@ $(objs) $(INCLUDES) $(LIBS) $(LDFLAGS) 
+	$(CXX) -o$@ $(objs) $(INCLUDES) $(LIBS) $(LDFLAGS) $(TRACE)
 
 .PHONY : clean cleanall all install
 

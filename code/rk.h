@@ -106,22 +106,21 @@ class RK
     /* else if (Limiter.getLimitingMethod()==2) Limiter.MYlimiting(arch(U)); */
     /* else if (Limiter.getLimitingMethod()==3) Limiter.M2limiting(arch(U)); */
 
-    // print the initial condition to the file
-    if(CFL>=0){
-      printf("Initial condition written to output file.\n");
-      print_dg(N_s, N_E, h_U, m, elem_type, 0, 0, 0);
-
-      // Output conservation of the fields
-      dgsolver.conservation(h_U,0.0);
-    }
-
     // Get cpu id
     int myid = 0;
 #ifdef USE_MPI 
     MPI_Comm_rank(MPI_COMM_WORLD,&myid);
 #endif
     
-   
+    // print the initial condition to the file
+    if(CFL>=0){
+      if(myid==0){printf("Initial condition written to output file.\n");}
+      print_dg(N_s, N_E, h_U, m, elem_type, 0, 0, 0);
+
+      // Output conservation of the fields
+      dgsolver.conservation(h_U,0.0);
+    }
+
     // Time integration
     while (!done){
 
