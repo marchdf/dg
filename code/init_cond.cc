@@ -636,6 +636,57 @@ void init_dg_blast1d_multifluid(const int N_s, const int N_E, const fullMatrix<s
 //   }
 }
 
+void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+
+#ifdef TWOD
+  printf("simblst problem can only be run in 1D. Exiting");
+  exit(1);
+#endif
+
+  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
+
+  // Initialize by setting the explosion energy
+  scalar p0 = 1;
+  scalar u0  = 0;    // velocity of unshocked material
+  scalar rho0 = 1;
+  scalar gamma = 1.4;
+  scalar c0 = sqrt(gamma*p0/rho0);
+  
+  for(int e = 0; e < N_E; e++){
+    scalar xc = XYZCen(e,0);
+    for(int i = 0; i < N_s; i++){
+      scalar x = XYZNodes(i,e*D+0);
+
+      if(xc<0){
+	scalar Ms    = 1.2;   // Shock Mach number
+	scalar u     = Ms*c0*(2*(Ms*Ms-1))/(gamma+1)/(Ms*Ms); // shock is moving downwards
+	scalar p     = p0*(1+2*gamma/(gamma+1)*(Ms*Ms-1));
+	p = (p-0.2)*x+p;
+	scalar rho   = rho0*(gamma+1)*Ms*Ms/(2+(gamma-1)*Ms*Ms);
+	rho = rho0*pow(p/p0,1.0/gamma);
+	U(i,e*N_F+0) = rho;
+	U(i,e*N_F+1) = rho*u;
+	U(i,e*N_F+2) = p/(gamma-1.0) + 0.5*rho*u*u;
+#ifdef GAMCONS
+	U(i,e*N_F+3) = rho/(gamma-1);
+#elif GAMNCON
+	U(i,e*N_F+3) = 1.0/(gamma-1);
+#endif
+      }
+      else{
+	U(i,e*N_F+0) = rho0;
+	U(i,e*N_F+1) = rho0*u0;
+	U(i,e*N_F+2) = p0/(gamma-1.0) + 0.5*rho0*u0*u0;
+#ifdef GAMCONS
+	U(i,e*N_F+3) = rho0/(gamma-1);
+#elif GAMNCON
+	U(i,e*N_F+3) = 1.0/(gamma-1);
+#endif
+      }
+    }
+  }
+}
+
 void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
 #ifdef TWOD
@@ -1367,7 +1418,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar vcoord =0; //-115.26;//72; // coordinate shift upwards
   scalar K = 0.5;
   scalar h = K*Lx;
-  scalar yinterface =-0.07; // first interface location
+  scalar yinterface =-10.0;//-0.07; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
   scalar u = 0;
   scalar v = 0+vcoord;
@@ -1398,7 +1449,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar xi = fabs(blstpos-yinterface); // distance btw blast initial position and interface
   scalar Ex  = pow(Q,2.0/alpha)*0.5*(gamma01+1)*ps/(alpha*alpha)*pow(xi,2.0/alpha-2.0);
 
-  Ex = 2e4;
+  Ex = 1e6;
   scalar Dxx = 0.001; // energy initially deposited in Dxx
 
   printf("xi=%f and ps=%e and Ex=%e\n",xi, ps, Ex);
