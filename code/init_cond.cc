@@ -687,85 +687,6 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   }
 }
 
-void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
-
-#ifdef TWOD
-  printf("rarecon problem can only be run in 1D. Exiting");
-  exit(1);
-#endif
-
-  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
-
-
-  // setup: right state | left state | rho jump 
-  // state btw left and right is from Sod shock tube
-
-  scalar ucoord =-150.65;//-115.26;//72; // coordinate shift upwards
-  
-  // Left state 
-  scalar xjmp = 0.0;
-  scalar rhoL = 5.494;
-  scalar uL   = 0+ucoord;
-  scalar pL   = 1e5;
-  scalar gammaL= 1.4;
-  scalar EtL  = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
-
-  // Contact discontinuity
-  scalar xcon = -0.02;
-  scalar rhoC = 1.351;
-  scalar uC   = uL;
-  scalar pC   = pL;
-  scalar gammaC = 1.6;
-  scalar EtC  = 1.0/(gammaC-1.0)*pC + 0.5*rhoC*uC*uC;
-
-  // Right state
-  scalar rhoR = 1;
-  scalar uR   = 0+ucoord;
-  scalar pR   = 1e4;
-  scalar gammaR= 1.4;
-  scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
-
-  
-  for(int e = 0; e < N_E; e++){
-    scalar xc = XYZCen(e,0);
-    for(int i = 0; i < N_s; i++){
-      scalar x = XYZNodes(i,e*D+0);
-
-      if      (xc>=xjmp){
-	U(i,e*N_F+0) = rhoR;
-	U(i,e*N_F+1) = rhoR*uR;
-	U(i,e*N_F+2) = EtR;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = rhoR/(gammaR-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = 1.0/(gammaR-1);
-#endif
-      }
-      else if(xc<xcon){
-	U(i,e*N_F+0) = rhoC;
-	U(i,e*N_F+1) = rhoC*uC;
-	U(i,e*N_F+2) = EtC;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = rhoC/(gammaC-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = 1.0/(gammaC-1);
-#endif
-      }
-      else{
-	U(i,e*N_F+0) = rhoL;
-	U(i,e*N_F+1) = rhoL*uL;
-	U(i,e*N_F+2) = EtL;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = rhoL/(gammaL-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = 1.0/(gammaL-1);
-#endif
-      }
-    }
-  }
-}
-
-
 void init_dg_sodcirc_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
 #ifdef ONED
@@ -1313,16 +1234,9 @@ void init_dg_khpertu_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #endif
 }
 
-void init_dg_rarec2d_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
-#ifdef ONED
-  printf("rarec2d problem can only be run in 2D. Exiting");
-  exit(1);
-#elif TWOD
   
-  if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
-
-
   // Initialize
   scalar A0 = 0.00183;
   scalar Lx = 0.089*2.0/3.0;
@@ -1355,15 +1269,35 @@ void init_dg_rarec2d_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar pR   = 1e4;
   scalar gammaR= 1.4;
   scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*(uR*uR+vR*vR);
-    
+
+  scalar xc=0, yc=0, x=0, y=0;
   for(int e = 0; e < N_E; e++){
-    scalar xc = XYZCen(e,0);
-    scalar yc = XYZCen(e,1);
     for(int i = 0; i < N_s; i++){
-      scalar x = XYZNodes(i,e*D+0);
-      scalar y = XYZNodes(i,e*D+1);
+
+#ifdef ONED
+      A0 = 0;
+      yc = XYZCen(e,0);
+      y  = XYZNodes(i,e*D+0);
+#elif TWOD
+      xc = XYZCen(e,0);
+      x  = XYZNodes(i,e*D+0);
+      yc = XYZCen(e,1);
+      y  = XYZNodes(i,e*D+1);
+#endif
 
       if(yc >= yjmp){ // post-shock region
+
+#ifdef ONED
+	U(i,e*N_F+0) = rhoR;
+	U(i,e*N_F+1) = rhoR*vR;
+	U(i,e*N_F+2) = EtR ;
+#ifdef GAMCONS
+	U(i,e*N_F+3) = rhoR/(gammaR-1);
+#elif GAMNCON
+	U(i,e*N_F+3) = 1.0/(gammaR-1);
+#endif
+	
+#elif TWOD
 	U(i,e*N_F+0) = rhoR;
 	U(i,e*N_F+1) = rhoR*uR;
 	U(i,e*N_F+2) = rhoR*vR;
@@ -1372,6 +1306,7 @@ void init_dg_rarec2d_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+4) = rhoR/(gammaR-1);
 #elif GAMNCON
 	U(i,e*N_F+4) = 1.0/(gammaR-1);
+#endif
 #endif
       }
       else{
@@ -1391,7 +1326,17 @@ void init_dg_rarec2d_multifluid(const int N_s, const int N_E, const fullMatrix<s
 
 	scalar alpha = jy*alphaC*jM/MC+(1-jy)*alphaL*jM/ML;
 	scalar gamma = 1+1.0/alpha;
-	
+
+#ifdef ONED
+	U(i,e*N_F+0) = rho;
+	U(i,e*N_F+1) = rho*v;
+	U(i,e*N_F+2) = p/(gamma-1)+ 0.5*rho*(u*u+v*v);
+#ifdef GAMCONS
+	U(i,e*N_F+3) = rho/(gamma-1);
+#elif GAMNCON
+	U(i,e*N_F+3) = 1.0/(gamma-1);
+#endif
+#elif TWOD
 	U(i,e*N_F+0) = rho;
 	U(i,e*N_F+1) = rho*u;
 	U(i,e*N_F+2) = rho*v;
@@ -1401,10 +1346,10 @@ void init_dg_rarec2d_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #elif GAMNCON
 	U(i,e*N_F+4) = 1.0/(gamma-1);
 #endif
+#endif
       }
     }
   }
-#endif
 }
 
 
