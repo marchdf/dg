@@ -336,15 +336,17 @@ arch_device void oned_multifluid_roe(scalar rhoL,
 		ws3*dV3*R33);
 
   //mass fractions
+  scalar Y,dVY; // will hold the Roe average of the mass fraction and the wave strength
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) F[4+x] = 0.5*(flux_ab(YL(x),vxL) + flux_ab(YR(x),vxR))*nx \
-    -0.5*(ws0*dV0*R00+							\
-	  ws1*dV1*R10+							\
-	  ws2*dV2*R20+							\
-	  ws3*dV3*R30);
+#define MACRO(x) Y = (YL(x)/rhoL+RT*YR(x)/rhoR)/(1+RT);			\
+  dVY = YR(x) - YL(x) - (dV0+dV2)*Y;					\
+  F[4+x] = 0.5*(flux_ab(YL(x),vxL) + flux_ab(YR(x),vxR))*nx		\
+    -0.5*(ws0*dV0*Y+							\
+	  ws1*dVY*1+							\
+	  ws2*dV2*Y);
 #include "loop.h"
-
+  
 /*     //mass fractions N-C form */
 /* #include "loopstart.h" */
 /* #define LOOP_END N_Y */
@@ -353,7 +355,7 @@ arch_device void oned_multifluid_roe(scalar rhoL,
 /* 				ws2*dV2*R20+				\ */
 /* 				ws3*dV3*R30);				\ */
 /*   ncterm[4+x] = -0.5*v*(YR(x) - YL(x))*nx; */
-/* #include "loop.h"   */
+/* #include "loop.h" */
 
 } // end Roe function
 #endif

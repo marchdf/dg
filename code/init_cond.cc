@@ -1236,41 +1236,53 @@ void init_dg_khpertu_multifluid(const int N_s, const int N_E, const fullMatrix<s
 
 void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
-  
-  // Initialize
+
+  // Initialize a rarefaction moving towards the left (or downwards)
   scalar A0 = 0.00183;
   scalar Lx = 0.089*2.0/3.0;
-  scalar vcoord =-115.26;//-115.26;//72; // coordinate shift upwards
+  scalar yinterface =-0.2;//-0.07; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
-  scalar u = 0;
-  scalar v = 0+vcoord;
-  scalar p = 1e5;
+  scalar u0 = 0;
+  scalar v0 = 0;
+  scalar p0 = 1e5;
 
-  // left state 
-  scalar yjmp = 0.0;
-  scalar rhoL = 5.494;
-  scalar gammaL= 1.4;
-  scalar alphaL= 1.0/(gammaL-1);
-  scalar EtL  = 1.0/(gammaL-1.0)*p + 0.5*rhoL*(u*u+v*v);
-  scalar ML     = 146.05;         // Molecular weight
-
-  // Contact discontinuity
-  scalar ycon = -0.02;
-  scalar rhoC = 1.351;
-  scalar gammaC = 1.6;
-  scalar alphaC = 1.0/(gammaC-1);
-  scalar EtC  = 1.0/(gammaC-1.0)*p + 0.5*rhoC*(u*u+v*v);
-  scalar MC      = 34.76;  // molecular weight
+  // Top material (rarefaction initialized here)
+  scalar rho01   = 1.351;//5.494;
+  scalar gamma01 = 1.4;
+  scalar alpha01 = 1/(gamma01-1);
+  scalar M01     = 34.76;//146.05;
+  scalar c01     = sqrt(gamma01*p0/rho01);
   
-  // Right state
-  scalar rhoR = 1;
-  scalar uR   = 0;
-  scalar vR   = 0+vcoord;
-  scalar pR   = 1e4;
-  scalar gammaR= 1.4;
-  scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*(uR*uR+vR*vR);
+  // Bottom material (material 2)
+  scalar rho02   = 5.494;//1.351;
+  scalar gamma02 = 1.4;
+  scalar alpha02 = 1/(gamma02-1);
+  scalar M02     = 146.05;//34.76; // molecular weight
+  scalar c02     = sqrt(gamma02*p0/rho02);
+    
+  // Parameters to choose
+  scalar strength = 0.1; // ratio pc/p0
+  scalar L = 0.3;
 
-  scalar xc=0, yc=0, x=0, y=0;
+  // contact velocity (velocity behind the rarefaction, positive)
+  scalar vc = 2.0*c01/(gamma01-1) * (1 - pow(strength, (gamma01-1)/(2.0*gamma01)));   
+
+  // time at with the rarefaction is of length L
+  scalar ti = 2.0/(gamma01+1) * 1.0/vc * L;
+  
+  // solve for the origin of rarefaction
+  scalar yR = yinterface+c01*ti;
+
+  // Head and tail positions at t0
+  scalar t0 = 0.80*ti; // alternatively: t0 = fudge * (yR-A0-yinterface)/c01; //0<fudge<1
+  scalar yH0 = -c01*t0 + yR;    
+  scalar yT0 = -(c01 - (gamma01+1)/2.0 * vc) * t0 + yR;
+
+  // reflection coefficient
+  scalar R = (1- rho01*c01/(rho02*c02))/(1+rho01*c01/(rho02*c02));
+  scalar vcoord = -(1-R)*vc; // coordinate shift upwards
+  
+  scalar xc=0, yc=0, x=0, y=0, u, v, rho, p;
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
 
@@ -1285,72 +1297,74 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<s
       y  = XYZNodes(i,e*D+1);
 #endif
 
-      if(yc >= yjmp){ // post-shock region
+      // vertical distance from interface
+      scalar d = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterface)/(2*delta);
+      
+      // Calculate volume fractions
+      scalar vol=0;
+      if      ((d<1)&&(d>0)) vol = exp(log(1e-16)*pow(fabs(d),8));
+      else if (d<=0)         vol = 1;
+      else                   vol = 0;
+      
+      scalar jx  = 1-vol;
+      scalar rho = jx*rho02+(1-jx)*rho01;
+      scalar jy  = jx*rho02/(jx*rho02+(1-jx)*rho01);      // mass fraction
+      scalar jM  = 1/(jy/M02+(1-jy)/M01);                 // total molecular weight
+      
+      scalar alpha = jy*alpha02*jM/M02+(1-jy)*alpha01*jM/M01;
+      scalar gamma = 1+1.0/alpha;
+      scalar c = sqrt(gamma*p0/rho);
 
-#ifdef ONED
-	U(i,e*N_F+0) = rhoR;
-	U(i,e*N_F+1) = rhoR*vR;
-	U(i,e*N_F+2) = EtR ;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = rhoR/(gammaR-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = 1.0/(gammaR-1);
-#endif
-	
-#elif TWOD
-	U(i,e*N_F+0) = rhoR;
-	U(i,e*N_F+1) = rhoR*uR;
-	U(i,e*N_F+2) = rhoR*vR;
-	U(i,e*N_F+3) = EtR ;
-#ifdef GAMCONS
-	U(i,e*N_F+4) = rhoR/(gammaR-1);
-#elif GAMNCON
-	U(i,e*N_F+4) = 1.0/(gammaR-1);
-#endif
-#endif
+      // Velocity, density and pressure modifications for rarefaction
+      if (y<yH0){ // region in front of the rarefaction
+	u = 0;
+	v = 0;
+	rho = rho;
+	p = p0;	
       }
-      else{
-	// vertical distance from interface
-	scalar d = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+ycon)/(2*delta);
-	
-	// Calculate volume fractions
-	scalar vol=0;
-	if      ((d<1)&&(d>0)) vol = exp(log(1e-16)*pow(fabs(d),8));
-	else if (d<=0)         vol = 1;
-	else                   vol = 0;
-
-	scalar jx  = 1-vol;
-	scalar rho = jx*rhoC+(1-jx)*rhoL;
-	scalar jy  = jx*rhoC/(jx*rhoC+(1-jx)*rhoL);       // mass fraction
-	scalar jM  = 1/(jy/MC+(1-jy)/ML);                    // total molecular weight
-
-	scalar alpha = jy*alphaC*jM/MC+(1-jy)*alphaL*jM/ML;
-	scalar gamma = 1+1.0/alpha;
-
-#ifdef ONED
-	U(i,e*N_F+0) = rho;
-	U(i,e*N_F+1) = rho*v;
-	U(i,e*N_F+2) = p/(gamma-1)+ 0.5*rho*(u*u+v*v);
-#ifdef GAMCONS
-	U(i,e*N_F+3) = rho/(gamma-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = 1.0/(gamma-1);
-#endif
-#elif TWOD
-	U(i,e*N_F+0) = rho;
-	U(i,e*N_F+1) = rho*u;
-	U(i,e*N_F+2) = rho*v;
-	U(i,e*N_F+3) = p/(gamma-1)+ 0.5*rho*(u*u+v*v);
-#ifdef GAMCONS
-	U(i,e*N_F+4) = rho/(gamma-1);
-#elif GAMNCON
-	U(i,e*N_F+4) = 1.0/(gamma-1);
-#endif
-#endif
+      else if (y>yT0){ // region behind the rarefaction
+	u = 0;
+	v = vc;
+	rho = rho * pow(strength,1.0/gamma);//rho * pow(1 - (gamma-1)/2.0 * fabs(vc/c), 2.0/(gamma-1));
+	p   = p0  * strength;
       }
+      else{ // inside the rarefaction
+	u = 0;
+	v = 2.0/(gamma+1)*(c + (y-yR)/t0);
+	rho = rho * pow(1 - (gamma-1)/2.0 * fabs(v/c), 2.0/(gamma-1));
+	p   = p0  * pow(1 - (gamma-1)/2.0 * fabs(v/c), 2.0*gamma/(gamma-1));
+      }
+      v = v + vcoord;
+      
+#ifdef ONED
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*v;
+      U(i,e*N_F+2) = p/(gamma-1)+ 0.5*rho*(u*u+v*v);
+#ifdef GAMCONS
+      U(i,e*N_F+3) = rho/(gamma-1);
+#elif GAMNCON
+      U(i,e*N_F+3) = 1.0/(gamma-1);
+#endif
+      // Mass fractions
+      U(i,e*N_F+4) = (1-jx)*rho;
+      
+#elif TWOD
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*u;
+      U(i,e*N_F+2) = rho*v;
+      U(i,e*N_F+3) = p/(gamma-1)+ 0.5*rho*(u*u+v*v);
+#ifdef GAMCONS
+      U(i,e*N_F+4) = rho/(gamma-1);
+#elif GAMNCON
+      U(i,e*N_F+4) = 1.0/(gamma-1);
+#endif
+      // Mass fractions
+      U(i,e*N_F+5) = (1-jx)*rho;
+#endif
     }
   }
 }
+
 
 
 void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
@@ -1361,43 +1375,45 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar A0 = 0.00183;
   scalar Lx = 0.089*2.0/3.0;
   scalar vcoord =0; //-115.26;//72; // coordinate shift upwards
-  scalar K = 0.5;
+  scalar K = 10;
   scalar h = K*Lx;
-  scalar yinterface =-10.0;//-0.07; // first interface location
+  scalar yinterface =-h;//-0.07; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
   scalar u = 0;
   scalar v = 0+vcoord;
   scalar p = 1e5;
 
   // Top material: blast initialized here
-  scalar rho01   = 1.351;//5.494;
+  scalar rho01   = 1.351;//5.494;//
   scalar u01     = u;
   scalar v01     = v;  
   scalar gamma01 = 1.4;
   scalar alpha01 = 1/(gamma01-1);
-  scalar M02     = 34.76;//146.05;
+  scalar M01     = 34.76;//146.05;//
 
   // Bottom material (material 2)
-  scalar rho02   = 5.494;//1.351;
+  scalar rho02   = 5.494;//1.351;//
   scalar u02     = u;
   scalar v02     = v;  
   scalar gamma02 = 1.4;
   scalar alpha02 = 1/(gamma02-1);
-  scalar M01     = 146.05;//34.76; // molecular weight
+  scalar M02     = 146.05;//34.76;//  // molecular weight
   
   // Explosion energy parameters
   scalar blstpos = 0.0;
-  scalar alpha = 2./3.; // = 2/3 for planar, 1/2 for cyl, 2/5 for sph.
-  scalar Q = 0.8119080; // for gamma = 1.4 //0.66927; // for alpha = 2/3 and gamma = 5/3
-  scalar Ms = 10;    // Mach number when blast front gets to interface
-  scalar ps = p*((2.0*gamma01*Ms*Ms-(gamma01-1))/(gamma01+1));  // pressure at shock in Pa
-  scalar xi = fabs(blstpos-yinterface); // distance btw blast initial position and interface
-  scalar Ex  = pow(Q,2.0/alpha)*0.5*(gamma01+1)*ps/(alpha*alpha)*pow(xi,2.0/alpha-2.0);
+  // scalar alpha = 2./3.; // = 2/3 for planar, 1/2 for cyl, 2/5 for sph.
+  // scalar Q = 0.8119080; // for gamma = 1.4 //0.66927; // for alpha = 2/3 and gamma = 5/3
+  // scalar Ms = 10;    // Mach number when blast front gets to interface
+  // scalar ps = p*((2.0*gamma01*Ms*Ms-(gamma01-1))/(gamma01+1));  // pressure at shock in Pa
+  // scalar xi = fabs(blstpos-yinterface); // distance btw blast initial position and interface
+  // scalar Ex  = pow(Q,2.0/alpha)*0.5*(gamma01+1)*ps/(alpha*alpha)*pow(xi,2.0/alpha-2.0);
 
-  Ex = 1e6;
-  scalar Dxx = 0.001; // energy initially deposited in Dxx
-
-  printf("xi=%f and ps=%e and Ex=%e\n",xi, ps, Ex);
+  scalar pratio = 100; // pressure ratio at blast = px/p0
+  scalar Px = pratio*p;
+  scalar Ex = Px/(gamma01-1);
+  //scalar Dxx = 0.001; // energy initially deposited in Dxx
+  
+  printf("px=%e and Ex=%e\n",Px, Ex);
   
   scalar xc=0, yc=0, x=0, y=0;
   for(int e = 0; e < N_E; e++){
@@ -1419,14 +1435,14 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #ifdef ONED
 	U(i,e*N_F+0) = rho01;
 	U(i,e*N_F+1) = rho01*v01;
-	U(i,e*N_F+2) = Ex/Dxx;
+	U(i,e*N_F+2) = Ex;///Dxx;
 #ifdef GAMCONS
 	U(i,e*N_F+3) = rho01/(gamma01-1);
 #elif GAMNCON
 	U(i,e*N_F+3) = 1.0/(gamma01-1);
 #endif
 	// Mass fractions
-	U(i,e*N_F+4) = 1*rho01;
+	U(i,e*N_F+4) = 1*rho01;//0;//1*rho01;
 #elif TWOD
 	U(i,e*N_F+0) = rho01;
 	U(i,e*N_F+1) = rho01*u01;
@@ -1438,7 +1454,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+4) = 1.0/(gamma01-1);
 #endif
 	// Mass fractions
-	U(i,e*N_F+5) = 1*rho01;
+	U(i,e*N_F+5) = 1*rho01;//0;//1*rho01;
 #endif
       }
       else{
@@ -1453,12 +1469,12 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
 
 	scalar jx  = 1-vol;
 	scalar rho = jx*rho02+(1-jx)*rho01;
-	scalar jy  = jx*rho02/(jx*rho02+(1-jx)*rho01);       // mass fraction
+	scalar jy  = jx*rho02/(jx*rho02+(1-jx)*rho01);      // mass fraction
 	scalar jM  = 1/(jy/M02+(1-jy)/M01);                 // total molecular weight
 
 	scalar alpha = jy*alpha02*jM/M02+(1-jy)*alpha01*jM/M01;
 	scalar gamma = 1+1.0/alpha;
-
+  
 #ifdef ONED
 	U(i,e*N_F+0) = rho;
 	U(i,e*N_F+1) = rho*v;
@@ -1469,7 +1485,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+3) = 1.0/(gamma-1);
 #endif
 	// Mass fractions
-	U(i,e*N_F+4) = (1-jx)*rho01; // jy is mass fraction of 2
+	U(i,e*N_F+4) = (1-jx)*rho;//(1-jx)*rho; // jy is mass fraction of 2
 #elif TWOD
 	U(i,e*N_F+0) = rho;
 	U(i,e*N_F+1) = rho*u;
@@ -1481,7 +1497,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+4) = 1.0/(gamma-1);
 #endif
 	// Mass fractions
-	U(i,e*N_F+5) = (1-jx)*rho01;
+	U(i,e*N_F+5) = (1-jx)*rho;//(1-jx)*rho;
 #endif
       }
     }

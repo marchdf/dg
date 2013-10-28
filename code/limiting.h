@@ -440,11 +440,11 @@ class Limiting
   
   void HRlimiting(scalar* U){
 #ifdef ONED
+
     // Go from lagrange to monomial representation
     blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);
     // Limit the solution according to Liu
     Lcpu_hrl1D(_N_s, _N_E, _N_G, N_F, _N_N, 1, _neighbors, 0, _weight, _V1D, _A, _Alim);
-    
     // Go back to lagrange representation
     blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
 
