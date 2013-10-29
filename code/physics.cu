@@ -191,7 +191,7 @@ arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug,
       // Mass fractions
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) s[(e*N_F+5+x)*N_G+g] = 0; \
+#define MACRO(x) s[(e*N_F+5+x)*N_G+g] = 0;				\
     f[((e*N_F+5+x)*N_G+g)*D+0] = flux_ab(Ug[(e*N_F+5+x)*N_G+g],u);	\
     f[((e*N_F+5+x)*N_G+g)*D+1] = flux_ab(Ug[(e*N_F+5+x)*N_G+g],v);	
 #include "loop.h"
