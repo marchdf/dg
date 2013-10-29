@@ -1375,7 +1375,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar A0 = 0.00183;
   scalar Lx = 0.089*2.0/3.0;
   scalar vcoord =0; //-115.26;//72; // coordinate shift upwards
-  scalar K = 10;
+  scalar K = 2;
   scalar h = K*Lx;
   scalar yinterface =-h;//-0.07; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
@@ -1408,12 +1408,12 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // scalar xi = fabs(blstpos-yinterface); // distance btw blast initial position and interface
   // scalar Ex  = pow(Q,2.0/alpha)*0.5*(gamma01+1)*ps/(alpha*alpha)*pow(xi,2.0/alpha-2.0);
 
-  scalar pratio = 100; // pressure ratio at blast = px/p0
+  scalar pratio = 20; // pressure ratio at blast = px/p0
   scalar Px = pratio*p;
   scalar Ex = Px/(gamma01-1);
   //scalar Dxx = 0.001; // energy initially deposited in Dxx
   
-  printf("px=%e and Ex=%e\n",Px, Ex);
+  printf("pratio=%f, px=%e and Ex=%e\n",pratio,Px, Ex);
   
   scalar xc=0, yc=0, x=0, y=0;
   for(int e = 0; e < N_E; e++){
@@ -1447,7 +1447,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+0) = rho01;
 	U(i,e*N_F+1) = rho01*u01;
 	U(i,e*N_F+2) = rho01*v01;
-	U(i,e*N_F+3) = Ex/Dxx;
+	U(i,e*N_F+3) = Ex;///Dxx;
 #ifdef GAMCONS
 	U(i,e*N_F+4) = rho01/(gamma01-1);
 #elif GAMNCON
