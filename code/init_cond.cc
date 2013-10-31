@@ -638,51 +638,154 @@ void init_dg_blast1d_multifluid(const int N_s, const int N_E, const fullMatrix<s
 
 void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
-#ifdef TWOD
-  printf("simblst problem can only be run in 1D. Exiting");
-  exit(1);
-#endif
+  // Initialize a rarefaction moving towards the left (or downwards)
+  scalar A0 = 0.00183;
+  scalar Lx = 0.089*2.0/3.0;
+  scalar yinterface =-0.2;//-0.07; // first interface location
+  scalar delta=0.005;   // The diffusion layer thickness
+  scalar u0 = 0;
+  scalar v0 = 0;
+  scalar p0 = 1e5;
 
-  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
-
-  // Initialize by setting the explosion energy
-  scalar p0 = 1;
-  scalar u0  = 0;    // velocity of unshocked material
-  scalar rho0 = 1;
-  scalar gamma = 1.4;
-  scalar c0 = sqrt(gamma*p0/rho0);
+  // Parameters to choose
+  scalar strength = 0.1; // ratio p2/p1
+  scalar L = 0.3;        // length of rarefaction when it reaches the interface
+  scalar Ms = 1.2;       // shock mach number
+  scalar T = 0;          // time difference btw shock and rarefaction arrival at the interface
   
-  for(int e = 0; e < N_E; e++){
-    scalar xc = XYZCen(e,0);
-    for(int i = 0; i < N_s; i++){
-      scalar x = XYZNodes(i,e*D+0);
+  // Top material (shock and rarefaction initialized here)
+  scalar rho01   = 1.351;//5.494;
+  scalar gamma01 = 1.4;
+  scalar alpha01 = 1/(gamma01-1);
+  scalar M01     = 34.76;//146.05;
+  scalar c01     = sqrt(gamma01*p0/rho01);
+  
+  // Bottom material (material 2)
+  scalar rho02   = 5.494;//1.351;
+  scalar gamma02 = 1.4;
+  scalar alpha02 = 1/(gamma02-1);
+  scalar M02     = 146.05;//34.76; // molecular weight
+  scalar c02     = sqrt(gamma02*p0/rho02);
 
-      if(xc<0){
-	scalar Ms    = 1.2;   // Shock Mach number
-	scalar u     = Ms*c0*(2*(Ms*Ms-1))/(gamma+1)/(Ms*Ms); // shock is moving downwards
-	scalar p     = p0*(1+2*gamma/(gamma+1)*(Ms*Ms-1));
-	p = (p-0.2)*x+p;
-	scalar rho   = rho0*(gamma+1)*Ms*Ms/(2+(gamma-1)*Ms*Ms);
-	rho = rho0*pow(p/p0,1.0/gamma);
-	U(i,e*N_F+0) = rho;
-	U(i,e*N_F+1) = rho*u;
-	U(i,e*N_F+2) = p/(gamma-1.0) + 0.5*rho*u*u;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = rho/(gamma-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = 1.0/(gamma-1);
+  // Post-shock material
+  scalar us     = -Ms*c01; // shock velocity
+  scalar u4     = 0;
+  scalar v4     =-Ms*c01*(2*(Ms*Ms-1))/(gamma01+1)/(Ms*Ms); // shock is moving downwards
+  scalar p4     = p0*(1+2*gamma01/(gamma01+1)*(Ms*Ms-1));
+  scalar rho4   = rho01*(gamma01+1)*Ms*Ms/(2+(gamma01-1)*Ms*Ms);
+  scalar gamma4 = gamma01;
+  scalar Et4    = p4/(gamma4-1.0) + 0.5*rho4*(u4*u4+v4*v4);
+  scalar c4     = sqrt(gamma4*p4/rho4);
+  
+  // contact velocity (velocity behind the rarefaction, positive)
+  scalar vc = 2.0*c4/(gamma01-1) * (1 - pow(strength, (gamma01-1)/(2.0*gamma01)));
+
+  // time at which the rarefaction is of length L
+  scalar tiR = 2.0/(gamma01+1) * 1.0/vc * L;
+
+  // solve for the origin of rarefaction
+  scalar yR = yinterface + c4*tiR;// + 0.03;
+
+  // Time at which the shock gets to the interface
+  scalar tiS = tiR - T;
+
+  // Solve for the shock origin
+  scalar yS = yinterface - us*tiS;
+
+  // Initialization time t0 = alpha*tiS
+  scalar t0 = 0.8*tiS;
+
+  // Position of the shock, head, and tail at t0
+  scalar yS0 = us*t0 + yS;
+  scalar yH0 = -c4*t0 + yR;    
+  scalar yT0 = -(c4 - (gamma01+1)/2.0 * vc) * t0 + yR;
+  printf("c4=%f, us=%f, yi=%f, yS=%f, yS0=%f, yH0=%f, yT0=%f, %f\n", c4, us, yinterface, yS, yS0, yH0, yT0,yT0-yH0);
+  
+  // reflection coefficient
+  //scalar R = (1- rho01*c01/(rho02*c02))/(1+rho01*c01/(rho02*c02));
+  scalar vcoord = 0;//-(1-R)*vc; // coordinate shift upwards
+  
+  scalar xc=0, yc=0, x=0, y=0, u, v, rho, p;
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+#ifdef ONED
+      A0 = 0;
+      yc = XYZCen(e,0);
+      y  = XYZNodes(i,e*D+0);
+#elif TWOD
+      xc = XYZCen(e,0);
+      x  = XYZNodes(i,e*D+0);
+      yc = XYZCen(e,1);
+      y  = XYZNodes(i,e*D+1);
 #endif
+
+      // vertical distance from interface
+      scalar d = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterface)/(2*delta);
+      
+      // Calculate volume fractions
+      scalar vol=0;
+      if      ((d<1)&&(d>0)) vol = exp(log(1e-16)*pow(fabs(d),8));
+      else if (d<=0)         vol = 1;
+      else                   vol = 0;
+      
+      scalar jx  = 1-vol;
+      scalar rho = jx*rho02+(1-jx)*rho01;
+      scalar jy  = jx*rho02/(jx*rho02+(1-jx)*rho01);      // mass fraction
+      scalar jM  = 1/(jy/M02+(1-jy)/M01);                 // total molecular weight
+      
+      scalar alpha = jy*alpha02*jM/M02+(1-jy)*alpha01*jM/M01;
+      scalar gamma = 1+1.0/alpha;
+      u=0;v=0;p=p0;
+
+      // Velocity, density and pressure modifications for shock and rarefaction
+      if ((yS0 <= yc) && (yc < yH0)){ // region behind the shock,  in front of the rarefaction
+      	u = u4;
+      	v = v4;
+      	rho = rho4;
+      	p   = p4;
       }
-      else{
-	U(i,e*N_F+0) = rho0;
-	U(i,e*N_F+1) = rho0*u0;
-	U(i,e*N_F+2) = p0/(gamma-1.0) + 0.5*rho0*u0*u0;
+      else if ((yH0 <= yc) && (yc < yT0)){ // inside rarefaction
+      	u = 0;
+      	v = 2.0/(gamma+1)*(c4 + (y-yR)/t0);
+      	rho = rho4 * pow(1 - (gamma-1)/2.0 * fabs(v/c4), 2.0/(gamma-1));
+      	p   = p4   * pow(1 - (gamma-1)/2.0 * fabs(v/c4), 2.0*gamma/(gamma-1));
+	v = v + v4;
+      }
+      else if (yT0 <= yc){ // behind rarefaction
+      	u = 0;
+      	v = vc;  
+      	rho = rho4 * pow(strength,1.0/gamma);//rho * pow(1 - (gamma-1)/2.0 * fabs(vc/c), 2.0/(gamma-1));
+      	p   = p4   * strength;
+	v = v + v4;
+      }
+      v = v + vcoord;
+      
+#ifdef ONED
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*v;
+      U(i,e*N_F+2) = p/(gamma-1)+ 0.5*rho*(u*u+v*v);
 #ifdef GAMCONS
-	U(i,e*N_F+3) = rho0/(gamma-1);
+      U(i,e*N_F+3) = rho/(gamma-1);
 #elif GAMNCON
-	U(i,e*N_F+3) = 1.0/(gamma-1);
+      U(i,e*N_F+3) = 1.0/(gamma-1);
 #endif
-      }
+      // Mass fractions
+      U(i,e*N_F+4) = (1-jx)*rho;
+      
+#elif TWOD
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*u;
+      U(i,e*N_F+2) = rho*v;
+      U(i,e*N_F+3) = p/(gamma-1)+ 0.5*rho*(u*u+v*v);
+#ifdef GAMCONS
+      U(i,e*N_F+4) = rho/(gamma-1);
+#elif GAMNCON
+      U(i,e*N_F+4) = 1.0/(gamma-1);
+#endif
+      // Mass fractions
+      U(i,e*N_F+5) = (1-jx)*rho;
+#endif
     }
   }
 }
