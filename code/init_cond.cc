@@ -1478,7 +1478,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar A0 = 0.00183;
   scalar Lx = 0.089*2.0/3.0;
   scalar vcoord =0; //-115.26;//72; // coordinate shift upwards
-  scalar K = 6;
+  scalar K = 1;
   scalar h = K*Lx;
   scalar yinterface =-h;//-0.07; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
