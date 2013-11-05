@@ -960,21 +960,19 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   exit(1);
 #elif TWOD
   
-  if (N_F!=7) printf("You are setting up the wrong problem. N_F =%i != 7.\n",N_F);
-
   // Initialize
   scalar A01 = 0.00183;                 // initial amplitude
   scalar A02 = 0.00183;                 // initial amplitude
   scalar yshck = 0.025; // initial shock location
   scalar Lx = 0.089*2.0/3.0;
-  scalar K = 1.5;
+  scalar K = 20;
   scalar h = K*Lx;
   scalar yinterface1 = 0; // first interface location
   scalar yinterface2 =-h; // second interface location
   scalar delta=0.005;    // The diffusion layer thickness
     
   // Velocities/pressures in all materials
-  scalar vcoord = 134;//51.5;//134;//72.9; // coordinate shift upwards
+  scalar vcoord = 68.32;//51.5;//134;//72.9; // coordinate shift upwards
   scalar u = 0.0;
   scalar v = 0.0+vcoord;
   scalar p = 1e5;
@@ -1028,7 +1026,7 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+4) = 1.0/(gamma4-1);
 #endif
  	// Mass fractions
-	// U(i,e*N_F+5) = 1*rho4;
+	U(i,e*N_F+5) = 1*rho4;
 	// U(i,e*N_F+6) = 0;
       }
       else{
@@ -1069,7 +1067,7 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+4) = 1.0/(gamma-1);
 #endif
  	// Mass fractions
-	// U(i,e*N_F+5) = Y1*rho;
+	U(i,e*N_F+5) = Y1*rho;
 	// U(i,e*N_F+6) = Y3*rho;
       }
     }
@@ -1478,7 +1476,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar A0 = 0.00183;
   scalar Lx = 0.089*2.0/3.0;
   scalar vcoord =0; //-115.26;//72; // coordinate shift upwards
-  scalar K = 1;
+  scalar K = 20;
   scalar h = K*Lx;
   scalar yinterface =-h;//-0.07; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
