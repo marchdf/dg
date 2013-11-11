@@ -1372,7 +1372,8 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // Initialize a rarefaction moving towards the left (or downwards)
   scalar A0 = 0.00183;
   scalar Lx = 0.089*2.0/3.0;
-  scalar yinterface =-0.2;//-0.07; // first interface location
+  scalar K = 4;
+  scalar yinterface =-(K+1)*Lx;//-0.07; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
   scalar u0 = 0;
   scalar v0 = 0;
@@ -1393,8 +1394,8 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar c02     = sqrt(gamma02*p0/rho02);
     
   // Parameters to choose
-  scalar strength = 0.1; // ratio pc/p0
-  scalar L = 0.3;
+  scalar strength = 0.3; // ratio pc/p0
+  scalar L = K*Lx;
 
   // contact velocity (velocity behind the rarefaction, positive)
   scalar vc = 2.0*c01/(gamma01-1) * (1 - pow(strength, (gamma01-1)/(2.0*gamma01)));   
@@ -1507,7 +1508,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar A0 = 0.00183;
   scalar Lx = 0.089*2.0/3.0;
   scalar vcoord =0; //-115.26;//72; // coordinate shift upwards
-  scalar K = 20;
+  scalar K = 6;
   scalar h = K*Lx;
   scalar yinterface =-h;//-0.07; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
@@ -1540,7 +1541,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // scalar xi = fabs(blstpos-yinterface); // distance btw blast initial position and interface
   // scalar Ex  = pow(Q,2.0/alpha)*0.5*(gamma01+1)*ps/(alpha*alpha)*pow(xi,2.0/alpha-2.0);
 
-  scalar pratio = 500; // pressure ratio at blast = px/p0
+  scalar pratio = 100; // pressure ratio at blast = px/p0
   scalar Px = pratio*p;
   scalar Ex = Px/(gamma01-1);
   //scalar Dxx = 0.001; // energy initially deposited in Dxx
