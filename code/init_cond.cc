@@ -1380,17 +1380,17 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar p0 = 1e5;
 
   // Top material (rarefaction initialized here)
-  scalar rho01   = 1.351;//5.494;
-  scalar gamma01 = 1.4;
+  scalar rho01   = 5.494;//1.351;//5.494;//
+  scalar gamma01 = 1.276;//;1.093;//1.276;//;
   scalar alpha01 = 1/(gamma01-1);
-  scalar M01     = 34.76;//146.05;
+  scalar M01     = 146.05;//34.76;//146.05;//
   scalar c01     = sqrt(gamma01*p0/rho01);
   
   // Bottom material (material 2)
-  scalar rho02   = 5.494;//1.351;
-  scalar gamma02 = 1.4;
+  scalar rho02   = 1.351;//5.494;//1.351;//
+  scalar gamma02 = 1.093;//1.276;//
   scalar alpha02 = 1/(gamma02-1);
-  scalar M02     = 146.05;//34.76; // molecular weight
+  scalar M02     = 34.76;//146.05;//34.76;// // molecular weight
   scalar c02     = sqrt(gamma02*p0/rho02);
     
   // Parameters to choose
