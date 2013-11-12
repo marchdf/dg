@@ -1372,7 +1372,7 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // Initialize a rarefaction moving towards the left (or downwards)
   scalar A0 = 0.00183;
   scalar Lx = 0.089*2.0/3.0;
-  scalar K = 4;
+  scalar K = 6;
   scalar yinterface =-(K+1)*Lx;//-0.07; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
   scalar u0 = 0;
@@ -1394,14 +1394,16 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar c02     = sqrt(gamma02*p0/rho02);
     
   // Parameters to choose
-  scalar strength = 0.3; // ratio pc/p0
+  scalar strength = 0.5;//0.4666; // ratio pc/p0
   scalar L = K*Lx;
-
+  printf("L = h/lambda=%f, strength=%f\n",K,strength);
+  
   // contact velocity (velocity behind the rarefaction, positive)
   scalar vc = 2.0*c01/(gamma01-1) * (1 - pow(strength, (gamma01-1)/(2.0*gamma01)));   
 
   // time at with the rarefaction is of length L
   scalar ti = 2.0/(gamma01+1) * 1.0/vc * L;
+  printf("interaction time with interface, ti = %f\n",ti);
   
   // solve for the origin of rarefaction
   scalar yR = yinterface+c01*ti;
