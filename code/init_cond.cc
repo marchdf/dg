@@ -641,34 +641,35 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // Initialize a rarefaction moving towards the left (or downwards)
   scalar A0 = 0.00183;
   scalar Lx = 0.089*2.0/3.0;
-  scalar yinterface =-0.2;//-0.07; // first interface location
+  scalar K = 1;
+  scalar yinterface =-(K+1)*Lx;//-0.07; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
   scalar u0 = 0;
   scalar v0 = 0;
   scalar p0 = 1e5;
 
   // Parameters to choose
-  scalar strength = 0.1; // ratio p2/p1
-  scalar L = 0.3;        // length of rarefaction when it reaches the interface
-  scalar Ms = 1.2;       // shock mach number
+  scalar strength = 0.5; // ratio p2/p1
+  scalar L = K*Lx;       // length of rarefaction when it reaches the interface
+  scalar Ms = 3;       // shock mach number
   scalar T = 0;          // time difference btw shock and rarefaction arrival at the interface
   
   // Top material (shock and rarefaction initialized here)
-  scalar rho01   = 1.351;//5.494;
-  scalar gamma01 = 1.4;
+  scalar rho01   = 5.494;//1.351;//5.494;//
+  scalar gamma01 = 1.276;//;1.093;//1.276;//;
   scalar alpha01 = 1/(gamma01-1);
-  scalar M01     = 34.76;//146.05;
+  scalar M01     = 146.05;//34.76;//146.05;//
   scalar c01     = sqrt(gamma01*p0/rho01);
   
   // Bottom material (material 2)
-  scalar rho02   = 5.494;//1.351;
-  scalar gamma02 = 1.4;
+  scalar rho02   = 5.494;//1.351;//
+  scalar gamma02 = 1.276;//1.093;//
   scalar alpha02 = 1/(gamma02-1);
-  scalar M02     = 146.05;//34.76; // molecular weight
+  scalar M02     = 146.05;//34.76;//  // molecular weight
   scalar c02     = sqrt(gamma02*p0/rho02);
 
   // Post-shock material
-  scalar us     = -Ms*c01; // shock velocity
+  scalar us     =-Ms*c01; // shock velocity
   scalar u4     = 0;
   scalar v4     =-Ms*c01*(2*(Ms*Ms-1))/(gamma01+1)/(Ms*Ms); // shock is moving downwards
   scalar p4     = p0*(1+2*gamma01/(gamma01+1)*(Ms*Ms-1));
@@ -678,13 +679,13 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar c4     = sqrt(gamma4*p4/rho4);
   
   // contact velocity (velocity behind the rarefaction, positive)
-  scalar vc = 2.0*c4/(gamma01-1) * (1 - pow(strength, (gamma01-1)/(2.0*gamma01)));
+  scalar vc = 2.0*c4/(gamma01-1) * (1 - pow(strength, (gamma01-1)/(2.0*gamma01))) + v4;
 
   // time at which the rarefaction is of length L
-  scalar tiR = 2.0/(gamma01+1) * 1.0/vc * L;
+  scalar tiR = 2.0/(gamma01+1) * 1.0/(vc-v4) * L;
 
   // solve for the origin of rarefaction
-  scalar yR = yinterface + c4*tiR;// + 0.03;
+  scalar yR = yinterface + (c4-v4)*tiR;
 
   // Time at which the shock gets to the interface
   scalar tiS = tiR - T;
@@ -693,13 +694,13 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar yS = yinterface - us*tiS;
 
   // Initialization time t0 = alpha*tiS
-  scalar t0 = 0.8*tiS;
+  scalar t0 = 0.9*tiS;
 
   // Position of the shock, head, and tail at t0
   scalar yS0 = us*t0 + yS;
-  scalar yH0 = -c4*t0 + yR;    
-  scalar yT0 = -(c4 - (gamma01+1)/2.0 * vc) * t0 + yR;
-  printf("c4=%f, us=%f, yi=%f, yS=%f, yS0=%f, yH0=%f, yT0=%f, %f\n", c4, us, yinterface, yS, yS0, yH0, yT0,yT0-yH0);
+  scalar yH0 = -(c4-v4)*t0 + yR;    
+  scalar yT0 = -(c4 - (gamma01+1)/2.0 * (vc-v4) - v4) * t0 + yR;
+  printf("c4=%f, us=%f, yi=%f, yS=%f, yS0=%f, yH0=%f, yT0=%f, %f, L=%f\n", c4, us, yinterface, yS, yS0, yH0, yT0,yT0-yH0, L);
   
   // reflection coefficient
   //scalar R = (1- rho01*c01/(rho02*c02))/(1+rho01*c01/(rho02*c02));
@@ -747,17 +748,17 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
       }
       else if ((yH0 <= yc) && (yc < yT0)){ // inside rarefaction
       	u = 0;
-      	v = 2.0/(gamma+1)*(c4 + (y-yR)/t0);
+      	v = 2.0/(gamma+1)*(c4 + (y-v4*t0-yR)/t0);
       	rho = rho4 * pow(1 - (gamma-1)/2.0 * fabs(v/c4), 2.0/(gamma-1));
       	p   = p4   * pow(1 - (gamma-1)/2.0 * fabs(v/c4), 2.0*gamma/(gamma-1));
 	v = v + v4;
       }
       else if (yT0 <= yc){ // behind rarefaction
       	u = 0;
-      	v = vc;  
+      	v = vc;
       	rho = rho4 * pow(strength,1.0/gamma);//rho * pow(1 - (gamma-1)/2.0 * fabs(vc/c), 2.0/(gamma-1));
       	p   = p4   * strength;
-	v = v + v4;
+	//v = v - v4;
       }
       v = v + vcoord;
       
@@ -1394,7 +1395,7 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar c02     = sqrt(gamma02*p0/rho02);
     
   // Parameters to choose
-  scalar strength = 0.5;//0.4666; // ratio pc/p0
+  scalar strength = 0.73; // ratio pc/p0
   scalar L = K*Lx;
   printf("L = h/lambda=%f, strength=%f\n",K,strength);
   
@@ -1509,7 +1510,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // Initialize
   scalar A0 = 0.00183;
   scalar Lx = 0.089*2.0/3.0;
-  scalar vcoord =0; //-115.26;//72; // coordinate shift upwards
+  scalar vcoord = 0; //-115.26;//72; // coordinate shift upwards
   scalar K = 6;
   scalar h = K*Lx;
   scalar yinterface =-h;//-0.07; // first interface location
@@ -1519,20 +1520,20 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar p = 1e5;
 
   // Top material: blast initialized here
-  scalar rho01   = 5.494;//1.351;//5.494;//
+  scalar rho01   = 1.351;//5.494;//
   scalar u01     = u;
   scalar v01     = v;  
-  scalar gamma01 = 1.276;//;1.093;//1.276;//;
+  scalar gamma01 = 1.093;//1.276;//;
   scalar alpha01 = 1/(gamma01-1);
-  scalar M01     = 146.05;//34.76;//146.05;//
+  scalar M01     = 34.76;//146.05;//
 
   // Bottom material (material 2)
-  scalar rho02   = 1.351;//5.494;//1.351;//
+  scalar rho02   = 5.494;//1.351;//
   scalar u02     = u;
   scalar v02     = v;  
-  scalar gamma02 = 1.093;//1.276;//1.093;//
+  scalar gamma02 = 1.276;//1.093;//
   scalar alpha02 = 1/(gamma02-1);
-  scalar M02     = 34.76;//146.05;//34.76;//  // molecular weight
+  scalar M02     = 146.05;//34.76;//  // molecular weight
   
   // Explosion energy parameters
   scalar blstpos = 0.0;
@@ -1543,7 +1544,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // scalar xi = fabs(blstpos-yinterface); // distance btw blast initial position and interface
   // scalar Ex  = pow(Q,2.0/alpha)*0.5*(gamma01+1)*ps/(alpha*alpha)*pow(xi,2.0/alpha-2.0);
 
-  scalar pratio = 100; // pressure ratio at blast = px/p0
+  scalar pratio = 500; // pressure ratio at blast = px/p0
   scalar Px = pratio*p;
   scalar Ex = Px/(gamma01-1);
   //scalar Dxx = 0.001; // energy initially deposited in Dxx
