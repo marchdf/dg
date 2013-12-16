@@ -732,7 +732,7 @@ int main (int argc, char **argv)
   double DtOut = inputs.getOutputTimeStep(); 
   double Tf    = inputs.getFinalTime();
   m.setDx(N_N,N_E,XYZCen,XYZNodes);
-  scalar CFL   = inputs.getCFL()*m.getDx()/(2.0*order+1);
+  scalar CFL   = inputs.getCFL()*m.getDx()/(2.0*order-1);//according to Eder. I used to have: (2.0*order+1);
 
   if(myid==0){printf("==== Now RK 4 steps =====\n");}
   DG_SOLVER dgsolver = DG_SOLVER(N_E, N_s, N_G, N_N, M_T, M_s, M_G, M_B, N_ghosts,
@@ -760,117 +760,119 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
 
-//   // Initial condition
-//   fullMatrix<scalar> Uinit(N_s, N_E*N_F);
-// #ifdef MULTIFLUID
-//   if     (simplew) init_dg_simplew_multifluid(N_s, N_E, XYZNodes, Uinit);
-//   else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, XYZNodes, Uinit);
-//   else if(contact) init_dg_contact_multifluid(N_s, N_E, XYZNodes, Uinit);
-//   else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, XYZNodes, Uinit);
-//   else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, XYZNodes, Uinit);
-//   else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, XYZNodes, Uinit);
-//   else if(expogam) init_dg_expogam_multifluid(N_s, N_E, XYZNodes, Uinit);
-//   else if(shckint) init_dg_shckint_multifluid(N_s, N_E, XYZNodes, Uinit);
-//   else if(rarecon) init_dg_rarecon_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
-//   else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, XYZNodes, Uinit);
-//   else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
-//   else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
-//   else if(khblast) init_dg_khblast_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
-//   else if(khpertu) init_dg_khpertu_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
-//   else if(blastrm) init_dg_blastrm_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
-// #elif PASSIVE
-//   if (sinephi) init_dg_sinephi_passive(N_s, N_E, XYZNodes, Uinit);
-//   if (sodmono) init_dg_sodmono_passive(N_s, N_E, XYZNodes, Uinit);
-// #endif
-//   scalar* h_Uinit = new scalar[N_s*N_E*N_F];  makeZero(h_Uinit,N_s*N_E*N_F);
-//   for(int e = 0; e < N_E; e++){
-//     for(int fc = 0; fc < N_F; fc++){
-//       for(int i = 0; i < N_s; i++){
-// 	h_Uinit[(e*N_F+fc)*N_s+i] = Uinit(i,e*N_F+fc);}}}
+#ifdef ERROR
+  // Initial condition
+  fullMatrix<scalar> Uinit(N_s, N_E*N_F);
+#ifdef MULTIFLUID
+  if     (simplew) init_dg_simplew_multifluid(N_s, N_E, XYZNodes, Uinit);
+  else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, XYZNodes, Uinit);
+  else if(contact) init_dg_contact_multifluid(N_s, N_E, XYZNodes, Uinit);
+  else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, XYZNodes, Uinit);
+  else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, XYZNodes, Uinit);
+  else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, XYZNodes, Uinit);
+  else if(expogam) init_dg_expogam_multifluid(N_s, N_E, XYZNodes, Uinit);
+  else if(shckint) init_dg_shckint_multifluid(N_s, N_E, XYZNodes, Uinit);
+  else if(rarecon) init_dg_rarecon_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
+  else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, XYZNodes, Uinit);
+  else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
+  else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
+  else if(khblast) init_dg_khblast_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
+  else if(khpertu) init_dg_khpertu_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
+  else if(blastrm) init_dg_blastrm_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
+#elif PASSIVE
+  if (sinephi) init_dg_sinephi_passive(N_s, N_E, XYZNodes, Uinit);
+  if (sodmono) init_dg_sodmono_passive(N_s, N_E, XYZNodes, Uinit);
+#endif
+  scalar* h_Uinit = new scalar[N_s*N_E*N_F];  makeZero(h_Uinit,N_s*N_E*N_F);
+  for(int e = 0; e < N_E; e++){
+    for(int fc = 0; fc < N_F; fc++){
+      for(int i = 0; i < N_s; i++){
+	h_Uinit[(e*N_F+fc)*N_s+i] = Uinit(i,e*N_F+fc);}}}
 
-//   // Change to primitive variables
-//   for(int e = 0; e < N_E; e++){
-//     for(int i = 0; i < N_s; i++){
-//       // velocity
-//       h_Uinit[(e*N_F+1)*N_s+i] = h_Uinit[(e*N_F+1)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; 
-//       h_U    [(e*N_F+1)*N_s+i] = h_U    [(e*N_F+1)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
-// #ifdef MULTIFLUID
-//       // gamma: get everything in terms of 1/(gamma-1)
-// #ifdef GAMCONS
-//       h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i];
-//       h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
-// #elif GAMNCON
-//       h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i];
-//       h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i];
-// #endif
-//       // pressure = (gamma-1)*(E-0.5 rho*v*v)
-//       h_Uinit[(e*N_F+2)*N_s+i] = 1.0/h_Uinit[(e*N_F+3)*N_s+i]*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
-//       h_U    [(e*N_F+2)*N_s+i] = 1.0/h_U    [(e*N_F+3)*N_s+i]*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
-// #elif PASSIVE
-//       // pressure = (gamma-1)*(E-0.5 rho*v*v)
-//       scalar gamma = constants::GLOBAL_GAMMA;
-//       h_Uinit[(e*N_F+2)*N_s+i] = (gamma-1)*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
-//       h_U    [(e*N_F+2)*N_s+i] = (gamma-1)*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
-//       // conservative phi
-//       h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; 
-//       h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
-// #endif
-//     }
-//   }
+  // Change to primitive variables
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+      // velocity
+      h_Uinit[(e*N_F+1)*N_s+i] = h_Uinit[(e*N_F+1)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; 
+      h_U    [(e*N_F+1)*N_s+i] = h_U    [(e*N_F+1)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
+#ifdef MULTIFLUID
+      // gamma: get everything in terms of 1/(gamma-1)
+#ifdef GAMCONS
+      h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i];
+      h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
+#elif GAMNCON
+      h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i];
+      h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i];
+#endif
+      // pressure = (gamma-1)*(E-0.5 rho*v*v)
+      h_Uinit[(e*N_F+2)*N_s+i] = 1.0/h_Uinit[(e*N_F+3)*N_s+i]*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
+      h_U    [(e*N_F+2)*N_s+i] = 1.0/h_U    [(e*N_F+3)*N_s+i]*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
+#elif PASSIVE
+      // pressure = (gamma-1)*(E-0.5 rho*v*v)
+      scalar gamma = constants::GLOBAL_GAMMA;
+      h_Uinit[(e*N_F+2)*N_s+i] = (gamma-1)*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
+      h_U    [(e*N_F+2)*N_s+i] = (gamma-1)*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
+      // conservative phi
+      h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; 
+      h_U    [(e*N_F+3)*N_s+i] = h_U    [(e*N_F+3)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
+#endif
+    }
+  }
 
     
-//   // Collocate the solution to the integration points
-//   scalar* h_Uinitg = new scalar[N_G*N_E*N_F];  makeZero(h_Uinitg,N_G*N_E*N_F);
-//   scalar* h_Ug     = new scalar[N_G*N_E*N_F];  makeZero(h_Ug    ,N_G*N_E*N_F);
-//   hostblasGemm('N','N', N_G, N_E*N_F, N_s, 1, h_phi, N_G, h_Uinit, N_s, 0.0, h_Uinitg, N_G);
-//   hostblasGemm('N','N', N_G, N_E*N_F, N_s, 1, h_phi, N_G, h_U    , N_s, 0.0, h_Ug    , N_G);
+  // Collocate the solution to the integration points
+  scalar* h_Uinitg = new scalar[N_G*N_E*N_F];  makeZero(h_Uinitg,N_G*N_E*N_F);
+  scalar* h_Ug     = new scalar[N_G*N_E*N_F];  makeZero(h_Ug    ,N_G*N_E*N_F);
+  hostblasGemm('N','N', N_G, N_E*N_F, N_s, 1, h_phi, N_G, h_Uinit, N_s, 0.0, h_Uinitg, N_G);
+  hostblasGemm('N','N', N_G, N_E*N_F, N_s, 1, h_phi, N_G, h_U    , N_s, 0.0, h_Ug    , N_G);
 
-//   // Take the cell average of the solution
-//   scalar* h_UinitAvg = new scalar[N_E*N_F];  makeZero(h_UinitAvg,N_E*N_F);
-//   scalar* h_UAvg     = new scalar[N_E*N_F];  makeZero(h_UAvg    ,N_E*N_F);
-//   scalar dx = XYZNodes(1,0*D+0)-XYZNodes(0,0*D+0);
-//   for(int e = 0; e < N_E; e++){
-//     for(int fc = 0; fc < N_F; fc++){
-//       for(int g = 0; g < N_G; g++){
-// 	h_UinitAvg[e*N_F+fc] += h_Uinitg[(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
-// 	h_UAvg    [e*N_F+fc] += h_Ug    [(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
-//       }
-//     }
-//   }
+  // Take the cell average of the solution
+  scalar* h_UinitAvg = new scalar[N_E*N_F];  makeZero(h_UinitAvg,N_E*N_F);
+  scalar* h_UAvg     = new scalar[N_E*N_F];  makeZero(h_UAvg    ,N_E*N_F);
+  scalar dx = XYZNodes(1,0*D+0)-XYZNodes(0,0*D+0);
+  for(int e = 0; e < N_E; e++){
+    for(int fc = 0; fc < N_F; fc++){
+      for(int g = 0; g < N_G; g++){
+	h_UinitAvg[e*N_F+fc] += h_Uinitg[(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
+	h_UAvg    [e*N_F+fc] += h_Ug    [(e*N_F+fc)*N_G+g]*h_J[e]*weight(g,0);
+      }
+    }
+  }
 
-//   // Calculate the different norms of the error
-//   scalar E = 0;
-//   scalar EMod = 0;
-//   scalar* h_Err1      = new scalar[N_F]; makeZero(h_Err1   , N_F);
-//   scalar* h_Err2      = new scalar[N_F]; makeZero(h_Err2   , N_F);
-//   scalar* h_ErrInf    = new scalar[N_F]; makeZero(h_ErrInf   , N_F);
-//   for(int e = 0; e < N_E; e++){
-//     for(int fc = 0; fc < N_F; fc++){
-//       E    = h_UinitAvg   [e*N_F+fc]-h_UAvg   [e*N_F+fc];
-//       h_Err1[fc]    += fabs(E);
-//       h_Err2[fc]    += E   *E;
-//       if (h_ErrInf[fc]    < fabs(E   ))  h_ErrInf   [fc] = fabs(E);
-//     }
-//   }
+  // Calculate the different norms of the error
+  scalar E = 0;
+  scalar EMod = 0;
+  scalar* h_Err1      = new scalar[N_F]; makeZero(h_Err1   , N_F);
+  scalar* h_Err2      = new scalar[N_F]; makeZero(h_Err2   , N_F);
+  scalar* h_ErrInf    = new scalar[N_F]; makeZero(h_ErrInf   , N_F);
+  for(int e = 0; e < N_E; e++){
+    for(int fc = 0; fc < N_F; fc++){
+      E    = h_UinitAvg   [e*N_F+fc]-h_UAvg   [e*N_F+fc];
+      h_Err1[fc]    += fabs(E);
+      h_Err2[fc]    += E   *E;
+      if (h_ErrInf[fc]    < fabs(E   ))  h_ErrInf   [fc] = fabs(E);
+    }
+  }
   
-//   // Output some stuff in a file to read by post-proc
-//   std::string error = "error.dat"; 
-//   FILE *f = fopen(error.c_str(),"w");
-//   fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_Err1[fc]/N_E);          fprintf(f,"\n");
-//   fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", sqrt(h_Err2[fc]/N_E));    fprintf(f,"\n");
-//   fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_ErrInf[fc]);            fprintf(f,"\n");
-//   fclose(f);
+  // Output some stuff in a file to read by post-proc
+  std::string error = "error.dat"; 
+  FILE *f = fopen(error.c_str(),"w");
+  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_Err1[fc]/N_E);          fprintf(f,"\n");
+  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", sqrt(h_Err2[fc]/N_E));    fprintf(f,"\n");
+  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_ErrInf[fc]);            fprintf(f,"\n");
+  fclose(f);
   
-  // // Free some stuff
-  // delete[] h_Uinit;
-  // delete[] h_Uinitg;
-  // delete[] h_UinitAvg;
-  // delete[] h_Ug;
-  // delete[] h_UAvg;
-  // delete[] h_Err1;
-  // delete[] h_Err2;
-  // delete[] h_ErrInf;
+  // Free some stuff
+  delete[] h_Uinit;
+  delete[] h_Uinitg;
+  delete[] h_UinitAvg;
+  delete[] h_Ug;
+  delete[] h_UAvg;
+  delete[] h_Err1;
+  delete[] h_Err2;
+  delete[] h_ErrInf;
 
+#endif
 
   //////////////////////////////////////////////////////////////////////////   
   //

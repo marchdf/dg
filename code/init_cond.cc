@@ -641,24 +641,23 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // Initialize a rarefaction moving towards the left (or downwards)
   scalar A0 = 0.00183;
   scalar Lx = 0.089*2.0/3.0;
-  scalar K = 1;
-  scalar yinterface =-(K+1)*Lx;//-0.07; // first interface location
+  scalar K = 2;
+  scalar yinterface =-(K)*Lx;//-0.07; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
   scalar u0 = 0;
   scalar v0 = 0;
   scalar p0 = 1e5;
 
   // Parameters to choose
-  scalar strength = 0.5; // ratio p2/p1
   scalar L = K*Lx;       // length of rarefaction when it reaches the interface
-  scalar Ms = 3;       // shock mach number
-  scalar T = 0;          // time difference btw shock and rarefaction arrival at the interface
+  scalar Ms = 2.85;      // shock mach number
+  scalar T = 0.;         // time difference btw shock and rarefaction arrival at the interface
   
   // Top material (shock and rarefaction initialized here)
-  scalar rho01   = 5.494;//1.351;//5.494;//
-  scalar gamma01 = 1.276;//;1.093;//1.276;//;
+  scalar rho01   = 1.351;//5.494;//
+  scalar gamma01 = 1.093;//1.276;//;
   scalar alpha01 = 1/(gamma01-1);
-  scalar M01     = 146.05;//34.76;//146.05;//
+  scalar M01     = 34.76;//146.05;//
   scalar c01     = sqrt(gamma01*p0/rho01);
   
   // Bottom material (material 2)
@@ -679,10 +678,10 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar c4     = sqrt(gamma4*p4/rho4);
   
   // contact velocity (velocity behind the rarefaction, positive)
-  scalar vc = 2.0*c4/(gamma01-1) * (1 - pow(strength, (gamma01-1)/(2.0*gamma01))) + v4;
+  scalar vc = 0;//2.0*c4/(gamma01-1) * (1 - pow(strength, (gamma01-1)/(2.0*gamma01))) + v4;
 
   // time at which the rarefaction is of length L
-  scalar tiR = 2.0/(gamma01+1) * 1.0/(vc-v4) * L;
+  scalar tiR = -2.0/(gamma01+1) * 1.0/v4 * L;
 
   // solve for the origin of rarefaction
   scalar yR = yinterface + (c4-v4)*tiR;
@@ -694,12 +693,12 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar yS = yinterface - us*tiS;
 
   // Initialization time t0 = alpha*tiS
-  scalar t0 = 0.9*tiS;
+  scalar t0 = 0.95*tiS;
 
   // Position of the shock, head, and tail at t0
   scalar yS0 = us*t0 + yS;
   scalar yH0 = -(c4-v4)*t0 + yR;    
-  scalar yT0 = -(c4 - (gamma01+1)/2.0 * (vc-v4) - v4) * t0 + yR;
+  scalar yT0 = -(c4 - v4 + (gamma01+1)/2.0 * v4) * t0 + yR;
   printf("c4=%f, us=%f, yi=%f, yS=%f, yS0=%f, yH0=%f, yT0=%f, %f, L=%f\n", c4, us, yinterface, yS, yS0, yH0, yT0,yT0-yH0, L);
   
   // reflection coefficient
@@ -740,25 +739,27 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
       u=0;v=0;p=p0;
 
       // Velocity, density and pressure modifications for shock and rarefaction
-      if ((yS0 <= yc) && (yc < yH0)){ // region behind the shock,  in front of the rarefaction
+      if ((yS0 <= yc) && (yc <= yH0)){ // region behind the shock,  in front of the rarefaction
       	u = u4;
       	v = v4;
       	rho = rho4;
       	p   = p4;
       }
-      else if ((yH0 <= yc) && (yc < yT0)){ // inside rarefaction
+      else if ((yH0 < yc) && (yc < yT0)){ // inside rarefaction
       	u = 0;
-      	v = 2.0/(gamma+1)*(c4 + (y-v4*t0-yR)/t0);
-      	rho = rho4 * pow(1 - (gamma-1)/2.0 * fabs(v/c4), 2.0/(gamma-1));
-      	p   = p4   * pow(1 - (gamma-1)/2.0 * fabs(v/c4), 2.0*gamma/(gamma-1));
-	v = v + v4;
+      	v = 2.0/(gamma+1)*(c4 - v4 + (y-yR)/t0) + v4;
+	scalar yp = y - v4*t0;
+	scalar vp = 2.0/(gamma+1)*(c4 + (yp-yR)/t0);
+      	rho = rho4 * pow(1 - (gamma-1)/2.0 * fabs(vp/c4), 2.0/(gamma-1));
+      	p   = p4   * pow(1 - (gamma-1)/2.0 * fabs(vp/c4), 2.0*gamma/(gamma-1));
+	//v = v + v4;
       }
       else if (yT0 <= yc){ // behind rarefaction
       	u = 0;
       	v = vc;
-      	rho = rho4 * pow(strength,1.0/gamma);//rho * pow(1 - (gamma-1)/2.0 * fabs(vc/c), 2.0/(gamma-1));
-      	p   = p4   * strength;
-	//v = v - v4;
+	scalar vp = -v4;	  
+      	rho = rho4 * pow(1 - (gamma-1)/2.0 * fabs(vp/c4), 2.0/(gamma-1));
+      	p   = p4   * pow(1 - (gamma-1)/2.0 * fabs(vp/c4), 2.0*gamma/(gamma-1));
       }
       v = v + vcoord;
       
