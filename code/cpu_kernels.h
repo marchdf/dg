@@ -33,7 +33,5 @@ extern "C" void Lcpu_Cons2Prim(int N_s, int N_E,  scalar* U, bool multifluid, bo
 extern "C" void Lcpu_Half2Cons(int N_s, int N_E,  scalar* U, bool multifluid, bool passive, int model, scalar gamma0);
 extern "C" void Lcpu_Cons2Half(int N_s, int N_E,  scalar* U, bool multifluid, bool passive, int model, scalar gamma0);
 
-#endif
 
-/*  LocalWords:  endif
- */
+#endif

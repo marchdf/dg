@@ -560,7 +560,7 @@ int main (int argc, char **argv)
   else if(sodmono) init_dg_sodmono_multifluid(N_s, N_E, XYZNodes, U);
   else if(contact) init_dg_contact_multifluid(N_s, N_E, XYZNodes, U);
   else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, XYZNodes, U);
-  else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, XYZNodes, U);
+  else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, XYZNodes, U);
   else if(expogam) init_dg_expogam_multifluid(N_s, N_E, XYZNodes, U);
   else if(shckint) init_dg_shckint_multifluid(N_s, N_E, XYZNodes, U);
@@ -768,7 +768,7 @@ int main (int argc, char **argv)
   else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, XYZNodes, Uinit);
   else if(contact) init_dg_contact_multifluid(N_s, N_E, XYZNodes, Uinit);
   else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, XYZNodes, Uinit);
-  else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, XYZNodes, Uinit);
+  else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, XYZNodes, Uinit);
   else if(expogam) init_dg_expogam_multifluid(N_s, N_E, XYZNodes, Uinit);
   else if(shckint) init_dg_shckint_multifluid(N_s, N_E, XYZNodes, Uinit);

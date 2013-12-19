@@ -4,6 +4,7 @@
 #include <misc.h>
 #include <constants.h>
 #include <physics.h>
+#include <limiting_kernels.h>
 
 class Limiting
 {
@@ -18,14 +19,18 @@ class Limiting
   scalar* _V1D;
   scalar* _weight; // integration weights
   scalar* _A;      // monomial solution
-  scalar* _Alim;   // holds the limited monomial solution
-  scalar* _pressure;
-  scalar* _pressureMono;
-  scalar* _pressureLim;
-  scalar* _u;
-  scalar* _uMono;
-  scalar* _uLim;
-  int     _method; // no limit= 0; HR=1
+  scalar* _Alim;   // limited monomial solution
+
+  scalar* _rho, * _rhoMono, * _rhoLim;
+  scalar* _rhou, * _rhouMono, * _rhouLim;
+  scalar* _rhov, * _rhovMono, * _rhovLim;
+  scalar* _pressure, * _pressureMono, * _pressureLim;
+  scalar* _K, * _KLim;
+  scalar* _E, * _EMono, * _ELim;
+  scalar* _gamma, * _gammaMono, * _gammaLim;
+  scalar* _rhoeLim;
+  
+  int     _method; // no limiting= 0; HR=1; MYL=2; M2L=3
   bool    _cartesian;
   int     _D;
   int     _N_s;
@@ -46,15 +51,9 @@ class Limiting
   int*    _TaylorDxIdx;
   int*    _TaylorDyIdx;
   scalar _refArea;
-  
- public:
-  // constructor
- Limiting(int method,bool cartesian) : _method(method), _cartesian(cartesian){}
 
-  // 1D limiting constructor
- Limiting(int method, int N_s, int N_E, int N_G, int N_N, int* neighbors, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, fullMatrix<scalar> &V1D, scalar* weight)
-   : _method(method), _N_s(N_s), _N_E(N_E), _N_G(N_G), _N_N(N_N){
-
+  // Common contructor
+  void common_ctor(){
     _Lag2Mono=NULL;
     _Mono2Lag=NULL;
     _Lag2MonoX=NULL;
@@ -66,17 +65,32 @@ class Limiting
     _weight=NULL; // integration weights
     _A=NULL;      // monomial solution
     _Alim=NULL;   // holds the limited monomial solution
-    _pressure=NULL;
-    _pressureMono=NULL;
-    _pressureLim=NULL;
-    _u=NULL;
-    _uMono=NULL;
-    _uLim=NULL;
+
+    _rho=NULL; _rhoMono=NULL; _rhoLim=NULL;
+    _rhou=NULL; _rhouMono=NULL; _rhouLim=NULL;
+    _rhov=NULL; _rhovMono=NULL; _rhovLim=NULL;
+    _pressure=NULL; _pressureMono=NULL; _pressureLim=NULL;
+    _K=NULL; _KLim=NULL;
+    _E=NULL; _EMono=NULL, _ELim=NULL;
+    _gamma=NULL; _gammaMono=NULL; _gammaLim=NULL;
+    _rhoeLim=NULL;
+
     _neighbors=NULL;
     _ghostElementSend=NULL;
     _ghostElementRecv=NULL;
     _TaylorDxIdx=NULL;
     _TaylorDyIdx=NULL;
+  }
+  
+ public:
+  // constructor
+ Limiting(int method,bool cartesian) : _method(method), _cartesian(cartesian){}
+
+  // 1D limiting constructor
+ Limiting(int method, int N_s, int N_E, int N_G, int N_N, int* neighbors, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, fullMatrix<scalar> &V1D, scalar* weight)
+   : _method(method), _N_s(N_s), _N_E(N_E), _N_G(N_G), _N_N(N_N){
+
+    common_ctor();
 
     switch (_method){
     case 1:
@@ -87,8 +101,6 @@ class Limiting
       _Mono2Lag = new scalar[_N_s*_N_s];     Mono2Lag.copyMatrixToPointer(_Mono2Lag);
       _V1D      = new scalar[_N_G*_N_s];     V1D.copyMatrixToPointer(_V1D);
       _weight   = new scalar[_N_G];          memcpy(_weight,weight,N_G*sizeof(scalar));
-      _A        = new scalar[_N_s*_N_E*N_F]; 
-      _Alim     = new scalar[_N_s*_N_E*N_F]; 
       _neighbors  = new int[_N_N*_N_E];
       memcpy(_neighbors,   neighbors,   _N_N*_N_E*sizeof(int));
 
@@ -103,8 +115,6 @@ class Limiting
       cudaMalloc((void**) &_Mono2Lag,_N_s*_N_s*sizeof(scalar));
       cudaMalloc((void**) &_V1D,_N_G*_N_s*sizeof(scalar));
       cudaMalloc((void**) &_weight,_N_G*sizeof(scalar));
-      cudaMalloc((void**) &_A,_N_s*_N_E*N_F*sizeof(scalar));
-      cudaMalloc((void**) &_Alim,_N_s*_N_E*N_F*sizeof(scalar));
       cudaMalloc((void**) &_neighbors  ,_N_N*_N_E*sizeof(int));
 
       // Copy data to GPU
@@ -126,12 +136,26 @@ class Limiting
 
     // For case specific stuff:
     switch (_method){
+    case 1:{
+#ifdef USE_CPU
+      _A        = new scalar[_N_s*_N_E*N_F]; 
+      _Alim     = new scalar[_N_s*_N_E*N_F]; 
+#elif USE_GPU
+      cudaMalloc((void**) &_A,_N_s*_N_E*N_F*sizeof(scalar));
+      cudaMalloc((void**) &_Alim,_N_s*_N_E*N_F*sizeof(scalar));
+#endif
+      }
+      break;
     case 2:{
 #ifdef USE_CPU
+      _A        = new scalar[_N_s*_N_E*N_F]; 
+      _Alim     = new scalar[_N_s*_N_E*N_F]; 
       _pressure     = new scalar[_N_s*_N_E];
       _pressureMono = new scalar[_N_s*_N_E];
       _pressureLim  = new scalar[_N_s*_N_E];
 #elif USE_GPU
+      cudaMalloc((void**) &_A,_N_s*_N_E*N_F*sizeof(scalar));
+      cudaMalloc((void**) &_Alim,_N_s*_N_E*N_F*sizeof(scalar));
       cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar));
@@ -140,19 +164,33 @@ class Limiting
       break;
     case 3:{
 #ifdef USE_CPU
-      _pressure     = new scalar[_N_s*_N_E];
-      _pressureMono = new scalar[_N_s*_N_E];
-      _pressureLim  = new scalar[_N_s*_N_E];
-      _u            = new scalar[_N_s*_N_E];
-      _uMono        = new scalar[_N_s*_N_E];
-      _uLim         = new scalar[_N_s*_N_E];
+      _rho      = new scalar[_N_s*_N_E]; _rhoMono      = new scalar[_N_s*_N_E]; _rhoLim      = new scalar[_N_s*_N_E];
+      _rhou     = new scalar[_N_s*_N_E]; _rhouMono     = new scalar[_N_s*_N_E]; _rhouLim     = new scalar[_N_s*_N_E];
+      _pressure = new scalar[_N_s*_N_E]; _pressureMono = new scalar[_N_s*_N_E]; _pressureLim = new scalar[_N_s*_N_E];
+      _K        = new scalar[_N_s*N_E];  _KLim         = new scalar[_N_s*N_E];
+      _E        = new scalar[_N_s*N_E];  _EMono        = new scalar[_N_s*N_E];  _ELim        = new scalar[_N_s*N_E];
+      _gamma    = new scalar[_N_s*_N_E]; _gammaMono    = new scalar[_N_s*_N_E]; _gammaLim    = new scalar[_N_s*_N_E];
+      _rhoeLim  = new scalar[_N_s*N_E];
+
 #elif USE_GPU
+      cudaMalloc((void**) &_rho,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhoMono,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhoLim,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhou,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhouMono,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhouLim,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_u,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_uMono,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_uLim,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_K,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_KLim,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_E,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_EMono,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_ELim,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_gamma,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_gammaMono,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_gammaLim,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhoeLim,_N_s*_N_E*sizeof(scalar));
 #endif
       }
       break;
@@ -163,30 +201,9 @@ class Limiting
  Limiting(int method, int N_s, int N_E, int N_G, int order, bool cartesian, int N_N, int M_ghosts, int* neighbors, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, fullMatrix<scalar> &V1D, int* ghostElementSend, int* ghostElementRecv, scalar* weight) : _method(method), _N_s(N_s), _N_E(N_E), _N_G(N_G), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(M_ghosts){
 
     _N_s1D = (order+1);
-    _N_G1D = (order+1), 
-    _Lag2Mono=NULL;
-    _Mono2Lag=NULL;
-    _Lag2MonoX=NULL;
-    _MonoX2MonoY=NULL;
-    _MonoY2Lag=NULL;
-    _XYZCen=NULL;
-    _powersXYZG=NULL;
-    _V1D=NULL;
-    _weight=NULL; // integration weights
-    _A=NULL;      // monomial solution
-    _Alim=NULL;   // holds the limited monomial solution
-    _pressure=NULL;
-    _pressureMono=NULL;
-    _pressureLim=NULL;
-    _u=NULL;
-    _uMono=NULL;
-    _uLim=NULL;
-    _neighbors=NULL;
-    _ghostElementSend=NULL;
-    _ghostElementRecv=NULL;
-    _TaylorDxIdx=NULL;
-    _TaylorDyIdx=NULL;
-
+    _N_G1D = (order+1);
+    common_ctor();
+    
     switch (_method){
     case 1:
     case 2:
@@ -197,8 +214,6 @@ class Limiting
       _MonoY2Lag   = new scalar[_N_s*_N_s];     MonoY2Lag.copyMatrixToPointer(_MonoY2Lag);
       _V1D      = new scalar[_N_G1D*_N_s1D];    V1D.copyMatrixToPointer(_V1D);
       _weight   = new scalar[_N_G1D];           memcpy(_weight,weight,_N_G1D*sizeof(scalar));
-      _A        = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_A,     _N_s*(_N_E+_N_ghosts)*N_F);
-      _Alim     = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_Alim,  _N_s*(_N_E+_N_ghosts)*N_F);
       _neighbors  = new int[_N_N*_N_E]; memcpy(_neighbors,   neighbors,   _N_N*_N_E*sizeof(int));
       _ghostElementSend  = new int[_N_ghosts*3]; memcpy(_ghostElementSend,   ghostElementSend,   _N_ghosts*3*sizeof(int));
       _ghostElementRecv  = new int[_N_ghosts*3]; memcpy(_ghostElementRecv,   ghostElementRecv,   _N_ghosts*3*sizeof(int));
@@ -216,8 +231,6 @@ class Limiting
       cudaMalloc((void**) &_MonoY2Lag  ,_N_s*_N_s*sizeof(scalar));
       cudaMalloc((void**) &_V1D        ,_N_G1D*_N_s1D*sizeof(scalar));
       cudaMalloc((void**) &_weight     ,_N_G1D*sizeof(scalar));
-      cudaMalloc((void**) &_A          ,_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar));
-      cudaMalloc((void**) &_Alim       ,_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar));
       cudaMalloc((void**) &_neighbors  ,_N_N*_N_E*sizeof(int));
 	    
       // Copy data to GPU
@@ -241,12 +254,26 @@ class Limiting
     
     // For case specific stuff:
     switch (_method){
+    case 1:{
+#ifdef USE_CPU
+      _A        = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_A,     _N_s*(_N_E+_N_ghosts)*N_F);
+      _Alim     = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_Alim,  _N_s*(_N_E+_N_ghosts)*N_F);
+#elif USE_GPU
+      cudaMalloc((void**) &_A          ,_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar));
+      cudaMalloc((void**) &_Alim       ,_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar));
+#endif
+      }
+      break;
     case 2:{
 #ifdef USE_CPU
+      _A        = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_A,     _N_s*(_N_E+_N_ghosts)*N_F);
+      _Alim     = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_Alim,  _N_s*(_N_E+_N_ghosts)*N_F);
       _pressure     = new scalar[_N_s*(_N_E+_N_ghosts)];
       _pressureMono = new scalar[_N_s*(_N_E+_N_ghosts)];
       _pressureLim  = new scalar[_N_s*(_N_E+_N_ghosts)];
 #elif USE_GPU
+      cudaMalloc((void**) &_A          ,_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar));
+      cudaMalloc((void**) &_Alim       ,_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar));
       cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar));
@@ -254,21 +281,6 @@ class Limiting
       }
       break;
     case 3:{
-/* #ifdef USE_CPU */
-/*       _pressure     = new scalar[_N_s*_N_E]; */
-/*       _pressureMono = new scalar[_N_s*_N_E]; */
-/*       _pressureLim  = new scalar[_N_s*_N_E]; */
-/*       _u            = new scalar[_N_s*_N_E]; */
-/*       _uMono        = new scalar[_N_s*_N_E]; */
-/*       _uLim         = new scalar[_N_s*_N_E]; */
-/* #elif USE_GPU */
-/*       cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar)); */
-/*       cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar)); */
-/*       cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar)); */
-/*       cudaMalloc((void**) &_u,_N_s*_N_E*sizeof(scalar)); */
-/*       cudaMalloc((void**) &_uMono,_N_s*_N_E*sizeof(scalar)); */
-/*       cudaMalloc((void**) &_uLim,_N_s*_N_E*sizeof(scalar)); */
-/* #endif */
       }
       break;
     }
@@ -278,26 +290,7 @@ class Limiting
  Limiting(int method, int N_s, int N_E, int N_G, int N_N, int L, int order, int L2Msize1, int L2Msize2, int* neighbors, fullMatrix<scalar> Lag2Mono, fullMatrix<scalar> Mono2Lag, fullMatrix<scalar> XYZCen, scalar* powersXYZG, scalar* weight, scalar refArea, int* TaylorDxIdx, int* TaylorDyIdx)
    : _method(method), _D(D),_N_s(N_s), _N_E(N_E), _N_G(N_G), _N_N(N_N), _L(L), _order(order), _L2Msize1(L2Msize1), _L2Msize2(L2Msize2), _refArea(refArea){
 
-    _Lag2Mono=NULL;
-    _Mono2Lag=NULL;
-    _Lag2MonoX=NULL;
-    _MonoX2MonoY=NULL;
-    _MonoY2Lag=NULL;
-    _XYZCen=NULL;
-    _powersXYZG=NULL;
-    _V1D=NULL;
-    _weight=NULL; // integration weights
-    _A=NULL;      // monomial solution
-    _Alim=NULL;   // holds the limited monomial solution
-    _pressure=NULL;
-    _pressureMono=NULL;
-    _pressureLim=NULL;
-    _u=NULL;
-    _uMono=NULL;
-    _uLim=NULL;
-    _neighbors=NULL;
-    _TaylorDxIdx=NULL;
-    _TaylorDyIdx=NULL;
+    common_ctor();
     
     switch (_method){
     case 1:
@@ -375,39 +368,7 @@ class Limiting
       _method = 0;
     }
     
-/*     // For case specific stuff: */
-/*     switch (_method){ */
-/*     case 2:{ */
-/* #ifdef USE_CPU */
-/*       _pressure     = new scalar[_N_s*_N_E]; */
-/*       _pressureMono = new scalar[_N_s*_N_E]; */
-/*       _pressureLim  = new scalar[_N_s*_N_E]; */
-/* #elif USE_GPU */
-/*       cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar)); */
-/*       cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar)); */
-/*       cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar)); */
-/* #endif */
-/*       } */
-/*       break; */
-/*     case 3:{ */
-/* #ifdef USE_CPU */
-/*       _pressure     = new scalar[_N_s*_N_E]; */
-/*       _pressureMono = new scalar[_N_s*_N_E]; */
-/*       _pressureLim  = new scalar[_N_s*_N_E]; */
-/*       _u            = new scalar[_N_s*_N_E]; */
-/*       _uMono        = new scalar[_N_s*_N_E]; */
-/*       _uLim         = new scalar[_N_s*_N_E]; */
-/* #elif USE_GPU */
-/*       cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar)); */
-/*       cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar)); */
-/*       cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar)); */
-/*       cudaMalloc((void**) &_u,_N_s*_N_E*sizeof(scalar)); */
-/*       cudaMalloc((void**) &_uMono,_N_s*_N_E*sizeof(scalar)); */
-/*       cudaMalloc((void**) &_uLim,_N_s*_N_E*sizeof(scalar)); */
-/* #endif */
-/*       } */
-/*       break; */
-/*     } */
+    // For case specific stuff:
   } // end 2D constructor
   
   // destructor
@@ -420,6 +381,14 @@ class Limiting
     if(_weight)       del(_weight);
     if(_A)            del(_A);
     if(_Alim)         del(_Alim);
+    if(_rho){         del(_rho); del(_rhoMono); del(_rhoLim);}
+    if(_rhou){        del(_rhou); del(_rhouMono); del(_rhouLim);}
+    if(_rhov){        del(_rhov); del(_rhovMono); del(_rhovLim);}
+    if(_pressure){    del(_pressure); del(_pressureMono); del(_pressureLim);}
+    if(_K){           del(_K); del(_KLim);}
+    if(_E){           del(_E); del(_EMono); del(_ELim);}
+    if(_gamma){       del(_gamma); del(_gammaMono); del(_gammaLim);}
+    if(_rhoeLim){     del(_rhoeLim);}
     if(_V1D)          del(_V1D);
     if(_XYZCen)       del(_XYZCen);
     if(_powersXYZG)   del(_powersXYZG);
@@ -428,12 +397,6 @@ class Limiting
     if(_ghostElementSend) del(_ghostElementSend);
     if(_TaylorDxIdx)  del(_TaylorDxIdx);
     if(_TaylorDyIdx)  del(_TaylorDyIdx);
-    if(_pressure)     del(_pressure);
-    if(_pressureMono) del(_pressureMono);
-    if(_pressureLim)  del(_pressureLim);
-    if(_u)            del(_u);
-    if(_uMono)        del(_uMono);
-    if(_uLim)         del(_uLim);
   }	      
   
   int getLimitingMethod() const {return _method;}
@@ -610,28 +573,55 @@ class Limiting
   }
 
   void M2limiting(scalar* U){
+    // Only works for GAMNCON
+    
+    // Get the density field, transform to monomial basis, limit, transform to Lagrange basis
+    Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,0,0,U,_rho); // copy from U into rho
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _rho, _N_s, 0.0, _rhoMono, _N_s);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, 1, _N_N, 1, _neighbors, 0, _weight, _V1D, _rhoMono, _rhoLim);
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Mono2Lag, _N_s, _rhoLim, _N_s, 0.0, _rho, _N_s);
+    
+    // Get the momentum field, transform to monomial basis, limit, transform to Lagrange basis
+    Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,_N_s,0,U,_rhou); // copy from U into rhou
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _rhou, _N_s, 0.0, _rhouMono, _N_s);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, 1, _N_N, 1, _neighbors, 0, _weight, _V1D, _rhouMono, _rhouLim);
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Mono2Lag, _N_s, _rhouLim, _N_s, 0.0, _rhou, _N_s);
 
-    // Get the pressure and velocity fields
-    Lpressure_u(_N_s, _N_E, U, _pressure, _u);
-
-    // Limit pressure
+    // Get the energy field, transform to monomial basis
+    Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,2*_N_s,0,U,_E); // copy from U into E
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _E, _N_s, 0.0, _EMono, _N_s);
+    
+    // Get the 1/gamma-1 field, transform to monomial basis, limit, transform to Lagrange basis
+    Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,3*_N_s,0,U,_gamma); // copy from U into gamma
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _gamma, _N_s, 0.0, _gammaMono, _N_s);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, 1, _N_N, 1, _neighbors, 0, _weight, _V1D, _gammaMono, _gammaLim);
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Mono2Lag, _N_s, _gammaLim, _N_s, 0.0, _gamma, _N_s);
+    
+    // Get the pressure field, transform to monomial basis, limit
+    Lpressure(_N_s, _N_E, U, _pressure);
     blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
     Lcpu_hrl1D(_N_s, _N_E, _N_G, 1, _N_N, 1, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
 
-    // Limit velocity
-    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _u, _N_s, 0.0, _uMono, _N_s);
-    Lcpu_hrl1D(_N_s, _N_E, _N_G, 1,_N_N, 1, _neighbors, 0, _weight, _V1D, _uMono, _uLim);
-
-    // Limit the other variables
-    blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);
-    Lcpu_hrl1D(_N_s, _N_E, _N_G, N_F, _N_N, 1, _neighbors, 0, _weight, _V1D, _A, _Alim);
-
-    // My modification
-    Llimmodif2(_N_s, _N_E, _A, _pressureLim, _uLim, _Alim);
+    // Get the limited kinetic energy by using the limited rho and limited rhou
+    // Start in Lagrange formulation then transform to monomial basis
+    Lkinetic_energy1D(_N_s,_N_E,_rho,_rhou,_K); // K = rhou^2/rho;
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _K, _N_s, 0.0, _KLim, _N_s);
     
-    // Go back to lagrange representation
-    blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
+    // Get the limited internal energy by using the limited pressure and limited 1/(gamma-1)
+    Linternal_energy(_N_s,_N_E,_pressureLim,_gammaLim,_rhoeLim);
 
+    // Reconstruct the limited energy coefficients, go back to lagrange basis
+    Lreconstruct_energy(_N_s,_N_E,_rhoeLim,_KLim,_EMono,_ELim);
+    // If we did the following, it would be normal HRL: 
+    //Lcpu_hrl1D(_N_s, _N_E, _N_G, 1, _N_N, 1, _neighbors, 0, _weight, _V1D, _EMono, _ELim);
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Mono2Lag, _N_s, _ELim, _N_s, 0.0, _E, _N_s);
+    
+    // Copy the variables back into U (now limited)
+    Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,0     ,_rho  ,U);
+    Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,_N_s  ,_rhou ,U);
+    Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,2*_N_s,_E    ,U);
+    Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,3*_N_s,_gamma,U);
   }
+
 };
 #endif

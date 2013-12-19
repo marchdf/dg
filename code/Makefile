@@ -10,7 +10,7 @@ LIEU=HOME
 NFLD=4
 MASS=0
 PROF=OFF
-ERRR=NO
+ERRR=NOERROR
 
 # configuration
 directories       := . quadratures

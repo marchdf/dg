@@ -223,7 +223,7 @@ void init_dg_rhotact_multifluid(const int N_s, const int N_E, const fullMatrix<s
 }
 
 
-void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
   // Left state
   scalar rhoL  = 1.0;
@@ -239,8 +239,30 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar pR     = 1.0;
   scalar EtR    = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
 
-  buildLRstates_multifluid(rhoL, uL, EtL, gammaL, rhoR, uR, EtR, gammaR, N_s, N_E, XYZNodes, U);
-  
+#ifdef GAMCONS
+  scalar GL = rhoL/(gammaL-1.0);   scalar GR = rhoR/(gammaR-1.0);
+#elif GAMNCON
+  scalar GL = 1.0/(gammaL-1.0);    scalar GR = 1.0/(gammaR-1.0);
+#endif
+
+  scalar xc=0;
+  for(int e = 0; e < N_E; e++){
+    xc = XYZCen(e,0);
+    for(int i = 0; i < N_s; i++){
+      if ((-0.5<xc)&&(xc<0.5)){
+	U(i,e*N_F+0) = rhoL;
+	U(i,e*N_F+1) = rhoL*uL;
+	U(i,e*N_F+2) = EtL;
+	U(i,e*N_F+3) = GL;
+      }
+      else {
+	U(i,e*N_F+0) = rhoR;
+	U(i,e*N_F+1) = rhoR*uR;
+	U(i,e*N_F+2) = EtR;
+	U(i,e*N_F+3) = GR;
+      }
+    }
+  }
 }
 
 void init_dg_sinegam_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){

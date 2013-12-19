@@ -1,5 +1,5 @@
-#ifndef COMMON_KERNELS_H
-#define COMMON_KERNELS_H
+#ifndef RK_KERNELS_H
+#define RK_KERNELS_H
 #include <scalar_def.h>
 #include <macros.h>
 
