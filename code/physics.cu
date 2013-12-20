@@ -642,8 +642,8 @@ arch_global void limmodif(int N_s, int N_E, int slicenum, scalar* A, scalar* pli
 #elif PASSIVE
 	scalar a0 = Alim[(e*N_F+0)*N_s*slicenum+slice*N_s+0];
 	scalar a1 = Alim[(e*N_F+0)*N_s*slicenum+slice*N_s+1];
-	scalar b0 = Alim[(e*N_F+Uidx)*N_s*slicenum+slice*N_s+0];
-	scalar b1 = Alim[(e*N_F+Uidx)*N_s*slicenum+slice*N_s+1];
+	scalar b0 = Alim[(e*N_F+1)*N_s*slicenum+slice*N_s+0];
+	scalar b1 = Alim[(e*N_F+1)*N_s*slicenum+slice*N_s+1];
 	scalar g0 = A[(e*N_F+Eidx)*N_s*slicenum+slice*N_s+0];
 	scalar g1 = A[(e*N_F+Eidx)*N_s*slicenum+slice*N_s+1];
 	scalar gamma = constants::GLOBAL_GAMMA;

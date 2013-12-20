@@ -239,10 +239,11 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar pR     = 1.0;
   scalar EtR    = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
 
+  scalar GL, GR;
 #ifdef GAMCONS
-  scalar GL = rhoL/(gammaL-1.0);   scalar GR = rhoR/(gammaR-1.0);
+  GL = rhoL/(gammaL-1.0);   GR = rhoR/(gammaR-1.0);
 #elif GAMNCON
-  scalar GL = 1.0/(gammaL-1.0);    scalar GR = 1.0/(gammaR-1.0);
+  GL = 1.0/(gammaL-1.0);    GR = 1.0/(gammaR-1.0);
 #endif
 
   scalar xc=0;

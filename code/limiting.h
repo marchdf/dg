@@ -573,8 +573,10 @@ class Limiting
   }
 
   void M2limiting(scalar* U){
-    // Only works for GAMNCON
-    
+
+#ifdef ONED
+#ifdef MULTIFLUID
+#ifdef GAMNCON
     // Get the density field, transform to monomial basis, limit, transform to Lagrange basis
     Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,0,0,U,_rho); // copy from U into rho
     blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _rho, _N_s, 0.0, _rhoMono, _N_s);
@@ -621,7 +623,22 @@ class Limiting
     Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,_N_s  ,_rhou ,U);
     Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,2*_N_s,_E    ,U);
     Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,3*_N_s,_gamma,U);
-  }
 
+#else 
+    printf("M2L is only implemented for gamncon. Exiting...\n");
+    exit(1);
+#endif
+#else 
+    printf("M2L is only implemented for multifluid. Exiting...\n");
+    exit(1);
+#endif
+#else 
+    printf("M2L is only implemented for 1D. Exiting...\n");
+    exit(1);
+#endif
+
+  } // end m2limiting
+
+  
 };
 #endif
