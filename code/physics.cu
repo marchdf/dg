@@ -4,6 +4,8 @@
 #include <twod_passive_fluxes.h>
 #include <oned_multifluid_fluxes.h>
 #include <twod_multifluid_fluxes.h>
+#include <oned_stiffened_fluxes.h>
+#include <twod_stiffened_fluxes.h>
 
 //==========================================================================
 //
@@ -93,6 +95,36 @@ arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug,
 // #define MACRO(x) s[(e*N_F+4+x)*N_G+g] = -u*dUg[(e*N_F+4+x)*N_G+g]*invJac[e*N_G+g];\
 //     f[((e*N_F+4+x)*N_G+g)*D+0] = 0; 
 // #include "loop.h"
+
+#elif STIFFENED //=========================================================
+      scalar rho   = Ug[(e*N_F+0)*N_G+g];   
+      scalar u     = Ug[(e*N_F+1)*N_G+g]/rho;  // (rho u / rho) = u
+      scalar Et    = Ug[(e*N_F+2)*N_G+g];
+      scalar gamma = 1+1.0/Ug[(e*N_F+3)*N_G+g];
+      scalar beta  = Ug[(e*N_F+4)*N_G+g];
+      scalar p = (gamma-1)*(Et - beta - 0.5*rho*u*u);
+
+      // Source term
+      s[(e*N_F+0)*N_G+g] = 0;
+      s[(e*N_F+1)*N_G+g] = 0;
+      s[(e*N_F+2)*N_G+g] = 0;
+      s[(e*N_F+3)*N_G+g] = -u*dUg[(e*N_F+3)*N_G+g]*invJac[e*N_G+g]; // = -u*dalphadx
+      s[(e*N_F+4)*N_G+g] = -u*dUg[(e*N_F+4)*N_G+g]*invJac[e*N_G+g]; // = -u*dbetadx
+      
+      // Flux derive par rapport a x
+      f[((e*N_F+0)*N_G+g)*D+0] = flux_ab(rho,u);       
+      f[((e*N_F+1)*N_G+g)*D+0] = flux_ab2pc(rho,u,p);
+      f[((e*N_F+2)*N_G+g)*D+0] = flux_ab(Et+p,u);
+      f[((e*N_F+3)*N_G+g)*D+0] = 0;
+      f[((e*N_F+4)*N_G+g)*D+0] = 0;
+
+      // Mass fractions
+      int fcnt = 5;
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) s[(e*N_F+fcnt+x)*N_G+g] = 0; \
+    f[((e*N_F+fcnt+x)*N_G+g)*D+0] = flux_ab(Ug[(e*N_F+fcnt+x)*N_G+g],u); fcnt++; // Ug contains rho
+#include "loop.h"
 
 #endif // end ifs on physics
 
@@ -196,6 +228,59 @@ arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug,
     f[((e*N_F+5+x)*N_G+g)*D+1] = flux_ab(Ug[(e*N_F+5+x)*N_G+g],v);	
 #include "loop.h"
 
+#elif STIFFENED //========================================================
+      scalar rho   = Ug[(e*N_F+0)*N_G+g];   
+      scalar u     = Ug[(e*N_F+1)*N_G+g]/rho;  // (rho u / rho) = u
+      scalar v     = Ug[(e*N_F+2)*N_G+g]/rho;  // (rho v / rho) = v
+      scalar Et    = Ug[(e*N_F+3)*N_G+g];
+      scalar gamma = 1+1.0/Ug[(e*N_F+4)*N_G+g];
+      scalar beta  = Ug[(e*N_F+5)*N_G+g];
+      scalar p = (gamma-1)*(Et - beta - 0.5*rho*(u*u+v*v));
+
+      scalar vdotgradalpha = 0; // = -u*dalphadx-v*dalphady
+      scalar vdotgradbeta = 0; // = -u*dbetadx-v*dbetady
+      for(int alpha = 0; alpha < D; alpha++){
+	vdotgradalpha += 
+	  -u*dUg[((e*N_F+4)*N_G+g)*D+alpha]*invJac[((e*N_G+g)*D+0)*D+alpha] // dphidx = dphidxi*dxidx + dphideta*detadx
+	  -v*dUg[((e*N_F+4)*N_G+g)*D+alpha]*invJac[((e*N_G+g)*D+1)*D+alpha];// dphidy = dphidxi*dxidy + dphideta*detady
+	vdotgradbeta += 
+	  -u*dUg[((e*N_F+5)*N_G+g)*D+alpha]*invJac[((e*N_G+g)*D+0)*D+alpha] // dphidx = dphidxi*dxidx + dphideta*detadx
+	  -v*dUg[((e*N_F+5)*N_G+g)*D+alpha]*invJac[((e*N_G+g)*D+1)*D+alpha];// dphidy = dphidxi*dxidy + dphideta*detady
+      }
+
+      // Source term
+      s[(e*N_F+0)*N_G+g] = 0;
+      s[(e*N_F+1)*N_G+g] = 0;
+      s[(e*N_F+2)*N_G+g] = 0;
+      s[(e*N_F+3)*N_G+g] = 0;
+      s[(e*N_F+4)*N_G+g] = vdotgradalpha;
+      s[(e*N_F+5)*N_G+g] = vdotgradbeta;
+      
+      // Flux derive par rapport a x
+      f[((e*N_F+0)*N_G+g)*D+0] = flux_ab(rho,u);      // rho*u     
+      f[((e*N_F+1)*N_G+g)*D+0] = flux_ab2pc(rho,u,p); // rho*u*u + p
+      f[((e*N_F+2)*N_G+g)*D+0] = flux_abc(rho,u,v);   // rho*u*v
+      f[((e*N_F+3)*N_G+g)*D+0] = flux_ab(Et+p,u);     // u(E+p)
+      f[((e*N_F+4)*N_G+g)*D+0] = 0;// flux wrt x
+      f[((e*N_F+5)*N_G+g)*D+0] = 0;// flux wrt x
+
+      // Flux derive par rapport a y
+      f[((e*N_F+0)*N_G+g)*D+1] = flux_ab(rho,v);      // rho*v     
+      f[((e*N_F+1)*N_G+g)*D+1] = flux_abc(rho,u,v);   // rho*u*v
+      f[((e*N_F+2)*N_G+g)*D+1] = flux_ab2pc(rho,v,p); // rho*v*v + p
+      f[((e*N_F+3)*N_G+g)*D+1] = flux_ab(Et+p,v);     // v(E+p)
+      f[((e*N_F+4)*N_G+g)*D+1] = 0;// flux wrt y
+      f[((e*N_F+5)*N_G+g)*D+1] = 0;// flux wrt x
+
+      // Mass fractions
+      int fcnt = 6;
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) s[(e*N_F+fcnt+x)*N_G+g] = 0;				\
+    f[((e*N_F+fcnt+x)*N_G+g)*D+0] = flux_ab(Ug[(e*N_F+fcnt+x)*N_G+g],u);	\
+    f[((e*N_F+fcnt+x)*N_G+g)*D+1] = flux_ab(Ug[(e*N_F+fcnt+x)*N_G+g],v); fcnt++;
+#include "loop.h"
+
 #endif // end ifs on physics
 
 #endif // end ifs on dimensions
@@ -231,7 +316,7 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
       // Send the data to the Riemann solvers
 #ifdef ONED
 
-#ifdef PASSIVE
+#ifdef PASSIVE //=========================================================
 #ifdef RUS
       oned_passive_rusanov(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
 			   UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
@@ -273,7 +358,7 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
 		       &buffer[Fidx],&buffer[ncidx]);
 #endif // flux if
 
-#elif MULTIFLUID
+#elif MULTIFLUID //=========================================================
 
 #ifdef RUS
       oned_multifluid_rusanov(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
@@ -320,6 +405,61 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
 #include "loop.h"
 			  normals[t*D+0],                                        // nx
 			  &buffer[Fidx],&buffer[ncidx]);
+#endif // flux if
+
+#elif STIFFENED //=========================================================
+
+#ifdef RUS
+      oned_stiffened_rusanov(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			     UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			     UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			     UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			     UgF[((t*N_F+2)*2+0)*M_G+g],                            // EtL
+			     UgF[((t*N_F+2)*2+1)*M_G+g],                            // EtR
+			     UgF[((t*N_F+3)*2+0)*M_G+g],                            // alphaL
+			     UgF[((t*N_F+3)*2+1)*M_G+g],                            // alphaR
+			     UgF[((t*N_F+4)*2+0)*M_G+g],                            // betaL
+			     UgF[((t*N_F+4)*2+1)*M_G+g],                            // betaR
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)             UgF[((t*N_F+5+x)*2+0)*M_G+g], UgF[((t*N_F+5+x)*2+1)*M_G+g],// rhoL*YL, rhoR*YR
+#include "loop.h"
+			     normals[t*D+0],                                        // nx
+			     &buffer[Fidx],&buffer[ncidx]);
+#elif HLL
+      oned_stiffened_hll(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			 UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			 UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			 UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			 UgF[((t*N_F+2)*2+0)*M_G+g],                            // EtL
+			 UgF[((t*N_F+2)*2+1)*M_G+g],                            // EtR
+			 UgF[((t*N_F+3)*2+0)*M_G+g],                            // alphaL
+			 UgF[((t*N_F+3)*2+1)*M_G+g],                            // alphaR
+			 UgF[((t*N_F+4)*2+0)*M_G+g],                            // betaL
+			 UgF[((t*N_F+4)*2+1)*M_G+g],                            // betaR
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)         UgF[((t*N_F+5+x)*2+0)*M_G+g], UgF[((t*N_F+5+x)*2+1)*M_G+g],// rhoL*YL, rhoR*YR
+#include "loop.h"
+			 normals[t*D+0],                                        // nx
+			 &buffer[Fidx],&buffer[ncidx]);
+#elif ROE
+      oned_stiffened_roe(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			 UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			 UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			 UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			 UgF[((t*N_F+2)*2+0)*M_G+g],                            // EtL
+			 UgF[((t*N_F+2)*2+1)*M_G+g],                            // EtR
+			 UgF[((t*N_F+3)*2+0)*M_G+g],                            // alphaL
+			 UgF[((t*N_F+3)*2+1)*M_G+g],                            // alphaR
+			 UgF[((t*N_F+4)*2+0)*M_G+g],                            // betaL
+			 UgF[((t*N_F+4)*2+1)*M_G+g],                            // betaR
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)         UgF[((t*N_F+5+x)*2+0)*M_G+g], UgF[((t*N_F+5+x)*2+1)*M_G+g],// rhoL*YL, rhoR*YR
+#include "loop.h"
+			 normals[t*D+0],                                        // nx
+			 &buffer[Fidx],&buffer[ncidx]);
 #endif // flux if
 
 #endif // physics if
@@ -378,7 +518,7 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
 		       &buffer[Fidx],&buffer[ncidx]);
 #endif // flux if
 
-#elif MULTIFLUID
+#elif MULTIFLUID //=========================================================
 
 #ifdef RUS
       twod_multifluid_rusanov(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
@@ -434,6 +574,70 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
 			  normals[t*D+0],                                        // nx
 			  normals[t*D+1],                                        // ny
 			  &buffer[Fidx],&buffer[ncidx]);
+#endif // flux if
+
+#elif STIFFENED //=========================================================
+
+#ifdef RUS
+      twod_stiffened_rusanov(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			     UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			     UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			     UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			     UgF[((t*N_F+2)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vyL
+			     UgF[((t*N_F+2)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vyR
+			     UgF[((t*N_F+3)*2+0)*M_G+g],                            // EtL
+			     UgF[((t*N_F+3)*2+1)*M_G+g],                            // EtR
+			     UgF[((t*N_F+4)*2+0)*M_G+g],                            // alphaL
+			     UgF[((t*N_F+4)*2+1)*M_G+g],                            // alphaR
+			     UgF[((t*N_F+5)*2+0)*M_G+g],                            // betaL
+			     UgF[((t*N_F+5)*2+1)*M_G+g],                            // betaR
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)             UgF[((t*N_F+6+x)*2+0)*M_G+g], UgF[((t*N_F+6+x)*2+1)*M_G+g],// rhoL*YL, rhoR*YR
+#include "loop.h"
+			     normals[t*D+0],                                        // nx
+			     normals[t*D+1],                                        // ny
+			     &buffer[Fidx],&buffer[ncidx]);
+#elif HLL
+      twod_stiffened_hll(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			 UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			 UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			 UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			 UgF[((t*N_F+2)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vyL
+			 UgF[((t*N_F+2)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vyR
+			 UgF[((t*N_F+3)*2+0)*M_G+g],                            // EtL
+			 UgF[((t*N_F+3)*2+1)*M_G+g],                            // EtR
+			 UgF[((t*N_F+4)*2+0)*M_G+g],                            // alphaL
+			 UgF[((t*N_F+4)*2+1)*M_G+g],                            // alphaR
+			 UgF[((t*N_F+5)*2+0)*M_G+g],                            // betaL
+			 UgF[((t*N_F+5)*2+1)*M_G+g],                            // betaR
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)         UgF[((t*N_F+6+x)*2+0)*M_G+g], UgF[((t*N_F+6+x)*2+1)*M_G+g],// rhoL*YL, rhoR*YR
+#include "loop.h"
+			 normals[t*D+0],                                        // nx
+			 normals[t*D+1],                                        // ny
+			 &buffer[Fidx],&buffer[ncidx]);
+#elif ROE
+      twod_stiffened_roe(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			 UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			 UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			 UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			 UgF[((t*N_F+2)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vyL
+			 UgF[((t*N_F+2)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vyR
+			 UgF[((t*N_F+3)*2+0)*M_G+g],                            // EtL
+			 UgF[((t*N_F+3)*2+1)*M_G+g],                            // EtR
+			 UgF[((t*N_F+4)*2+0)*M_G+g],                            // alphaL
+			 UgF[((t*N_F+4)*2+1)*M_G+g],                            // alphaR
+			 UgF[((t*N_F+5)*2+0)*M_G+g],                            // betaL
+			 UgF[((t*N_F+5)*2+1)*M_G+g],                            // betaR
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)         UgF[((t*N_F+6+x)*2+0)*M_G+g], UgF[((t*N_F+6+x)*2+1)*M_G+g],// rhoL*YL, rhoR*YR
+#include "loop.h"
+			 normals[t*D+0],                                        // nx
+			 normals[t*D+1],                                        // ny
+			 &buffer[Fidx],&buffer[ncidx]);
 #endif // flux if
 
 #endif // physics if
@@ -526,6 +730,10 @@ arch_global void pressure(int N_s, int N_E, scalar* U, scalar* p){
 #endif
 #elif PASSIVE
       scalar gamma = constants::GLOBAL_GAMMA;
+#elif STIFFENED
+      scalar gamma=1.0+1.0/U[(e*N_F+3)*N_s+i];
+      scalar beta = U[(e*N_F+4)*N_s+i];
+      E = E - beta; // correct the energy for stiffened EOS
 #endif
       p[e*N_s+i] = (gamma-1)*(E - 0.5*rhou*rhou/rho);
 
@@ -543,6 +751,10 @@ arch_global void pressure(int N_s, int N_E, scalar* U, scalar* p){
 #endif
 #elif PASSIVE
       scalar gamma = constants::GLOBAL_GAMMA;
+#elif STIFFENED
+      scalar gamma=1.0+1.0/U[(e*N_F+4)*N_s+i];
+      scalar beta = U[(e*N_F+5)*N_s+i];
+      E = E - beta; // correct the energy for stiffened EOS
 #endif
       p[e*N_s+i] = (gamma-1)*(E - 0.5*(rhou*rhou+rhov*rhov)/rho);
 #endif
@@ -578,6 +790,10 @@ arch_global void pressure_u(int N_s, int N_E, scalar* U, scalar* p, scalar* u){
 #endif
 #elif PASSIVE
       scalar gamma = constants::GLOBAL_GAMMA;
+#elif STIFFENED
+      scalar gamma=1.0+1.0/U[(e*N_F+3)*N_s+i];
+      scalar beta = U[(e*N_F+4)*N_s+i];
+      E = E - beta; // correction for stiffened EOS
 #endif
       p[e*N_s+i] = (gamma-1)*(E - 0.5*rhou*rhou/rho);
 

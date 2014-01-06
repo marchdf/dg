@@ -148,6 +148,8 @@ int main (int argc, char **argv)
   bool blastrm = false;
   bool sinephi = false;
   bool sodmono = false;
+  bool stffrnt = false;
+  bool stfshck = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
   else if (inputs.getInitialCondition()=="contact") contact = true;
@@ -169,6 +171,8 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="blastrm") blastrm = true;
   else if (inputs.getInitialCondition()=="sinephi") sinephi = true;
   else if (inputs.getInitialCondition()=="sodmono") sodmono = true;
+  else if (inputs.getInitialCondition()=="stffrnt") stffrnt = true;
+  else if (inputs.getInitialCondition()=="stfshck") stfshck = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // setup the boundary condition type
@@ -578,6 +582,9 @@ int main (int argc, char **argv)
 #elif PASSIVE
   if (sinephi) init_dg_sinephi_passive(N_s, N_E, XYZNodes, U);
   if (sodmono) init_dg_sodmono_passive(N_s, N_E, XYZNodes, U);
+#elif STIFFENED
+  if (stffrnt) init_dg_stffrnt_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
+  if (stfshck) init_dg_stfshck_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
 #endif
 
   if (order0) average_cell_p0(N_s, N_E, U);
@@ -732,7 +739,7 @@ int main (int argc, char **argv)
   double DtOut = inputs.getOutputTimeStep(); 
   double Tf    = inputs.getFinalTime();
   m.setDx(N_N,N_E,XYZCen,XYZNodes);
-  scalar CFL   = inputs.getCFL()*m.getDx()/(2.0*order+1);//according to Eder. I used to have: (2.0*order+1);
+  scalar CFL   = inputs.getCFL()*m.getDx()/(2.0*order+1);
 
   if(myid==0){printf("==== Now RK 4 steps =====\n");}
   DG_SOLVER dgsolver = DG_SOLVER(N_E, N_s, N_G, N_N, M_T, M_s, M_G, M_B, N_ghosts,

@@ -55,6 +55,32 @@ arch_device scalar twod_multifluid_upa(scalar rho,
   scalar a = sqrt(gamma*p/rho);
   return MAX(fabs(u)+a,fabs(v)+a);
 }
+
+#endif //dimensions
+
+#elif STIFFENED
+#ifdef ONED
+arch_device scalar oned_stiffened_upa(scalar rho,
+				      scalar u,
+				      scalar E,
+				      scalar alpha,
+				      scalar beta){
+  scalar gamma = 1.0+1.0/alpha;
+  scalar p = (gamma-1)*(E - beta - 0.5*rho*u*u);
+  return fabs(u)+sqrt(gamma*p/rho);
+}
+#elif TWOD
+arch_device scalar twod_stiffened_upa(scalar rho,
+				       scalar u,
+				       scalar v,
+				       scalar E,
+				       scalar alpha,
+				       scalar beta){
+  scalar gamma = 1.0+1.0/alpha;
+  scalar p = (gamma-1)*(E - beta - 0.5*rho*(u*u+v*v));
+  scalar a = sqrt(gamma*p/rho);
+  return MAX(fabs(u)+a,fabs(v)+a);
+}
 #endif //dimensions
 #endif // problem type
 #endif // header file

@@ -67,6 +67,7 @@ arch_global void average_cell_p0(const int N_s, const int N_E,  scalar* DU){
   }
 }
 
+//==========================================================================
 arch_global void findUPA(const int N_s, const int N_E,  scalar* U, scalar* UPA){
 
 #ifdef USE_CPU
@@ -103,6 +104,22 @@ arch_global void findUPA(const int N_s, const int N_E,  scalar* U, scalar* UPA){
 				     U[(e*N_F+2)*N_s+i]/U[(e*N_F+0)*N_s+i], // v
 				     U[(e*N_F+3)*N_s+i],                    // E
 				     U[(e*N_F+4)*N_s+i]);                   // alpha
+#endif //dimesions
+#elif STIFFENED
+#ifdef ONED
+  UPA[e*N_s+i] = oned_stiffened_upa(U[(e*N_F+0)*N_s+i],                    // rho
+				    U[(e*N_F+1)*N_s+i]/U[(e*N_F+0)*N_s+i], // u
+				    U[(e*N_F+2)*N_s+i],                    // E
+				    U[(e*N_F+3)*N_s+i],                    // alpha
+  				    U[(e*N_F+4)*N_s+i]);                   // beta
+#elif TWOD
+  UPA[e*N_s+i] = twod_stiffened_upa(U[(e*N_F+0)*N_s+i],                    // rho
+				    U[(e*N_F+1)*N_s+i]/U[(e*N_F+0)*N_s+i], // u
+				    U[(e*N_F+2)*N_s+i]/U[(e*N_F+0)*N_s+i], // v
+				    U[(e*N_F+3)*N_s+i],                    // E
+				    U[(e*N_F+4)*N_s+i],                    // alpha
+  				    U[(e*N_F+5)*N_s+i]);                   // beta
+  
 #endif //dimesions
 #endif // problem type
 

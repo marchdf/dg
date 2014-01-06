@@ -1768,6 +1768,95 @@ void init_dg_sodmono_passive(const int N_s, const int N_E, const fullMatrix<scal
 }
 
 
+void init_dg_stffrnt_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+
+  // Left state
+  scalar rhoL  = 1.0;
+  scalar uL    = 1.0;
+  scalar gammaL= 1.4;
+  scalar pinfL = 1.6;
+  scalar pL    = 1.0;
+  scalar EtL   = 1.0/(gammaL-1.0)*pL + gammaL*pinfL/(gammaL-1) + 0.5*rhoL*uL*uL;
+  scalar GL    = 1.0/(gammaL-1.0);
+
+  
+  // Right state
+  scalar rhoR   = 0.125;
+  scalar uR     = 1.0;
+  scalar gammaR = 1.6;
+  scalar pinfR  = 0;
+  scalar pR     = 1.0;
+  scalar EtR    = 1.0/(gammaR-1.0)*pR + gammaR*pinfR/(gammaR-1)  + 0.5*rhoR*uR*uR;
+  scalar GR     = 1.0/(gammaR-1.0);
+
+  
+  scalar xc=0;
+  for(int e = 0; e < N_E; e++){
+    xc = XYZCen(e,0);
+    for(int i = 0; i < N_s; i++){
+      if ((-0.5<xc)&&(xc<0.5)){
+	U(i,e*N_F+0) = rhoL;
+	U(i,e*N_F+1) = rhoL*uL;
+	U(i,e*N_F+2) = EtL;
+	U(i,e*N_F+3) = GL;
+	U(i,e*N_F+4) = gammaL*pinfL/(gammaL-1);
+      }
+      else {
+	U(i,e*N_F+0) = rhoR;
+	U(i,e*N_F+1) = rhoR*uR;
+	U(i,e*N_F+2) = EtR;
+	U(i,e*N_F+3) = GR;
+	U(i,e*N_F+4) = gammaR*pinfR/(gammaR-1);
+      }
+    }
+  }
+}
+
+void init_dg_stfshck_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+
+  // Initial condition taken from Shyue JCP 1998
+  
+  // Left state
+  scalar rhoL  = 1.241;
+  scalar uL    = 0.0;
+  scalar gammaL= 1.4;
+  scalar pinfL = 0;
+  scalar pL    = 2.753;
+  scalar EtL   = 1.0/(gammaL-1.0)*pL + gammaL*pinfL/(gammaL-1) + 0.5*rhoL*uL*uL;
+  scalar GL    = 1.0/(gammaL-1.0);
+
+  
+  // Right state
+  scalar rhoR   = 0.991;
+  scalar uR     = 0.0;
+  scalar gammaR = 5.5;
+  scalar pinfR  = 1.505;
+  scalar pR     = 3.059*1e-4;
+  scalar EtR    = 1.0/(gammaR-1.0)*pR + gammaR*pinfR/(gammaR-1)  + 0.5*rhoR*uR*uR;
+  scalar GR     = 1.0/(gammaR-1.0);
+
+  
+  scalar xc=0;
+  for(int e = 0; e < N_E; e++){
+    xc = XYZCen(e,0);
+    for(int i = 0; i < N_s; i++){
+      if (xc<0.0){
+	U(i,e*N_F+0) = rhoL;
+	U(i,e*N_F+1) = rhoL*uL;
+	U(i,e*N_F+2) = EtL;
+	U(i,e*N_F+3) = GL;
+	U(i,e*N_F+4) = gammaL*pinfL/(gammaL-1);
+      }
+      else {
+	U(i,e*N_F+0) = rhoR;
+	U(i,e*N_F+1) = rhoR*uR;
+	U(i,e*N_F+2) = EtR;
+	U(i,e*N_F+3) = GR;
+	U(i,e*N_F+4) = gammaR*pinfR/(gammaR-1);
+      }
+    }
+  }
+}
 
 
 void init_dg_euler1D_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
