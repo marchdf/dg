@@ -66,8 +66,9 @@ arch_device scalar oned_stiffened_upa(scalar rho,
 				      scalar alpha,
 				      scalar beta){
   scalar gamma = 1.0+1.0/alpha;
+  scalar pinf = (1-1.0/gamma)*beta;
   scalar p = (gamma-1)*(E - beta - 0.5*rho*u*u);
-  return fabs(u)+sqrt(gamma*p/rho);
+  return fabs(u)+sqrt(gamma*(p+pinf)/rho);
 }
 #elif TWOD
 arch_device scalar twod_stiffened_upa(scalar rho,
@@ -77,8 +78,9 @@ arch_device scalar twod_stiffened_upa(scalar rho,
 				       scalar alpha,
 				       scalar beta){
   scalar gamma = 1.0+1.0/alpha;
+  scalar pinf = (1-1.0/gamma)*beta;
   scalar p = (gamma-1)*(E - beta - 0.5*rho*(u*u+v*v));
-  scalar a = sqrt(gamma*p/rho);
+  scalar a = sqrt(gamma*(p+pinf)/rho);
   return MAX(fabs(u)+a,fabs(v)+a);
 }
 #endif //dimensions

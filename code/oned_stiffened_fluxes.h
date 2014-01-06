@@ -37,10 +37,12 @@ arch_device void oned_stiffened_rusanov(scalar rhoL,
 
   scalar gammaL = 1.0+1.0/alphaL;
   scalar gammaR = 1.0+1.0/alphaR;
+  scalar pinfL = (1-1.0/gammaL)*betaL;
+  scalar pinfR = (1-1.0/gammaR)*betaR;
   scalar pL = (gammaL-1)*(EtL - betaL - 0.5*rhoL*vxL*vxL);
   scalar pR = (gammaR-1)*(EtR - betaR - 0.5*rhoR*vxR*vxR);
-  scalar aL = sqrt((gammaL*pL)/rhoL);
-  scalar aR = sqrt((gammaR*pR)/rhoR);
+  scalar aL = sqrt((gammaL*(pL+pinfL))/rhoL);
+  scalar aR = sqrt((gammaR*(pR+pinfR))/rhoR);
   int fcnt = 0;   // field counter
   
   // Find the maximum eigenvalue
@@ -149,10 +151,12 @@ arch_device void oned_stiffened_roe(scalar rhoL,
 
   scalar gammaL = 1.0+1.0/alphaL;
   scalar gammaR = 1.0+1.0/alphaR;
+  scalar pinfL = (1-1.0/gammaL)*betaL;
+  scalar pinfR = (1-1.0/gammaR)*betaR;
   scalar pL = (gammaL-1)*(EtL - betaL - 0.5*rhoL*vxL*vxL);
   scalar pR = (gammaR-1)*(EtR - betaR - 0.5*rhoR*vxR*vxR);
-  scalar aL = sqrt((gammaL*pL)/rhoL);
-  scalar aR = sqrt((gammaR*pR)/rhoR);
+  scalar aL = sqrt((gammaL*(pL+pinfL))/rhoL);
+  scalar aR = sqrt((gammaR*(pR+pinfR))/rhoR);
   int fcnt = 0; // field counter
   
   // Compute Roe averages
