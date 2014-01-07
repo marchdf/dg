@@ -1814,7 +1814,8 @@ void init_dg_stffrnt_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 
 void init_dg_stfshck_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
-  // Initial condition taken from Shyue JCP 1998
+  // Initial condition taken from Cocchi 1996, Shyue JCP 1998
+  // Also found in Eric's thesis p. 62
   
   // Left state
   scalar rhoL  = 1.241;
@@ -1853,6 +1854,75 @@ void init_dg_stfshck_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 	U(i,e*N_F+2) = EtR;
 	U(i,e*N_F+3) = GR;
 	U(i,e*N_F+4) = gammaR*pinfR/(gammaR-1);
+      }
+    }
+  }
+}
+
+void init_dg_stfbubl_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+
+  // Shock-bubble interaction: air bubble in water
+  
+  // post-shock state
+  scalar rhoS  = 838.4992509408085;
+  scalar uS    = 0.076024412532547;
+  scalar vS    = 0;
+  scalar gammaS= 2.35;
+  scalar pinfS = 7049.451905114377;
+  scalar pS    = 285.7142857142857;
+  scalar EtS   = 1.0/(gammaS-1.0)*pS + gammaS*pinfS/(gammaS-1) + 0.5*rhoS*uS*uS;
+  scalar GS    = 1.0/(gammaS-1.0);
+  scalar xshckpos = -2;
+  
+  // background water
+  scalar rhoW   = 824.4793880152995;
+  scalar uW     = 0.0;
+  scalar vW     = 0.0;
+  scalar gammaW = 2.35;
+  scalar pinfW  = 7049.451905114377;
+  scalar pW     = 0.714285714285714;
+  scalar EtW    = 1.0/(gammaW-1.0)*pW + gammaW*pinfW/(gammaW-1)  + 0.5*rhoW*uW*uW;
+  scalar GW     = 1.0/(gammaW-1.0);
+
+  // Bubble properties
+  scalar rhoB   = 1;
+  scalar uB     = 0.0;
+  scalar vB     = 0.0;
+  scalar gammaB = 1.4;
+  scalar pinfB  = 0;
+  scalar pB     = 0.714285714285714;
+  scalar EtB    = 1.0/(gammaB-1.0)*pB + gammaB*pinfB/(gammaB-1)  + 0.5*rhoB*uB*uB;
+  scalar GB     = 1.0/(gammaB-1.0);
+  scalar radius = 1;
+  
+  scalar xc=0,yc=0;
+  for(int e = 0; e < N_E; e++){
+    xc = XYZCen(e,0);
+    yc = XYZCen(e,1);
+    for(int i = 0; i < N_s; i++){
+      if (xc*xc+yc*yc<radius*radius){ // inside the bubble
+	U(i,e*N_F+0) = rhoB;
+	U(i,e*N_F+1) = rhoB*uB;
+	U(i,e*N_F+2) = rhoB*vB;
+	U(i,e*N_F+3) = EtB;
+	U(i,e*N_F+4) = GB;
+	U(i,e*N_F+5) = gammaB*pinfB/(gammaB-1);
+      }
+      else if (xc<xshckpos){
+	U(i,e*N_F+0) = rhoS;
+	U(i,e*N_F+1) = rhoS*uS;
+	U(i,e*N_F+2) = rhoS*vS;
+	U(i,e*N_F+3) = EtS;
+	U(i,e*N_F+4) = GS;
+	U(i,e*N_F+5) = gammaS*pinfS/(gammaS-1);
+      }
+      else {
+	U(i,e*N_F+0) = rhoW;
+	U(i,e*N_F+1) = rhoW*uW;
+	U(i,e*N_F+2) = rhoW*vW;
+	U(i,e*N_F+3) = EtW;
+	U(i,e*N_F+4) = GW;
+	U(i,e*N_F+5) = gammaW*pinfW/(gammaW-1);
       }
     }
   }

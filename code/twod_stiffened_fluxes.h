@@ -172,8 +172,8 @@ arch_device void twod_stiffened_roe(scalar rhoL,
   scalar gammaR = 1.0+1.0/alphaR;
   scalar pinfL = (1-1.0/gammaL)*betaL;
   scalar pinfR = (1-1.0/gammaR)*betaR;
-  scalar pL = (gammaL-1)*(EtL - 0.5*rhoL*(vxL*vxL+vyL*vyL));
-  scalar pR = (gammaR-1)*(EtR - 0.5*rhoR*(vxR*vxR+vyR*vyR));
+  scalar pL = (gammaL-1)*(EtL - betaL - 0.5*rhoL*(vxL*vxL+vyL*vyL));
+  scalar pR = (gammaR-1)*(EtR - betaR - 0.5*rhoR*(vxR*vxR+vyR*vyR));
   scalar aL = sqrt((gammaL*(pL+pinfL))/rhoL);
   scalar aR = sqrt((gammaR*(pR+pinfR))/rhoR);
   scalar HL = (EtL + pL)/rhoL;
@@ -268,7 +268,7 @@ arch_device void twod_stiffened_roe(scalar rhoL,
   scalar R55 = 1;
 
   //first: fx = rho*u; fy = rho*v
-  F[cnt] = 0.5*(flux_ab(rhoL,vnL) + flux_ab(rhoR,vnR))
+  F[fcnt] = 0.5*(flux_ab(rhoL,vnL) + flux_ab(rhoR,vnR))
     -0.5*(ws0*dV0*R00+
 	  ws1*dV1*R10+
 	  ws2*dV2*R20+
@@ -277,7 +277,7 @@ arch_device void twod_stiffened_roe(scalar rhoL,
 	  ws5*dV5*R50); fcnt++;
 
   //second: fx = rho*u*u+p; fy = rho*u*v
-  F[cnt] = 0.5*(flux_apb(rhoL*vnL*vxL,pL*nx)  + flux_apb(rhoR*vnR*vxR,pR*nx))
+  F[fcnt] = 0.5*(flux_apb(rhoL*vnL*vxL,pL*nx)  + flux_apb(rhoR*vnR*vxR,pR*nx))
     -0.5*(ws0*dV0*R01+
 	  ws1*dV1*R11+
 	  ws2*dV2*R21+
@@ -286,7 +286,7 @@ arch_device void twod_stiffened_roe(scalar rhoL,
 	  ws5*dV5*R51); fcnt++;
 
   //third: fx = rho*u*v; fy = rho*v*v+p
-  F[cnt] = 0.5*(flux_apb(rhoL*vnL*vyL,pL*ny)  + flux_apb(rhoR*vnR*vyR,pR*ny))
+  F[fcnt] = 0.5*(flux_apb(rhoL*vnL*vyL,pL*ny)  + flux_apb(rhoR*vnR*vyR,pR*ny))
     -0.5*(ws0*dV0*R02+
 	  ws1*dV1*R12+
 	  ws2*dV2*R22+
@@ -295,7 +295,7 @@ arch_device void twod_stiffened_roe(scalar rhoL,
 	  ws5*dV5*R52); fcnt++;
  
   //fourth: fx = rho*u*H; fy = rho*v*H;
-  F[cnt] = 0.5*(flux_abc(rhoL,vnL,HL)+flux_abc(rhoR,vnR,HR))
+  F[fcnt] = 0.5*(flux_abc(rhoL,vnL,HL)+flux_abc(rhoR,vnR,HR))
     -0.5*(ws0*dV0*R03+
 	  ws1*dV1*R13+
 	  ws2*dV2*R23+
