@@ -292,13 +292,13 @@ class DG_SOLVER
 #else
     Lcpu_gemm_q(_M_G, _M_s, _M_T, _Qtcj, _qJ, _psi_w);
 #endif
-    
+
     // map_q: requires map, Qtcj, Q (might want to do this in the previous step)
     Lcpu_mapToElement(_N_s, _N_E, _M_s, _N_N, _invmap, _Q, _Qtcj);
 
     // Make f_rk = S+F+Q
     Lcpu_addSFQ(_N_s, _N_E, f_rk, _S, _F, _Q);
-    
+
   }; // end solver function
 
 

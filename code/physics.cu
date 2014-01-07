@@ -302,7 +302,7 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
     for(int g = 0; g < M_G; g++){
 #elif USE_GPU
   int blk = threadIdx.z; // buffer needs room for all the elements in the block
-  int t = blockIdx.x*blkT+threadIdx.z;
+  int t = blockIdx.x*blkT+blk;
   if ( t < M_T){
     int g = threadIdx.x;
     extern __shared__ scalar buffer[];    // buffer holds F and ncterm (blkT x M_G x 2*N_F: [F,ncterm])

@@ -266,6 +266,11 @@ arch_global void cpu_mapToElement(int N_s, int N_E, int M_s, int N_N, int* invma
 #endif
       sol[(blk*N_F+fc)*N_s+i] = 0;
 
+    // make sure all threads initialize sol to zero before moving on
+#ifdef USE_GPU
+    __syncthreads(); 
+#endif
+    
     // Get the values of Q from the interfaces
 #ifdef USE_CPU
     for(int i = 0; i < M_s*N_N; i++){
@@ -280,6 +285,11 @@ arch_global void cpu_mapToElement(int N_s, int N_E, int M_s, int N_N, int* invma
       atomicAdd(&sol[(blk*N_F+fc)*N_s+solidx], Qtcj[qidx]);
 #endif
     }
+
+    // make sure all threads complete the atomic add before moving on
+#ifdef USE_GPU
+    __syncthreads(); 
+#endif
 
     // Push sol to Q
 #ifdef USE_CPU
