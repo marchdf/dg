@@ -98,7 +98,7 @@ arch_global void reconstruct_energy(int N_s, int N_E, scalar* rhoeLim, scalar* K
 
 
 //==========================================================================
-arch_global void internal_energy(int N_s, int N_E, scalar* p, scalar* g, scalar* rhoe){
+arch_global void internal_energy_multifluid(int N_s, int N_E, scalar* p, scalar* g, scalar* rhoe){
   /* Reconstruct the monomial internal energy coefficients using the
      pressure and 1/gamma-1 coefficients so that the pressure remains
      non-oscillatory */
@@ -119,6 +119,35 @@ arch_global void internal_energy(int N_s, int N_E, scalar* p, scalar* g, scalar*
       I += (scalar)binomial_coefficient(i,k) * p[e*N_s+i-k] * g[e*N_s+k];
     }
     rhoe[e*N_s+i] = I;
+
+#ifdef USE_CPU
+  }
+#endif
+  }
+}
+
+//==========================================================================
+arch_global void internal_energy_stiffened(int N_s, int N_E, scalar* p, scalar* g, scalar* b, scalar* rhoe){
+  /* Reconstruct the monomial internal energy coefficients using the
+     pressure, 1/gamma-1, and gamma*pinf/(gamma-1) coefficients so
+     that the pressure remains non-oscillatory */
+#ifdef USE_CPU
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+#elif USE_GPU
+  int e = blockIdx.x*blkE+threadIdx.z;
+  if (e < N_E){
+    int i = threadIdx.x;
+#endif
+
+    //printf("==== m = %i\n",i);
+    scalar I = 0;
+    for(int k=0; k<i+1; k++){
+      // could prob do this faster if I brought p and g as a shared array
+      //printf("(m,k)=(%i,%i)=%i, m-k=%i, k=%i\n",i,k,binomial_coefficient(i,k),i-k,k);
+      I += (scalar)binomial_coefficient(i,k) * p[e*N_s+i-k] * g[e*N_s+k];
+    }
+    rhoe[e*N_s+i] = I + b[e*N_s+i];
 
 #ifdef USE_CPU
   }
@@ -158,7 +187,7 @@ void Lreconstruct_energy(int N_s, int N_E, scalar* rhoeLim, scalar* KLim, scalar
 }
 
 extern "C"
-void Linternal_energy(int N_s, int N_E, scalar* p, scalar* g, scalar* rhoe){
+void Linternal_energy_multifluid(int N_s, int N_E, scalar* p, scalar* g, scalar* rhoe){
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
@@ -167,10 +196,24 @@ void Linternal_energy(int N_s, int N_E, scalar* p, scalar* g, scalar* rhoe){
   dim3 dimGrid(div+mod,1);
 #endif
 
-  internal_energy arch_args (N_s, N_E, p, g, rhoe);
+  internal_energy_multifluid arch_args (N_s, N_E, p, g, rhoe);
 
 }
- 
+
+extern "C"
+void Linternal_energy_stiffened(int N_s, int N_E, scalar* p, scalar* g, scalar* b, scalar* rhoe){
+#ifdef USE_GPU
+  int div = N_E/blkE;
+  int mod = 0;
+  if (N_E%blkE != 0) mod = 1;
+  dim3 dimBlock(N_s,1,blkE);
+  dim3 dimGrid(div+mod,1);
+#endif
+
+  internal_energy_stiffened arch_args (N_s, N_E, p, g, b, rhoe);
+
+}
+
 //==========================================================================
 //
 //  Internal functions

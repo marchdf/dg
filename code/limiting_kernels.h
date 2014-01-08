@@ -10,5 +10,6 @@ extern "C" void Lstridedcopy(int count, int blocklen, int strideA, int strideB, 
 extern "C" void Lreconstruct_energy(int N_s, int N_E, scalar* rhoeLim, scalar* KLim, scalar* EMono, scalar* ELim);
 
 // Reconstruct the internal energy monomial coefficients using pressure and gamma in a non-oscillatory fashion
-extern "C" void Linternal_energy(int N_s, int N_E, scalar* p, scalar* g, scalar* rhoe);
+extern "C" void Linternal_energy_multifluid(int N_s, int N_E, scalar* p, scalar* g, scalar* rhoe);
+extern "C" void Linternal_energy_stiffened(int N_s, int N_E, scalar* p, scalar* g, scalar* b, scalar* rhoe);
 #endif

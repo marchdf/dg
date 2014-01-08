@@ -28,6 +28,7 @@ class Limiting
   scalar* _K, * _KLim;
   scalar* _E, * _EMono, * _ELim;
   scalar* _gamma, * _gammaMono, * _gammaLim;
+  scalar* _beta, * _betaMono, * _betaLim; //=gamma*pinf/(gamma-1)
   scalar* _rhoeLim;
   
   int     _method; // no limiting= 0; HR=1; MYL=2; M2L=3
@@ -73,6 +74,7 @@ class Limiting
     _K=NULL; _KLim=NULL;
     _E=NULL; _EMono=NULL, _ELim=NULL;
     _gamma=NULL; _gammaMono=NULL; _gammaLim=NULL;
+    _beta=NULL; _betaMono=NULL; _betaLim=NULL;
     _rhoeLim=NULL;
 
     _neighbors=NULL;
@@ -164,6 +166,7 @@ class Limiting
       break;
     case 3:{
 #ifdef USE_CPU
+
       _rho      = new scalar[_N_s*_N_E]; _rhoMono      = new scalar[_N_s*_N_E]; _rhoLim      = new scalar[_N_s*_N_E];
       _rhou     = new scalar[_N_s*_N_E]; _rhouMono     = new scalar[_N_s*_N_E]; _rhouLim     = new scalar[_N_s*_N_E];
       _pressure = new scalar[_N_s*_N_E]; _pressureMono = new scalar[_N_s*_N_E]; _pressureLim = new scalar[_N_s*_N_E];
@@ -171,7 +174,11 @@ class Limiting
       _E        = new scalar[_N_s*N_E];  _EMono        = new scalar[_N_s*N_E];  _ELim        = new scalar[_N_s*N_E];
       _gamma    = new scalar[_N_s*_N_E]; _gammaMono    = new scalar[_N_s*_N_E]; _gammaLim    = new scalar[_N_s*_N_E];
       _rhoeLim  = new scalar[_N_s*N_E];
+#ifdef STIFFENED
+      _beta    = new scalar[_N_s*_N_E]; _betaMono    = new scalar[_N_s*_N_E]; _betaLim    = new scalar[_N_s*_N_E];
+#endif
 
+      
 #elif USE_GPU
       cudaMalloc((void**) &_rho,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_rhoMono,_N_s*_N_E*sizeof(scalar));
@@ -191,6 +198,13 @@ class Limiting
       cudaMalloc((void**) &_gammaMono,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_gammaLim,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_rhoeLim,_N_s*_N_E*sizeof(scalar));
+#ifdef STIFFENED
+      cudaMalloc((void**) &_beta,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_betaMono,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_betaLim,_N_s*_N_E*sizeof(scalar));
+#endif
+
+
 #endif
       }
       break;
@@ -388,6 +402,7 @@ class Limiting
     if(_K){           del(_K); del(_KLim);}
     if(_E){           del(_E); del(_EMono); del(_ELim);}
     if(_gamma){       del(_gamma); del(_gammaMono); del(_gammaLim);}
+    if(_beta){        del(_beta); del(_betaMono); del(_betaLim);}
     if(_rhoeLim){     del(_rhoeLim);}
     if(_V1D)          del(_V1D);
     if(_XYZCen)       del(_XYZCen);
@@ -575,7 +590,7 @@ class Limiting
   void M2limiting(scalar* U){
 
 #ifdef ONED
-#ifdef MULTIFLUID
+#ifdef MULTIFLUID  //===========================================================
 #ifdef GAMNCON
     // Get the density field, transform to monomial basis, limit, transform to Lagrange basis
     Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,0,0,U,_rho); // copy from U into rho
@@ -610,7 +625,7 @@ class Limiting
     blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _K, _N_s, 0.0, _KLim, _N_s);
     
     // Get the limited internal energy by using the limited pressure and limited 1/(gamma-1)
-    Linternal_energy(_N_s,_N_E,_pressureLim,_gammaLim,_rhoeLim);
+    Linternal_energy_multifluid(_N_s,_N_E,_pressureLim,_gammaLim,_rhoeLim);
 
     // Reconstruct the limited energy coefficients, go back to lagrange basis
     Lreconstruct_energy(_N_s,_N_E,_rhoeLim,_KLim,_EMono,_ELim);
@@ -628,8 +643,64 @@ class Limiting
     printf("M2L is only implemented for gamncon. Exiting...\n");
     exit(1);
 #endif
+
+#elif STIFFENED  //===========================================================
+
+    // Get the density field, transform to monomial basis, limit, transform to Lagrange basis
+    Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,0,0,U,_rho); // copy from U into rho
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _rho, _N_s, 0.0, _rhoMono, _N_s);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, 1, _N_N, 1, _neighbors, 0, _weight, _V1D, _rhoMono, _rhoLim);
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Mono2Lag, _N_s, _rhoLim, _N_s, 0.0, _rho, _N_s);
+    
+    // Get the momentum field, transform to monomial basis, limit, transform to Lagrange basis
+    Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,_N_s,0,U,_rhou); // copy from U into rhou
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _rhou, _N_s, 0.0, _rhouMono, _N_s);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, 1, _N_N, 1, _neighbors, 0, _weight, _V1D, _rhouMono, _rhouLim);
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Mono2Lag, _N_s, _rhouLim, _N_s, 0.0, _rhou, _N_s);
+
+    // Get the energy field, transform to monomial basis
+    Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,2*_N_s,0,U,_E); // copy from U into E
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _E, _N_s, 0.0, _EMono, _N_s);
+    
+    // Get the 1/gamma-1 field, transform to monomial basis, limit, transform to Lagrange basis
+    Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,3*_N_s,0,U,_gamma); // copy from U into gamma
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _gamma, _N_s, 0.0, _gammaMono, _N_s);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, 1, _N_N, 1, _neighbors, 0, _weight, _V1D, _gammaMono, _gammaLim);
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Mono2Lag, _N_s, _gammaLim, _N_s, 0.0, _gamma, _N_s);
+
+    // Get the gamma ping/gamma-1 field, transform to monomial basis, limit, transform to Lagrange basis
+    Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,4*_N_s,0,U,_beta); // copy from U into beta
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _beta, _N_s, 0.0, _betaMono, _N_s);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, 1, _N_N, 1, _neighbors, 0, _weight, _V1D, _betaMono, _betaLim);
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Mono2Lag, _N_s, _betaLim, _N_s, 0.0, _beta, _N_s);
+
+    // Get the pressure field, transform to monomial basis, limit
+    Lpressure(_N_s, _N_E, U, _pressure);
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, 1, _N_N, 1, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
+
+    // Get the limited kinetic energy by using the limited rho and limited rhou
+    // Start in Lagrange formulation then transform to monomial basis
+    Lkinetic_energy1D(_N_s,_N_E,_rho,_rhou,_K); // K = rhou^2/rho;
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _K, _N_s, 0.0, _KLim, _N_s);
+    
+    // Get the limited internal energy by using the limited pressure, limited 1/(gamma-1) and limited beta
+    Linternal_energy_stiffened(_N_s,_N_E,_pressureLim,_gammaLim,_betaLim,_rhoeLim);
+
+    // Reconstruct the limited energy coefficients, go back to lagrange basis
+    Lreconstruct_energy(_N_s,_N_E,_rhoeLim,_KLim,_EMono,_ELim);
+    // If we did the following, it would be normal HRL: 
+    //Lcpu_hrl1D(_N_s, _N_E, _N_G, 1, _N_N, 1, _neighbors, 0, _weight, _V1D, _EMono, _ELim);
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Mono2Lag, _N_s, _ELim, _N_s, 0.0, _E, _N_s);
+    
+    // Copy the variables back into U (now limited)
+    Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,0     ,_rho  ,U);
+    Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,_N_s  ,_rhou ,U);
+    Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,2*_N_s,_E    ,U);
+    Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,3*_N_s,_gamma,U);
+    Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,4*_N_s,_beta ,U);
 #else 
-    printf("M2L is only implemented for multifluid. Exiting...\n");
+    printf("M2L is only implemented for multifluid and stiffened. Exiting...\n");
     exit(1);
 #endif
 #else 
