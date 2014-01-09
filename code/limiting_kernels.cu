@@ -30,10 +30,17 @@ arch_global void stridedcopy(int numblocks, int blocklen, int strideA, int strid
      scalar* a = new scalar[18];
      scalar* b = new scalar[6];
      for(int i=0; i<18; i++){a[i] = i;printf("%i %f\n",i,a[i]);}
-     Lstridedcopy(2,3,9,3,a,b);
+     scalar* d_a;
+     scalar* d_b;
+     cudaMalloc((void**) &d_a,18*sizeof(scalar));
+     cudaMalloc((void**) &d_b,6*sizeof(scalar));
+     cudaMemcpy(d_a, a, 18*sizeof(scalar), cudaMemcpyHostToDevice);
+     Lstridedcopy(2,3,9,3,0,0,d_a,d_b);
+     cudaMemcpy(b, d_b, 6*sizeof(scalar), cudaMemcpyDeviceToHost);
      for(int i=0; i<6; i++){printf("%i: %f\n",i,b[i]);}
      delete[] a;
      delete[] b;
+     exit(0);
   */
 
   
@@ -65,7 +72,7 @@ arch_global void stridedcopy(int numblocks, int blocklen, int strideA, int strid
 }
 
 //==========================================================================
-arch_global void reconstruct_energy(int N_s, int N_E, scalar* rhoeLim, scalar* KLim, scalar* EMono, scalar* ELim){
+arch_global void reconstruct_energy(int N_s, int N_E, int slicenum, scalar* rhoeLim, scalar* KLim, scalar* EMono, scalar* ELim){
 
   /* Reconstruct the energy monomial coefficients using the internal
      and kinetic energy monomial coefficients. Apply a correction to
@@ -73,42 +80,51 @@ arch_global void reconstruct_energy(int N_s, int N_E, scalar* rhoeLim, scalar* K
      
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
+    for(int slice = 0; slice < slicenum; slice++){
 #elif USE_GPU
   int e = blockIdx.x*blkE+threadIdx.z;
   if (e < N_E){
+    int slice = threadIdx.x;
 #endif
 
-    int idx, idx0=e*N_s+0;
+    int idx=0;
+    int idx0=e*N_s*slicenum+slice*N_s+0;
     
     // Start at idx 1 because we will do the zeroth coefficient separately
     for(int i = 1; i < N_s; i++){
-      idx = e*N_s+i;
+      idx = e*N_s*slicenum+slice*N_s+i;
       ELim[idx] = rhoeLim[idx]+KLim[idx];
     }
 
     // Correct the zeroth coefficient to conserve energy
     scalar E0 = EMono[idx0];
     for(int k = 2; k<N_s; k+=2){
-      idx = e*N_s+k;
+      idx = e*N_s*slicenum+slice*N_s+k;
       E0 -= 1.0/((scalar)lim_factorial(k+1)) * (ELim[idx]-EMono[idx]);
     }
     ELim[idx0] = E0;
+
+#ifdef USE_CPU
+  }// for on slice
+#endif
   }
 }
 
 
 //==========================================================================
-arch_global void internal_energy_multifluid(int N_s, int N_E, scalar* p, scalar* g, scalar* rhoe){
+arch_global void internal_energy_multifluid(int N_s, int N_E, int slicenum, scalar* p, scalar* g, scalar* rhoe){
   /* Reconstruct the monomial internal energy coefficients using the
      pressure and 1/gamma-1 coefficients so that the pressure remains
      non-oscillatory */
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
-    for(int i = 0; i < N_s; i++){
+    for(int slice = 0; slice < slicenum; slice++){
+      for(int i = 0; i < N_s; i++){
 #elif USE_GPU
   int e = blockIdx.x*blkE+threadIdx.z;
   if (e < N_E){
     int i = threadIdx.x;
+    int slice = threadIdx.y;
 #endif
 
     //printf("==== m = %i\n",i);
@@ -116,28 +132,31 @@ arch_global void internal_energy_multifluid(int N_s, int N_E, scalar* p, scalar*
     for(int k=0; k<i+1; k++){
       // could prob do this faster if I brought p and g as a shared array
       //printf("(m,k)=(%i,%i)=%i, m-k=%i, k=%i\n",i,k,binomial_coefficient(i,k),i-k,k);
-      I += (scalar)binomial_coefficient(i,k) * p[e*N_s+i-k] * g[e*N_s+k];
+      I += (scalar)binomial_coefficient(i,k) * p[e*N_s*slicenum+slice*N_s+i-k] * g[e*N_s*slicenum+slice*N_s+k];
     }
-    rhoe[e*N_s+i] = I;
+    rhoe[e*N_s*slicenum+slice*N_s+i] = I;
 
 #ifdef USE_CPU
+    }
   }
 #endif
   }
 }
 
 //==========================================================================
-arch_global void internal_energy_stiffened(int N_s, int N_E, scalar* p, scalar* g, scalar* b, scalar* rhoe){
+arch_global void internal_energy_stiffened(int N_s, int N_E, int slicenum, scalar* p, scalar* g, scalar* b, scalar* rhoe){
   /* Reconstruct the monomial internal energy coefficients using the
      pressure, 1/gamma-1, and gamma*pinf/(gamma-1) coefficients so
      that the pressure remains non-oscillatory */
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
-    for(int i = 0; i < N_s; i++){
+    for(int slice = 0; slice < slicenum; slice++){
+      for(int i = 0; i < N_s; i++){
 #elif USE_GPU
   int e = blockIdx.x*blkE+threadIdx.z;
   if (e < N_E){
     int i = threadIdx.x;
+    int slice = threadIdx.y;
 #endif
 
     //printf("==== m = %i\n",i);
@@ -145,11 +164,12 @@ arch_global void internal_energy_stiffened(int N_s, int N_E, scalar* p, scalar* 
     for(int k=0; k<i+1; k++){
       // could prob do this faster if I brought p and g as a shared array
       //printf("(m,k)=(%i,%i)=%i, m-k=%i, k=%i\n",i,k,binomial_coefficient(i,k),i-k,k);
-      I += (scalar)binomial_coefficient(i,k) * p[e*N_s+i-k] * g[e*N_s+k];
+      I += (scalar)binomial_coefficient(i,k) * p[e*N_s*slicenum+slice*N_s+i-k] * g[e*N_s*slicenum+slice*N_s+k];
     }
-    rhoe[e*N_s+i] = I + b[e*N_s+i];
+    rhoe[e*N_s*slicenum+slice*N_s+i] = I + b[e*N_s*slicenum+slice*N_s+i];
 
 #ifdef USE_CPU
+  }
   }
 #endif
   }
@@ -174,43 +194,43 @@ void Lstridedcopy(int numblocks, int blocklen, int strideA, int strideB, int off
 };
 
 extern "C"
-void Lreconstruct_energy(int N_s, int N_E, scalar* rhoeLim, scalar* KLim, scalar* EMono, scalar* ELim){
+void Lreconstruct_energy(int N_s, int N_E, int slicenum, scalar* rhoeLim, scalar* KLim, scalar* EMono, scalar* ELim){
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
   if (N_E%blkE != 0) mod = 1;
-  dim3 dimBlock(1,1,blkE);
+  dim3 dimBlock(slicenum,1,blkE);
   dim3 dimGrid(div+mod,1);
 #endif
 
-  reconstruct_energy arch_args (N_s, N_E, rhoeLim, KLim, EMono, ELim);
+  reconstruct_energy arch_args (N_s, N_E, slicenum, rhoeLim, KLim, EMono, ELim);
 }
 
 extern "C"
-void Linternal_energy_multifluid(int N_s, int N_E, scalar* p, scalar* g, scalar* rhoe){
+void Linternal_energy_multifluid(int N_s, int N_E, int slicenum, scalar* p, scalar* g, scalar* rhoe){
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
   if (N_E%blkE != 0) mod = 1;
-  dim3 dimBlock(N_s,1,blkE);
+  dim3 dimBlock(N_s,slicenum,blkE);
   dim3 dimGrid(div+mod,1);
 #endif
 
-  internal_energy_multifluid arch_args (N_s, N_E, p, g, rhoe);
+  internal_energy_multifluid arch_args (N_s, N_E, slicenum, p, g, rhoe);
 
 }
 
 extern "C"
-void Linternal_energy_stiffened(int N_s, int N_E, scalar* p, scalar* g, scalar* b, scalar* rhoe){
+void Linternal_energy_stiffened(int N_s, int N_E, int slicenum, scalar* p, scalar* g, scalar* b, scalar* rhoe){
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
   if (N_E%blkE != 0) mod = 1;
-  dim3 dimBlock(N_s,1,blkE);
+  dim3 dimBlock(N_s,slicenum,blkE);
   dim3 dimGrid(div+mod,1);
 #endif
 
-  internal_energy_stiffened arch_args (N_s, N_E, p, g, b, rhoe);
+  internal_energy_stiffened arch_args (N_s, N_E, slicenum, p, g, b, rhoe);
 
 }
 
@@ -221,16 +241,20 @@ void Linternal_energy_stiffened(int N_s, int N_E, scalar* p, scalar* g, scalar* 
 //==========================================================================
 arch_device int lim_factorial(int n)
 {
-#ifdef USE_CPU
-  return (n == 1 || n == 0) ? 1 : lim_factorial(n - 1) * n;
-#elif USE_GPU  // no recursion for device less than 2.0
-  int f = n;
-  while (n>0){
-    f*=n;
-    n--;
-  }
-  return f;
-#endif 
+  if     (n== 0) return 1;
+  else if(n== 1) return 1;
+  else if(n== 2) return 2;
+  else if(n== 3) return 6;
+  else if(n== 4) return 24;
+  else if(n== 5) return 120;
+  else if(n== 6) return 720;
+  else if(n== 7) return 5040;
+  else if(n== 8) return 40320;
+  else if(n== 9) return 362880;
+  else if(n==10) return 3628800;
+  else if(n==11) return 39916800;
+  else if(n==12) return 479001600;
+  return 1; // default return for factorial
 }
 
 arch_device int binomial_coefficient(int n, int k){

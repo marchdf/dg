@@ -666,11 +666,24 @@ arch_global void kinetic_energy1D(int N_s, int N_E, scalar* rho, scalar* rhou, s
      scalar* c = new scalar[18];     
      for(int i=0; i<18; i++){a[i] = i+1;}
      for(int i=0; i<18; i++){b[i] = i+5;}
-     Lkinetic_energy1D(1,18,a,b,c);
-     for(int i=0; i<18; i++){printf("%i: %f =? %f\n",i,c[i],b[i]*b[i]/a[i]);}
+     scalar* d_a;
+     scalar* d_b;
+     scalar* d_c;
+     cudaMalloc((void**) &d_a,18*sizeof(scalar));
+     cudaMalloc((void**) &d_b,18*sizeof(scalar));
+     cudaMalloc((void**) &d_c,18*sizeof(scalar));
+     cudaMemcpy(d_a, a, 18*sizeof(scalar), cudaMemcpyHostToDevice);
+     cudaMemcpy(d_b, b, 18*sizeof(scalar), cudaMemcpyHostToDevice);
+     cudaMemcpy(d_c, c, 18*sizeof(scalar), cudaMemcpyHostToDevice);
+     //Lkinetic_energy1D(1,18,a,b,c);
+     Lkinetic_energy1D(1,18,d_a,d_b,d_c);
+     cudaMemcpy(c, d_c, 18*sizeof(scalar), cudaMemcpyDeviceToHost);
+     for(int i=0; i<18; i++){printf("%i: %f =? %f\n",i,c[i],0.5*b[i]*b[i]/a[i]);}
      delete[] a;
      delete[] b;
-     delete[] c;*/  
+     delete[] c;
+     exit(0);
+  */  
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
