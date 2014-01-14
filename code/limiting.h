@@ -6,6 +6,11 @@
 #include <physics.h>
 #include <limiting_kernels.h>
 
+// Used to define dynamically variables (mass fractions)
+#define _Y(x) _Y ##x
+#define _YMono(x) _YMono ##x
+#define _YLim(x) _YLim ##x
+
 class Limiting
 {
  private:
@@ -32,6 +37,10 @@ class Limiting
   scalar* _gamma, * _gammaMono, * _gammaLim;
   scalar* _beta, * _betaMono, * _betaLim; //=gamma*pinf/(gamma-1)
   scalar* _rhoeLim;
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) scalar* _Y(x), * _YMono(x), * _YLim(x);
+#include "loop.h"
   
   int     _method; // no limiting= 0; HR=1; MYL=2; M2L=3
   bool    _cartesian;
@@ -80,6 +89,10 @@ class Limiting
     _gamma=NULL; _gammaMono=NULL; _gammaLim=NULL;
     _beta=NULL; _betaMono=NULL; _betaLim=NULL;
     _rhoeLim=NULL;
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) _Y(x) = NULL; _YMono(x) = NULL; _YLim(x) = NULL;
+#include "loop.h"
 
     _neighbors=NULL;
     _ghostElementSend=NULL;
@@ -180,7 +193,11 @@ class Limiting
 #ifdef STIFFENED
       _beta    = new scalar[_N_s*_N_E]; _betaMono    = new scalar[_N_s*_N_E]; _betaLim    = new scalar[_N_s*_N_E];
 #endif
-
+      // Mass fractions initializations
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) _Y(x) = new scalar[_N_s*_N_E]; _YMono(x) = new scalar[_N_s*_N_E]; _YLim(x) = new scalar[_N_s*_N_E];
+#include "loop.h"
       
 #elif USE_GPU
       cudaMalloc((void**) &_rho,_N_s*_N_E*sizeof(scalar));
@@ -206,6 +223,13 @@ class Limiting
       cudaMalloc((void**) &_betaMono,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_betaLim,_N_s*_N_E*sizeof(scalar));
 #endif
+      // Mass fractions initializations
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) cudaMalloc((void**) &_Y(x),_N_s*_N_E*sizeof(scalar)); \
+      cudaMalloc((void**) &_YMono(x),_N_s*_N_E*sizeof(scalar));        \
+      cudaMalloc((void**) &_YLim(x),_N_s*_N_E*sizeof(scalar)); 
+#include "loop.h"
 
 #endif
       }
@@ -319,7 +343,12 @@ class Limiting
 #ifdef STIFFENED
       _beta    = new scalar[_N_s*_N_E]; _betaMono    = new scalar[_N_s*_N_E]; _betaLim    = new scalar[_N_s*_N_E];
 #endif
-      
+      // Mass fractions initializations
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) _Y(x) = new scalar[_N_s*_N_E]; _YMono(x) = new scalar[_N_s*_N_E]; _YLim(x) = new scalar[_N_s*_N_E];
+#include "loop.h"
+
 #elif USE_GPU
       cudaMalloc((void**) &_rho,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_rhoMono,_N_s*_N_E*sizeof(scalar));
@@ -347,6 +376,13 @@ class Limiting
       cudaMalloc((void**) &_betaMono,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_betaLim,_N_s*_N_E*sizeof(scalar));
 #endif
+      // Mass fractions initializations
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) cudaMalloc((void**) &_Y(x),_N_s*_N_E*sizeof(scalar)); \
+      cudaMalloc((void**) &_YMono(x),_N_s*_N_E*sizeof(scalar));        \
+      cudaMalloc((void**) &_YLim(x),_N_s*_N_E*sizeof(scalar)); 
+#include "loop.h"
 
 #endif
     }
@@ -460,6 +496,10 @@ class Limiting
     if(_gamma){       del(_gamma); del(_gammaMono); del(_gammaLim);}
     if(_beta){        del(_beta); del(_betaMono); del(_betaLim);}
     if(_rhoeLim){     del(_rhoeLim);}
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) if(_Y(x)) del(_Y(x)); del(_YMono(x)); del(_YLim(x));
+#include "loop.h"
     if(_V1D)          del(_V1D);
     if(_XYZCen)       del(_XYZCen);
     if(_powersXYZG)   del(_powersXYZG);
@@ -696,6 +736,16 @@ class Limiting
     Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,2*_N_s,_E    ,U);
     Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,3*_N_s,_gamma,U);
 
+    // Get the mass fraction field, transform to monomial basis, limit, transform to Lagrange basis
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,(4+x)*_N_s,0,U,_Y(x));                     \
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s);	 \
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, 1, _N_N, 1, _neighbors, 0, _weight, _V1D, _YMono(x), _YLim(x)); \
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Mono2Lag, _N_s, _YLim(x), _N_s, 0.0, _Y(x), _N_s);   \
+    Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,(4+x)*_N_s,_Y(x),U);
+#include "loop.h"    
+    
 #else 
     printf("M2L is only implemented for gamncon. Exiting...\n");
     exit(1);
@@ -756,6 +806,18 @@ class Limiting
     Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,2*_N_s,_E    ,U);
     Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,3*_N_s,_gamma,U);
     Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,4*_N_s,_beta ,U);
+
+    // Get the mass fraction field, transform to monomial basis, limit, transform to Lagrange basis
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,(5+x)*_N_s,0,U,_Y(x));                     \
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s);	 \
+    Lcpu_hrl1D(_N_s, _N_E, _N_G, 1, _N_N, 1, _neighbors, 0, _weight, _V1D, _YMono(x), _YLim(x)); \
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Mono2Lag, _N_s, _YLim(x), _N_s, 0.0, _Y(x), _N_s);   \
+    Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,(5+x)*_N_s,_Y(x),U);
+#include "loop.h"    
+
+
 #else 
     printf("M2L is only implemented for multifluid and stiffened. Exiting...\n");
     exit(1);
@@ -835,6 +897,26 @@ class Limiting
       Lreconstruct_energy(_N_s1D,_N_E,_N_s1D, _rhoeLim,_KLim,_EMono,_ELim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _ELim, _N_s, 0.0, _E, _N_s);
 
+      // Get the mass fraction field, transform to monomial basis, limit in x, transform to Lagrange basis
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,(5+x)*_N_s,0,U,_Y(x)); \
+      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s);
+#include "loop.h"    
+#ifdef USE_MPI
+      MPI_Barrier(MPI_COMM_WORLD);
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) 
+      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _YMono(x));
+#include "loop.h"    
+#endif
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _YMono(x), _YLim(x)); \
+      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _YLim(x), _N_s, 0.0, _Y(x), _N_s);
+#include "loop.h"    
+
       //
       // Limit wrt y
       //
@@ -903,6 +985,26 @@ class Limiting
       Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,2*_N_s,_rhov ,U);
       Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,3*_N_s,_E    ,U);
       Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,4*_N_s,_gamma,U);
+
+      // Get the mass fraction field, transform to monomial basis, limit in y, transform to Lagrange basis, copy to U
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s);
+#include "loop.h"
+#ifdef USE_MPI
+      MPI_Barrier(MPI_COMM_WORLD);
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _YMono(x));
+#include "loop.h"
+#endif
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _YMono(x), _YLim(x)); \
+      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _Lim(x), _N_s, 0.0, _Y(x), _N_s); \
+      Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,(5+x)*_N_s,_gamma,U);
+#include "loop.h"
+      
     } // end if cartesian
 #else 
     printf("M2L is only implemented for gamncon. Exiting...\n");
@@ -991,6 +1093,26 @@ class Limiting
       Lreconstruct_energy(_N_s1D,_N_E,_N_s1D, _rhoeLim,_KLim,_EMono,_ELim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _ELim, _N_s, 0.0, _E, _N_s);
 
+      // Get the mass fraction field, transform to monomial basis, limit in x, transform to Lagrange basis
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,(6+x)*_N_s,0,U,_Y(x)); \
+      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s);
+#include "loop.h"    
+#ifdef USE_MPI
+      MPI_Barrier(MPI_COMM_WORLD);
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) 
+      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _YMono(x));
+#include "loop.h"    
+#endif
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _YMono(x), _YLim(x)); \
+      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _YLim(x), _N_s, 0.0, _Y(x), _N_s);
+#include "loop.h"    
+
       //
       // Limit wrt y
       //
@@ -1069,6 +1191,26 @@ class Limiting
       Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,3*_N_s,_E    ,U);
       Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,4*_N_s,_gamma,U);
       Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,5*_N_s,_beta,U);
+
+      // Get the mass fraction field, transform to monomial basis, limit in y, transform to Lagrange basis, copy to U
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s);
+#include "loop.h"
+#ifdef USE_MPI
+      MPI_Barrier(MPI_COMM_WORLD);
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _YMono(x));
+#include "loop.h"
+#endif
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _YMono(x), _YLim(x)); \
+      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _Lim(x), _N_s, 0.0, _Y(x), _N_s); \
+      Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,(6+x)*_N_s,_gamma,U);
+#include "loop.h"
+
     } // end if cartesian
 
 #endif // problem type
