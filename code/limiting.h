@@ -1001,8 +1001,8 @@ class Limiting
 #include "loopstart.h"
 #define LOOP_END N_Y
 #define MACRO(x) Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _YMono(x), _YLim(x)); \
-      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _Lim(x), _N_s, 0.0, _Y(x), _N_s); \
-      Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,(5+x)*_N_s,_gamma,U);
+      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _YLim(x), _N_s, 0.0, _Y(x), _N_s); \
+      Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,(5+x)*_N_s,_Y(x),U);
 #include "loop.h"
       
     } // end if cartesian
@@ -1207,8 +1207,8 @@ class Limiting
 #include "loopstart.h"
 #define LOOP_END N_Y
 #define MACRO(x) Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _YMono(x), _YLim(x)); \
-      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _Lim(x), _N_s, 0.0, _Y(x), _N_s); \
-      Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,(6+x)*_N_s,_gamma,U);
+      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _YLim(x), _N_s, 0.0, _Y(x), _N_s); \
+      Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,(6+x)*_N_s,_Y(x),U);
 #include "loop.h"
 
     } // end if cartesian
