@@ -1862,6 +1862,8 @@ void init_dg_stfshck_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 void init_dg_stfbubl_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
   // Shock-bubble interaction: air bubble in water
+  // From: http://dx.doi.org/10.3850/978-981-07-2826-7_213
+  // Pressure and pinf normalized by (rho_air*cs_air^2)
   
   // post-shock state
   scalar rhoS  = 838.4992509408085;
