@@ -251,7 +251,7 @@ class DG_SOLVER
 #endif
 
     // Apply special boundary conditions
-    LrflctiveBoundary(_M_s, _rflctiveIdx,_boundaryMap,0,_UF);
+    LrflctiveBoundary(_M_s, _rflctiveIdx,_boundaryMap,_normals,0,_UF);
     
     // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes
 #ifdef HAVE_BLAS
