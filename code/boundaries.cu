@@ -9,7 +9,7 @@
 //==========================================================================
 
 //==========================================================================
-arch_global void rflctive(int M_s, int M_B, int* boundaryMap, int start, scalar* UF){
+arch_global void rflctive(int M_s, int M_B, int* boundaryMap, scalar* normals, int start, scalar* UF){
 #ifdef USE_CPU
   for(int k = 0; k < M_B; k++){
     int t = boundaryMap[start+k];
@@ -23,9 +23,23 @@ arch_global void rflctive(int M_s, int M_B, int* boundaryMap, int start, scalar*
       // velocity flip
       UF[((t*N_F+1)*2+1)*M_s+j] = -UF[((t*N_F+1)*2+1)*M_s+j];
 #elif TWOD
-      // velocities
-      UF[((t*N_F+1)*2+1)*M_s+j] = -UF[((t*N_F+1)*2+1)*M_s+j];
-      UF[((t*N_F+2)*2+1)*M_s+j] = -UF[((t*N_F+2)*2+1)*M_s+j];
+      // normal
+      scalar nx = normals[t*D+0]; 
+      scalar ny = normals[t*D+1]; 
+      scalar nx2 = nx*nx;
+      scalar ny2 = ny*ny;
+      scalar nxny = nx*ny;
+      
+      // // Normal and tangential velocities
+      scalar vxL = UF[((t*N_F+1)*2+0)*M_s+j];
+      scalar vyL = UF[((t*N_F+2)*2+0)*M_s+j];
+      scalar vxR = 1.0/(nx2+ny2) * ((-nx2+ny2)*vxL + (-2*nxny)*vyL);
+      scalar vyR = 1.0/(nx2+ny2) * ((-2*nxny)*vxL + (nx2-ny2)*vyL);
+
+      // velocities 
+      UF[((t*N_F+1)*2+1)*M_s+j] = vxR;
+      UF[((t*N_F+2)*2+1)*M_s+j] = vyR;
+
 #endif //on dimensions
       
 #ifdef USE_CPU
@@ -41,14 +55,14 @@ arch_global void rflctive(int M_s, int M_B, int* boundaryMap, int start, scalar*
 //
 //==========================================================================
 extern "C"
-void LrflctiveBoundary(int M_s, int M_B, int* boundaryMap, int start, scalar* UF){
+void LrflctiveBoundary(int M_s, int M_B, int* boundaryMap, scalar* normals, int start, scalar* UF){
 
 #ifdef USE_GPU
   dim3 dimBlock(M_s,1,1);
   dim3 dimGrid(M_B,1);
 #endif
 
-  rflctive arch_args (M_s, M_B, boundaryMap, start, UF);
+  rflctive arch_args (M_s, M_B, boundaryMap, normals, start, UF);
 }
 
 

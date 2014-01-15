@@ -4,7 +4,7 @@
 #include <math.h>
 #include <macros.h>
 
-extern "C" void LrflctiveBoundary(int M_s, int M_B, int* boundaryMap, int start, scalar* UF);
+extern "C" void LrflctiveBoundary(int M_s, int M_B, int* boundaryMap, scalar* normals, int start, scalar* UF);
 
 
 #endif
