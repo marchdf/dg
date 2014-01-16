@@ -1864,39 +1864,58 @@ void init_dg_stfbubl_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   // Shock-bubble interaction: air bubble in water
   // From: http://dx.doi.org/10.3850/978-981-07-2826-7_213
   // Pressure and pinf normalized by (rho_air*cs_air^2)
+
+  // Material properties
+  // air at 300K/27C from http://www.mhtl.uwaterloo.ca/old/onlinetools/airprop/airprop.html
+  scalar rho_air = 1.1765;
+  scalar gamma_air = 1.4;
+  scalar patm = 101325;
+  scalar cs_air = sqrt(gamma_air*patm/rho_air);
+
+  // water at 300K
+  scalar rho_water = 996; // use 970 if gelatine/water mixture as in Bourne1992
+  scalar gamma_water = 5.5;// Shahab uses different EoS model and so 2.35;
+  scalar pinf_water = 492115000;// Shahab uses: 1e9;
+  scalar cs_water = sqrt(gamma_water*(patm+pinf_water)/rho_water);
   
+  // Shock properties
+  scalar ratio = 10000; // pressure ratio at shock
+    
   // post-shock state
-  scalar rhoS  = 838.4992509408085;
-  scalar uS    = 0.076024412532547;
+  scalar pSwater = ratio*patm;
+  scalar rhoSwater = rho_water * ((gamma_water+1)/(gamma_water-1) * (pSwater+pinf_water)/(patm+pinf_water) + 1) / ((gamma_water+1)/(gamma_water-1) + (pSwater+pinf_water)/(patm+pinf_water));
+  scalar uSwater = cs_water/gamma_water * (ratio-1)*patm/(patm+pinf_water) / sqrt((gamma_water+1)/(2*gamma_water) * (ratio-1) * patm/(patm+pinf_water) + 1);
+  scalar rhoS  = rhoSwater/rho_air;
+  scalar uS    = uSwater/cs_air;
   scalar vS    = 0;
-  scalar gammaS= 2.35;
-  scalar pinfS = 7049.451905114377;
-  scalar pS    = 285.7142857142857;
+  scalar gammaS= gamma_water;
+  scalar pinfS = pinf_water/(rho_air*cs_air*cs_air);
+  scalar pS    = pSwater/(rho_air*cs_air*cs_air);
   scalar EtS   = 1.0/(gammaS-1.0)*pS + gammaS*pinfS/(gammaS-1) + 0.5*rhoS*uS*uS;
   scalar GS    = 1.0/(gammaS-1.0);
   scalar xshckpos = -2;
-  
+
   // background water
-  scalar rhoW   = 824.4793880152995;
+  scalar rhoW   = rho_water/rho_air;
   scalar uW     = 0.0;
   scalar vW     = 0.0;
-  scalar gammaW = 2.35;
-  scalar pinfW  = 7049.451905114377;
-  scalar pW     = 0.714285714285714;
+  scalar gammaW = gamma_water;
+  scalar pinfW  = pinf_water/(rho_air*cs_air*cs_air);
+  scalar pW     = patm/(rho_air*cs_air*cs_air);
   scalar EtW    = 1.0/(gammaW-1.0)*pW + gammaW*pinfW/(gammaW-1)  + 0.5*rhoW*uW*uW;
   scalar GW     = 1.0/(gammaW-1.0);
 
   // Bubble properties
-  scalar rhoB   = 1;
+  scalar rhoB   = rho_air/rho_air;
   scalar uB     = 0.0;
   scalar vB     = 0.0;
-  scalar gammaB = 1.4;
+  scalar gammaB = gamma_air;
   scalar pinfB  = 0;
-  scalar pB     = 0.714285714285714;
+  scalar pB     = patm/(rho_air*cs_air*cs_air);
   scalar EtB    = 1.0/(gammaB-1.0)*pB + gammaB*pinfB/(gammaB-1)  + 0.5*rhoB*uB*uB;
   scalar GB     = 1.0/(gammaB-1.0);
   scalar radius = 1;
-  
+ 
   scalar xc=0,yc=0;
   for(int e = 0; e < N_E; e++){
     xc = XYZCen(e,0);
