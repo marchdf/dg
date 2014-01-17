@@ -1879,8 +1879,9 @@ void init_dg_stfbubl_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar cs_water = sqrt(gamma_water*(patm+pinf_water)/rho_water);
   
   // Shock properties
-  scalar ratio = 10000; // pressure ratio at shock
-    
+  scalar ratio = 2000;//10000; // pressure ratio at shock
+  printf("Pressure ratio = %g\n",ratio);
+  
   // post-shock state
   scalar pSwater = ratio*patm;
   scalar rhoSwater = rho_water * ((gamma_water+1)/(gamma_water-1) * (pSwater+pinf_water)/(patm+pinf_water) + 1) / ((gamma_water+1)/(gamma_water-1) + (pSwater+pinf_water)/(patm+pinf_water));
