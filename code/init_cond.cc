@@ -1983,7 +1983,9 @@ void init_dg_stfbubl_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar EtS   = 1.0/(gammaS-1.0)*pS + gammaS*pinfS/(gammaS-1) + 0.5*rhoS*uS*uS;
   scalar GS    = 1.0/(gammaS-1.0);
   scalar xshckpos = -2;
-
+  printf("rhoSwater=%f, uSwater=%f, pSwater=%f\n",rhoSwater,uSwater,pSwater);
+  printf("rhoS=%f, uS=%f, pS=%f\n",rhoS,uS,pS);
+    
   // background water
   scalar rhoW   = rho_water/rho_air;
   scalar uW     = 0.0;
@@ -1993,7 +1995,8 @@ void init_dg_stfbubl_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar pW     = patm/(rho_air*cs_air*cs_air);
   scalar EtW    = 1.0/(gammaW-1.0)*pW + gammaW*pinfW/(gammaW-1)  + 0.5*rhoW*uW*uW;
   scalar GW     = 1.0/(gammaW-1.0);
-
+  printf("rhoW=%f, uW=%f, pW=%f\n",rhoW,uW,pW);
+  
   // Bubble properties
   scalar rhoB   = rho_air/rho_air;
   scalar uB     = 0.0;
@@ -2004,7 +2007,8 @@ void init_dg_stfbubl_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar EtB    = 1.0/(gammaB-1.0)*pB + gammaB*pinfB/(gammaB-1)  + 0.5*rhoB*uB*uB;
   scalar GB     = 1.0/(gammaB-1.0);
   scalar radius = 1;
- 
+  printf("rhoB=%f, uB=%f, pB=%f\n",rhoB,uB,pB);
+   
   scalar xc=0,yc=0;
   for(int e = 0; e < N_E; e++){
     xc = XYZCen(e,0);
