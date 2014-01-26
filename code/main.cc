@@ -135,6 +135,7 @@ int main (int argc, char **argv)
   bool sinegam = false;
   bool expogam = false;
   bool shckint = false;
+  bool shuoshe = false;
   bool multint = false;
   bool blast1d = false;
   bool simblst = false;
@@ -159,6 +160,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="sinegam") sinegam = true;
   else if (inputs.getInitialCondition()=="expogam") expogam = true;
   else if (inputs.getInitialCondition()=="shckint") shckint = true;
+  else if (inputs.getInitialCondition()=="shuoshe") shuoshe = true;
   else if (inputs.getInitialCondition()=="multint") multint = true;
   else if (inputs.getInitialCondition()=="blast1d") blast1d = true;
   else if (inputs.getInitialCondition()=="simblst") simblst = true;
@@ -570,6 +572,7 @@ int main (int argc, char **argv)
   else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, XYZNodes, U);
   else if(expogam) init_dg_expogam_multifluid(N_s, N_E, XYZNodes, U);
   else if(shckint) init_dg_shckint_multifluid(N_s, N_E, XYZNodes, U);
+  else if(shuoshe) init_dg_shuoshe_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(multint) init_dg_multint_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(blast1d) init_dg_blast1d_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(simblst) init_dg_simblst_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
@@ -782,6 +785,7 @@ int main (int argc, char **argv)
   else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, XYZNodes, Uinit);
   else if(expogam) init_dg_expogam_multifluid(N_s, N_E, XYZNodes, Uinit);
   else if(shckint) init_dg_shckint_multifluid(N_s, N_E, XYZNodes, Uinit);
+  else if(shuoshe) init_dg_shuoshe_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(rarecon) init_dg_rarecon_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, XYZNodes, Uinit);
   else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);

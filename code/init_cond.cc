@@ -225,12 +225,19 @@ void init_dg_rhotact_multifluid(const int N_s, const int N_E, const fullMatrix<s
 
 void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
+
+  scalar R = 8.3144621; // J/molK
+  scalar T = 300; // K
+  
   // Left state
   scalar rhoL  = 1.0;
   scalar uL    = 1.0;
   scalar gammaL= 1.4;
   scalar pL    = 1.0;
   scalar EtL   = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
+  scalar ML    = T*rhoL*R/pL; // molecular weight
+  scalar RL    = R/ML;
+  scalar CvL   = RL/(gammaL-1);
     
   // Right state
   scalar rhoR   = 0.125;
@@ -238,7 +245,12 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar gammaR = 1.6;
   scalar pR     = 1.0;
   scalar EtR    = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
+  scalar MR     = rhoR/rhoL*pL/pR*ML; // molecular weight
+  scalar RR     = R/MR;
+  scalar CvR    = RR/(gammaR-1);
 
+  printf("ML=%f and MR=%f\n",ML,MR);
+  
   scalar GL, GR;
 #ifdef GAMCONS
   GL = rhoL/(gammaL-1.0);   GR = rhoR/(gammaR-1.0);
@@ -255,12 +267,16 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+1) = rhoL*uL;
 	U(i,e*N_F+2) = EtL;
 	U(i,e*N_F+3) = GL;
+	//U(i,e*N_F+4) = rhoL*1; // mass fraction
+	//U(i,e*N_F+5) = rhoL*CvL;
       }
       else {
 	U(i,e*N_F+0) = rhoR;
 	U(i,e*N_F+1) = rhoR*uR;
 	U(i,e*N_F+2) = EtR;
 	U(i,e*N_F+3) = GR;
+	//U(i,e*N_F+4) = rhoR*0; // mass fraction
+	//U(i,e*N_F+5) = rhoR*CvR;
       }
     }
   }
@@ -294,6 +310,24 @@ void init_dg_sinegam_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #elif GAMNCON
       Q[3] = (scalar)1.0/(gamma0+sinegam-1);
 #endif
+      scalar R = 8.3144621; // J/molK
+      scalar T = 300; // K
+      scalar r = rho+sinerho;
+      scalar r1 = rho - Arho;
+      scalar r2 = rho + Arho;
+      scalar g1 = gamma0 - Agam;
+      scalar g2 = gamma0 + Agam;
+      scalar M1 = T*r1*R/p;
+      scalar M2 = T*r2*R/p;
+      scalar Cv1 = (R/M1)/(g1-1);
+      scalar Cv2 = (R/M2)/(g2-1);
+      scalar g = gamma0+sinegam;
+      scalar z = -M1*(1-(g-1)/(g2-1))/( M2*(1-(g-1)/(g1-1)) - M1*(1-(g-1)/(g2-1)));
+      scalar rhocv = p/(T*(gamma0+sinegam-1)); // rho Cv
+      scalar rhoz = (rhocv - r*Cv2)/(Cv1-Cv2);
+      Q[4] = rhoz;
+      Q[5] = rhocv;
+      
 #elif TWOD
       if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
       scalar y = XYZNodes(i,e*D+1);
@@ -431,6 +465,58 @@ void init_dg_shckint_multifluid(const int N_s, const int N_E, const fullMatrix<s
     for(int i = 0; i < N_s; i++){
       for(int b = 0; b < N_S; b++) if ((xS(b,0) <= x) && (x < xS(b+1,0)))  ind = b;
       for(int k = 0; k < N_F; k++) U(i,e*N_F+k) = S(k,ind);
+    }
+  }
+}
+
+void init_dg_shuoshe_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+#ifdef TWOD
+  printf("shuoshe problem can only be run in 1D. Exiting");
+  exit(1);
+#endif
+
+  // Multifluid Shu-Osher problem taken from Movahed JCP 2013
+
+  // Shocked state (Ms = 3)
+  scalar rhoL = 3.857143;
+  scalar uL   = 2.629369;
+  scalar pL   = 10.3333;
+  scalar GL   = 2.5; // 1/(g-1)
+  scalar EtL  = pL*GL + 0.5*rhoL*uL*uL;
+#ifdef GAMCONS
+  GL = rhoL*GL;
+#endif
+
+  // Quiescent state
+  scalar rhoR = 0;
+  scalar uR   = 0;
+  scalar pR   = 1;
+  scalar GR = 0;
+  scalar EtR = 0;
+
+  for(int e = 0; e < N_E; e++){
+    scalar xc = XYZCen(e,0);
+    for(int i = 0; i < N_s; i++){
+      scalar x = XYZNodes(i,e*D+0);
+      
+      if(xc <= 1){ // post-shock region
+	U(i,e*N_F+0) = rhoL;
+	U(i,e*N_F+1) = rhoL*uL;
+	U(i,e*N_F+2) = EtL;
+	U(i,e*N_F+3) = GL;
+      }
+      else{
+	rhoR = 1+0.2*sin(5*(x-5));
+	GR = 1.33+0.2*sin(5*(x-5));
+	EtR = pR*GR + 0.5*rhoR*uR*uR;
+#ifdef GAMCONS
+	GR = rhoR*GR;
+#endif
+	U(i,e*N_F+0) = rhoR;
+	U(i,e*N_F+1) = rhoR*uR;
+	U(i,e*N_F+2) = EtR;
+	U(i,e*N_F+3) = GR;
+      }
     }
   }
 }
@@ -1881,7 +1967,7 @@ void init_dg_stfbubl_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar cs_water = sqrt(gamma_water*(patm+pinf_water)/rho_water);
   
   // Shock properties
-  scalar ratio = 2000;//10000; // pressure ratio at shock
+  scalar ratio = 19000;//10000; // pressure ratio at shock
   printf("Pressure ratio = %g\n",ratio);
   
   // post-shock state
