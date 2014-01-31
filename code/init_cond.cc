@@ -227,7 +227,7 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const fullMatrix<s
 
 
   scalar R = 8.3144621; // J/molK
-  scalar T = 300; // K
+  scalar T = 1; // K
   
   // Left state
   scalar rhoL  = 1.0;
@@ -267,16 +267,16 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+1) = rhoL*uL;
 	U(i,e*N_F+2) = EtL;
 	U(i,e*N_F+3) = GL;
-	//U(i,e*N_F+4) = rhoL*1; // mass fraction
-	//U(i,e*N_F+5) = rhoL*CvL;
+	U(i,e*N_F+4) = rhoL*1; // mass fraction
+	U(i,e*N_F+5) = rhoL*CvL;
       }
       else {
 	U(i,e*N_F+0) = rhoR;
 	U(i,e*N_F+1) = rhoR*uR;
 	U(i,e*N_F+2) = EtR;
 	U(i,e*N_F+3) = GR;
-	//U(i,e*N_F+4) = rhoR*0; // mass fraction
-	//U(i,e*N_F+5) = rhoR*CvR;
+	U(i,e*N_F+4) = rhoR*0; // mass fraction
+	U(i,e*N_F+5) = rhoR*CvR;
       }
     }
   }
@@ -311,7 +311,7 @@ void init_dg_sinegam_multifluid(const int N_s, const int N_E, const fullMatrix<s
       Q[3] = (scalar)1.0/(gamma0+sinegam-1);
 #endif
       scalar R = 8.3144621; // J/molK
-      scalar T = 300; // K
+      scalar T = 1; // K
       scalar r = rho+sinerho;
       scalar r1 = rho - Arho;
       scalar r2 = rho + Arho;
@@ -1071,14 +1071,14 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar A02 = 0.00183;                 // initial amplitude
   scalar yshck = 0.025; // initial shock location
   scalar Lx = 0.089*2.0/3.0;
-  scalar K = 20;
+  scalar K = 1;
   scalar h = K*Lx;
   scalar yinterface1 = 0; // first interface location
   scalar yinterface2 =-h; // second interface location
   scalar delta=0.005;    // The diffusion layer thickness
     
   // Velocities/pressures in all materials
-  scalar vcoord = 72.9;//111;//51.5;//134;//72.9; // coordinate shift upwards
+  scalar vcoord = 134;//111;//51.5;//134;//72.9; // coordinate shift upwards
   scalar u = 0.0;
   scalar v = 0.0+vcoord;
   scalar p = 1e5;
@@ -1102,10 +1102,10 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar M2      = 146.05;//34.76;//
 
   // pre-shock density (material 3)
-  scalar rho03   = 10;//0.1785;//10;//5.494;//10;//
+  scalar rho03   = 0.1785;//10;//5.494;//10;//
   scalar gamma03 = 5.0/3.0;//1.093;//
   scalar alpha03 = 1/(gamma03-1);
-  scalar M3      = 300;//4;//300;//146.05;//300;//
+  scalar M3      = 4;//300;//146.05;//300;//
 
   // Post-shock state (material 1) (see p 101 Toro)
   scalar Ms = 1.21;   // Shock Mach number
