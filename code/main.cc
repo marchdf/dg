@@ -861,10 +861,10 @@ int main (int argc, char **argv)
   scalar* h_ErrInf    = new scalar[N_F]; makeZero(h_ErrInf   , N_F);
   for(int e = 0; e < N_E; e++){
     for(int fc = 0; fc < N_F; fc++){
-      E    = h_UinitAvg   [e*N_F+fc]-h_UAvg   [e*N_F+fc];
-      h_Err1[fc]    += fabs(E);
-      h_Err2[fc]    += E   *E;
-      if (h_ErrInf[fc]    < fabs(E   ))  h_ErrInf   [fc] = fabs(E);
+      E = h_UinitAvg[e*N_F+fc]-h_UAvg[e*N_F+fc];
+      h_Err1[fc] += fabs(E);
+      h_Err2[fc] += E*E;
+      if (h_ErrInf[fc] < fabs(E))  h_ErrInf[fc] = fabs(E);
     }
   }
   

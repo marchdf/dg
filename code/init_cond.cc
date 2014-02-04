@@ -267,16 +267,16 @@ void init_dg_matfrnt_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+1) = rhoL*uL;
 	U(i,e*N_F+2) = EtL;
 	U(i,e*N_F+3) = GL;
-	U(i,e*N_F+4) = rhoL*1; // mass fraction
-	U(i,e*N_F+5) = rhoL*CvL;
+	//U(i,e*N_F+4) = rhoL*1; // mass fraction
+	//U(i,e*N_F+5) = rhoL*CvL;
       }
       else {
 	U(i,e*N_F+0) = rhoR;
 	U(i,e*N_F+1) = rhoR*uR;
 	U(i,e*N_F+2) = EtR;
 	U(i,e*N_F+3) = GR;
-	U(i,e*N_F+4) = rhoR*0; // mass fraction
-	U(i,e*N_F+5) = rhoR*CvR;
+	//U(i,e*N_F+4) = rhoR*0; // mass fraction
+	//U(i,e*N_F+5) = rhoR*CvR;
       }
     }
   }
@@ -325,8 +325,8 @@ void init_dg_sinegam_multifluid(const int N_s, const int N_E, const fullMatrix<s
       scalar z = -M1*(1-(g-1)/(g2-1))/( M2*(1-(g-1)/(g1-1)) - M1*(1-(g-1)/(g2-1)));
       scalar rhocv = p/(T*(gamma0+sinegam-1)); // rho Cv
       scalar rhoz = (rhocv - r*Cv2)/(Cv1-Cv2);
-      Q[4] = rhoz;
-      Q[5] = rhocv;
+      //Q[4] = rhoz;
+      //Q[5] = rhocv;
       
 #elif TWOD
       if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
@@ -1071,10 +1071,12 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar A02 = 0.00183;                 // initial amplitude
   scalar yshck = 0.025; // initial shock location
   scalar Lx = 0.089*2.0/3.0;
-  scalar K = 1;
+  scalar K = 1.0;
   scalar h = K*Lx;
   scalar yinterface1 = 0; // first interface location
   scalar yinterface2 =-h; // second interface location
+  scalar shift1 = 0;
+  scalar shift2 = 0.5;   // shift interface by a given wavelength
   scalar delta=0.005;    // The diffusion layer thickness
     
   // Velocities/pressures in all materials
@@ -1083,7 +1085,7 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar v = 0.0+vcoord;
   scalar p = 1e5;
 
-  printf("h/l=%f, vcoord=%f\n",K,vcoord);
+  printf("h/l=%f, vcoord=%f, shift1=%f, shift2=%f\n",K,vcoord,shift1,shift2);
 
   // Convention for material order:
   // mat1 (with shock) | mat 2 | mat 3
@@ -1162,8 +1164,8 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
       }
       else{
 	// vertical distance from interface
-	scalar d1 = ((delta+A01*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterface1)/(2*delta);
-	scalar d2 = ((delta+A02*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterface2)/(2*delta);
+	scalar d1 = ((delta+A01*sin(2*M_PI*x/Lx-M_PI/2-shift1*2*M_PI))-y+yinterface1)/(2*delta);
+	scalar d2 = ((delta+A02*sin(2*M_PI*x/Lx-M_PI/2-shift2*2*M_PI))-y+yinterface2)/(2*delta);
 	
 	// Calculate volume fractions
 	scalar vol1=0;
@@ -1968,7 +1970,8 @@ void init_dg_stfbubl_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   
   // Shock properties
   scalar ratio = 19000;//10000; // pressure ratio at shock
-  printf("Pressure ratio = %g\n",ratio);
+  scalar Ms = sqrt( (gamma_water+1)/(2*gamma_water) * (ratio-1) * patm/(patm+pinf_water) + 1);
+  printf("Pressure ratio = %g and shock mach number = %g\n",ratio,Ms);
   
   // post-shock state
   scalar pSwater = ratio*patm;
@@ -2008,7 +2011,7 @@ void init_dg_stfbubl_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar GB     = 1.0/(gammaB-1.0);
   scalar radius = 1;
   printf("rhoB=%f, uB=%f, pB=%f\n",rhoB,uB,pB);
-   
+
   scalar xc=0,yc=0;
   for(int e = 0; e < N_E; e++){
     xc = XYZCen(e,0);
