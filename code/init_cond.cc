@@ -1069,18 +1069,21 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // Initialize
   scalar A01 = 0.00183;                 // initial amplitude
   scalar A02 = 0.00183;                 // initial amplitude
+  scalar A03 = 0.00183;                 // initial amplitude
   scalar yshck = 0.025; // initial shock location
   scalar Lx = 0.089*2.0/3.0;
   scalar K = 1.0;
   scalar h = K*Lx;
   scalar yinterface1 = 0; // first interface location
   scalar yinterface2 =-h; // second interface location
+  scalar yinterface3 =-2*h; // second interface location
   scalar shift1 = 0;
-  scalar shift2 = 0.5;   // shift interface by a given wavelength
+  scalar shift2 = 0;   // shift interface by a given wavelength
+  scalar shift3 = 0;   // shift interface by a given wavelength
   scalar delta=0.005;    // The diffusion layer thickness
     
   // Velocities/pressures in all materials
-  scalar vcoord = 51.5;//111;//51.5;//134;//72.9; // coordinate shift upwards
+  scalar vcoord = 153;//140;//111;//51.5;//134;//72.9; // coordinate shift upwards
   scalar u = 0.0;
   scalar v = 0.0+vcoord;
   scalar p = 1e5;
@@ -1104,19 +1107,25 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar M2      = 146.05;//34.76;//
 
   // pre-shock density (material 3)
-  scalar rho03   = 10;//0.1785;//10;//5.494;//10;//
+  scalar rho03   = 0.1785;//10;//5.494;//10;//
   scalar gamma03 = 5.0/3.0;//1.093;//
   scalar alpha03 = 1/(gamma03-1);
-  scalar M3      = 300;//4;//300;//146.05;//300;//
+  scalar M3      = 4;//300;//4;//300;//146.05;//300;//
+
+  // pre-shock density (material 4)
+  scalar rho04   = 0.05;//1.351;//5.494;//0.1785;//10;//5.494;//10;//
+  scalar gamma04 = 5.0/3.0;//1.276;//5.0/3.0;//1.093;//
+  scalar alpha04 = 1/(gamma04-1);
+  scalar M4      = 2;//34.76;//4;//300;//146.05;//300;//
 
   // Post-shock state (material 1) (see p 101 Toro)
   scalar Ms = 1.21;   // Shock Mach number
-  scalar u4   = 0;
-  scalar v4   =-Ms*c01*(2*(Ms*Ms-1))/(gamma01+1)/(Ms*Ms)+vcoord; // shock is moving downwards
-  scalar p4   = p*(1+2*gamma01/(gamma01+1)*(Ms*Ms-1));
-  scalar rho4 = rho01*(gamma01+1)*Ms*Ms/(2+(gamma01-1)*Ms*Ms);
-  scalar gamma4 = gamma01;
-  scalar Et4    = p4/(gamma4-1.0) + 0.5*rho4*(u4*u4+v4*v4);
+  scalar uS   = 0;
+  scalar vS   =-Ms*c01*(2*(Ms*Ms-1))/(gamma01+1)/(Ms*Ms)+vcoord; // shock is moving downwards
+  scalar pS   = p*(1+2*gamma01/(gamma01+1)*(Ms*Ms-1));
+  scalar rhoS = rho01*(gamma01+1)*Ms*Ms/(2+(gamma01-1)*Ms*Ms);
+  scalar gammaS = gamma01;
+  scalar EtS    = pS/(gammaS-1.0) + 0.5*rhoS*(uS*uS+vS*vS);
 
   scalar xc=0, yc=0, x=0, y=0;
   for(int e = 0; e < N_E; e++){
@@ -1136,58 +1145,68 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
       if(yc >= (yshck-1e-6)){ // post-shock region
 
 #ifdef ONED
-	U(i,e*N_F+0) = rho4;
-	U(i,e*N_F+1) = rho4*v4;
-	U(i,e*N_F+2) = Et4 ;
+	U(i,e*N_F+0) = rhoS;
+	U(i,e*N_F+1) = rhoS*vS;
+	U(i,e*N_F+2) = EtS ;
 #ifdef GAMCONS
-	U(i,e*N_F+3) = rho4/(gamma4-1);
+	U(i,e*N_F+3) = rhoS/(gammaS-1);
 #elif GAMNCON
-	U(i,e*N_F+3) = 1.0/(gamma4-1);
+	U(i,e*N_F+3) = 1.0/(gammaS-1);
 #endif
  	// Mass fractions
-	U(i,e*N_F+4) = 1*rho4;
+	U(i,e*N_F+4) = 1*rhoS;
 	U(i,e*N_F+5) = 0;
+	U(i,e*N_F+6) = 0;
 #elif TWOD
-	U(i,e*N_F+0) = rho4;
-	U(i,e*N_F+1) = rho4*u4;
-	U(i,e*N_F+2) = rho4*v4;
-	U(i,e*N_F+3) = Et4 ;
+	U(i,e*N_F+0) = rhoS;
+	U(i,e*N_F+1) = rhoS*uS;
+	U(i,e*N_F+2) = rhoS*vS;
+	U(i,e*N_F+3) = EtS ;
 #ifdef GAMCONS
-	U(i,e*N_F+4) = rho4/(gamma4-1);
+	U(i,e*N_F+4) = rhoS/(gammaS-1);
 #elif GAMNCON
-	U(i,e*N_F+4) = 1.0/(gamma4-1);
+	U(i,e*N_F+4) = 1.0/(gammaS-1);
 #endif
  	// Mass fractions
-	U(i,e*N_F+5) = 1*rho4;
+	U(i,e*N_F+5) = 1*rhoS;
 	U(i,e*N_F+6) = 0;
+	U(i,e*N_F+7) = 0;
 #endif 
       }
       else{
 	// vertical distance from interface
 	scalar d1 = ((delta+A01*sin(2*M_PI*x/Lx-M_PI/2-shift1*2*M_PI))-y+yinterface1)/(2*delta);
 	scalar d2 = ((delta+A02*sin(2*M_PI*x/Lx-M_PI/2-shift2*2*M_PI))-y+yinterface2)/(2*delta);
+	scalar d3 = ((delta+A03*sin(2*M_PI*x/Lx-M_PI/2-shift3*2*M_PI))-y+yinterface3)/(2*delta);
 	
 	// Calculate volume fractions
 	scalar vol1=0;
 	scalar vol2=0;
-	if      (d1<=0)            { vol1 = 1; vol2 = 0;}
-	else if ((0<d1)&&(d1<1))   { vol1 = exp(log(1e-16)*pow(fabs(d1),8)); vol2 = 1-vol1;}
+	scalar vol3=0;
+	if      (d1<=0)            { vol1 = 1; vol2 = 0; vol3=0;}
+	else if ((0<d1)&&(d1<1))   { vol1 = exp(log(1e-16)*pow(fabs(d1),8)); vol2 = 1-vol1; vol3=0;}
 	else{
-	  if      (d2<=0)          { vol1 = 0; vol2 = 1;}
-	  else if ((0<d2)&&(d2<1)) { vol1 = 0; vol2 = exp(log(1e-16)*pow(fabs(d2),8));}
-	  else                     { vol1 = 0; vol2 = 0;}  
+	  if      (d2<=0)          { vol1 = 0; vol2 = 1; vol3=0;}
+	  else if ((0<d2)&&(d2<1)) { vol1 = 0; vol2 = exp(log(1e-16)*pow(fabs(d2),8)); vol3=1-vol2;}
+	  else{
+	    if (d3<=0)               {vol1 = 0; vol2 = 0; vol3 = 1;}
+	    else if ((0<d3)&&(d3<1)) {vol1 = 0; vol2 = 0; vol3 = exp(log(1e-16)*pow(fabs(d3),8));}
+	    else                     {vol1 = 0; vol2 = 0; vol3 = 0;}	      
+	  }
 	}
 	
 	scalar j1  = vol1;
 	scalar j2  = vol2;
-	scalar j3  = 1-vol1-vol2;
-	scalar rho = j1*rho01+j2*rho02+j3*rho03;
+	scalar j3  = vol3;
+	scalar j4  = 1-vol1-vol2-vol3;
+	scalar rho = j1*rho01+j2*rho02+j3*rho03+j4*rho04;
 	scalar Y1  = j1*rho01/rho;       // mass fraction
 	scalar Y2  = j2*rho02/rho;
 	scalar Y3  = j3*rho03/rho;
-	scalar M   = 1/(Y1/M1+Y2/M2+Y3/M3);                    // total molecular weight
+	scalar Y4  = j4*rho04/rho;
+	scalar M   = 1/(Y1/M1+Y2/M2+Y3/M3+Y4/M4);                    // total molecular weight
 
-	scalar alpha = Y1*alpha01*M/M1+Y2*alpha02*M/M2+Y3*alpha03*M/M3;
+	scalar alpha = Y1*alpha01*M/M1+Y2*alpha02*M/M2+Y3*alpha03*M/M3+Y4*alpha04*M/M4;
 	scalar gamma = 1+1.0/alpha;
 
 #ifdef ONED
@@ -1202,6 +1221,7 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
  	// Mass fractions
 	U(i,e*N_F+4) = Y1*rho;
 	U(i,e*N_F+5) = Y3*rho;
+	U(i,e*N_F+6) = Y4*rho;
 #elif TWOD
 	U(i,e*N_F+0) = rho;
 	U(i,e*N_F+1) = rho*u;
@@ -1215,6 +1235,7 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
  	// Mass fractions
 	U(i,e*N_F+5) = Y1*rho;
 	U(i,e*N_F+6) = Y3*rho;
+	U(i,e*N_F+7) = Y4*rho;
 #endif
       }
     }
