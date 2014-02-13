@@ -907,8 +907,7 @@ class Limiting
       MPI_Barrier(MPI_COMM_WORLD);
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) 
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _YMono(x));
+#define MACRO(x) Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _YMono(x));
 #include "loop.h"    
 #endif
 #include "loopstart.h"
@@ -1103,8 +1102,7 @@ class Limiting
       MPI_Barrier(MPI_COMM_WORLD);
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) 
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _YMono(x));
+#define MACRO(x) Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _YMono(x));
 #include "loop.h"    
 #endif
 #include "loopstart.h"

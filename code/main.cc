@@ -80,7 +80,7 @@ int main (int argc, char **argv)
   MPI_Comm_rank(MPI_COMM_WORLD,&myid);
   if(myid==0){printf("Total number of processors=%i and I am number %i\n",numprocs,myid);}
 #endif
-
+  
   ////////////////////////////////////////////////////////////////////////////
   //
   // Read arguments from deck
@@ -458,7 +458,7 @@ int main (int argc, char **argv)
 
   m.buildNeighbors(N_N, N_E);
   int* h_neighbors = m.getNeighbors();
-
+    
   //////////////////////////////////////////////////////////////////////////   
   //
   // Monomial to Lagrange basis transforms

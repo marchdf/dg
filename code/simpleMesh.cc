@@ -502,6 +502,7 @@ void simpleMesh::buildNeighbors(int N_N, int N_E)
   _neighbors = new int[N_N*N_E]; for(int k=0; k < N_N*N_E; k++){_neighbors[k]=0;}
 
   int N_I = _interfaces.size();       // number of interfaces                   (i index)
+  double eps = 1e-9; // used for comparisons of smallness
   
   // A neighbor counter for each element, set to zero
   int* nn = new int[N_E];  for(int k=0; k<N_E; k++){ nn[k]=0;} 
@@ -511,18 +512,27 @@ void simpleMesh::buildNeighbors(int N_N, int N_E)
     const simpleInterface &face = _interfaces[i];  // get the interface
     const simpleElement *el1 = face.getElement(0); // get the element on one side
     const simpleElement *el2 = face.getElement(1); // get the element on the other side
-    int el1num = _elementMap.at(el1->getId());         // element idx in order of the U matrix
+    int el1num = _elementMap.at(el1->getId());     // element idx in order of the U matrix
     int el2num=0; 
     if(el2->getPartition()==_myid){el2num = _elementMap.at(el2->getId());}
     else                          {el2num = _ghostElementMap.at(el2->getId());}
 
-    double eps = 1e-9; // used for comparisons of smallness
 
+    // If el1num = el2num, we are at some kind of boundary
+    if (el2num == el1num){
+      int physical = face.getPhysicalTag();
+      // give elnum2 the negative value of the physical. The idea is
+      // that when using the neighbors in the limiting procedure, we can
+      // know which boundary we are at and use the appropriate nodal
+      // values for the reconstruction
+      if ((physical == 2)||(physical == 3)){el2num = -physical;}
+    }
+    
     // Not a cartesian mesh
     if(!_cartesian){
       _neighbors[el1num*N_N+nn[el1num]] = el2num; nn[el1num]++;
       // do the reverse if el2 belongs to me
-      if(el2->getPartition()==_myid){ _neighbors[el2num*N_N+nn[el2num]] = el1num; nn[el2num]++;}
+      if (el2num>=0){ if(el2->getPartition()==_myid){ _neighbors[el2num*N_N+nn[el2num]] = el1num; nn[el2num]++;}}
     }
     else if (_cartesian){ // sort in LRDU order
       double nx = _normals(0,i);
@@ -534,29 +544,28 @@ void simpleMesh::buildNeighbors(int N_N, int N_E)
       // printf("e1=%i, e2=%i, nx=%e, ny=%e\n",el1->getId(),el2->getId(),nx,ny);
       // normal pointing to the left: el2 is at left of el1
       if     ((fabs(ny)<eps)&&(nx<0)){
-	_neighbors[el1num*N_N+0] = el2num; nn[el1num]++;
-	// do the reverse if el2 belongs to me
-	if(el2->getPartition()==_myid){ _neighbors[el2num*N_N+1] = el1num; nn[el2num]++;}
+	_neighbors[el1num*N_N+0] = el2num;
+	// do the reverse if el2 belongs to me (and it's not el1num, ie el2num >=0 )
+	if (el2num>=0){ if(el2->getPartition()==_myid){_neighbors[el2num*N_N+1] = el1num;}}
       }
 
       // normal pointing to the right: el2 is at right of el1
       else if((fabs(ny)<eps)&&(nx>0)){
-	_neighbors[el1num*N_N+1] = el2num; nn[el1num]++;
-	if(el2->getPartition()==_myid){ _neighbors[el2num*N_N+0] = el1num; nn[el2num]++;}
+	_neighbors[el1num*N_N+1] = el2num;
+	if (el2num>=0){ if(el2->getPartition()==_myid){ _neighbors[el2num*N_N+0] = el1num;}}
       }
 
       // normal pointing down: el2 is below el1
       else if((fabs(nx)<eps)&&(ny<0)){
-	_neighbors[el1num*N_N+2] = el2num; nn[el1num]++;
-	if(el2->getPartition()==_myid){ _neighbors[el2num*N_N+3] = el1num; nn[el2num]++;}
+	_neighbors[el1num*N_N+2] = el2num;
+	if (el2num>=0){ if(el2->getPartition()==_myid){ _neighbors[el2num*N_N+3] = el1num;}}
       }
 
       // normal pointing up: el2 is above el1
       else if((fabs(nx)<eps)&&(ny>0)){
-	_neighbors[el1num*N_N+3] = el2num; nn[el1num]++;
-	if(el2->getPartition()==_myid){ _neighbors[el2num*N_N+2] = el1num; nn[el2num]++;}
+	_neighbors[el1num*N_N+3] = el2num;
+	if (el2num>=0){ if(el2->getPartition()==_myid){ _neighbors[el2num*N_N+2] = el1num;}}
       }
-
       else{
 	printf("Error in neighbor creation!!\n");
 	exit(1);

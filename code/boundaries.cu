@@ -31,7 +31,7 @@ arch_global void rflctive(int M_s, int M_B, int* boundaryMap, scalar* normals, i
       scalar m2nxny = -2*nx*ny;
       scalar invnx2ny2 = 1.0/(nx2+ny2);
       
-      // // Normal and tangential velocities
+      // Normal and tangential velocities
       scalar vxL = UF[((t*N_F+1)*2+0)*M_s+j];
       scalar vyL = UF[((t*N_F+2)*2+0)*M_s+j];
       scalar vxR = invnx2ny2 * ((-nx2+ny2)*vxL +    m2nxny*vyL);

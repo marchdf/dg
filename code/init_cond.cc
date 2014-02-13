@@ -1075,15 +1075,15 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar K = 1.0;
   scalar h = K*Lx;
   scalar yinterface1 = 0; // first interface location
-  scalar yinterface2 =-h; // second interface location
-  scalar yinterface3 =-2*h; // second interface location
+  scalar yinterface2 =-20*h; // second interface location
+  scalar yinterface3 =-30*h; // second interface location
   scalar shift1 = 0;
   scalar shift2 = 0;   // shift interface by a given wavelength
   scalar shift3 = 0;   // shift interface by a given wavelength
   scalar delta=0.005;    // The diffusion layer thickness
     
   // Velocities/pressures in all materials
-  scalar vcoord = 153;//140;//111;//51.5;//134;//72.9; // coordinate shift upwards
+  scalar vcoord = 72.9;//140;//111;//51.5;//134;//72.9; // coordinate shift upwards
   scalar u = 0.0;
   scalar v = 0.0+vcoord;
   scalar p = 1e5;
@@ -1107,16 +1107,16 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar M2      = 146.05;//34.76;//
 
   // pre-shock density (material 3)
-  scalar rho03   = 0.1785;//10;//5.494;//10;//
+  scalar rho03   = 10;//0.1785;//10;//5.494;//10;//
   scalar gamma03 = 5.0/3.0;//1.093;//
   scalar alpha03 = 1/(gamma03-1);
-  scalar M3      = 4;//300;//4;//300;//146.05;//300;//
+  scalar M3      = 300;//4;//300;//146.05;//300;//
 
   // pre-shock density (material 4)
-  scalar rho04   = 0.05;//1.351;//5.494;//0.1785;//10;//5.494;//10;//
-  scalar gamma04 = 5.0/3.0;//1.276;//5.0/3.0;//1.093;//
+  scalar rho04   = 1.351;//0.05;//1.351;//5.494;//0.1785;//10;//5.494;//10;//
+  scalar gamma04 = 1.276;//5.0/3.0;//1.276;//5.0/3.0;//1.093;//
   scalar alpha04 = 1/(gamma04-1);
-  scalar M4      = 2;//34.76;//4;//300;//146.05;//300;//
+  scalar M4      = 34.76;//2;//34.76;//4;//300;//146.05;//300;//
 
   // Post-shock state (material 1) (see p 101 Toro)
   scalar Ms = 1.21;   // Shock Mach number
