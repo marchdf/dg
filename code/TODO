@@ -1,5 +1,6 @@
 KNOWN BUGS
   - M2L + MPI: something isn't working at the edges btwn partitions
+  - Can't preserve hydrostatic equilibrium with gravity...
 
 OUTPUT
   - Inefficient to build a matrix to output it...

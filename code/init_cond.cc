@@ -1,5 +1,7 @@
 #include <init_cond.h>
 #include <stdlib.h>
+scalar constants::GLOBAL_GX;
+scalar constants::GLOBAL_GY;
 
 void init_dg_shallow(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
@@ -1241,6 +1243,100 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
     }
   }
 }
+
+
+
+void init_dg_rtaylor_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+  
+  // Rayleigh-Taylor instability setup
+  scalar y0 = 0;
+  scalar rho0 = 1;
+  scalar u = 0;
+  scalar v = 0;
+  scalar p0 = 1;
+  scalar gamma = 1.4;
+  scalar rho = 0;
+  scalar p  = 0;
+  scalar Et = 0;
+
+  // Gravity
+  constants::GLOBAL_GX = -1;
+
+  // scalar R = 8.3144621; // J/molK
+  // scalar T0 = 1;
+  // scalar M = T0*rho0*R/p0; // molecular mass
+  // scalar cv = R/M*1/(gamma-1);
+  // scalar H = constants::GLOBAL_GX/((gamma-1)*cv*T0);
+  // printf("H=%f\n",H);
+  
+  scalar alpha = 0;
+  
+  scalar xc=0, yc=0, x=0, y=0;
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+#ifdef ONED
+      yc = XYZCen(e,0);
+      y  = XYZNodes(i,e*D+0);
+#elif TWOD
+      xc = XYZCen(e,0);
+      x  = XYZNodes(i,e*D+0);
+      yc = XYZCen(e,1);
+      y  = XYZNodes(i,e*D+1);
+#endif
+
+      rho = 1.0;
+      p   = rho*(constants::GLOBAL_GX)*y + p0;
+      Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
+      // //Sharp interface
+      // if (yc<0){ // fluid 1
+      // 	rho = 0.5;
+      // 	p   = rho*(constants::GLOBAL_GX)*y + p0;
+      // 	Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
+      // }
+      // else{ // fluid 2
+      // 	rho = 1;
+      // 	p   = rho*(constants::GLOBAL_GX)*y + p0;
+      // 	Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
+      // }
+
+      // // Diffuse interface
+      // scalar rho01 = 0.5;
+      // scalar rho02 = 1;
+      // scalar delta = 0.05;
+      // scalar d = (delta-y)/(2*delta);
+      // scalar vol=0;
+      // if      ((d<1)&&(d>0)) vol = exp(log(1e-16)*pow(fabs(d),8));
+      // else if (d<=0)         vol = 1;
+      // else                   vol = 0;
+      // scalar jx  = 1-vol;
+      // rho = jx*rho01+(1-jx)*rho02;
+      // p   = rho*(constants::GLOBAL_GX)*y + p0;
+      // Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
+
+#ifdef GAMCONS
+      alpha = rho/(gamma-1);
+#elif GAMNCON
+      alpha = 1.0/(gamma-1);
+#endif
+      
+#ifdef ONED
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*v;
+      U(i,e*N_F+2) = Et ;
+      U(i,e*N_F+3) = alpha;
+      
+#elif TWOD
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*u;
+      U(i,e*N_F+2) = rho*v;
+      U(i,e*N_F+3) = Et ;
+      U(i,e*N_F+4) = alpha;
+#endif 
+    }
+  }
+}
+
 
 
 void init_dg_khinstb_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){

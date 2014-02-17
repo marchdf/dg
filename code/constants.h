@@ -5,8 +5,12 @@
 namespace constants
 {
   const scalar GLOBAL_GAMMA = 1.4;
-  const scalar GLOBAL_GX = 0.0; // gravity x-dir
-  const scalar GLOBAL_GY = 0.0; // gravity y-dir
+
+  // I don't like the way this is done but I have nothing better for
+  // now. It seems that it will initialize to zero by default.
+  extern scalar GLOBAL_GX; // gravity x-dir
+  extern scalar GLOBAL_GY; // gravity y-dir
+  
 } // namespace constants
 
 #endif

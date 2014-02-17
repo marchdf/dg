@@ -6,6 +6,7 @@
 #include <twod_multifluid_fluxes.h>
 #include <oned_stiffened_fluxes.h>
 #include <twod_stiffened_fluxes.h>
+#include <stdio.h>
 
 //==========================================================================
 //
@@ -66,9 +67,9 @@ arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug,
 
       // Source term
       s[(e*N_F+0)*N_G+g] = 0;
-      s[(e*N_F+1)*N_G+g] = 0;
-      s[(e*N_F+2)*N_G+g] = 0;
-
+      s[(e*N_F+1)*N_G+g] = rho*constants::GLOBAL_GX;
+      s[(e*N_F+2)*N_G+g] = rho*u*constants::GLOBAL_GX;
+      
       // Flux derive par rapport a x
       f[((e*N_F+0)*N_G+g)*D+0] = flux_ab(rho,u);       
       f[((e*N_F+1)*N_G+g)*D+0] = flux_ab2pc(rho,u,p);
@@ -106,8 +107,8 @@ arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug,
 
       // Source term
       s[(e*N_F+0)*N_G+g] = 0;
-      s[(e*N_F+1)*N_G+g] = 0;
-      s[(e*N_F+2)*N_G+g] = 0;
+      s[(e*N_F+1)*N_G+g] = rho*constants::GLOBAL_GX;
+      s[(e*N_F+2)*N_G+g] = rho*u*constants::GLOBAL_GX;
       s[(e*N_F+3)*N_G+g] = -u*dUg[(e*N_F+3)*N_G+g]*invJac[e*N_G+g]; // = -u*dalphadx
       s[(e*N_F+4)*N_G+g] = -u*dUg[(e*N_F+4)*N_G+g]*invJac[e*N_G+g]; // = -u*dbetadx
       

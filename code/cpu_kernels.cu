@@ -752,13 +752,15 @@ arch_global void cpu_hrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int 
 	  // farfield (zero-gradient) and reflective BC
 	  // Not necessary actually (I think... maybe it is for reflective BC...)
 	  if ((physical==2)||(physical==3)){ 
-	    Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+m] = 0;
+	    Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+m] = 0;//A[(e*Nfields+fc)*N_s*slicenum+slice*N_s+m];//0;//
+	    //if(m==1){Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+0] = A[(e*Nfields+fc)*N_s*slicenum+slice*N_s+0];}
 	  }
 	  // Otherwise...
 	  else{
 	    Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+m] = cpu_minmod(&c[((blk*slicenum+slice)*Nfields+fc)*2],2); // give it a subset of c (the part you want minmod to act on)
 	    //Alim[(e*Nfields+fc)*N_s*N_s+slice*N_s+m] = cminmod(c,2,0.01);
 	    //or use minmod2(c,2), minmod(c,2,eps), cminmod(c,2,0.01); cminmod2(c,2,eps)
+	    //if(m==1){Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+0] = avgLC;}
 	  }
 	  if(m==1){Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+0] = avgLC;}
 	  
