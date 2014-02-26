@@ -6,6 +6,7 @@
 
 #include <physics.h>
 #include <boundaries.h>
+#include <stdio.h>
 
 class DG_SOLVER
 {
@@ -32,6 +33,8 @@ class DG_SOLVER
   scalar* _dphi_w  ;
   scalar* _psi     ;
   scalar* _psi_w   ;
+  //scalar* _xyz     ;
+  //scalar* _xyzf    ;
   scalar* _J       ;
   scalar* _invJac  ;
   scalar* _JF      ;
@@ -63,7 +66,8 @@ class DG_SOLVER
  public:
   // constructor
  DG_SOLVER(int N_E, int N_s, int N_G,  int N_N, int M_T, int M_s, int M_G, int M_B, int M_ghosts,
-	   int* map, int* invmap, int* ghostInterfaces, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* psi, scalar* psi_w, scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals, int* boundaryMap, int* boundaryIdx) :
+	   int* map, int* invmap, int* ghostInterfaces, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* psi, scalar* psi_w, //scalar* xyz, scalar* xyzf,
+	   scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals, int* boundaryMap, int* boundaryIdx) :
   _N_E(N_E), _N_s(N_s), _N_G(N_G), _N_N(N_N), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B), _M_ghosts(M_ghosts){
 
 
@@ -86,6 +90,8 @@ class DG_SOLVER
     _dphi_w  = new scalar[D*N_G*N_s];	     makeZero(_dphi_w,D*N_G*N_s);
     _psi     = new scalar[M_G*M_s];	     makeZero(_psi,M_G*M_s);
     _psi_w   = new scalar[M_G*M_s];	     makeZero(_psi_w,M_G*M_s);
+    //_xyz     = new scalar[D*N_E*N_G];	     makeZero(_xyz,D*N_E*N_G);
+    //_xyzf    = new scalar[D*M_T*M_G];	     makeZero(_xyzf,D*M_T*M_G);
     _J       = new scalar[N_E];              makeZero(_J,N_E);                                 // not same as J!!
     _invJac  = new scalar[N_G*D*N_E*D];      makeZero(_invJac,N_G*D*N_E*D);                    // not same as invJac!!
     _JF = new scalar[2*M_T];     	     makeZero(_JF,2*M_T);	 
@@ -115,6 +121,8 @@ class DG_SOLVER
     memcpy(_dphi_w     , dphi_w     , D*N_G*N_s*sizeof(scalar));
     memcpy(_psi        , psi        , M_G*M_s*sizeof(scalar));
     memcpy(_psi_w      , psi_w      , M_G*M_s*sizeof(scalar));
+    //memcpy(_xyz        , xyz        , D*N_E*N_G*sizeof(scalar));
+    //memcpy(_xyzf       , xyzf       , D*M_T*M_G*sizeof(scalar));
     memcpy(_J          , J          , N_E*sizeof(scalar));
     memcpy(_invJac     , invJac     , N_G*D*N_E*D*sizeof(scalar));
     memcpy(_JF         , JF         , 2*M_T*sizeof(scalar));
@@ -132,6 +140,8 @@ class DG_SOLVER
     cudaMalloc((void**) &_dphi_w     , D*N_G*N_s*sizeof(scalar));
     cudaMalloc((void**) &_psi        , M_G*M_s*sizeof(scalar));
     cudaMalloc((void**) &_psi_w      , M_G*M_s*sizeof(scalar));
+    //cudaMalloc((void**) &_xyz        , D*N_E*N_G*sizeof(scalar));
+    //cudaMalloc((void**) &_xyzf       , D*M_T*M_G*sizeof(scalar));
     cudaMalloc((void**) &_J          , N_E*sizeof(scalar));
     cudaMalloc((void**) &_invJac     , N_G*D*N_E*D*sizeof(scalar));
     cudaMalloc((void**) &_JF         , 2*M_T*sizeof(scalar));
@@ -182,6 +192,8 @@ class DG_SOLVER
     cudaMemcpy(_dphi_w     , dphi_w     , D*N_G*N_s*sizeof(scalar)  , cudaMemcpyHostToDevice);
     cudaMemcpy(_psi        , psi        , M_G*M_s*sizeof(scalar)    , cudaMemcpyHostToDevice);
     cudaMemcpy(_psi_w      , psi_w      , M_G*M_s*sizeof(scalar)    , cudaMemcpyHostToDevice);
+    //cudaMemcpy(_xyz        , xyz        , D*N_E*N_G*sizeof(scalar)  , cudaMemcpyHostToDevice);
+    //cudaMemcpy(_xyzf       , xyzf       , D*M_T*M_G*sizeof(scalar)  , cudaMemcpyHostToDevice);
     cudaMemcpy(_J          , J          , N_E*sizeof(scalar)        , cudaMemcpyHostToDevice);
     cudaMemcpy(_invJac     , invJac     , N_G*D*N_E*D*sizeof(scalar), cudaMemcpyHostToDevice);
     cudaMemcpy(_JF         , JF         , 2*M_T*sizeof(scalar)      , cudaMemcpyHostToDevice);
@@ -211,6 +223,8 @@ class DG_SOLVER
     del(_dphi_w);
     del(_psi);
     del(_psi_w);
+    //del(_xyz);
+    //del(_xyzf);
     del(_J);
     del(_invJac);
     del(_JF);
@@ -269,8 +283,8 @@ class DG_SOLVER
 #endif
 
     // Physics
-    Levaluate_sf(_N_G, _N_E, _s, _f, _Uinteg, _dUinteg, _invJac);
-    Levaluate_q(_M_G, _M_T, _q, _UintegF, _normals);
+    Levaluate_sf(_N_G, _N_E, _s, _f, _Uinteg, _dUinteg, _invJac);//, _xyz);
+    Levaluate_q(_M_G, _M_T, _q, _UintegF, _normals);//, _xyzf);
     
     // redistribute_sf: requires J, invJac, s, f, phi_w, dphi_w, sJ, fJ, S, F
     Lcpu_redistribute_sf(_N_G, _N_E, _sJ, _fJ, _s, _f, _J, _invJac);

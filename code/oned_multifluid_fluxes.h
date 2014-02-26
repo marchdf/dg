@@ -5,6 +5,7 @@
 #include <math.h>
 #include <macros.h>
 #include <basic_fluxes.h>
+#include <stdio.h>
 
 // Used to define dynamically mass fraction variables
 #define YL(x) YL ##x
@@ -31,6 +32,7 @@ arch_device void oned_multifluid_rusanov(scalar rhoL,
 #define MACRO(x)                     scalar YL(x), scalar YR(x),
 #include "loop.h"
 					 scalar nx,
+					 //scalar x,
 					 scalar* F, scalar* ncterm){
 
 #ifdef GAMCONS
@@ -41,11 +43,17 @@ arch_device void oned_multifluid_rusanov(scalar rhoL,
   scalar gammaR = 1.0+1.0/alphaR;
   scalar pL = (gammaL-1)*(EtL - 0.5*rhoL*vxL*vxL);
   scalar pR = (gammaR-1)*(EtR - 0.5*rhoR*vxR*vxR);
+  // Adjust pressure for gravity (flux method)
+  //pL = pL - rhoL*constants::GLOBAL_GX*x; //pL = 1e5;
+  //pR = pR - rhoR*constants::GLOBAL_GX*x; //pR = 1e5;
+  //printf("xf=%f, pL=%f, pR=%f\n",x,pL,pR);  
+
   scalar aL = sqrt((gammaL*pL)/rhoL);
   scalar aR = sqrt((gammaR*pR)/rhoR);
-
+ 
   // Find the maximum eigenvalue
   scalar maxvap = MAX(fabs(vxL)+aL, fabs(vxR)+aR);
+
 
   //first: fx = rho*u; 
   F[0] = 0.5*((flux_ab(rhoL,vxL) + flux_ab(rhoR,vxR))*nx
@@ -241,9 +249,16 @@ arch_device void oned_multifluid_roe(scalar rhoL,
   scalar gammaR = 1.0+1.0/alphaR;
   scalar pL = (gammaL-1)*(EtL - 0.5*rhoL*vxL*vxL);
   scalar pR = (gammaR-1)*(EtR - 0.5*rhoR*vxR*vxR);
+  // Adjust pressure for gravity (flux method)
+  //pL = pL - rhoL*constants::GLOBAL_GX*x; //pL = 1e5;
+  //pR = pR - rhoR*constants::GLOBAL_GX*x; //pR = 1e5;
+  //printf("xf=%f, pL=%f, pR=%f\n",x,pL,pR);  
+  
   scalar aL = sqrt((gammaL*pL)/rhoL);
   scalar aR = sqrt((gammaR*pR)/rhoR);
 
+
+  
   // Compute Roe averages
   scalar RT    = sqrt(rhoR/rhoL);
   scalar rho   = RT*rhoL;

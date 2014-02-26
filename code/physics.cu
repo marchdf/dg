@@ -15,7 +15,7 @@
 //==========================================================================
 
 //==========================================================================
-arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
+arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac, scalar GX, scalar GY){//, scalar* xyz){
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -40,6 +40,7 @@ arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug,
       scalar gamma = constants::GLOBAL_GAMMA;
       scalar p = (gamma-1)*(Et - 0.5*rho*u*u);
 
+     
       // Source term
       s[(e*N_F+0)*N_G+g] = 0;
       s[(e*N_F+1)*N_G+g] = 0;
@@ -64,17 +65,22 @@ arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug,
       scalar gamma=1+1.0/Ug[(e*N_F+3)*N_G+g];
 #endif
       scalar p = (gamma-1)*(Et - 0.5*rho*u*u);
-
+      // Adjust pressure for gravity (flux method)
+      // scalar x = xyz[(e*N_G+g)*D+0];
+      //p = p -rho*constants::GLOBAL_GX*x; //p = 1e5;
+      
       // Source term
       s[(e*N_F+0)*N_G+g] = 0;
-      s[(e*N_F+1)*N_G+g] = rho*constants::GLOBAL_GX;
-      s[(e*N_F+2)*N_G+g] = rho*u*constants::GLOBAL_GX;
+      s[(e*N_F+1)*N_G+g] = rho*GX; 
+      s[(e*N_F+2)*N_G+g] = rho*u*GX;
       
       // Flux derive par rapport a x
       f[((e*N_F+0)*N_G+g)*D+0] = flux_ab(rho,u);       
       f[((e*N_F+1)*N_G+g)*D+0] = flux_ab2pc(rho,u,p);
       f[((e*N_F+2)*N_G+g)*D+0] = flux_ab(Et+p,u);
 
+      //printf("p=%f,rho=%f,g=%f,x=%f,p0 = %20.16e\n",p,rho,constants::GLOBAL_GX,x,p-rho*constants::GLOBAL_GX*x);
+      
 #ifdef GAMCONS
       s[(e*N_F+3)*N_G+g] = 0;
       f[((e*N_F+3)*N_G+g)*D+0] = flux_abc(rho,u,1/(gamma-1));
@@ -107,8 +113,8 @@ arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug,
 
       // Source term
       s[(e*N_F+0)*N_G+g] = 0;
-      s[(e*N_F+1)*N_G+g] = rho*constants::GLOBAL_GX;
-      s[(e*N_F+2)*N_G+g] = rho*u*constants::GLOBAL_GX;
+      s[(e*N_F+1)*N_G+g] = rho*GX;
+      s[(e*N_F+2)*N_G+g] = rho*u*GX;
       s[(e*N_F+3)*N_G+g] = -u*dUg[(e*N_F+3)*N_G+g]*invJac[e*N_G+g]; // = -u*dalphadx
       s[(e*N_F+4)*N_G+g] = -u*dUg[(e*N_F+4)*N_G+g]*invJac[e*N_G+g]; // = -u*dbetadx
       
@@ -189,9 +195,9 @@ arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug,
 
       // Source term
       s[(e*N_F+0)*N_G+g] = 0;
-      s[(e*N_F+1)*N_G+g] = 0;
-      s[(e*N_F+2)*N_G+g] = 0;
-      s[(e*N_F+3)*N_G+g] = 0;
+      s[(e*N_F+1)*N_G+g] = rho*GX;
+      s[(e*N_F+2)*N_G+g] = rho*GY; 
+      s[(e*N_F+3)*N_G+g] = rho*(u*GX+v*GY);
 
       // Flux derive par rapport a x
       f[((e*N_F+0)*N_G+g)*D+0] = flux_ab(rho,u);      // rho*u     
@@ -251,9 +257,9 @@ arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug,
 
       // Source term
       s[(e*N_F+0)*N_G+g] = 0;
-      s[(e*N_F+1)*N_G+g] = 0;
-      s[(e*N_F+2)*N_G+g] = 0;
-      s[(e*N_F+3)*N_G+g] = 0;
+      s[(e*N_F+1)*N_G+g] = rho*GX;
+      s[(e*N_F+2)*N_G+g] = rho*GY; 
+      s[(e*N_F+3)*N_G+g] = rho*(u*GX+v*GY);
       s[(e*N_F+4)*N_G+g] = vdotgradalpha;
       s[(e*N_F+5)*N_G+g] = vdotgradbeta;
       
@@ -294,7 +300,7 @@ arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug,
 
 
 //==========================================================================
-arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* normals){
+arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* normals){//, scalar* xyzf){
  
 #ifdef USE_CPU
   int blk = 0;
@@ -313,7 +319,8 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
       int Fidx = (blk*M_G+g)*2*N_F;       // index for start of F
       int ncidx = (blk*M_G+g)*2*N_F+N_F;  // index for start of ncterm
       for(int k = 0; k < 2*N_F; k++) buffer[Fidx+k]  = 0;
-      
+
+     
       // Send the data to the Riemann solvers
 #ifdef ONED
 
@@ -362,6 +369,8 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
 #elif MULTIFLUID //=========================================================
 
 #ifdef RUS
+      // Coordinate of face if you want it...
+      //scalar x = xyzf[(t*M_G+g)*D+0];
       oned_multifluid_rusanov(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
 			      UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
 			      UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
@@ -375,6 +384,7 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
 #define MACRO(x)              UgF[((t*N_F+4+x)*2+0)*M_G+g], UgF[((t*N_F+4+x)*2+1)*M_G+g],// rhoL*YL, rhoR*YR
 #include "loop.h"
 			      normals[t*D+0],                                        // nx
+			      //x,
 			      &buffer[Fidx],&buffer[ncidx]);
 #elif HLL
       oned_multifluid_hll(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
@@ -1000,7 +1010,7 @@ arch_global void limmodif2(int N_s, int N_E, scalar* A, scalar* plim, scalar* ul
 //
 //==========================================================================
 extern "C" 
-void Levaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){
+void Levaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac){//, scalar* xyz){
 
 #ifdef USE_GPU
   int div = N_E/blkE;
@@ -1010,11 +1020,11 @@ void Levaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar* dU
   dim3 dimGrid(div+mod,1);
 #endif
 
-  evaluate_sf arch_args (N_G, N_E, s, f, Ug, dUg, invJac);
+  evaluate_sf arch_args (N_G, N_E, s, f, Ug, dUg, invJac, constants::GLOBAL_GX, constants::GLOBAL_GY);//, xyz);
 }
 
 extern "C" 
-void Levaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* normals){
+void Levaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* normals){//, scalar* xyzf){
 
 #ifdef USE_GPU
   int div = M_T/blkT;
@@ -1024,7 +1034,7 @@ void Levaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* normals){
   dim3 dimGrid(div+mod,1);
 #endif
 
-  evaluate_q arch_args_array(blkT*M_G*2*N_F*sizeof(scalar)) (M_G, M_T, q, UgF, normals);
+  evaluate_q arch_args_array(blkT*M_G*2*N_F*sizeof(scalar)) (M_G, M_T, q, UgF, normals);//, xyzf);
 }
 
 extern "C"

@@ -5,8 +5,8 @@
 #include <macros.h>
 
 // Generic
-extern "C" void Levaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac);
-extern "C" void Levaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* normals);
+extern "C" void Levaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac);//, scalar* xyz);
+extern "C" void Levaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* normals);//, scalar* xyzf);
 
 extern "C" void Lkinetic_energy1D(int N_s, int N_E, scalar* rho, scalar* rhou, scalar* K);
 extern "C" void Lkinetic_energy2D(int N_s, int N_E, scalar* rho, scalar* rhou, scalar* rhov, scalar* K);

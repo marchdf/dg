@@ -400,73 +400,69 @@ void init_dg_expogam_multifluid(const int N_s, const int N_E, const fullMatrix<s
   delete[] Q;
 }
 
-void init_dg_shckint_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
+void init_dg_shckint_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
 
-  // Pre-shock state (material 1)
+  scalar ucoord = -2;
+  scalar u0 = 0 + ucoord;
+  scalar p0 = 1;
+
+  // pre-shock state (material 1) (shock is initialized here)
   scalar rho02   = 0.1;
-  scalar u02     =-2.0;
   scalar gamma02 = 1.6667;
-  scalar p02     = 1.0;
-  scalar Et02    = 1.0/(gamma02-1.0)*p02 + 0.5*rho02*u02*u02;
-  scalar c02     = sqrt(gamma02*p02/rho02); // sound speed
-  scalar M02     = u02/c02; //Mach number ahead of shock
-  
-  // Pre-shock state (material 2)
-  scalar rho01   = 1.0;
-  scalar u01     =-2.0;
+  scalar c02     = sqrt(gamma02*p0/rho02);
+
+  // pre-shock state (material 2)
+  scalar rho01   = 1;
   scalar gamma01 = 1.4;
-  scalar p01     = 1.0;
-  scalar Et01    = 1.0/(gamma01-1.0)*p01 + 0.5*rho01*u01*u01;
+  scalar c01     = sqrt(gamma01*p0/rho01);
 
   // Post-shock state (material 1) (see p 101 Toro)
-  //scalar Ms = 9;   // Shock Mach number
-  scalar Ms     = M02+sqrt((gamma02+1)/(2.0*gamma02)*100.0 + (gamma02-1)/(2.0*gamma02));   // Shock Mach number (with ratio)
+  scalar pratio = 100.0;
+  scalar Ms = sqrt((gamma02+1)/(2.0*gamma02)*100.0 + (gamma02-1)/(2.0*gamma02));   // Shock Mach number (with ratio)
   printf("Ms=%f\n",Ms);
-  scalar s      = Ms*c02;  // shock speed
-  scalar rho4   = rho02*(gamma02+1) * (M02-Ms)*(M02-Ms)/((gamma02-1) * (M02-Ms)*(M02-Ms) + 2);
-  scalar p4     = p02  *(2*gamma02*(M02-Ms)*(M02-Ms) - (gamma02-1))/(gamma02+1);
-  scalar u4     = (1 - rho02/rho4)*s + u02*rho02/rho4;
+  scalar rho4 = rho02*(gamma02+1) * Ms*Ms/((gamma02-1) * Ms*Ms + 2);
+  scalar u4   = (1.0/Ms)*c02*(2*(Ms*Ms-1))/(gamma02+1)+ucoord;
+  scalar p4  = pratio*p0;
   scalar gamma4 = gamma02;
-  scalar Et4    = 1.0/(gamma4-1.0)*p4 + 0.5*rho4*u4*u4;
 
-  int N_S = 3; // number of states
-  fullMatrix<scalar> xS(N_S+1,1); // state boundaries
-  xS(0,0) = -1000; xS(1,0) = -0.8; xS(2,0) = -0.2; xS(3,0) = 1000;
-  fullMatrix<scalar> S(N_F,N_S); // holds the states
+  scalar xshock = -0.8;
+  scalar xint   = -0.2;
   
-#ifdef ONED
-  if (N_F!=4) printf("You are setting up the wrong problem. N_F =%i != 4.\n",N_F);
-  S(0,0) = rho4;            S(0,1) = rho02;             S(0,2) = rho01;
-  S(1,0) = rho4*u4;         S(1,1) = rho02*u02;         S(1,2) = rho01*u01;
-  S(2,0) = Et4;             S(2,1) = Et02;              S(2,2) = Et01; 
-#ifdef GAMCONS
-  S(3,0) = rho4/(gamma4-1); S(3,1) = rho02/(gamma02-1); S(3,2) = rho01/(gamma01-1); 
-#elif GAMNCON
-  S(3,0) = 1.0/(gamma4-1);  S(3,1) = 1.0/(gamma02-1);   S(3,2) = 1.0/(gamma01-1); 
-#endif
-#elif TWOD
-  if (N_F!=5) printf("You are setting up the wrong problem. N_F =%i != 5.\n",N_F);
-  scalar v4 = 0;            scalar v02 = 0;             scalar v01 = 0;
-  Et4  = 1.0/(gamma4-1.0)*p4 + 0.5*rho4*(u4*u4+v4*v4);
-  Et02  = 1.0/(gamma02-1.0)*p02 + 0.5*rho02*(u02*u02+v02*v02);
-  Et01  = 1.0/(gamma01-1.0)*p01 + 0.5*rho01*(u01*u01+v01*v01);
-  S(0,0) = rho4;            S(0,1) = rho02;             S(0,2) = rho01;
-  S(1,0) = rho4*u4;         S(1,1) = rho02*u02;         S(1,2) = rho01*u01;
-  S(2,0) = rho4*v4;         S(2,1) = rho02*v02;         S(2,2) = rho01*v01;
-  S(3,0) = Et4;             S(3,1) = Et02;              S(3,2) = Et01; 
-#ifdef GAMCONS
-  S(4,0) = rho4/(gamma4-1); S(4,1) = rho02/(gamma02-1); S(4,2) = rho01/(gamma01-1); 
-#elif GAMNCON
-  S(4,0) = 1.0/(gamma4-1);  S(4,1) = 1.0/(gamma02-1);   S(4,2) = 1.0/(gamma01-1); 
-#endif
-#endif
-
-  int ind = 0; // index for the state we use
+  scalar xc=0, x=0;
+  scalar rho=0,u=0,p=0,gamma=0,Et=0;
   for(int e = 0; e < N_E; e++){
-    scalar x = XYZNodes(0,e*D+0);
     for(int i = 0; i < N_s; i++){
-      for(int b = 0; b < N_S; b++) if ((xS(b,0) <= x) && (x < xS(b+1,0)))  ind = b;
-      for(int k = 0; k < N_F; k++) U(i,e*N_F+k) = S(k,ind);
+      xc = XYZCen(e,0);
+      x  = XYZNodes(i,e*D+0);
+
+      if(xc < xshock){ // post-shock region
+	rho = rho4;
+	u   = u4;
+	p   = p4;
+	gamma = gamma4;
+      }
+      else if ((xshock <xc)&&(xc <= xint)){
+	rho = rho02;
+	u   = u0;
+	p   = p0;
+	gamma = gamma02;
+      }
+      else{
+	rho = rho01;
+	u   = u0;
+	p   = p0;
+	gamma = gamma01;
+      }
+      Et = p/(gamma-1) + 0.5*rho*u*u;
+      
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*u;
+      U(i,e*N_F+2) = Et ;
+#ifdef GAMCONS
+      U(i,e*N_F+3) = rho/(gamma-1);
+#elif GAMNCON
+      U(i,e*N_F+3) = 1.0/(gamma-1);
+#endif
     }
   }
 }
@@ -1244,32 +1240,61 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   }
 }
 
+scalar rtaylor_integrate_density(scalar A, scalar B, scalar rho01, scalar rho02, scalar yint, scalar H){
+  // Used by rtaylor to integrate the density profile to get the
+  // pressure in a variable density profile (eg. diffuse
+  // interface). This uses the idea from Pooya's JFM 2014 paper where
+  // the densities in the mixing region are derived from the mass
+  // fractions.
 
+  // Calculate dx for the integration
+  scalar L = fabs(A-B); // length of integration region
+  scalar dy = H/100;    // to get a fine enough integration resolution
+  int N = L/dy + 1;
+  dy = L/(N-1); // resize dx for an integer N
+  printf("dy=%20.16e\n",dy);
+  
+  if(B<A){dy=-dy;} // integrate in the other direction
+  if(L<1e-10){return 0;}
+    
+  scalar yk = yint;
+  scalar ykp1 = yint+dy;
+  scalar I  = 0;
+  scalar Y = 0;
+  for(int k=0; k<N; k++){
+    Y = 0.5*(1-erf((yk-yint)/H));
+    scalar rhok = 1.0/(Y/rho01 + (1-Y)/rho02);
+    Y = 0.5*(1-erf((ykp1-yint)/H));
+    scalar rhokp1 = 1.0/(Y/rho01 + (1-Y)/rho02);
+    I = I + 0.5*(ykp1-yk)*(rhok+rhokp1);
+    yk = yk+dy;
+    ykp1 = ykp1+dy;
+  }
+  return I;
+}
 
 void init_dg_rtaylor_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
   
   // Rayleigh-Taylor instability setup
-  scalar y0 = 0;
-  scalar rho0 = 1;
-  scalar u = 0;
-  scalar v = 0;
-  scalar p0 = 1;
-  scalar gamma = 1.4;
-  scalar rho = 0;
-  scalar p  = 0;
-  scalar Et = 0;
+  scalar yinterface = 0;
+  scalar p0 = 1e5;
+  scalar u=0,v=0,rho=0,p=0,Et=0,gamma=0,alpha=0;
+  scalar gravity = -10;
+  
+  // bottom fluid
+  scalar rho01 = 1.351;
+  scalar gamma01 = 1.276;
+
+  // Top fluid
+  scalar rho02 = 5.494; // top fluid
+  scalar gamma02 = 1.093;
 
   // Gravity
-  constants::GLOBAL_GX = -1;
-
-  // scalar R = 8.3144621; // J/molK
-  // scalar T0 = 1;
-  // scalar M = T0*rho0*R/p0; // molecular mass
-  // scalar cv = R/M*1/(gamma-1);
-  // scalar H = constants::GLOBAL_GX/((gamma-1)*cv*T0);
-  // printf("H=%f\n",H);
-  
-  scalar alpha = 0;
+#ifdef ONED
+  constants::GLOBAL_GX = gravity;
+#elif TWOD
+  constants::GLOBAL_GY = gravity;
+#endif
   
   scalar xc=0, yc=0, x=0, y=0;
   for(int e = 0; e < N_E; e++){
@@ -1285,35 +1310,30 @@ void init_dg_rtaylor_multifluid(const int N_s, const int N_E, const fullMatrix<s
       y  = XYZNodes(i,e*D+1);
 #endif
 
-      rho = 1.0;
-      p   = rho*(constants::GLOBAL_GX)*y + p0;
-      Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
-      // //Sharp interface
-      // if (yc<0){ // fluid 1
-      // 	rho = 0.5;
-      // 	p   = rho*(constants::GLOBAL_GX)*y + p0;
-      // 	Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
+      // // Sharp interface
+      // if (yc<yinterface){ // fluid 1
+      // 	rho = rho01;
+      // 	gamma = 1.4;//gamma01;
       // }
       // else{ // fluid 2
-      // 	rho = 1;
-      // 	p   = rho*(constants::GLOBAL_GX)*y + p0;
-      // 	Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
+      // 	rho = rho02;
+      // 	gamma = 1.4;//gamma02;
       // }
-
-      // // Diffuse interface
-      // scalar rho01 = 0.5;
-      // scalar rho02 = 1;
-      // scalar delta = 0.05;
-      // scalar d = (delta-y)/(2*delta);
-      // scalar vol=0;
-      // if      ((d<1)&&(d>0)) vol = exp(log(1e-16)*pow(fabs(d),8));
-      // else if (d<=0)         vol = 1;
-      // else                   vol = 0;
-      // scalar jx  = 1-vol;
-      // rho = jx*rho01+(1-jx)*rho02;
-      // p   = rho*(constants::GLOBAL_GX)*y + p0;
+      // p   = rho*gravity*y + p0;
       // Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
 
+      // Diffuse interface
+      scalar L = 1.0;
+      scalar H = L/16;
+      scalar Y = 0.5*(1-erf((y-yinterface)/H));
+      rho = 1.0/(Y/rho01 + (1-Y)/rho02);
+
+      scalar I = rtaylor_integrate_density(yinterface,y,rho01,rho02,yinterface,H);
+      p = p0 + gravity*I;
+      //printf("y=%20.16e, p=%20.16e\n",y,p);
+      gamma = 1.4;
+      Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
+      
 #ifdef GAMCONS
       alpha = rho/(gamma-1);
 #elif GAMNCON

@@ -708,8 +708,10 @@ arch_global void cpu_hrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int 
 	// farfield (i.e. zero-gradient) = 2
 	// reflective = 3
 	int physical = 0;
-	if (left  < 0){physical = -left;  left  = e;}
-	if (right < 0){physical = -right; right = e;}
+	bool L = false;
+	bool R = false;
+	if (left  < 0){physical = -left;  left  = e; L = true;}
+	if (right < 0){physical = -right; right = e; R = true;}
 	
 	// Loop on derivatives
 	for(int m = N; m > 0; m--){

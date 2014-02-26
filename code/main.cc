@@ -261,6 +261,7 @@ int main (int argc, char **argv)
   gaussIntegration::getLine(order*2+1, pointsF, weightF);
 #endif
 
+  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Define some numbers for clarity
@@ -430,6 +431,29 @@ int main (int argc, char **argv)
   }
   XYZGF.gemm (psi, XYZNodesF);
 
+
+  // //
+  // // Physical coordinates for the elements and the faces
+  // //
+  // scalar* h_xyz = new scalar[D*N_E*N_G];
+  // for(int e=0; e<N_E; e++){
+  //   for(int g=0; g<N_G; g++){
+  //     for(int alpha=0; alpha<D; alpha++){
+  // 	h_xyz[(e*N_G+g)*D+alpha] = XYZG(g,e*D+alpha);
+  //     }
+  //   }
+  // }
+
+  // scalar* h_xyzf = new scalar[D*N_E*N_G];
+  // for(int t=0; t<M_T; t++){
+  //   for(int g=0; g<M_G; g++){
+  //     for(int alpha=0; alpha<D; alpha++){
+  // 	h_xyzf[(t*M_G+g)*D+alpha] = XYZGF(g,(t*2+0)*D+alpha);
+  //     }
+  //   }
+  // }
+
+
   
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -573,7 +597,7 @@ int main (int argc, char **argv)
   else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, XYZNodes, U);
   else if(expogam) init_dg_expogam_multifluid(N_s, N_E, XYZNodes, U);
-  else if(shckint) init_dg_shckint_multifluid(N_s, N_E, XYZNodes, U);
+  else if(shckint) init_dg_shckint_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(shuoshe) init_dg_shuoshe_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(multint) init_dg_multint_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(blast1d) init_dg_blast1d_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
@@ -752,7 +776,8 @@ int main (int argc, char **argv)
 
   if(myid==0){printf("==== Now RK 4 steps =====\n");}
   DG_SOLVER dgsolver = DG_SOLVER(N_E, N_s, N_G, N_N, M_T, M_s, M_G, M_B, N_ghosts,
-  				 h_map, h_invmap, h_ghostInterfaces, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, h_J, h_invJac, h_JF, h_weight, h_normals,
+  				 h_map, h_invmap, h_ghostInterfaces, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, //h_xyz, h_xyzf,
+				 h_J, h_invJac, h_JF, h_weight, h_normals,
   				 h_boundaryMap, h_boundaryIdx);
   RK rk4 = RK(4);
 
@@ -787,7 +812,7 @@ int main (int argc, char **argv)
   else if(matfrnt) init_dg_matfrnt_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(sinegam) init_dg_sinegam_multifluid(N_s, N_E, XYZNodes, Uinit);
   else if(expogam) init_dg_expogam_multifluid(N_s, N_E, XYZNodes, Uinit);
-  else if(shckint) init_dg_shckint_multifluid(N_s, N_E, XYZNodes, Uinit);
+  else if(shckint) init_dg_shckint_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(shuoshe) init_dg_shuoshe_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(rarecon) init_dg_rarecon_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, XYZNodes, Uinit);
@@ -922,6 +947,8 @@ int main (int argc, char **argv)
   delete[] h_dphi_w;
   delete[] h_psi;
   delete[] h_psi_w;
+  //delete[] h_xyz;
+  //delete[] h_xyzf;
   delete[] h_weight;
   delete[] h_J;
   delete[] h_JF;
