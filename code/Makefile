@@ -124,10 +124,11 @@ endif
 
 # All together
 LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) #-L$(CUDASDK_LIB)
-INCLUDES          += -I. -I$(BLAS_INC) -I$(LAPACK_INC)
+INCLUDES          += -I. -I$(BLAS_INC) -I$(LAPACK_INC) 
 
 MATH_LIB          := -lm
-LDFLAGS           := $(LAPACK_LINKER) $(BLAS_LINKER) $(MATH_LIB)	
+GSL_LIB           := -lgsl -lgslcblas
+LDFLAGS           := $(LAPACK_LINKER) $(BLAS_LINKER) $(MATH_LIB) $(GSL_LIB)
 CFLAGS 	          := -O3
 CXXFLAGS          := -I. -O3 $(DEFINES)
 ifeq ($(ARCH),USE_GPU)

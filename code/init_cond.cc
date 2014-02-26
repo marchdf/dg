@@ -1,5 +1,7 @@
 #include <init_cond.h>
 #include <stdlib.h>
+#include <gsl/gsl_integration.h>
+
 scalar constants::GLOBAL_GX;
 scalar constants::GLOBAL_GY;
 
@@ -1240,37 +1242,16 @@ void init_dg_rmmulti_multifluid(const int N_s, const int N_E, const fullMatrix<s
   }
 }
 
-scalar rtaylor_integrate_density(scalar A, scalar B, scalar rho01, scalar rho02, scalar yint, scalar H){
-  // Used by rtaylor to integrate the density profile to get the
-  // pressure in a variable density profile (eg. diffuse
-  // interface). This uses the idea from Pooya's JFM 2014 paper where
-  // the densities in the mixing region are derived from the mass
-  // fractions.
+struct rtaylor_density_params {double rho01; double rho02; double H; double yinterface;};
 
-  // Calculate dx for the integration
-  scalar L = fabs(A-B); // length of integration region
-  scalar dy = H/100;    // to get a fine enough integration resolution
-  int N = L/dy + 1;
-  dy = L/(N-1); // resize dx for an integer N
-  printf("dy=%20.16e\n",dy);
-  
-  if(B<A){dy=-dy;} // integrate in the other direction
-  if(L<1e-10){return 0;}
-    
-  scalar yk = yint;
-  scalar ykp1 = yint+dy;
-  scalar I  = 0;
-  scalar Y = 0;
-  for(int k=0; k<N; k++){
-    Y = 0.5*(1-erf((yk-yint)/H));
-    scalar rhok = 1.0/(Y/rho01 + (1-Y)/rho02);
-    Y = 0.5*(1-erf((ykp1-yint)/H));
-    scalar rhokp1 = 1.0/(Y/rho01 + (1-Y)/rho02);
-    I = I + 0.5*(ykp1-yk)*(rhok+rhokp1);
-    yk = yk+dy;
-    ykp1 = ykp1+dy;
-  }
-  return I;
+double rtaylor_density (double y, void * p) {
+  struct rtaylor_density_params * params = (struct rtaylor_density_params *)p;
+  scalar rho01 = (params->rho01);
+  scalar rho02 = (params->rho02);
+  scalar H = (params->H);
+  scalar yinterface = (params->yinterface);
+  scalar Y   = 0.5*(1-erf((y-yinterface)/H));
+  return 1.0/(Y/rho01 + (1-Y)/rho02);;
 }
 
 void init_dg_rtaylor_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
@@ -1324,13 +1305,23 @@ void init_dg_rtaylor_multifluid(const int N_s, const int N_E, const fullMatrix<s
 
       // Diffuse interface
       scalar L = 1.0;
-      scalar H = L/16;
+      scalar H = L/16.0;
       scalar Y = 0.5*(1-erf((y-yinterface)/H));
       rho = 1.0/(Y/rho01 + (1-Y)/rho02);
 
-      scalar I = rtaylor_integrate_density(yinterface,y,rho01,rho02,yinterface,H);
+      // Better integration with GSL library
+      gsl_integration_workspace * w = gsl_integration_workspace_alloc (1000);
+      double I, error;
+      gsl_function F;
+      struct rtaylor_density_params params = {rho01,rho02,H,yinterface};
+      F.function = &rtaylor_density;
+      F.params = &params;
+      gsl_integration_qags (&F, yinterface, y, 0, 1e-13, 1000, w, &I, &error);
+      gsl_integration_workspace_free (w);
+
+      // Define pressure
       p = p0 + gravity*I;
-      //printf("y=%20.16e, p=%20.16e\n",y,p);
+      printf("y=%20.16e, p=%20.16e\n",y,p);
       gamma = 1.4;
       Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
       
