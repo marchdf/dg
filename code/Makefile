@@ -122,13 +122,15 @@ TRACE		  := -L/soft/apps/current/ibm-hpct/lib -lmpitrace -llicense -lgetarg -L/s
 endif
 endif
 
+# GSL stuff
+GSL_LINKER        := -lgsl -lgslcblas
+
 # All together
-LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) #-L$(CUDASDK_LIB)
-INCLUDES          += -I. -I$(BLAS_INC) -I$(LAPACK_INC) 
+LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) -L$(GSL_LINK) #-L$(CUDASDK_LIB)
+INCLUDES          += -I. -I$(BLAS_INC) -I$(LAPACK_INC) -I$(GSL_INC)
 
 MATH_LIB          := -lm
-GSL_LIB           := -lgsl -lgslcblas
-LDFLAGS           := $(LAPACK_LINKER) $(BLAS_LINKER) $(MATH_LIB) $(GSL_LIB)
+LDFLAGS           := $(LAPACK_LINKER) $(BLAS_LINKER) $(MATH_LIB) $(GSL_LINKER)
 CFLAGS 	          := -O3
 CXXFLAGS          := -I. -O3 $(DEFINES)
 ifeq ($(ARCH),USE_GPU)
