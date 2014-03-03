@@ -708,7 +708,7 @@ arch_global void cpu_hrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int 
 	// farfield (i.e. zero-gradient) = 2
 	// reflective = 3
 	int physical = 0;
-	bool L = false;
+	bool L = false; // L = true if I don't have a neighbor on the left
 	bool R = false;
 	if (left  < 0){physical = -left;  left  = e; L = true;}
 	if (right < 0){physical = -right; right = e; R = true;}
@@ -754,7 +754,11 @@ arch_global void cpu_hrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int 
 	  // farfield (zero-gradient) and reflective BC
 	  // Not necessary actually (I think... maybe it is for reflective BC...)
 	  if ((physical==2)||(physical==3)){ 
-	    Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+m] = A[(e*Nfields+fc)*N_s*slicenum+slice*N_s+m];//0;//
+	    Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+m] = 0;
+	    if(m==1){Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+0] = avgLC;}
+	  }
+	  else if (physical==4){ // gravity field: leave slopes unchanged. This is a problem if we also have shocks...
+	    Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+m] = A[(e*Nfields+fc)*N_s*slicenum+slice*N_s+m];
 	    if(m==1){Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+0] = A[(e*Nfields+fc)*N_s*slicenum+slice*N_s+0];}
 	  }
 	  // Otherwise...
@@ -764,7 +768,6 @@ arch_global void cpu_hrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int 
 	    //or use minmod2(c,2), minmod(c,2,eps), cminmod(c,2,0.01); cminmod2(c,2,eps)
 	    if(m==1){Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+0] = avgLC;}
 	  }
-	  //if(m==1){Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+0] = avgLC;}
 	  
 	  avgRL=0; avgRC=0; avgRR=0;
 	}// end loop on m

@@ -339,7 +339,7 @@ void simpleMesh::buildBoundary(){
     const simpleInterface &face = _interfaces[i];
     int physical = face.getPhysicalTag();
     if     (3==physical){ rflctive.push_back(face); rflctiveFaceNumber.push_back(i);}
-    else if(4==physical){ otherone.push_back(face); otheroneFaceNumber.push_back(i);}
+    else if(5==physical){ otherone.push_back(face); otheroneFaceNumber.push_back(i);}
   }
 
   //
@@ -525,7 +525,7 @@ void simpleMesh::buildNeighbors(int N_N, int N_E)
       // that when using the neighbors in the limiting procedure, we can
       // know which boundary we are at and use the appropriate nodal
       // values for the reconstruction
-      if ((physical == 2)||(physical == 3)){el2num = -physical;}
+      if ((physical == 2)||(physical == 3)||(physical == 4)){el2num = -physical;}
     }
     
     // Not a cartesian mesh
@@ -649,7 +649,7 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
         interfaceFound._elements[0] = &el;
         interfaceFound._closureId[0] = j;
 	//farfield or reflective BC, copy my element to my neighbor
-	if ((interfaceFound.getPhysicalTag()==2)||(interfaceFound.getPhysicalTag()==3)){
+	if ((interfaceFound.getPhysicalTag()==2)||(interfaceFound.getPhysicalTag()==3)||(interfaceFound.getPhysicalTag()==4)){
 	  interfaceFound._elements[1] = &el;
 	  interfaceFound._closureId[1] = j;
 	}
