@@ -124,6 +124,10 @@ endif
 
 # GSL stuff
 GSL_LINKER        := -lgsl -lgslcblas
+ifeq ($(LIEU),HOME)
+GSL_LINK          := .
+GSL_INC	          := .
+endif
 
 # All together
 LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) -L$(GSL_LINK) #-L$(CUDASDK_LIB)

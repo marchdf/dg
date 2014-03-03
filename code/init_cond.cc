@@ -1258,18 +1258,23 @@ void init_dg_rtaylor_multifluid(const int N_s, const int N_E, const fullMatrix<s
   
   // Rayleigh-Taylor instability setup
   scalar yinterface = 0;
-  scalar p0 = 1e5;
+  scalar L = 2*M_PI;
   scalar u=0,v=0,rho=0,p=0,Et=0,gamma=0,alpha=0;
-  scalar gravity = -10;
+  scalar gravity = -1;
   
   // bottom fluid
-  scalar rho01 = 1.351;
-  scalar gamma01 = 1.276;
-
+  scalar rho01 = 1;
+  scalar gamma01 = 5.0/3.0;
+  scalar M01 = 1;
+  
   // Top fluid
-  scalar rho02 = 5.494; // top fluid
-  scalar gamma02 = 1.093;
-
+  scalar rho02 = 3; // top fluid
+  scalar gamma02 = 1.4;
+  scalar M02 = 1;
+  
+  // Pressure
+  scalar p0 = 2*M_PI*L*(rho01+rho02);
+  
   // Gravity
 #ifdef ONED
   constants::GLOBAL_GX = gravity;
@@ -1294,21 +1299,21 @@ void init_dg_rtaylor_multifluid(const int N_s, const int N_E, const fullMatrix<s
       // // Sharp interface
       // if (yc<yinterface){ // fluid 1
       // 	rho = rho01;
-      // 	gamma = 1.4;//gamma01;
+      // 	gamma = gamma01;
       // }
       // else{ // fluid 2
       // 	rho = rho02;
-      // 	gamma = 1.4;//gamma02;
+      // 	gamma = gamma02;
       // }
-      // p   = rho*gravity*y + p0;
+      // p  = p0 + rho*gravity*y ;
       // Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
 
       // Diffuse interface
-      scalar L = 1.0;
       scalar H = L/16.0;
       scalar Y = 0.5*(1-erf((y-yinterface)/H));
       rho = 1.0/(Y/rho01 + (1-Y)/rho02);
-
+      gamma = 1.0/(Y/(gamma01-1) *1/M01+ (1-Y)/(gamma02-1)*1/M02) + 1;
+      
       // Better integration with GSL library
       gsl_integration_workspace * w = gsl_integration_workspace_alloc (1000);
       double I, error;
@@ -1322,7 +1327,6 @@ void init_dg_rtaylor_multifluid(const int N_s, const int N_E, const fullMatrix<s
       // Define pressure
       p = p0 + gravity*I;
       printf("y=%20.16e, p=%20.16e\n",y,p);
-      gamma = 1.4;
       Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
       
 #ifdef GAMCONS
