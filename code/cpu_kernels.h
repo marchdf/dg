@@ -14,7 +14,6 @@ extern "C" void Lcpu_add(int N_s, int N_E,  scalar* A, scalar* B, scalar c); // 
 extern "C" void Lcpu_mapToFace_shallow(int M_s, int M_T,  int* map, scalar* U, scalar* UF);
 extern "C" void Lcpu_mapToFace_mhd(int M_s, int M_T,  int* map, scalar* U, scalar* UF);
 extern "C" void Lcpu_mapToFace(int M_s, int M_T,  int N_s, int* map, scalar* U, scalar* UF);
-extern "C" void Lcpu_mapGhostFace(int M_s, int M_ghosts,  int* ghostInterfaces, scalar* UF);
 extern "C" void Lcpu_mapToElement(int N_s, int N_E,  int M_s, int N_N, int* invmapx, scalar* Q, scalar* q);
 extern "C" void Lcpu_collocationU(int N_G, int N_s, int N_E,  scalar* Ug, scalar* dUg, scalar* phi, scalar* dphi, scalar* U);
 extern "C" void Lcpu_collocationUF(int M_G, int M_s, int M_T,  scalar* UgF, scalar* psi, scalar* UF);

@@ -183,65 +183,6 @@ arch_global void cpu_mapToFace(int M_s, int M_T, int N_s, int* map, scalar* U, s
 }
 
 //==========================================================================
-arch_global void cpu_mapGhostFace(int M_s, int M_ghosts, int* ghostInterfaces, scalar* UF){
-
-  /* Communicate the ghost edges in the mesh to and from the other
-     partitions
-
-     Just CPU version for now
-  */
-
-
-#ifdef USE_MPI
-
-  MPI_Status status[M_ghosts];
-  MPI_Request request[M_ghosts];
-  
-  MPI_Datatype strided; // make a strided datatype to access UF (only access on side of the interface)
-  // from http://stackoverflow.com/questions/15483360/mpi-sending-segments-of-an-array
-  // and http://www.mcs.anl.gov/research/projects/mpi/www/www3/MPI_Type_vector.html
-  MPI_Type_vector (N_F, M_s, 2*M_s, MPI_SCALAR, &strided);
-  MPI_Type_commit(&strided);
-
-  // Allocate a buffer for buffered send
-  int bufsize =  M_ghosts * (MPI_BSEND_OVERHEAD + N_F*M_s) + MPI_BSEND_OVERHEAD;
-  scalar *buf = new scalar[bufsize];
-  MPI_Buffer_attach( buf, bufsize );
-  
-  int t, dest_source, tag,id;
-  //MPI_Comm_rank(MPI_COMM_WORLD,&id);
-  //printf("M_ghosts=%i\n",M_ghosts);
-  for(int k = 0; k < M_ghosts; k++){
-    t           = ghostInterfaces[k*3+0];
-    dest_source = ghostInterfaces[k*3+1];
-    tag         = ghostInterfaces[k*3+2];
-
-    //printf("CPU id %i is sending/receiving interface %i to proc %i with tag %i\n",id,t,dest_source,tag);
-
-    // VERSION 1: non-blocking send and receive
-    // Non-blocking send of my interface
-    //MPI_Isend(&UF[t*N_F*2*M_s], 1, strided, dest_source, tag, MPI_COMM_WORLD, &request[2*k+0]);
-    // Non-blocking receive of the other side of that interface
-    //MPI_Irecv(&UF[t*N_F*2*M_s+M_s], 1, strided, dest_source, tag, MPI_COMM_WORLD, &request[2*k+1]);
-
-    // VERSION 2: buffered send and non-blocking receive
-    MPI_Bsend(&UF[t*N_F*2*M_s+M_s], 1, strided, dest_source, tag, MPI_COMM_WORLD);
-    MPI_Irecv(&UF[t*N_F*2*M_s+M_s], 1, strided, dest_source, tag, MPI_COMM_WORLD, &request[k]);
-  }
-
-  // Wait for all communications to end
-  MPI_Waitall(M_ghosts, request, status);
-  //printf("Sending/Receiving done by cpu %i\n",id);
-
-  // Detach the buffer
-  MPI_Buffer_detach( &buf, &bufsize);
-  delete[] buf;
-  
-  MPI_Type_free(&strided);
-#endif
-}
-
-//==========================================================================
 arch_global void cpu_mapToElement(int N_s, int N_E, int M_s, int N_N, int* invmap, scalar* Q, scalar* Qtcj){
 
 #ifdef USE_CPU
@@ -670,8 +611,6 @@ arch_global void cpu_CommunicateGhosts(int N_s, int N_E, int Nfields, int N_ghos
   MPI_Waitall(2*N_ghosts, request, status);
 
 #endif
-
-
 }
  
 //==========================================================================
@@ -1128,21 +1067,6 @@ void Lcpu_mapToFace(int M_s, int M_T, int N_s, int* map, scalar* U, scalar* UF){
 #endif
 
   cpu_mapToFace arch_args (M_s, M_T, N_s, map, U, UF);
-}
-
-extern "C"
-void Lcpu_mapGhostFace(int M_s, int M_ghosts, int* ghostInterfaces, scalar* UF){
-
-#ifdef USE_GPU
-  int div = M_ghosts/blkT;
-  int mod = 0;
-  if (M_ghosts%blkT != 0) mod = 1;
-  dim3 dimBlock(M_s,N_F,blkT);
-  dim3 dimGrid(div+mod,1);
-#endif
-
-  cpu_mapGhostFace arch_args (M_s, M_ghosts, ghostInterfaces, UF);
-
 }
 
 extern "C" 

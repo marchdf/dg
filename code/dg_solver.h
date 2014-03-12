@@ -7,6 +7,7 @@
 #include <physics.h>
 #include <boundaries.h>
 #include <stdio.h>
+#include <communicator_faces.h>
 
 class DG_SOLVER
 {
@@ -53,7 +54,8 @@ class DG_SOLVER
   scalar* _qJ      ;
   scalar* _Qtcj    ;
   scalar* _Q       ; 
-
+  COMMUNICATOR_FACES _communicator;
+  
   // To calculate the conservation of certain fields
   std::string consfile;
   FILE *consf;
@@ -68,7 +70,7 @@ class DG_SOLVER
  DG_SOLVER(int N_E, int N_s, int N_G,  int N_N, int M_T, int M_s, int M_G, int M_B, int M_ghosts,
 	   int* map, int* invmap, int* ghostInterfaces, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* psi, scalar* psi_w, //scalar* xyz, scalar* xyzf,
 	   scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals, int* boundaryMap, int* boundaryIdx) :
-  _N_E(N_E), _N_s(N_s), _N_G(N_G), _N_N(N_N), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B), _M_ghosts(M_ghosts){
+  _N_E(N_E), _N_s(N_s), _N_G(N_G), _N_N(N_N), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B), _M_ghosts(M_ghosts), _communicator(M_ghosts,M_s){
 
 
     // Indexes for boundary conditions
@@ -259,9 +261,7 @@ class DG_SOLVER
 
     // Do the necessary MPI communications
 #ifdef USE_MPI
-    MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
-    Lcpu_mapGhostFace(_M_s, _M_ghosts, _ghostInterfaces, _UF);
-    MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
+    _communicator.mapGhostFace(_ghostInterfaces, _UF);
 #endif
 
     // Apply special boundary conditions
