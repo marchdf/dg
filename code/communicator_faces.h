@@ -12,8 +12,8 @@ class COMMUNICATOR_FACES
  private:
   int _M_ghosts;
   int _M_s;
-  MPI_Status *_status;//[M_ghosts];
-  MPI_Request *_request;//[M_ghosts];
+  MPI_Status *_status;
+  MPI_Request *_request;
   
   MPI_Datatype _strided; // for strided access
 
@@ -51,4 +51,4 @@ class COMMUNICATOR_FACES
 };
 
 
-#endif // COMMUNICATOR_H
+#endif // COMMUNICATOR_FACES_H

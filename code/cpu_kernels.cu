@@ -575,43 +575,6 @@ arch_global void cpu_hsl(int N_s, int N_E, int boundaryMap, scalar* U, scalar* U
   // delete[] c;
   
 }
-
-//==========================================================================
-arch_global void cpu_CommunicateGhosts(int N_s, int N_E, int Nfields, int N_ghosts, int* ghostElementSend, int* ghostElementRecv, scalar* A){
-
-  /* This function, used by the limiting procedure, communicates the
-     elements which are not in my partition. Basically you send the
-     elements of A that other partitions need and you receive the
-     elements from other partitions that you will need. You store
-     these in the back columns of A.
-
-     Had to declare Nfields when we operate on just one field instead of N_F*/
-
-#ifdef USE_MPI
-  MPI_Status status[2*N_ghosts];
-  MPI_Request request[2*N_ghosts];
-  int e, dest, source, tag;
-
-  for(int k=0; k<N_ghosts; k++){
-
-    // Send info 
-    e   = ghostElementSend[k*3+0]; // local index of A to send
-    dest = ghostElementSend[k*3+1]; // destination processor
-    tag = ghostElementSend[k*3+2]; // global idx of element
-    MPI_Isend(&A[e*Nfields*N_s], Nfields*N_s, MPI_SCALAR, dest, tag, MPI_COMM_WORLD, &request[2*k+0]);
-    
-    // Recv info
-    e      = ghostElementRecv[k*3+0]; // local index of A to recv (back columns)
-    source = ghostElementRecv[k*3+1]; // destination processor
-    tag    = ghostElementRecv[k*3+2]; // global idx of element
-    MPI_Irecv(&A[e*Nfields*N_s], Nfields*N_s, MPI_SCALAR, source, tag, MPI_COMM_WORLD, &request[2*k+1]);
-  }
-
-  // Wait for communication to end
-  MPI_Waitall(2*N_ghosts, request, status);
-
-#endif
-}
  
 //==========================================================================
 arch_global void cpu_hrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim){
@@ -1247,21 +1210,6 @@ void Lcpu_Cons2Half(int N_s, int N_E, scalar* U, bool multifluid, bool passive, 
   cpu_Cons2Half arch_args (N_s, N_E, U, multifluid, passive, model, gamma0);
 }
 
-extern "C"
-void Lcpu_CommunicateGhosts(int N_s, int N_E, int Nfields, int N_ghosts, int* ghostElementSend, int* ghostElementRecv, scalar* A){
-
-#ifdef USE_GPU
-  int div = N_ghosts/blkE;
-  int mod = 0;
-  if (N_ghosts%blkE != 0) mod = 1;
-  dim3 dimBlock(N_s,Nfields,blkE);
-  dim3 dimGrid(div+mod,1);
-#endif
-
-  cpu_CommunicateGhosts arch_args (N_s, N_E, Nfields, N_ghosts, ghostElementSend, ghostElementRecv, A);
-
-}
-  
 extern "C"
 void Lcpu_hrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim){
 

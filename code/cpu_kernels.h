@@ -23,7 +23,6 @@ extern "C" void Lcpu_redistribute_q(int M_G, int M_T,  scalar* qJ, scalar* q, sc
 extern "C" void Lcpu_gemm_q(int M_G, int M_s, int M_T,  scalar* Qtcj, scalar* qJ, scalar* psi_w);
 extern "C" void Lcpu_addSFQ(int N_s, int N_E,  scalar* A, scalar* S, scalar* F, scalar* Q); // A = S+F+Q
 extern "C" void Lcpu_hsl(int N_s, int N_E,  int boundaryMap, scalar* U, scalar* UNew);
-extern "C" void Lcpu_CommunicateGhosts(int N_s, int N_E, int Nfields, int N_ghosts, int* ghostElementSend, int* ghostElementRecv, scalar* A);
 extern "C" void Lcpu_hrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim);
 extern "C" void Lcpu_hrl2D(int N_s, int N_E, int N_G, int N_N, int order, scalar* XYZCen, scalar* powersXYZG, int* neighbors, int* TaylorDxIdx, int* TaylorDyIdx, scalar* weight, scalar refArea, scalar* A, scalar* Alim);
 extern "C" void LChangeBasis(int size1, int size2, int N_E,  scalar* Transform, scalar* U, scalar* Unew);

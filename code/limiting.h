@@ -5,6 +5,7 @@
 #include <constants.h>
 #include <physics.h>
 #include <limiting_kernels.h>
+#include <communicator_elements.h>
 
 // Used to define dynamically variables (mass fractions)
 #define _Y(x) _Y ##x
@@ -63,7 +64,8 @@ class Limiting
   int*    _TaylorDxIdx;
   int*    _TaylorDyIdx;
   scalar _refArea;
-
+  COMMUNICATOR_ELEMENTS _communicator;
+  
   // Common contructor
   void common_ctor(){
     _Lag2Mono=NULL;
@@ -238,7 +240,7 @@ class Limiting
   } // end 1D constructor
 
   // 2D limiting constructor for structured mesh
- Limiting(int method, int N_s, int N_E, int N_G, int order, bool cartesian, int N_N, int M_ghosts, int* neighbors, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, fullMatrix<scalar> &V1D, int* ghostElementSend, int* ghostElementRecv, scalar* weight) : _method(method), _N_s(N_s), _N_E(N_E), _N_G(N_G), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(M_ghosts){
+ Limiting(int method, int N_s, int N_E, int N_G, int order, bool cartesian, int N_N, int M_ghosts, int* neighbors, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, fullMatrix<scalar> &V1D, int* ghostElementSend, int* ghostElementRecv, scalar* weight) : _method(method), _N_s(N_s), _N_E(N_E), _N_G(N_G), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(M_ghosts), _communicator(_N_ghosts,N_s){
 
     _N_s1D = (order+1);
     _N_G1D = (order+1);
@@ -529,8 +531,7 @@ class Limiting
 
       // Communicate the elements on different partitions
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, N_F, _N_ghosts, _ghostElementSend, _ghostElementRecv, _A);
+      _communicator.CommunicateGhosts(N_F, _ghostElementSend, _ghostElementRecv, _A);
 #endif
       
       // Limit the solution according to Liu (for each x slice)
@@ -541,8 +542,7 @@ class Limiting
 
       // Communicate the elements on different partitions
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, N_F, _N_ghosts, _ghostElementSend, _ghostElementRecv, _A);
+      _communicator.CommunicateGhosts(N_F, _ghostElementSend, _ghostElementRecv, _A);
 #endif
 
       // Limit the solution according to Liu (for each y slice)
@@ -631,8 +631,7 @@ class Limiting
       Lpressure(_N_s, _N_E, U, _pressure);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _pressureMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _pressureMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
 
@@ -641,8 +640,7 @@ class Limiting
       // 
       blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Lag2MonoX, _N_s, U, _N_s, 0.0, _A, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, N_F, _N_ghosts, _ghostElementSend, _ghostElementRecv, _A);
+      _communicator.CommunicateGhosts(N_F, _ghostElementSend, _ghostElementRecv, _A);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, N_F, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _A, _Alim);
 
@@ -656,8 +654,7 @@ class Limiting
       //
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2MonoY, _N_s, _pressureLim, _N_s, 0.0, _pressureMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _pressureMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _pressureMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _pressureMono, _pressureLim);
 
@@ -666,8 +663,7 @@ class Limiting
       // 
       blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _MonoX2MonoY, _N_s, _Alim, _N_s, 0.0, _A, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, N_F, _N_ghosts, _ghostElementSend, _ghostElementRecv, _A);
+      _communicator.CommunicateGhosts(N_F, _ghostElementSend, _ghostElementRecv, _A);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, N_F, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _A, _Alim);
 
@@ -836,8 +832,7 @@ class Limiting
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,0,0,U,_rho); // copy from U into rho
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _rho, _N_s, 0.0, _rhoMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _rhoMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _rhoMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _rhoMono, _rhoLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _rhoLim, _N_s, 0.0, _rho, _N_s);
@@ -846,8 +841,7 @@ class Limiting
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,_N_s,0,U,_rhou); // copy from U into rhou
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _rhou, _N_s, 0.0, _rhouMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _rhouMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _rhouMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _rhouMono, _rhouLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _rhouLim, _N_s, 0.0, _rhou, _N_s);
@@ -856,8 +850,7 @@ class Limiting
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,2*_N_s,0,U,_rhov); // copy from U into rhov
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _rhov, _N_s, 0.0, _rhovMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _rhovMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _rhovMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _rhovMono, _rhovLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _rhovLim, _N_s, 0.0, _rhov, _N_s);
@@ -866,8 +859,7 @@ class Limiting
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,4*_N_s,0,U,_gamma); // copy from U into gamma
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _gamma, _N_s, 0.0, _gammaMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _gammaMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _gammaMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _gammaMono, _gammaLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _gammaLim, _N_s, 0.0, _gamma, _N_s);
@@ -876,8 +868,7 @@ class Limiting
       Lpressure(_N_s, _N_E, U, _pressure);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _pressureMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _pressureMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _pressureLim, _N_s, 0.0, _pressure, _N_s);
@@ -904,10 +895,9 @@ class Limiting
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s);
 #include "loop.h"    
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _YMono(x));
+#define MACRO(x)  _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _YMono(x));
 #include "loop.h"    
 #endif
 #include "loopstart.h"
@@ -923,8 +913,7 @@ class Limiting
       // Get the density field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _rho, _N_s, 0.0, _rhoMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _rhoMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _rhoMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _rhoMono, _rhoLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _rhoLim, _N_s, 0.0, _rho, _N_s);
@@ -932,8 +921,7 @@ class Limiting
       // Get the momentum x field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _rhou, _N_s, 0.0, _rhouMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _rhouMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _rhouMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _rhouMono, _rhouLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _rhouLim, _N_s, 0.0, _rhou, _N_s);
@@ -941,8 +929,7 @@ class Limiting
       // Get the momentum y field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _rhov, _N_s, 0.0, _rhovMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _rhovMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _rhovMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _rhovMono, _rhovLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _rhovLim, _N_s, 0.0, _rhov, _N_s);
@@ -950,8 +937,7 @@ class Limiting
       // Get the 1/gamma-1 field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _gamma, _N_s, 0.0, _gammaMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _gammaMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _gammaMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _gammaMono, _gammaLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _gammaLim, _N_s, 0.0, _gamma, _N_s);
@@ -959,8 +945,7 @@ class Limiting
       // Get the pressure field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _pressureMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _pressureMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _pressureMono, _pressureLim);
 
@@ -991,10 +976,9 @@ class Limiting
 #define MACRO(x) blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s);
 #include "loop.h"
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _YMono(x));
+#define MACRO(x) _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _YMono(x));
 #include "loop.h"
 #endif
 #include "loopstart.h"
@@ -1021,8 +1005,7 @@ class Limiting
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,0,0,U,_rho); // copy from U into rho
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _rho, _N_s, 0.0, _rhoMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _rhoMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _rhoMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _rhoMono, _rhoLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _rhoLim, _N_s, 0.0, _rho, _N_s);
@@ -1031,8 +1014,7 @@ class Limiting
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,_N_s,0,U,_rhou); // copy from U into rhou
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _rhou, _N_s, 0.0, _rhouMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _rhouMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _rhouMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _rhouMono, _rhouLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _rhouLim, _N_s, 0.0, _rhou, _N_s);
@@ -1041,8 +1023,7 @@ class Limiting
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,2*_N_s,0,U,_rhov); // copy from U into rhov
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _rhov, _N_s, 0.0, _rhovMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _rhovMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _rhovMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _rhovMono, _rhovLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _rhovLim, _N_s, 0.0, _rhov, _N_s);
@@ -1051,8 +1032,7 @@ class Limiting
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,4*_N_s,0,U,_gamma); // copy from U into gamma
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _gamma, _N_s, 0.0, _gammaMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _gammaMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _gammaMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _gammaMono, _gammaLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _gammaLim, _N_s, 0.0, _gamma, _N_s);
@@ -1061,8 +1041,7 @@ class Limiting
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,5*_N_s,0,U,_beta); // copy from U into beta
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _beta, _N_s, 0.0, _betaMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _betaMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _betaMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _betaMono, _betaLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _betaLim, _N_s, 0.0, _beta, _N_s);
@@ -1071,8 +1050,7 @@ class Limiting
       Lpressure(_N_s, _N_E, U, _pressure);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _pressureMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _pressureMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _pressureLim, _N_s, 0.0, _pressure, _N_s);
@@ -1099,10 +1077,9 @@ class Limiting
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s);
 #include "loop.h"    
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _YMono(x));
+#define MACRO(x) _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _YMono(x));
 #include "loop.h"    
 #endif
 #include "loopstart.h"
@@ -1118,8 +1095,7 @@ class Limiting
       // Get the density field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _rho, _N_s, 0.0, _rhoMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _rhoMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _rhoMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _rhoMono, _rhoLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _rhoLim, _N_s, 0.0, _rho, _N_s);
@@ -1127,8 +1103,7 @@ class Limiting
       // Get the momentum x field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _rhou, _N_s, 0.0, _rhouMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _rhouMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _rhouMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _rhouMono, _rhouLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _rhouLim, _N_s, 0.0, _rhou, _N_s);
@@ -1136,8 +1111,7 @@ class Limiting
       // Get the momentum y field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _rhov, _N_s, 0.0, _rhovMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _rhovMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _rhovMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _rhovMono, _rhovLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _rhovLim, _N_s, 0.0, _rhov, _N_s);
@@ -1145,8 +1119,7 @@ class Limiting
       // Get the 1/gamma-1 field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _gamma, _N_s, 0.0, _gammaMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _gammaMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _gammaMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _gammaMono, _gammaLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _gammaLim, _N_s, 0.0, _gamma, _N_s);
@@ -1154,8 +1127,7 @@ class Limiting
       // Get the gamma*pinf/gamma-1 field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _beta, _N_s, 0.0, _betaMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _betaMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _betaMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _betaMono, _betaLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _betaLim, _N_s, 0.0, _beta, _N_s);
@@ -1163,8 +1135,7 @@ class Limiting
       // Get the pressure field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-      Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _pressureMono);
+      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _pressureMono);
 #endif
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _pressureMono, _pressureLim);
 
@@ -1196,10 +1167,9 @@ class Limiting
 #define MACRO(x) blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s);
 #include "loop.h"
 #ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) Lcpu_CommunicateGhosts(_N_s, _N_E, 1, _N_ghosts, _ghostElementSend, _ghostElementRecv, _YMono(x));
+#define MACRO(x) _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _YMono(x));
 #include "loop.h"
 #endif
 #include "loopstart.h"
