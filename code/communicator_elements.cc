@@ -1,3 +1,4 @@
+#ifdef USE_MPI
 #include <communicator_elements.h>
 
 void COMMUNICATOR_ELEMENTS::CommunicateGhosts(int Nfields, int* ghostElementSend, int* ghostElementRecv, scalar* A){
@@ -34,3 +35,4 @@ void COMMUNICATOR_ELEMENTS::CommunicateGhosts(int Nfields, int* ghostElementSend
   MPI_Waitall(2*_N_ghosts, _request, _status);
 
 }
+#endif

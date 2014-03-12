@@ -4,6 +4,7 @@
 #ifndef COMMUNICATOR_FACES_H
 #define COMMUNICATOR_FACES_H
 
+#ifdef USE_MPI
 #include <scalar_def.h>
 #include "mpi.h"
 
@@ -50,5 +51,12 @@ class COMMUNICATOR_FACES
   
 };
 
+#else
+class COMMUNICATOR_FACES{
+ public:
+  COMMUNICATOR_FACES(){};
+  COMMUNICATOR_FACES(int a, int b){};
+};
+#endif
 
 #endif // COMMUNICATOR_FACES_H

@@ -1,3 +1,4 @@
+#ifdef USE_MPI
 #include <communicator_faces.h>
 
 void COMMUNICATOR_FACES::mapGhostFace(int* ghostInterfaces, scalar* UF){
@@ -44,3 +45,4 @@ void COMMUNICATOR_FACES::mapGhostFace(int* ghostInterfaces, scalar* UF){
   // Not necessary I think? wait until every process gets here
   //MPI_Barrier(MPI_COMM_WORLD); 
 }
+#endif

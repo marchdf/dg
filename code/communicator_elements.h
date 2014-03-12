@@ -1,9 +1,11 @@
 //
 // Class to communicate the faces between cpus and gpus
 //
+
 #ifndef COMMUNICATOR_ELEMENTS_H
 #define COMMUNICATOR_ELEMENTS_H
 
+#ifdef USE_MPI
 #include <scalar_def.h>
 #include "mpi.h"
 
@@ -31,6 +33,13 @@ class COMMUNICATOR_ELEMENTS
   void CommunicateGhosts(int Nfields, int* ghostElementSend, int* ghostElementRecv, scalar* A);
 
 };
+#else
+class COMMUNICATOR_ELEMENTS{
+ public:
+  COMMUNICATOR_ELEMENTS(){};
+  COMMUNICATOR_ELEMENTS(int a, int b){};
+};
+#endif
 
 #endif // COMMUNICATOR_ELEMENTS_H
 
