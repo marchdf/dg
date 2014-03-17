@@ -11,10 +11,6 @@ extern "C" void Levaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
 extern "C" void Lkinetic_energy1D(int N_s, int N_E, scalar* rho, scalar* rhou, scalar* K);
 extern "C" void Lkinetic_energy2D(int N_s, int N_E, scalar* rho, scalar* rhou, scalar* rhov, scalar* K);
 extern "C" void Lpressure(int N_s, int N_E, scalar* U, scalar* p);
-extern "C" void Lpressure_u(int N_s, int N_E, scalar* U, scalar* p, scalar* u);
-extern "C" void Llimmodif(int N_s, int N_E, int slicenum, scalar* A, scalar* plim, scalar* Alim);
-extern "C" void Llimmodif2(int N_s, int N_E, scalar* A, scalar* plim, scalar* ulim, scalar* Alim);
-
 
 // Possibly broken:
 extern "C" void Lcpu_evaluate_sf_shallow(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar H0, scalar G0);

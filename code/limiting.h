@@ -43,7 +43,7 @@ class Limiting
 #define MACRO(x) scalar* _Y(x), * _YMono(x), * _YLim(x);
 #include "loop.h"
   
-  int     _method; // no limiting= 0; HR=1; MYL=2; M2L=3
+  int     _method; // no limiting= 0; HR=1; M2L=2
   bool    _cartesian;
   int     _D;
   int     _N_s;
@@ -169,22 +169,6 @@ class Limiting
       break;
     case 2:{
 #ifdef USE_CPU
-      _A        = new scalar[_N_s*_N_E*N_F]; 
-      _Alim     = new scalar[_N_s*_N_E*N_F]; 
-      _pressure     = new scalar[_N_s*_N_E];
-      _pressureMono = new scalar[_N_s*_N_E];
-      _pressureLim  = new scalar[_N_s*_N_E];
-#elif USE_GPU
-      cudaMalloc((void**) &_A,_N_s*_N_E*N_F*sizeof(scalar));
-      cudaMalloc((void**) &_Alim,_N_s*_N_E*N_F*sizeof(scalar));
-      cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar));
-#endif
-      }
-      break;
-    case 3:{
-#ifdef USE_CPU
       _rho      = new scalar[_N_s*_N_E]; _rhoMono      = new scalar[_N_s*_N_E]; _rhoLim      = new scalar[_N_s*_N_E];
       _rhou     = new scalar[_N_s*_N_E]; _rhouMono     = new scalar[_N_s*_N_E]; _rhouLim     = new scalar[_N_s*_N_E];
       _pressure = new scalar[_N_s*_N_E]; _pressureMono = new scalar[_N_s*_N_E]; _pressureLim = new scalar[_N_s*_N_E];
@@ -240,7 +224,7 @@ class Limiting
   } // end 1D constructor
 
   // 2D limiting constructor for structured mesh
- Limiting(int method, int N_s, int N_E, int N_G, int order, bool cartesian, int N_N, int M_ghosts, int* neighbors, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, fullMatrix<scalar> &V1D, int* ghostElementSend, int* ghostElementRecv, scalar* weight) : _method(method), _N_s(N_s), _N_E(N_E), _N_G(N_G), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(M_ghosts), _communicator(_N_ghosts,N_s){
+ Limiting(int method, int N_s, int N_E, int N_G, int order, bool cartesian, int N_N, int N_ghosts, int* neighbors, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, fullMatrix<scalar> &V1D, int* ghostElementSend, int* ghostElementRecv, scalar* weight) : _method(method), _N_s(N_s), _N_E(N_E), _N_G(N_G), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(N_ghosts), _communicator(_N_ghosts,N_s){
 
     _N_s1D = (order+1);
     _N_G1D = (order+1);
@@ -312,22 +296,6 @@ class Limiting
       }
       break;
     case 2:{
-#ifdef USE_CPU
-      _A        = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_A,     _N_s*(_N_E+_N_ghosts)*N_F);
-      _Alim     = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_Alim,  _N_s*(_N_E+_N_ghosts)*N_F);
-      _pressure     = new scalar[_N_s*(_N_E+_N_ghosts)];
-      _pressureMono = new scalar[_N_s*(_N_E+_N_ghosts)];
-      _pressureLim  = new scalar[_N_s*(_N_E+_N_ghosts)];
-#elif USE_GPU
-      cudaMalloc((void**) &_A          ,_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar));
-      cudaMalloc((void**) &_Alim       ,_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar));
-      cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar));
-#endif
-      }
-      break;
-    case 3:{
 
       // Some extra modal-nodal transforms
       blasGemm('N','N', _N_s, _N_s, _N_s, 1, _MonoY2Lag, _N_s, _MonoX2MonoY, _N_s, 0.0, _MonoX2Lag, _N_s);
@@ -514,7 +482,7 @@ class Limiting
   
   int getLimitingMethod() const {return _method;}
   
-  void HRlimiting(scalar* U){
+  void HRlimiting(COMMUNICATOR_ELEMENTS &communicator, scalar* U){
 #ifdef ONED
 
     // Go from lagrange to monomial representation
@@ -527,23 +495,16 @@ class Limiting
 #elif TWOD
     if(_cartesian){
       // Go from lagrange to monomial representation wrt x
-      blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Lag2MonoX, _N_s, U, _N_s, 0.0, _A, _N_s);
+      blasGemm('N','N', _N_s, (_N_E+_N_ghosts)*N_F, _N_s, 1, _Lag2MonoX, _N_s, U, _N_s, 0.0, _A, _N_s);
 
-      // Communicate the elements on different partitions
-#ifdef USE_MPI
-      _communicator.CommunicateGhosts(N_F, _ghostElementSend, _ghostElementRecv, _A);
-#endif
-      
       // Limit the solution according to Liu (for each x slice)
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, N_F, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _A, _Alim);
       
       // Go to the monomial representation wrt y
       blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _MonoX2MonoY, _N_s, _Alim, _N_s, 0.0, _A, _N_s);
 
-      // Communicate the elements on different partitions
-#ifdef USE_MPI
-      _communicator.CommunicateGhosts(N_F, _ghostElementSend, _ghostElementRecv, _A);
-#endif
+      // Communicate the elements on different partitions if necessary
+      communicator.CommunicateGhosts2(N_F, _A);
 
       // Limit the solution according to Liu (for each y slice)
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, N_F, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _A, _Alim);
@@ -601,83 +562,6 @@ class Limiting
 
   }
 
-  void MYlimiting(scalar* U){
-
-#ifdef ONED
-    // Get the pressure field
-    Lpressure(_N_s, _N_E, U, _pressure);
-    
-    // Limit pressure
-    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2Mono, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
-    Lcpu_hrl1D(_N_s, _N_E, _N_G, 1, _N_N, 1, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
-
-    // Go from lagrange to monomial representation
-    blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Lag2Mono, _N_s, U, _N_s, 0.0, _A, _N_s);
-    // Limit the solution according to Liu
-    Lcpu_hrl1D(_N_s, _N_E, _N_G, N_F, _N_N, 1, _neighbors, 0, _weight, _V1D, _A, _Alim);
-
-    // My modification
-    Llimmodif(_N_s, _N_E, 1, _A, _pressureLim, _Alim);
-    
-    // Go back to lagrange representation
-    blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Mono2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
-    
-#elif TWOD
-    if(_cartesian){
-
-      //
-      // Limit the pressure field wrt x
-      //
-      Lpressure(_N_s, _N_E, U, _pressure);
-      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
-#ifdef USE_MPI
-      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _pressureMono);
-#endif
-      Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
-
-      //
-      // Limit U wrt x
-      // 
-      blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _Lag2MonoX, _N_s, U, _N_s, 0.0, _A, _N_s);
-#ifdef USE_MPI
-      _communicator.CommunicateGhosts(N_F, _ghostElementSend, _ghostElementRecv, _A);
-#endif
-      Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, N_F, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _A, _Alim);
-
-      //
-      // My limiter modifications in 2D
-      //
-      Llimmodif(_N_s1D, _N_E, _N_s1D, _A, _pressureLim, _Alim);
-      
-      //
-      // Limit the pressure field wrt y
-      //
-      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2MonoY, _N_s, _pressureLim, _N_s, 0.0, _pressureMono, _N_s);
-#ifdef USE_MPI
-      _communicator.CommunicateGhosts(1, _ghostElementSend, _ghostElementRecv, _pressureMono);
-#endif
-      Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _pressureMono, _pressureLim);
-
-      //
-      // Limit U wrt y
-      // 
-      blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _MonoX2MonoY, _N_s, _Alim, _N_s, 0.0, _A, _N_s);
-#ifdef USE_MPI
-      _communicator.CommunicateGhosts(N_F, _ghostElementSend, _ghostElementRecv, _A);
-#endif
-      Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, N_F, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _A, _Alim);
-
-      //
-      // My limiter modifications in 2D
-      //
-      Llimmodif(_N_s1D, _N_E, _N_s1D, _A, _pressureLim, _Alim);
-      
-      // Go back to lagrange
-      blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _MonoY2Lag, _N_s, _Alim, _N_s, 0.0, U, _N_s);
-    }
-
-#endif
-  }
 
   void M2limiting(scalar* U){
 

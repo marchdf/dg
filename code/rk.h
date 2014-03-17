@@ -105,8 +105,7 @@ class RK
   
     /* // Limit solution */
     /* if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(arch(U)); */
-    /* else if (Limiter.getLimitingMethod()==2) Limiter.MYlimiting(arch(U)); */
-    /* else if (Limiter.getLimitingMethod()==3) Limiter.M2limiting(arch(U)); */
+    /* else if (Limiter.getLimitingMethod()==2) Limiter.M2limiting(arch(U)); */
 
     // Get cpu id
     int myid = 0;
@@ -163,9 +162,8 @@ class RK
 
 	//Limit the solution if you so want to do so
 	if(k>0){
-	  if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(_Ustar);
-	  else if (Limiter.getLimitingMethod()==2) Limiter.MYlimiting(_Ustar);
-	  else if (Limiter.getLimitingMethod()==3) Limiter.M2limiting(_Ustar);
+	  if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(communicator, _Ustar);
+	  else if (Limiter.getLimitingMethod()==2) Limiter.M2limiting(_Ustar);
 	}
 
 	// Now you have to calculate f(Ustar)
@@ -182,10 +180,12 @@ class RK
 
       }// end loop on k
       
+      // Communications for Ustar
+      communicator.CommunicateGhosts2(N_F, arch(U));
+
       // Limit solution
-      if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(arch(U));
-      else if (Limiter.getLimitingMethod()==2) Limiter.MYlimiting(arch(U));
-      else if (Limiter.getLimitingMethod()==3) Limiter.M2limiting(arch(U));
+      if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(communicator, arch(U));
+      else if (Limiter.getLimitingMethod()==2) Limiter.M2limiting(arch(U));
 
 
       T = T + Dt; // update current time

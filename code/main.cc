@@ -121,8 +121,7 @@ int main (int argc, char **argv)
   // Setup the limiting
   int limiterMethod = 0;
   if      (inputs.getLimiter() == "hrl")   {limiterMethod = 1; if(myid==0){printf("Using HR limiting\n");}}
-  else if (inputs.getLimiter() == "myl")   {limiterMethod = 2; if(myid==0){printf("Using my limiting\n");}}
-  else if (inputs.getLimiter() == "m2l")   {limiterMethod = 3; if(myid==0){printf("Using m2 limiting\n");}}
+  else if (inputs.getLimiter() == "m2l")   {limiterMethod = 2; if(myid==0){printf("Using m2 limiting\n");}}
   else{limiterMethod = 0; if(myid==0){printf("No limiting\n");}}
 
   // Setup the initial condition type
@@ -693,7 +692,7 @@ int main (int argc, char **argv)
   scalar* h_invJac  = new scalar[N_G*D*N_E*D];   makeZero(h_invJac,N_G*D*N_E*D);  // not same as invJac!!
   scalar* h_JF      = new scalar[2*M_T];         makeZero(h_JF, D*M_T);
   scalar* h_normals = new scalar[D*M_T];         makeZero(h_normals,D*M_T);	 
-  scalar* h_U       = new scalar[N_s*N_E*N_F];   makeZero(h_U,N_s*N_E*N_F);
+  scalar* h_U       = new scalar[N_s*(N_E+N_ghosts)*N_F];   makeZero(h_U,N_s*(N_E+N_ghosts)*N_F);
 
   // copy from the fullMatrix to the pointer format (column major)
   phi.copyMatrixToPointer(h_phi);
@@ -728,6 +727,15 @@ int main (int argc, char **argv)
     }
   }
 
+
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Communication setup
+  //
+  //////////////////////////////////////////////////////////////////////////
+  COMMUNICATOR_ELEMENTS communicator(N_ghosts, N_s, h_ghostElementSend, h_ghostElementRecv);
+
+  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Setup the limiter
@@ -779,9 +787,7 @@ int main (int argc, char **argv)
   				 h_boundaryMap, h_boundaryIdx);
   RK rk4 = RK(4);
   
-  // Communication setup
-  COMMUNICATOR_ELEMENTS communicator(N_ghosts, N_s, h_ghostElementSend, h_ghostElementRecv);
-  
+ 
   // RK integration
   rk_start = std::clock();
   rk4.RK_integration(DtOut, Tf, CFL,
