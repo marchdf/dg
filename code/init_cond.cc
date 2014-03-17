@@ -1296,38 +1296,38 @@ void init_dg_rtaylor_multifluid(const int N_s, const int N_E, const fullMatrix<s
       y  = XYZNodes(i,e*D+1);
 #endif
 
-      // // Sharp interface
-      // if (yc<yinterface){ // fluid 1
-      // 	rho = rho01;
-      // 	gamma = gamma01;
-      // }
-      // else{ // fluid 2
-      // 	rho = rho02;
-      // 	gamma = gamma02;
-      // }
-      // p  = p0 + rho*gravity*y ;
-      // Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
-
-      // Diffuse interface
-      scalar H = L/16.0;
-      scalar Y = 0.5*(1-erf((y-yinterface)/H));
-      rho = 1.0/(Y/rho01 + (1-Y)/rho02);
-      gamma = 1.0/(Y/(gamma01-1) *1/M01+ (1-Y)/(gamma02-1)*1/M02) + 1;
-      
-      // Better integration with GSL library
-      gsl_integration_workspace * w = gsl_integration_workspace_alloc (1000);
-      double I, error;
-      gsl_function F;
-      struct rtaylor_density_params params = {rho01,rho02,H,yinterface};
-      F.function = &rtaylor_density;
-      F.params = &params;
-      gsl_integration_qags (&F, yinterface, y, 0, 1e-13, 1000, w, &I, &error);
-      gsl_integration_workspace_free (w);
-
-      // Define pressure
-      p = p0 + gravity*I;
-      printf("y=%20.16e, p=%20.16e\n",y,p);
+      // Sharp interface
+      if (yc<yinterface){ // fluid 1
+      	rho = rho01;
+      	gamma = gamma01;
+      }
+      else{ // fluid 2
+      	rho = rho02;
+      	gamma = gamma02;
+      }
+      p  = p0 + rho*gravity*y ;
       Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
+
+      // // Diffuse interface
+      // scalar H = L/16.0;
+      // scalar Y = 0.5*(1-erf((y-yinterface)/H));
+      // rho = 1.0/(Y/rho01 + (1-Y)/rho02);
+      // gamma = 1.0/(Y/(gamma01-1) *1/M01+ (1-Y)/(gamma02-1)*1/M02) + 1;
+      
+      // // Better integration with GSL library
+      // gsl_integration_workspace * w = gsl_integration_workspace_alloc (1000);
+      // double I, error;
+      // gsl_function F;
+      // struct rtaylor_density_params params = {rho01,rho02,H,yinterface};
+      // F.function = &rtaylor_density;
+      // F.params = &params;
+      // gsl_integration_qags (&F, yinterface, y, 0, 1e-13, 1000, w, &I, &error);
+      // gsl_integration_workspace_free (w);
+
+      // // Define pressure
+      // p = p0 + gravity*I;
+      // printf("y=%20.16e, p=%20.16e\n",y,p);
+      // Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
       
 #ifdef GAMCONS
       alpha = rho/(gamma-1);

@@ -19,9 +19,9 @@ void COMMUNICATOR_ELEMENTS::CommunicateGhosts(int Nfields, int* ghostElementSend
   for(int k=0; k<_N_ghosts; k++){
 
     // Send info 
-    e   = ghostElementSend[k*3+0]; // local index of A to send
+    e    = ghostElementSend[k*3+0]; // local index of A to send
     dest = ghostElementSend[k*3+1]; // destination processor
-    tag = ghostElementSend[k*3+2]; // global idx of element
+    tag  = ghostElementSend[k*3+2]; // global idx of element
     MPI_Isend(&A[e*Nfields*_N_s], Nfields*_N_s, MPI_SCALAR, dest, tag, MPI_COMM_WORLD, &_request[2*k+0]);
     
     // Recv info
