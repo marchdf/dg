@@ -99,9 +99,7 @@ int main (int argc, char **argv)
   if(myid==0){printf("%i-dimensional problem\n",D);}
   
   // Get the blas option
-#ifdef HAVE_BLAS
   if(myid==0){printf("Using BLAS\n");}
-#endif
 
   // Get the method order
   int order = inputs.getOrder();

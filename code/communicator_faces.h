@@ -15,9 +15,7 @@ class COMMUNICATOR_FACES
   int _M_s;
   MPI_Status *_status;
   MPI_Request *_request;
-  
   MPI_Datatype _strided; // for strided access
-
   int _bufsize;
   scalar *_buf;
   

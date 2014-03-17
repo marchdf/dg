@@ -45,45 +45,6 @@ __device__ double atomicAdd(double* address, double val)
 }
 #endif 
 
-//==========================================================================
-arch_global void cpu_equal(int N_s, int N_E, scalar* A, scalar* B){
-
-#ifdef USE_CPU
-  for(int e = 0; e < N_E; e++){
-    for(int i = 0; i < N_s; i++)
-      for(int fc = 0; fc < N_F; fc++)
-#elif USE_GPU
-  int e = blockIdx.x*blkE+threadIdx.z;
-  if (e < N_E){
-    int i = threadIdx.x;
-    int fc = threadIdx.y;
-#endif
-
-  A[(e*N_F+fc)*N_s+i] = B[(e*N_F+fc)*N_s+i];
-
-  }
-}
-
-//==========================================================================
-arch_global void cpu_add(int N_s, int N_E, scalar* A, scalar* B, scalar c){
-
-  // A = A + c*B
-#ifdef USE_CPU
-  for(int e = 0; e < N_E; e++){
-    for(int i = 0; i < N_s; i++)
-      for(int fc = 0; fc < N_F; fc++)
-#elif USE_GPU
-  int e = blockIdx.x*blkE+threadIdx.z;
-  if (e < N_E){
-    int i = threadIdx.x;
-    int fc = threadIdx.y;
-#endif
-
-  A[(e*N_F+fc)*N_s+i] =  A[(e*N_F+fc)*N_s+i] + c*B[(e*N_F+fc)*N_s+i];
-
-  }
-}
-
 
 //==========================================================================
 arch_global void cpu_mapToFace_shallow(int M_s, int M_T, int* map, scalar* U, scalar* UF){
@@ -247,103 +208,6 @@ arch_global void cpu_mapToElement(int N_s, int N_E, int M_s, int N_N, int* invma
   } // end loop on elements
 }
    
-//   //==========================================================================
-// arch_global void cpu_mapToElement(int N_s, int N_E, int* invmap, scalar* Q, scalar* Qtcj){
-
-// #ifdef USE_CPU
-//   for(int e = 0; e < N_E; e++){
-//     for(int i = 0; i < N_s; i++){
-//       for(int fc = 0; fc < N_F; fc++){
-// #elif USE_GPU
-//   int e = blockIdx.x*blkE+threadIdx.z;
-//   if (e < N_E){
-//     int i = threadIdx.x;
-//     int fc= threadIdx.y;
-// #endif
-// 	int idx = 0;
-// 	scalar sol = 0;
-// 	for(int k = 0; k < 2; k++){
-// 	  idx = invmap[((e*N_F+fc)*2+k)*N_s+i];
-// 	  if(idx != -1){
-// 	    sol += Qtcj[idx];
-// 	  }
-// 	}
-// 	Q[(e*N_F+fc)*N_s+i] = sol;
-
-// #ifdef USE_CPU
-//       }
-//     }
-// #endif
-//   }
-// }
-
-//==========================================================================
-arch_global void cpu_collocationU(int N_G, int N_s, int N_E, scalar* Ug, scalar* dUg, scalar* phi, scalar* dphi, scalar* U){
-
-#ifdef USE_CPU
-  for(int e = 0; e < N_E; e++){
-    for(int g = 0; g < N_G; g++){
-      for(int fc = 0; fc < N_F; fc++){
-#elif USE_GPU
-  int e = blockIdx.x*blkE+threadIdx.z;
-  if (e < N_E){
-    int g = threadIdx.x;
-    int fc= threadIdx.y;
-#endif
-
-	scalar sol = 0;
-	for(int i = 0; i < N_s; i++){
-	  sol += phi[i*N_G+g] * U[(e*N_F+fc)*N_s+i];
-	}
-	Ug[(e*N_F+fc)*N_G+g] = sol;
-
-	sol = 0.0;
-	for(int a = 0; a < D; a++){
-	  for(int i = 0; i < N_s; i++){
-	    sol += dphi[(i*N_G+g)*D+a] * U[(e*N_F+fc)*N_s+i];
-	  }
-	  dUg[((e*N_F+fc)*N_G+g)*D+a] = sol;
-	  sol = 0.0;
-	}
-
-#ifdef USE_CPU
-      }
-    }
-#endif
-  }
-}
-
-//==========================================================================
-arch_global void cpu_collocationUF(int M_G, int M_s, int M_T, scalar* UgF, scalar* psi, scalar* UF){
-
-#ifdef USE_CPU
-  for(int t = 0; t < M_T; t++){
-    for(int g = 0; g < M_G; g++){
-      for(int fc = 0; fc < N_F; fc++){
-#elif USE_GPU
-  int t = blockIdx.x*blkT+threadIdx.z;
-  if ( t < M_T){
-    int g = threadIdx.x;
-    int fc= threadIdx.y;
-#endif
-
-	scalar sol = 0;
-	for(int d = 0; d < 2; d++){
-	  for(int j = 0; j < M_s; j++){
-	    sol += psi[j*M_G+g] * UF[((t*N_F+fc)*2+d)*M_s+j];
-	  }
-	  UgF[((t*N_F+fc)*2+d)*M_G+g] = sol;
-	  sol = 0.0;
-	}
-
-#ifdef USE_CPU
-      }
-    }
-#endif
-  }
-}
-
-
 
 //==========================================================================
 arch_global void cpu_redistribute_sf(int N_G, int N_E, scalar* sJ, scalar* fJ, scalar* s, scalar* f, scalar* J, scalar* invJac){
@@ -380,47 +244,6 @@ arch_global void cpu_redistribute_sf(int N_G, int N_E, scalar* sJ, scalar* fJ, s
 }
 
 //==========================================================================
-arch_global void cpu_gemm_sf(int N_G, int N_s, int N_E, scalar* S, scalar* F, scalar* sJ, scalar* fJ, scalar* phi_w, scalar* dphi_w){
-
-#ifdef USE_CPU
-  for(int e = 0; e < N_E; e++){
-    for(int i = 0; i < N_s; i++){
-      for(int fc = 0; fc < N_F; fc++){
-
-#elif USE_GPU
-  int e = blockIdx.x*blkE+threadIdx.z;
-  if (e < N_E){
-    int i = threadIdx.x;
-    int fc= threadIdx.y;
-#endif
-
-	scalar sol = 0.0;
-
-	// S = phi_w.transpose() x sJ
-	for(int g = 0; g < N_G; g++){
-	  sol += phi_w[i*N_G+g] * sJ[(e*N_F+fc)*N_G+g];
-	}
-	S[(e*N_F+fc)*N_s+i] = sol;
-	sol = 0.0;
-  
-	// F = dphi_w.transpose() x fJ
-	sol = 0.0; 
-	for(int g = 0; g < N_G; g++){
-	  for(int a = 0; a < D; a++){
-	    sol += dphi_w[(i*N_G+g)*D+a] * fJ[((e*N_F+fc)*N_G+g)*D+a];
-	  }
-	}
-	F[(e*N_F+fc)*N_s+i] = sol;
-	sol = 0.0;
-
-#ifdef USE_CPU
-      }
-    }
-#endif
-  }
-}
-
-//==========================================================================
 arch_global void cpu_redistribute_q(int M_G, int M_T, scalar* qJ, scalar* q, scalar* JF){
 
 #ifdef USE_CPU
@@ -437,39 +260,6 @@ arch_global void cpu_redistribute_q(int M_G, int M_T, scalar* qJ, scalar* q, sca
       qJ[((t*N_F+fc)*2+0)*M_G+g] = q[((t*N_F+fc)*2+0)*M_G+g]*JF[t*2+0];
       qJ[((t*N_F+fc)*2+1)*M_G+g] = q[((t*N_F+fc)*2+1)*M_G+g]*JF[t*2+1];
   
-#ifdef USE_CPU
-      }
-    }
-#endif
-  }
-}
-
- 
-//==========================================================================
-arch_global void cpu_gemm_q(int M_G, int M_s, int M_T, scalar* Qtcj, scalar* qJ, scalar* psi_w){
-
-#ifdef USE_CPU  
-  for(int t = 0; t < M_T; t++){
-    for(int j = 0; j < M_s; j++){
-      for(int fc = 0; fc < N_F; fc++){
-#elif USE_GPU
-  int t = blockIdx.x*blkT+threadIdx.z;
-  if ( t < M_T){
-    int j = threadIdx.x;
-    int fc= threadIdx.y;
-#endif
-
-	scalar sol = 0.0;
-	
-	// Qtcj = psi_w.transpose() x qJ
-	for(int d = 0; d < 2; d++){
-	  for(int g = 0; g < M_G; g++){
-	    sol += psi_w[j*M_G+g] * qJ[((t*N_F+fc)*2+d)*M_G+g];
-	  }
-	  Qtcj[((t*N_F+fc)*2+d)*M_s+j] = sol;
-	  sol = 0.0;
-	}
-
 #ifdef USE_CPU
       }
     }
@@ -963,34 +753,6 @@ arch_global void cpu_Cons2Half(int N_s, int N_E, scalar* U, bool multifluid, boo
 //==========================================================================
 
 extern "C" 
-void Lcpu_equal(int N_s, int N_E, scalar* A, scalar* B){
-
-#ifdef USE_GPU
-  int div = N_E/blkE;
-  int mod = 0;
-  if (N_E%blkE != 0) mod = 1;
-  dim3 dimBlock(N_s,N_F,blkE);
-  dim3 dimGrid(div+mod,1);
-#endif
-
-  cpu_equal arch_args (N_s, N_E, A, B);
-}
-
-extern "C" 
-void Lcpu_add(int N_s, int N_E, scalar* A, scalar* B, scalar c){
-
-#ifdef USE_GPU
-  int div = N_E/blkE;
-  int mod = 0;
-  if (N_E%blkE != 0) mod = 1;
-  dim3 dimBlock(N_s,N_F,blkE);
-  dim3 dimGrid(div+mod,1);
-#endif 
-
-  cpu_add arch_args (N_s, N_E, A, B, c);
-}
-
-extern "C" 
 void Lcpu_mapToFace_shallow(int M_s, int M_T, int* map, scalar* U, scalar* UF){
 
 #ifdef USE_GPU
@@ -1046,33 +808,6 @@ void Lcpu_mapToElement(int N_s, int N_E, int M_s, int N_N, int* invmap, scalar* 
   cpu_mapToElement arch_args_array(blkE*N_F*N_s*sizeof(scalar)) (N_s, N_E, M_s, N_N, invmap, Q, q);
 }
 
-extern "C" 
-void Lcpu_collocationU(int N_G, int N_s, int N_E, scalar* Ug, scalar* dUg, scalar* phi, scalar* dphi, scalar* U){
-
-#ifdef USE_GPU
-  int div = N_E/blkE;
-  int mod = 0;
-  if (N_E%blkE != 0) mod = 1;
-  dim3 dimBlock(N_G,N_F,blkE);
-  dim3 dimGrid(div+mod,1);
-#endif
-
-  cpu_collocationU arch_args (N_G, N_s, N_E, Ug, dUg, phi, dphi, U);
-}
-
-extern "C" 
-void Lcpu_collocationUF(int M_G, int M_s, int M_T, scalar* UgF, scalar* psi, scalar* UF){
-
-#ifdef USE_GPU
-  int div = M_T/blkT;
-  int mod = 0;
-  if (M_T%blkT != 0) mod = 1;
-  dim3 dimBlock(M_G,N_F,blkT);
-  dim3 dimGrid(div+mod,1);
-#endif
-
-  cpu_collocationUF arch_args (M_G, M_s, M_T, UgF, psi, UF);
-}
 
 extern "C" 
 void Lcpu_redistribute_sf(int N_G, int N_E, scalar* sJ, scalar* fJ, scalar* s, scalar* f, scalar* J, scalar* invJac){
@@ -1087,20 +822,6 @@ void Lcpu_redistribute_sf(int N_G, int N_E, scalar* sJ, scalar* fJ, scalar* s, s
   cpu_redistribute_sf arch_args (N_G, N_E, sJ, fJ, s, f, J, invJac);
 }
 
-extern "C" 
-void Lcpu_gemm_sf(int N_G, int N_s, int N_E, scalar* S, scalar* F, scalar* sJ, scalar* fJ, scalar* phi_w, scalar* dphi_w){
-
-#ifdef USE_GPU
-  int div = N_E/blkE;
-  int mod = 0;
-  if (N_E%blkE != 0) mod = 1;
-  dim3 dimBlock(N_s,N_F,blkE);
-  dim3 dimGrid(div+mod,1);
-#endif
-
-  cpu_gemm_sf arch_args (N_G, N_s, N_E, S, F, sJ, fJ, phi_w, dphi_w);
-}
-
 extern "C"
 void Lcpu_redistribute_q(int M_G, int M_T, scalar* qJ, scalar* q, scalar* JF){
 
@@ -1113,20 +834,6 @@ void Lcpu_redistribute_q(int M_G, int M_T, scalar* qJ, scalar* q, scalar* JF){
 #endif
 
   cpu_redistribute_q arch_args (M_G, M_T, qJ, q, JF);
-}
-
-extern "C" 
-void Lcpu_gemm_q(int M_G, int M_s, int M_T, scalar* Qtcj, scalar* qJ, scalar* psi_w){
-
-#ifdef USE_GPU
-  int div = M_T/blkT;
-  int mod = 0;
-  if (M_T%blkT != 0) mod = 1;
-  dim3 dimBlock(M_s,N_F,blkT);
-  dim3 dimGrid(div+mod,1);
-#endif
-
-  cpu_gemm_q arch_args (M_G, M_s, M_T, Qtcj, qJ, psi_w);
 }
 
 extern "C" 

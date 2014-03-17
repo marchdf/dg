@@ -268,19 +268,11 @@ class DG_SOLVER
     LrflctiveBoundary(_M_s, _rflctiveIdx,_boundaryMap,_normals,0,_UF);
     
     // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes
-#ifdef HAVE_BLAS
     blasGemm('N','N', _N_G   , _N_E*N_F, _N_s, 1, _phi,  _N_G   , U, _N_s, 0.0, _Uinteg, _N_G);
     blasGemm('N','N', _N_G*D, _N_E*N_F, _N_s, 1, _dphi, _N_G*D, U, _N_s, 0.0, _dUinteg, _N_G*D);
-#else
-    Lcpu_collocationU(D, _N_G, _N_s, _N_E, _Uinteg, _dUinteg, _phi, _dphi, U);
-#endif
     
     // collocationUF: requires psi, UF, UintegF and some sizes
-#ifdef HAVE_BLAS
     blasGemm('N','N', _M_G, _M_T*N_F*2, _M_s, 1, _psi, _M_G, _UF, _M_s, 0.0, _UintegF, _M_G);
-#else
-    Lcpu_collocationUF(_M_G, _M_s, _M_T, _UintegF, _psi, _UF);
-#endif
 
     // Physics
     Levaluate_sf(_N_G, _N_E, _s, _f, _Uinteg, _dUinteg, _invJac);//, _xyz);
@@ -290,22 +282,14 @@ class DG_SOLVER
     Lcpu_redistribute_sf(_N_G, _N_E, _sJ, _fJ, _s, _f, _J, _invJac);
       
     // matrix-matrix multiply for sf
-#ifdef HAVE_BLAS
     blasGemm('T','N', _N_s, _N_E*N_F, _N_G   , 1, _phi_w , _N_G   , _sJ, _N_G  , 0.0, _S, _N_s);
     blasGemm('T','N', _N_s, _N_E*N_F, _N_G*D, 1, _dphi_w, _N_G*D, _fJ, _N_G*D, 0.0, _F, _N_s);
-#else
-    Lcpu_gemm_sf(D, _N_G, _N_s, _N_E, _S, _F, _sJ, _fJ, _phi_w, _dphi_w);
-#endif
 
     // redistribute_q: requires JF, q, qJ, psi_w, Qtcj,
     Lcpu_redistribute_q(_M_G, _M_T, _qJ, _q, _JF);
     
     // matrix-matrix multiply for q
-#ifdef HAVE_BLAS
     blasGemm('T','N', _M_s, _M_T*N_F*2, _M_G, 1, _psi_w , _M_G, _qJ, _M_G, 0.0, _Qtcj, _M_s);
-#else
-    Lcpu_gemm_q(_M_G, _M_s, _M_T, _Qtcj, _qJ, _psi_w);
-#endif
 
     // map_q: requires map, Qtcj, Q (might want to do this in the previous step)
     Lcpu_mapToElement(_N_s, _N_E, _M_s, _N_N, _invmap, _Q, _Qtcj);
@@ -320,11 +304,7 @@ class DG_SOLVER
   void conservation(scalar* U, double time){
 
     // Collocate the solution to the integration points
-#ifdef HAVE_BLAS
     hostblasGemm('N','N', _N_G, _N_E*N_F, _N_s, 1, _phiC, _N_G, U, _N_s, 0.0, _UgC, _N_G);
-#else
-    printf("Need BLAS library to calculate conservation.\n")
-#endif
     
     // Take the cell average of the solution
     makeZero(_I, N_F);

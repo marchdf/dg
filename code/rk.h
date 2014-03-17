@@ -148,20 +148,11 @@ class RK
       }
       
       // Us = U
-#ifdef HAVE_BLAS
       blasCopy(N_F*N_s*N_E, arch(U), 1, _Us, 1);
-#else
-      Lcpu_equal(N_s, N_E, N_F, _Us, arch(U));
-#endif
       for(int k = 0; k < _order; k++){
 	// Ustar = Us + beta*DU
-#ifdef HAVE_BLAS
-	blasCopy(N_F*N_s*N_E, _Us, 1, _Ustar, 1);
-	blasAxpy(N_s*N_F*N_E, _beta[k], _DU, 1, _Ustar, 1);
-#else
-	Lcpu_equal(N_s, N_E, N_F, _Ustar, _Us); // make Ustar = Us;
-	Lcpu_add(N_s, N_E, N_F, _Ustar, _DU, _beta[k]);// do Ustar.add(DU,beta[k]);
-#endif
+	blasCopy(N_F*N_s*N_E, _Us, 1, _Ustar, 1);           // make Ustar = Us;
+	blasAxpy(N_s*N_F*N_E, _beta[k], _DU, 1, _Ustar, 1); // do Ustar.add(DU,beta[k]);
 
 	Tstar = T + _beta[k]*Dt;
 
@@ -182,11 +173,7 @@ class RK
 	if (order0){Laverage_cell_p0(N_s, N_E, _DU);}
 
 	// U = U + gamma*DU
-#ifdef HAVE_BLAS
-	blasAxpy(N_s*N_F*N_E, _gamma[k], _DU, 1, arch(U), 1);
-#else
-	Lcpu_add(N_s, N_E, N_F, arch(U), _DU, _gamma[k]); // do U.add(DU,gamma[k])
-#endif
+	blasAxpy(N_s*N_F*N_E, _gamma[k], _DU, 1, arch(U), 1); // do U.add(DU,gamma[k])
 
       }// end loop on k
       
