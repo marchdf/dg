@@ -45,7 +45,6 @@ class simpleMesh {
   std::map<int,int> _elementMap;
   std::map<int,int> _ghostElementMap;
   bool _cartesian;
-  int* _ghostInterfaces;
   int* _ghostElementSend;
   int* _ghostElementRecv;
   int _N_B; // number of boundaries
@@ -73,8 +72,7 @@ class simpleMesh {
   void buildCommunicators(int elem_type);
   void buildNormals(int typeInterface, int typeElement);
 
-  int getNbGhostInterfaces() const {return _N_ghosts;}
-  int* getGhostInterfaces()const {return _ghostInterfaces;}
+  int getNbGhosts() const {return _N_ghosts;}
   int* getGhostElementSend()const {return _ghostElementSend;}
   int* getGhostElementRecv()const {return _ghostElementRecv;}
   

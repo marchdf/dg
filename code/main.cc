@@ -229,7 +229,6 @@ int main (int argc, char **argv)
 
   m.buildCommunicators(elem_type); // build the indexes to map the ghost elements to my partition
   const std::map<int,int> & ghostElementMap = m.getGhostElementMap();
-  int* h_ghostInterfaces  = m.getGhostInterfaces();
   int* h_ghostElementSend = m.getGhostElementSend();
   int* h_ghostElementRecv = m.getGhostElementRecv();
 
@@ -280,7 +279,7 @@ int main (int argc, char **argv)
   int N   = N_E*N_s;                  // number of dof for a DG
   int N_G = points.size1();           // number of integration points           (g index)
   int M_G = pointsF.size1();          // number of integration points on a face (g index)
-  int N_ghosts = m.getNbGhostInterfaces();
+  int N_ghosts = m.getNbGhosts();
 
   if(myid==0){
     if(order0) printf("order %i\n",0); else printf("order %i\n",order);
@@ -774,8 +773,8 @@ int main (int argc, char **argv)
   scalar CFL   = inputs.getCFL()*m.getDx()/(2.0*order+1);
 
   if(myid==0){printf("==== Now RK 4 steps =====\n");}
-  DG_SOLVER dgsolver = DG_SOLVER(N_E, N_s, N_G, N_N, M_T, M_s, M_G, M_B, N_ghosts,
-  				 h_map, h_invmap, h_ghostInterfaces, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, //h_xyz, h_xyzf,
+  DG_SOLVER dgsolver = DG_SOLVER(N_E, N_s, N_G, N_N, M_T, M_s, M_G, M_B,
+  				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, //h_xyz, h_xyzf,
 				 h_J, h_invJac, h_JF, h_weight, h_normals,
   				 h_boundaryMap, h_boundaryIdx);
   RK rk4 = RK(4);
@@ -931,7 +930,6 @@ int main (int argc, char **argv)
   // Free stuff on the host
   //
   //////////////////////////////////////////////////////////////////////////   
-  delete[] h_ghostInterfaces;
   delete[] h_ghostElementSend;
   delete[] h_ghostElementRecv;
   delete[] h_boundaryMap;

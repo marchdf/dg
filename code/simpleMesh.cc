@@ -72,7 +72,9 @@ bool pairPeriodic(const fullMatrix<double> &meshNodes, std::vector<int> nodes1, 
 
 
 int uniqueTag(int id1, int id2, int N=0){
-  /* Given two numbers (the global id of el1 and el2 of an interface),
+  /* This is not used anymore... but I keep it because it's kind of cool
+
+     Given two numbers (the global id of el1 and el2 of an interface),
      create a unique number. Ideally I would use a perfect hash. But
      for that I would need a 64-bit integer to represent all pairs of
      32-bit integers. For a good discussion on this see
@@ -817,11 +819,6 @@ void simpleMesh::buildCommunicators(int elem_type){
      back columns of U/A in the limiting procedure (using the
      neighbors vector)
 
-     Create ghostInterfaces matrix of size 3 X # ghost interfaces. It
-     stores the local interface index, the partition where el2 lives,
-     and a unique tag to reference this interface during MPI
-     communication.
-
      Create ghostElementSend matrix containing the element index to
      send to other partitions, the number of that partition to send
      to, and its global id (as tag for communication).
@@ -852,7 +849,6 @@ void simpleMesh::buildCommunicators(int elem_type){
   _N_ghosts = count;
   
   // initialize the vectors
-  _ghostInterfaces  = new int[3*_N_ghosts];
   _ghostElementSend = new int[3*_N_ghosts];
   _ghostElementRecv = new int[3*_N_ghosts];
 
@@ -867,10 +863,6 @@ void simpleMesh::buildCommunicators(int elem_type){
     int partition2 = el2->getPartition();
     int id2 = el2->getId();
     if( partition1 != partition2){
-
-      _ghostInterfaces[count*3+0] = t;
-      _ghostInterfaces[count*3+1] = partition2; // dest/source partition
-      _ghostInterfaces[count*3+2] = uniqueTag(id1,id2,sharedCount[partition2]);
 
       _ghostElementSend[count*3+0] = _elementMap.at(id1);
       _ghostElementSend[count*3+1] = partition2;

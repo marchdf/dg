@@ -7,7 +7,6 @@
 #include <physics.h>
 #include <boundaries.h>
 #include <stdio.h>
-#include <communicator_faces.h>
 
 class DG_SOLVER
 {
@@ -20,10 +19,8 @@ class DG_SOLVER
   int _M_s;
   int _M_G;
   int _M_B;
-  int _M_ghosts;
   int* _map;
   int* _invmap;
-  int* _ghostInterfaces;
   int* _boundaryMap;
   int _rflctiveIdx;
   int _otheroneIdx;
@@ -54,7 +51,6 @@ class DG_SOLVER
   scalar* _qJ      ;
   scalar* _Qtcj    ;
   scalar* _Q       ; 
-  COMMUNICATOR_FACES _communicator;
   
   // To calculate the conservation of certain fields
   std::string consfile;
@@ -67,10 +63,10 @@ class DG_SOLVER
   
  public:
   // constructor
- DG_SOLVER(int N_E, int N_s, int N_G,  int N_N, int M_T, int M_s, int M_G, int M_B, int M_ghosts,
-	   int* map, int* invmap, int* ghostInterfaces, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* psi, scalar* psi_w, //scalar* xyz, scalar* xyzf,
+ DG_SOLVER(int N_E, int N_s, int N_G,  int N_N, int M_T, int M_s, int M_G, int M_B, 
+	   int* map, int* invmap, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* psi, scalar* psi_w, //scalar* xyz, scalar* xyzf,
 	   scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals, int* boundaryMap, int* boundaryIdx) :
-  _N_E(N_E), _N_s(N_s), _N_G(N_G), _N_N(N_N), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B), _M_ghosts(M_ghosts), _communicator(M_ghosts,M_s){
+  _N_E(N_E), _N_s(N_s), _N_G(N_G), _N_N(N_N), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B) {
 
 
     // Indexes for boundary conditions
@@ -84,7 +80,6 @@ class DG_SOLVER
 
     _map     = new int[M_s*M_T*N_F*2];       
     _invmap  = new int[M_s*N_N*N_E*N_F*2];
-    _ghostInterfaces = new int[3*M_ghosts];
     _boundaryMap  = new int[M_B];
     _phi     = new scalar[N_G*N_s];          makeZero(_phi,N_G*N_s);
     _phi_w   = new scalar[N_G*N_s];          makeZero(_phi_w,N_G*N_s);          
@@ -115,7 +110,6 @@ class DG_SOLVER
 
     memcpy(_map        , map        , M_s*M_T*N_F*2*sizeof(int));
     memcpy(_invmap     , invmap     , M_s*N_N*N_E*N_F*2*sizeof(int));
-    memcpy(_ghostInterfaces, ghostInterfaces, 3*M_ghosts*sizeof(int));
     memcpy(_boundaryMap, boundaryMap, M_B*sizeof(int));
     memcpy(_phi        , phi        , N_G*N_s*sizeof(scalar));
     memcpy(_phi_w      , phi_w      , N_G*N_s*sizeof(scalar));
@@ -134,7 +128,6 @@ class DG_SOLVER
     // Allocate space on the GPU
     cudaMalloc((void**) &_map        , M_s*M_T*N_F*2*sizeof(int));
     cudaMalloc((void**) &_invmap     , M_s*N_N*N_E*N_F*2*sizeof(int));
-    cudaMalloc((void**) &_ghostInterfaces, 3*M_ghosts*sizeof(int));
     cudaMalloc((void**) &_boundaryMap, M_B*sizeof(int));
     cudaMalloc((void**) &_phi        , N_G*N_s*sizeof(scalar));
     cudaMalloc((void**) &_phi_w      , N_G*N_s*sizeof(scalar));
@@ -186,7 +179,6 @@ class DG_SOLVER
     // Send the stuff to the device
     cudaMemcpy(_map        , map        , M_s*M_T*N_F*2*sizeof(int) , cudaMemcpyHostToDevice);
     cudaMemcpy(_invmap     , invmap     , M_s*N_N*N_E*N_F*2*sizeof(int) , cudaMemcpyHostToDevice);
-    cudaMemcpy(_ghostInterfaces, ghostInterfaces, 3*M_ghosts*sizeof(int) , cudaMemcpyHostToDevice);
     cudaMemcpy(_boundaryMap, boundaryMap, M_B*sizeof(int)         , cudaMemcpyHostToDevice);
     cudaMemcpy(_phi        , phi        , N_G*N_s*sizeof(scalar)    , cudaMemcpyHostToDevice);
     cudaMemcpy(_phi_w      , phi_w      , N_G*N_s*sizeof(scalar)    , cudaMemcpyHostToDevice);
@@ -217,7 +209,6 @@ class DG_SOLVER
   ~DG_SOLVER(){
     del(_map);
     del(_invmap);
-    del(_ghostInterfaces);
     del(_boundaryMap);
     del(_phi);
     del(_phi_w);
@@ -258,11 +249,6 @@ class DG_SOLVER
 
     // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
     Lcpu_mapToFace(_M_s, _M_T, _N_s, _map, U, _UF);
-
-    // Do the necessary MPI communications
-#ifdef USE_MPI
-    //_communicator.mapGhostFace(_ghostInterfaces, _UF);
-#endif
 
     // Apply special boundary conditions
     LrflctiveBoundary(_M_s, _rflctiveIdx,_boundaryMap,_normals,0,_UF);
