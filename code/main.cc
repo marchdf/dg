@@ -751,7 +751,7 @@ int main (int argc, char **argv)
   //
   //if(cartesian){
   scalar* h_weightF  = new scalar[M_G]; makeZero(h_weightF,M_G); for(int g=0; g<M_G; g++) h_weightF[g] = (scalar)weightF(g,0);  
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_G, order, cartesian, N_N, N_ghosts, h_neighbors, Lag2MonoX, MonoX2MonoY, MonoY2Lag, monoV, h_ghostElementSend, h_ghostElementRecv, h_weightF);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_G, order, cartesian, N_N, N_ghosts, h_neighbors, Lag2MonoX, MonoX2MonoY, MonoY2Lag, monoV, h_weightF);
   delete[] h_weightF;
   //}
   

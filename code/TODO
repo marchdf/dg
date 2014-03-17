@@ -1,7 +1,3 @@
-KNOWN BUGS
-  - M2L + MPI: something isn't working at the edges btwn partitions
-  - Can't preserve hydrostatic equilibrium with gravity...
-
 DELETIONS
   - some things are deleted in the destructor and need a delete in the main (e.g. simpleMesh)
 

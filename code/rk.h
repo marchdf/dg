@@ -163,7 +163,7 @@ class RK
 	//Limit the solution if you so want to do so
 	if(k>0){
 	  if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(communicator, _Ustar);
-	  else if (Limiter.getLimitingMethod()==2) Limiter.M2limiting(_Ustar);
+	  else if (Limiter.getLimitingMethod()==2) Limiter.M2limiting(communicator, _Ustar);
 	}
 
 	// Now you have to calculate f(Ustar)
@@ -185,7 +185,7 @@ class RK
 
       // Limit solution
       if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(communicator, arch(U));
-      else if (Limiter.getLimitingMethod()==2) Limiter.M2limiting(arch(U));
+      else if (Limiter.getLimitingMethod()==2) Limiter.M2limiting(communicator, arch(U));
 
 
       T = T + Dt; // update current time
