@@ -23,7 +23,7 @@
 #include <misc.h>
 #include <limiting.h>
 #include <dg_solver.h>
-#include <communicator_elements.h>
+#include <communicator.h>
 
 //
 // Function prototypes
@@ -733,7 +733,7 @@ int main (int argc, char **argv)
   // Communication setup
   //
   //////////////////////////////////////////////////////////////////////////
-  COMMUNICATOR_ELEMENTS communicator(N_ghosts, N_s, h_ghostElementSend, h_ghostElementRecv);
+  COMMUNICATOR communicator(N_ghosts, N_s, h_ghostElementSend, h_ghostElementRecv);
 
   
   //////////////////////////////////////////////////////////////////////////   

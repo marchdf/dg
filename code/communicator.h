@@ -2,14 +2,14 @@
 // Class to communicate the faces between cpus and gpus
 //
 
-#ifndef COMMUNICATOR_ELEMENTS_H
-#define COMMUNICATOR_ELEMENTS_H
+#ifndef COMMUNICATOR_H
+#define COMMUNICATOR_H
 
 #ifdef USE_MPI
 #include <scalar_def.h>
 #include "mpi.h"
 
-class COMMUNICATOR_ELEMENTS
+class COMMUNICATOR
 {
  private:
   int _N_ghosts;
@@ -21,13 +21,13 @@ class COMMUNICATOR_ELEMENTS
 
  public:
   // constructors
- COMMUNICATOR_ELEMENTS(){};
- COMMUNICATOR_ELEMENTS(int N_ghosts, int N_s): _N_ghosts(N_ghosts), _N_s(N_s){
+ COMMUNICATOR(){};
+ COMMUNICATOR(int N_ghosts, int N_s): _N_ghosts(N_ghosts), _N_s(N_s){
     // Initialize MPI things
     _status = new MPI_Status [2*N_ghosts];
     _request = new MPI_Request [2*N_ghosts];
   };
- COMMUNICATOR_ELEMENTS(int N_ghosts, int N_s, int* ghostElementSend, int* ghostElementRecv): _N_ghosts(N_ghosts), _N_s(N_s){
+ COMMUNICATOR(int N_ghosts, int N_s, int* ghostElementSend, int* ghostElementRecv): _N_ghosts(N_ghosts), _N_s(N_s){
     // Initialize MPI things
     _status = new MPI_Status [2*N_ghosts];
     _request = new MPI_Request [2*N_ghosts];
@@ -42,20 +42,19 @@ class COMMUNICATOR_ELEMENTS
   };
 
   // destructor
-  ~COMMUNICATOR_ELEMENTS(){};
+  ~COMMUNICATOR(){};
 
   // Communicate the ghost elements
-  void CommunicateGhosts(int Nfields, int* ghostElementSend, int* ghostElementRecv, scalar* A);
-  void CommunicateGhosts2(int Nfields, scalar* U);
+  void CommunicateGhosts(int Nfields, scalar* U);
 
 };
 #else
-class COMMUNICATOR_ELEMENTS{
+class COMMUNICATOR{
  public:
-  COMMUNICATOR_ELEMENTS(){};
-  COMMUNICATOR_ELEMENTS(int a, int b){};
+  COMMUNICATOR(){};
+  COMMUNICATOR(int a, int b){};
 };
 #endif
 
-#endif // COMMUNICATOR_ELEMENTS_H
+#endif // COMMUNICATOR_H
 

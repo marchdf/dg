@@ -5,7 +5,7 @@
 #include <constants.h>
 #include <physics.h>
 #include <limiting_kernels.h>
-#include <communicator_elements.h>
+#include <communicator.h>
 
 // Used to define dynamically variables (mass fractions)
 #define _Y(x) _Y ##x
@@ -472,7 +472,7 @@ class Limiting
   
   int getLimitingMethod() const {return _method;}
   
-  void HRlimiting(COMMUNICATOR_ELEMENTS &communicator, scalar* U){
+  void HRlimiting(COMMUNICATOR &communicator, scalar* U){
 #ifdef ONED
 
     // Go from lagrange to monomial representation
@@ -494,7 +494,7 @@ class Limiting
       blasGemm('N','N', _N_s, _N_E*N_F, _N_s, 1, _MonoX2MonoY, _N_s, _Alim, _N_s, 0.0, _A, _N_s);
 
       // Communicate the elements on different partitions if necessary
-      communicator.CommunicateGhosts2(N_F, _A);
+      communicator.CommunicateGhosts(N_F, _A);
 
       // Limit the solution according to Liu (for each y slice)
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, N_F, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _A, _Alim);
@@ -553,7 +553,7 @@ class Limiting
   }
 
 
-  void M2limiting(COMMUNICATOR_ELEMENTS &communicator, scalar* U){
+  void M2limiting(COMMUNICATOR &communicator, scalar* U){
 
 #ifdef ONED
 #ifdef MULTIFLUID  //===========================================================
@@ -705,35 +705,35 @@ class Limiting
       // Get the density field, transform to monomial basis, limit in x, transform to Lagrange basis
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,0,0,U,_rho); // copy from U into rho
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _rho, _N_s, 0.0, _rhoMono, _N_s);
-      communicator.CommunicateGhosts2(1, _rhoMono);
+      communicator.CommunicateGhosts(1, _rhoMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _rhoMono, _rhoLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _rhoLim, _N_s, 0.0, _rho, _N_s);
       
       // Get the momentum x field, transform to monomial basis, limit in x, transform to Lagrange basis
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,_N_s,0,U,_rhou); // copy from U into rhou
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _rhou, _N_s, 0.0, _rhouMono, _N_s);
-      communicator.CommunicateGhosts2(1, _rhouMono);
+      communicator.CommunicateGhosts(1, _rhouMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _rhouMono, _rhouLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _rhouLim, _N_s, 0.0, _rhou, _N_s);
 
       // Get the momentum y field, transform to monomial basis, limit in x, transform to Lagrange basis
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,2*_N_s,0,U,_rhov); // copy from U into rhov
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _rhov, _N_s, 0.0, _rhovMono, _N_s);
-      communicator.CommunicateGhosts2(1, _rhovMono);
+      communicator.CommunicateGhosts(1, _rhovMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _rhovMono, _rhovLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _rhovLim, _N_s, 0.0, _rhov, _N_s);
     
       // Get the 1/gamma-1 field, transform to monomial basis, limit in x, transform to Lagrange basis
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,4*_N_s,0,U,_gamma); // copy from U into gamma
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _gamma, _N_s, 0.0, _gammaMono, _N_s);
-      communicator.CommunicateGhosts2(1, _gammaMono);
+      communicator.CommunicateGhosts(1, _gammaMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _gammaMono, _gammaLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _gammaLim, _N_s, 0.0, _gamma, _N_s);
 
       // Get the pressure field, transform to monomial basis, limit in x, transform to Lagrange basis
       Lpressure(_N_s, _N_E, U, _pressure);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
-      communicator.CommunicateGhosts2(1, _pressureMono);
+      communicator.CommunicateGhosts(1, _pressureMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _pressureLim, _N_s, 0.0, _pressure, _N_s);
 
@@ -761,7 +761,7 @@ class Limiting
 #ifdef USE_MPI
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) communicator.CommunicateGhosts2(1, _YMono(x));
+#define MACRO(x) communicator.CommunicateGhosts(1, _YMono(x));
 #include "loop.h"    
 #endif
 #include "loopstart.h"
@@ -776,31 +776,31 @@ class Limiting
 
       // Get the density field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _rho, _N_s, 0.0, _rhoMono, _N_s);
-      communicator.CommunicateGhosts2(1, _rhoMono);
+      communicator.CommunicateGhosts(1, _rhoMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _rhoMono, _rhoLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _rhoLim, _N_s, 0.0, _rho, _N_s);
 
       // Get the momentum x field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _rhou, _N_s, 0.0, _rhouMono, _N_s);
-      communicator.CommunicateGhosts2(1, _rhouMono);
+      communicator.CommunicateGhosts(1, _rhouMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _rhouMono, _rhouLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _rhouLim, _N_s, 0.0, _rhou, _N_s);
 
       // Get the momentum y field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _rhov, _N_s, 0.0, _rhovMono, _N_s);
-      communicator.CommunicateGhosts2(1, _rhovMono);
+      communicator.CommunicateGhosts(1, _rhovMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _rhovMono, _rhovLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _rhovLim, _N_s, 0.0, _rhov, _N_s);
 
       // Get the 1/gamma-1 field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _gamma, _N_s, 0.0, _gammaMono, _N_s);
-      communicator.CommunicateGhosts2(1, _gammaMono);
+      communicator.CommunicateGhosts(1, _gammaMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _gammaMono, _gammaLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _gammaLim, _N_s, 0.0, _gamma, _N_s);
 
       // Get the pressure field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
-      communicator.CommunicateGhosts2(1, _pressureMono);
+      communicator.CommunicateGhosts(1, _pressureMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _pressureMono, _pressureLim);
 
       // Get the limited kinetic energy by using the limited rho and limited rhou and limited rhov
@@ -832,7 +832,7 @@ class Limiting
 #ifdef USE_MPI
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) communicator.CommunicateGhosts2(1, _YMono(x));
+#define MACRO(x) communicator.CommunicateGhosts(1, _YMono(x));
 #include "loop.h"
 #endif
 #include "loopstart.h"
@@ -858,42 +858,42 @@ class Limiting
       // Get the density field, transform to monomial basis, limit in x, transform to Lagrange basis
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,0,0,U,_rho); // copy from U into rho
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _rho, _N_s, 0.0, _rhoMono, _N_s);
-      communicator.CommunicateGhosts2(1, _rhoMono);
+      communicator.CommunicateGhosts(1, _rhoMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _rhoMono, _rhoLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _rhoLim, _N_s, 0.0, _rho, _N_s);
       
       // Get the momentum x field, transform to monomial basis, limit in x, transform to Lagrange basis
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,_N_s,0,U,_rhou); // copy from U into rhou
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _rhou, _N_s, 0.0, _rhouMono, _N_s);
-      communicator.CommunicateGhosts2(1, _rhouMono);
+      communicator.CommunicateGhosts(1, _rhouMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _rhouMono, _rhouLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _rhouLim, _N_s, 0.0, _rhou, _N_s);
 
       // Get the momentum y field, transform to monomial basis, limit in x, transform to Lagrange basis
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,2*_N_s,0,U,_rhov); // copy from U into rhov
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _rhov, _N_s, 0.0, _rhovMono, _N_s);
-      communicator.CommunicateGhosts2(1, _rhovMono);
+      communicator.CommunicateGhosts(1, _rhovMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _rhovMono, _rhovLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _rhovLim, _N_s, 0.0, _rhov, _N_s);
     
       // Get the 1/gamma-1 field, transform to monomial basis, limit in x, transform to Lagrange basis
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,4*_N_s,0,U,_gamma); // copy from U into gamma
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _gamma, _N_s, 0.0, _gammaMono, _N_s);
-      communicator.CommunicateGhosts2(1, _gammaMono);
+      communicator.CommunicateGhosts(1, _gammaMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _gammaMono, _gammaLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _gammaLim, _N_s, 0.0, _gamma, _N_s);
 
       // Get the gamma pinf/gamma-1 field, transform to monomial basis, limit, transform to Lagrange basis
       Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,5*_N_s,0,U,_beta); // copy from U into beta
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _beta, _N_s, 0.0, _betaMono, _N_s);
-      communicator.CommunicateGhosts2(1, _betaMono);
+      communicator.CommunicateGhosts(1, _betaMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _betaMono, _betaLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _betaLim, _N_s, 0.0, _beta, _N_s);
 
       // Get the pressure field, transform to monomial basis, limit in x, transform to Lagrange basis
       Lpressure(_N_s, _N_E, U, _pressure);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
-      communicator.CommunicateGhosts2(1, _pressureMono);
+      communicator.CommunicateGhosts(1, _pressureMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _pressureLim, _N_s, 0.0, _pressure, _N_s);
 
@@ -921,7 +921,7 @@ class Limiting
 #ifdef USE_MPI
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) communicator.CommunicateGhosts2(1, _YMono(x));
+#define MACRO(x) communicator.CommunicateGhosts(1, _YMono(x));
 #include "loop.h"    
 #endif
 #include "loopstart.h"
@@ -936,37 +936,37 @@ class Limiting
 
       // Get the density field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _rho, _N_s, 0.0, _rhoMono, _N_s);
-      communicator.CommunicateGhosts2(1, _rhoMono);
+      communicator.CommunicateGhosts(1, _rhoMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _rhoMono, _rhoLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _rhoLim, _N_s, 0.0, _rho, _N_s);
 
       // Get the momentum x field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _rhou, _N_s, 0.0, _rhouMono, _N_s);
-      communicator.CommunicateGhosts2(1, _rhouMono);
+      communicator.CommunicateGhosts(1, _rhouMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _rhouMono, _rhouLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _rhouLim, _N_s, 0.0, _rhou, _N_s);
 
       // Get the momentum y field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _rhov, _N_s, 0.0, _rhovMono, _N_s);
-      communicator.CommunicateGhosts2(1, _rhovMono);
+      communicator.CommunicateGhosts(1, _rhovMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _rhovMono, _rhovLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _rhovLim, _N_s, 0.0, _rhov, _N_s);
 
       // Get the 1/gamma-1 field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _gamma, _N_s, 0.0, _gammaMono, _N_s);
-      communicator.CommunicateGhosts2(1, _gammaMono);
+      communicator.CommunicateGhosts(1, _gammaMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _gammaMono, _gammaLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _gammaLim, _N_s, 0.0, _gamma, _N_s);
 
       // Get the gamma*pinf/gamma-1 field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _beta, _N_s, 0.0, _betaMono, _N_s);
-      communicator.CommunicateGhosts2(1, _betaMono);
+      communicator.CommunicateGhosts(1, _betaMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _betaMono, _betaLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _betaLim, _N_s, 0.0, _beta, _N_s);
 
       // Get the pressure field, transform to monomial basis, limit in y, transform to Lagrange basis
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
-      communicator.CommunicateGhosts2(1, _pressureMono);
+      communicator.CommunicateGhosts(1, _pressureMono);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _pressureMono, _pressureLim);
 
       // Get the limited kinetic energy by using the limited rho and limited rhou and limited rhov
@@ -999,7 +999,7 @@ class Limiting
 #ifdef USE_MPI
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) communicator.CommunicateGhosts2(1, _YMono(x));
+#define MACRO(x) communicator.CommunicateGhosts(1, _YMono(x));
 #include "loop.h"
 #endif
 #include "loopstart.h"

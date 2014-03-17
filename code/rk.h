@@ -9,7 +9,7 @@
 #include <cpu_kernels.h>
 #include <limiting.h>
 #include <dg_solver.h>
-#include <communicator_elements.h>
+#include <communicator.h>
 #include <print_sol.h>
 #ifdef USE_MPI
 #include "mpi.h"
@@ -52,7 +52,7 @@ class RK
 		      int N_E, int N_s, int N_G, int M_T, int M_s, int N_ghosts,
 		      scalar* h_Minv, 
 		      scalar* h_U,
-		      Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR_ELEMENTS &communicator,
+		      Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator,
 		      int elem_type, simpleMesh &m){
 
     // Initialize some vars
@@ -158,7 +158,7 @@ class RK
 	Tstar = T + _beta[k]*Dt;
 
 	// Communications for Ustar
-	communicator.CommunicateGhosts2(N_F, _Ustar);
+	communicator.CommunicateGhosts(N_F, _Ustar);
 
 	//Limit the solution if you so want to do so
 	if(k>0){
@@ -181,7 +181,7 @@ class RK
       }// end loop on k
       
       // Communications for Ustar
-      communicator.CommunicateGhosts2(N_F, arch(U));
+      communicator.CommunicateGhosts(N_F, arch(U));
 
       // Limit solution
       if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(communicator, arch(U));
