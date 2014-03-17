@@ -746,7 +746,7 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
   	// If this interface has a first element but not a second element
   	if ((interfaceFound._elements[0] != NULL)&&(interfaceFound._elements[1] == NULL)) {
   	  interfaceFound._elements[1] = &el;
-  	  interfaceFound._closureId[1] = interfaceFound._closureId[0]+nsides;
+  	  interfaceFound._closureId[1] = j+nsides;
   	}
       }
       catch(const std::out_of_range &oor){
@@ -763,7 +763,7 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
   	      bool paired = pairPeriodic(meshNodes, nodes1, nodes);
   	      if(paired){
   		interface1._elements[1] = &el;
-  		interface1._closureId[1] = interface1._closureId[0]+nsides;
+  		interface1._closureId[1] = j+nsides;
   	      }
   	    } // end if periodic
   	  } // end loop on interfaces

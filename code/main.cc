@@ -23,6 +23,7 @@
 #include <misc.h>
 #include <limiting.h>
 #include <dg_solver.h>
+#include <communicator_elements.h>
 
 //
 // Function prototypes
@@ -656,7 +657,7 @@ int main (int argc, char **argv)
   //////////////////////////////////////////////////////////////////////////
   int* h_map = new int[M_s*M_T*N_F*2];
   int* h_invmap = new int[M_s*N_N*N_E*N_F*2];
-  dg_mappings(myid, M_s, M_T, N_s, N_E, N_N, interfaces, ElementMap, closures, h_map, h_invmap);
+  dg_mappings(myid, M_s, M_T, N_s, N_E, N_N, interfaces, ElementMap, ghostElementMap, closures, h_map, h_invmap);
   
   //==========================================================================
   //
@@ -682,18 +683,18 @@ int main (int argc, char **argv)
   //  We need to transform the data in fullMatrix to a pointer form to
   //  transfer to GPU note: it's got to be column major sorted
   //
-  scalar* h_phi     = new scalar[N_G*N_s];          makeZero(h_phi,N_G*N_s);
-  scalar* h_phi_w   = new scalar[N_G*N_s];          makeZero(h_phi_w,N_G*N_s);          
-  scalar* h_dphi    = new scalar[D*N_G*N_s];	    makeZero(h_dphi,D*N_G*N_s);	 
-  scalar* h_dphi_w  = new scalar[D*N_G*N_s];	    makeZero(h_dphi_w,D*N_G*N_s);
+  scalar* h_phi     = new scalar[N_G*N_s];       makeZero(h_phi,N_G*N_s);
+  scalar* h_phi_w   = new scalar[N_G*N_s];       makeZero(h_phi_w,N_G*N_s);          
+  scalar* h_dphi    = new scalar[D*N_G*N_s];     makeZero(h_dphi,D*N_G*N_s);	 
+  scalar* h_dphi_w  = new scalar[D*N_G*N_s];     makeZero(h_dphi_w,D*N_G*N_s);
 
-  scalar* h_psi     = new scalar[M_G*M_s];	    makeZero(h_psi,M_G*M_s);	 
-  scalar* h_psi_w   = new scalar[M_G*M_s];	    makeZero(h_psi_w,M_G*M_s);	 
-  scalar* h_J       = new scalar[N_E];              makeZero(h_J,N_E);               // not same as J!!
-  scalar* h_invJac  = new scalar[N_G*D*N_E*D];      makeZero(h_invJac,N_G*D*N_E*D);  // not same as invJac!!
-  scalar* h_JF      = new scalar[2*M_T];            makeZero(h_JF, D*M_T);
-  scalar* h_normals = new scalar[D*M_T];	    makeZero(h_normals,D*M_T);	 
-  scalar* h_U       = new scalar[N_s*N_E*N_F];	    makeZero(h_U,N_s*N_E*N_F);
+  scalar* h_psi     = new scalar[M_G*M_s];       makeZero(h_psi,M_G*M_s);	 
+  scalar* h_psi_w   = new scalar[M_G*M_s];       makeZero(h_psi_w,M_G*M_s);	 
+  scalar* h_J       = new scalar[N_E];           makeZero(h_J,N_E);               // not same as J!!
+  scalar* h_invJac  = new scalar[N_G*D*N_E*D];   makeZero(h_invJac,N_G*D*N_E*D);  // not same as invJac!!
+  scalar* h_JF      = new scalar[2*M_T];         makeZero(h_JF, D*M_T);
+  scalar* h_normals = new scalar[D*M_T];         makeZero(h_normals,D*M_T);	 
+  scalar* h_U       = new scalar[N_s*N_E*N_F];   makeZero(h_U,N_s*N_E*N_F);
 
   // copy from the fullMatrix to the pointer format (column major)
   phi.copyMatrixToPointer(h_phi);
@@ -778,17 +779,17 @@ int main (int argc, char **argv)
 				 h_J, h_invJac, h_JF, h_weight, h_normals,
   				 h_boundaryMap, h_boundaryIdx);
   RK rk4 = RK(4);
-
-
-
-
-  /* Your algorithm here */
+  
+  // Communication setup
+  COMMUNICATOR_ELEMENTS communicator(N_ghosts, N_s, h_ghostElementSend, h_ghostElementRecv);
+  
+  // RK integration
   rk_start = std::clock();
   rk4.RK_integration(DtOut, Tf, CFL,
-  		     N_E, N_s, N_G, M_T, M_s,
+  		     N_E, N_s, N_G, M_T, M_s, N_ghosts,
   		     h_Minv, 
   		     h_U,
-  		     Limiter, order0, dgsolver,
+  		     Limiter, order0, dgsolver, communicator,
   		     elem_type, m);
   rk_time = ( std::clock() - rk_start ) / (double) CLOCKS_PER_SEC;
   printf("RK time = %20.16e for proc %i\n", rk_time, myid);

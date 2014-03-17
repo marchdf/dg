@@ -2,6 +2,9 @@ KNOWN BUGS
   - M2L + MPI: something isn't working at the edges btwn partitions
   - Can't preserve hydrostatic equilibrium with gravity...
 
+DELETIONS
+  - some things are deleted in the destructor and need a delete in the main (e.g. simpleMesh)
+
 OUTPUT
   - Inefficient to build a matrix to output it...
   - Add capability to output in the .txt format that gmsh can generate too
@@ -50,3 +53,4 @@ OTHER
   - Remove cpu_ in the function names (not necessary now)
   - Does shifts works in 1D? It does not!
   - clean the deletes in main. Only have the class deleting the vectors it creates. (eg. in main I delete arrays created in simpleMesh)
+  - change makeZero to memset functions

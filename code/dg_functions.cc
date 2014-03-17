@@ -129,7 +129,7 @@ void dg_inverse_mass_matrix(const int order, const int elem_type, const std::str
 }
 
 
-void dg_mappings(const int myid, const int M_s, const int M_T, const int N_s, const int N_E, const int N_N, const std::vector<simpleInterface> &interfaces, const std::map<int,int> &ElementMap, const std::vector<std::vector<int> > &closures, int* map, int* invmap){
+void dg_mappings(const int myid, const int M_s, const int M_T, const int N_s, const int N_E, const int N_N, const std::vector<simpleInterface> &interfaces, const std::map<int,int> &ElementMap, const std::map<int,int> &ghostElementMap, const std::vector<std::vector<int> > &closures, int* map, int* invmap){
   /* Map the element matrix to the interfaces matrix and
      vice-versa. This is a modified version of what I had
      previously. I think it works better and is more efficient.*/
@@ -143,6 +143,9 @@ void dg_mappings(const int myid, const int M_s, const int M_T, const int N_s, co
     const simpleElement *el1 = face.getElement(0); // get the element to the left
     const simpleElement *el2 = face.getElement(1); // get the element to the right
     int e1 = ElementMap.at(el1->getId());
+    int el2num = 0; // do this like in buildNeighbors
+    if(el2->getPartition()==myid){ el2num = ElementMap.at(el2->getId());}
+    else                         { el2num = ghostElementMap.at(el2->getId());} // refer to a back column of U
     int id1 = face.getClosureId(0);
     int id2 = face.getClosureId(1);
     const std::vector<int> &cl1 = closures[id1];
@@ -152,8 +155,7 @@ void dg_mappings(const int myid, const int M_s, const int M_T, const int N_s, co
 
 	// Map from U to UF
 	map[((t*N_F+fc)*2+0)*M_s+j] = (e1*N_F+fc)*N_s+cl1[j];
-	if(el2->getPartition()==myid)  map[((t*N_F+fc)*2+1)*M_s+j] = ((ElementMap.at(el2->getId()))*N_F+fc)*N_s+cl2[j];
-	else                           map[((t*N_F+fc)*2+1)*M_s+j] = ((ElementMap.at(el1->getId()))*N_F+fc)*N_s+cl2[j];
+	map[((t*N_F+fc)*2+1)*M_s+j] = (el2num*N_F+fc)*N_s+cl2[j];
 
 	// Inverse map
 	invmap[((e1*N_F+fc)*M_s*N_N+cnt[e1*N_F+fc])*2+0] = cl1[j];

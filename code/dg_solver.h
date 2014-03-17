@@ -261,7 +261,7 @@ class DG_SOLVER
 
     // Do the necessary MPI communications
 #ifdef USE_MPI
-    _communicator.mapGhostFace(_ghostInterfaces, _UF);
+    //_communicator.mapGhostFace(_ghostInterfaces, _UF);
 #endif
 
     // Apply special boundary conditions

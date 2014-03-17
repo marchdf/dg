@@ -9,6 +9,7 @@
 #include <cpu_kernels.h>
 #include <limiting.h>
 #include <dg_solver.h>
+#include <communicator_elements.h>
 #include <print_sol.h>
 #ifdef USE_MPI
 #include "mpi.h"
@@ -20,7 +21,7 @@ class RK
   int     _order;  // RK order (only implemented RK4)
   scalar* _beta;
   scalar* _gamma;
-
+  
  public:
   // constructor
   RK(int order) : _order(order){
@@ -48,10 +49,10 @@ class RK
   
   // main RK integration function
   void RK_integration(double DtOut, double Tf, scalar CFL,
-		      int N_E, int N_s, int N_G, int M_T, int M_s,
+		      int N_E, int N_s, int N_G, int M_T, int M_s, int N_ghosts,
 		      scalar* h_Minv, 
 		      scalar* h_U,
-		      Limiting &Limiter, bool order0, DG_SOLVER &dgsolver,
+		      Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR_ELEMENTS &communicator,
 		      int elem_type, simpleMesh &m){
 
     // Initialize some vars
@@ -70,10 +71,11 @@ class RK
     scalar* _DU;
     scalar* _UPA; 
     scalar* _f;
-    scalar* _Minv;    
+    scalar* _Minv;
+      
 #ifdef USE_CPU
     _Us    = new scalar[N_s*N_E*N_F];  makeZero(_Us   ,N_s*N_E*N_F);	 
-    _Ustar = new scalar[N_s*N_E*N_F];  makeZero(_Ustar,N_s*N_E*N_F);
+    _Ustar = new scalar[N_s*(N_E+N_ghosts)*N_F];  makeZero(_Ustar,N_s*(N_E+N_ghosts)*N_F);
     _DU    = new scalar[N_s*N_E*N_F];  makeZero(_DU   ,N_s*N_E*N_F);
     _UPA   = new scalar[N_s*N_E];      makeZero(_UPA  ,N_s*N_E);
     _f     = new scalar[N_s*N_E*N_F];  makeZero(_f    ,N_s*N_E*N_F);
@@ -155,6 +157,9 @@ class RK
 	blasAxpy(N_s*N_F*N_E, _beta[k], _DU, 1, _Ustar, 1); // do Ustar.add(DU,beta[k]);
 
 	Tstar = T + _beta[k]*Dt;
+
+	// Communications for Ustar
+	communicator.CommunicateGhosts2(N_F, _Ustar);
 
 	//Limit the solution if you so want to do so
 	if(k>0){
