@@ -4,6 +4,7 @@
 // Small functions that run on host but that interface with the GPU.
 // It requires some cuda stuff
 #include <assert.h>
+#include <cuda_runtime_api.h>
 
 // Convenience function for checking CUDA runtime API results
 // can be wrapped around any runtime API call. No-op in release builds.
