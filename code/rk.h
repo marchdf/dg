@@ -180,12 +180,9 @@ class RK
 
       }// end loop on k
       
-      // Communications for U
-      communicator.CommunicateGhosts(N_F, arch(U));
-
-      // Limit solution
-      if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(communicator, arch(U));
-      else if (Limiter.getLimitingMethod()==2) Limiter.M2limiting(communicator, arch(U));
+      // Communicate and limit solution
+      if      (Limiter.getLimitingMethod()==1){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.HRlimiting(communicator, arch(U));}
+      else if (Limiter.getLimitingMethod()==2){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.M2limiting(communicator, arch(U));}
 
 
       T = T + Dt; // update current time

@@ -21,6 +21,7 @@
 #include <init_cond.h>
 #include <rk.h>
 #include <misc.h>
+#include <misc_cuda.h>
 #include <limiting.h>
 #include <dg_solver.h>
 #include <communicator.h>
@@ -686,8 +687,18 @@ int main (int argc, char **argv)
   scalar* h_J       = new scalar[N_E];           makeZero(h_J,N_E);               // not same as J!!
   scalar* h_invJac  = new scalar[N_G*D*N_E*D];   makeZero(h_invJac,N_G*D*N_E*D);  // not same as invJac!!
   scalar* h_JF      = new scalar[2*M_T];         makeZero(h_JF, D*M_T);
-  scalar* h_normals = new scalar[D*M_T];         makeZero(h_normals,D*M_T);	 
+  scalar* h_normals = new scalar[D*M_T];         makeZero(h_normals,D*M_T);
+
+#ifdef USE_CPU
+  // Normal allocation of U
   scalar* h_U       = new scalar[N_s*(N_E+N_ghosts)*N_F];   makeZero(h_U,N_s*(N_E+N_ghosts)*N_F);
+#elif USE_GPU
+  // Pinned allocation of U. Faster host <-> device transfer
+  // http://devblogs.nvidia.com/parallelforall/how-optimize-data-transfers-cuda-cc/
+  // If I run into an issue: cudaHostAlloc and cudaMallocHost ARE NOT THE SAME (http://stackoverflow.com/questions/8591577/does-cudafreehost-care-what-device-is-active-when-cudamallochost-is-used-to-allo)
+  scalar* h_U;
+  checkCuda(cudaMallocHost((void**)&h_U, N_s*(N_E+N_ghosts)*N_F*sizeof(scalar)));
+#endif
 
   // copy from the fullMatrix to the pointer format (column major)
   phi.copyMatrixToPointer(h_phi);
@@ -921,6 +932,7 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////   
 #ifdef USE_GPU
+  cudaFreeHost(h_U);
   status = cublasShutdown();
 #endif
   
@@ -946,7 +958,9 @@ int main (int argc, char **argv)
   delete[] h_JF;
   delete[] h_invJac;
   delete[] h_normals;
+#ifdef USE_CPU
   delete[] h_U;
+#endif 
 
   //////////////////////////////////////////////////////////////////////////   
   //
