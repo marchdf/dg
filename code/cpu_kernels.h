@@ -4,10 +4,6 @@
 #include <math.h>
 #include <macros.h>
 
-#ifdef USE_MPI
-#include <mpi.h>
-#endif
-
 // Here I define the gpu kernels I will be using
 extern "C" void Lcpu_mapToFace_shallow(int M_s, int M_T,  int* map, scalar* U, scalar* UF);
 extern "C" void Lcpu_mapToFace_mhd(int M_s, int M_T,  int* map, scalar* U, scalar* UF);

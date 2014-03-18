@@ -6,6 +6,7 @@
 #include <physics.h>
 #include <limiting_kernels.h>
 #include <communicator.h>
+#include "simpleMesh.h"
 
 // Used to define dynamically variables (mass fractions)
 #define _Y(x) _Y ##x
@@ -103,7 +104,7 @@ class Limiting
  Limiting(int method,bool cartesian) : _method(method), _cartesian(cartesian){}
 
   // 1D limiting constructor
- Limiting(int method, int N_s, int N_E, int N_G, int N_N, int* neighbors, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, fullMatrix<scalar> &V1D, scalar* weight)
+ Limiting(int method, int N_s, int N_E, int N_G, int N_N, simpleMesh &m, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, fullMatrix<scalar> &V1D, scalar* weight)
    : _method(method), _N_s(N_s), _N_E(N_E), _N_G(N_G), _N_N(N_N){
 
     common_ctor();
@@ -117,7 +118,7 @@ class Limiting
       _V1D      = new scalar[_N_G*_N_s];     V1D.copyMatrixToPointer(_V1D);
       _weight   = new scalar[_N_G];          memcpy(_weight,weight,N_G*sizeof(scalar));
       _neighbors  = new int[_N_N*_N_E];
-      memcpy(_neighbors,   neighbors,   _N_N*_N_E*sizeof(int));
+      memcpy(_neighbors,   m.getNeighbors(),   _N_N*_N_E*sizeof(int));
 
 #elif USE_GPU
       // tmp host pointers to copy data to gpu
@@ -137,7 +138,7 @@ class Limiting
       cudaMemcpy(_Mono2Lag, tmpMono2Lag, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
       cudaMemcpy(_V1D, tmpV1D, N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
       cudaMemcpy(_weight,weight, N_G*sizeof(scalar), cudaMemcpyHostToDevice);
-      cudaMemcpy(_neighbors,  neighbors,_N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice);
+      cudaMemcpy(_neighbors,  m.getNeighbors(),_N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice);
       
       delete[] tmpLag2Mono;	
       delete[] tmpMono2Lag;	
@@ -218,7 +219,7 @@ class Limiting
   } // end 1D constructor
 
   // 2D limiting constructor for structured mesh
- Limiting(int method, int N_s, int N_E, int N_G, int order, bool cartesian, int N_N, int N_ghosts, int* neighbors, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, fullMatrix<scalar> &V1D, scalar* weight) : _method(method), _N_s(N_s), _N_E(N_E), _N_G(N_G), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(N_ghosts) {
+ Limiting(int method, int N_s, int N_E, int N_G, int order, bool cartesian, int N_N, int N_ghosts, simpleMesh &m, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, fullMatrix<scalar> &V1D, scalar* weight) : _method(method), _N_s(N_s), _N_E(N_E), _N_G(N_G), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(N_ghosts) {
 
     _N_s1D = (order+1);
     _N_G1D = (order+1);
@@ -236,7 +237,7 @@ class Limiting
       _MonoY2Lag   = new scalar[_N_s*_N_s];     MonoY2Lag.copyMatrixToPointer(_MonoY2Lag);
       _V1D      = new scalar[_N_G1D*_N_s1D];    V1D.copyMatrixToPointer(_V1D);
       _weight   = new scalar[_N_G1D];           memcpy(_weight,weight,_N_G1D*sizeof(scalar));
-      _neighbors  = new int[_N_N*_N_E]; memcpy(_neighbors,   neighbors,   _N_N*_N_E*sizeof(int));
+      _neighbors  = new int[_N_N*_N_E];         memcpy(_neighbors,   m.getNeighbors(),   _N_N*_N_E*sizeof(int));
      
 #elif USE_GPU
       // tmp host pointers to copy data to gpu
@@ -261,7 +262,7 @@ class Limiting
       cudaMemcpy(_MonoY2Lag,   tmpMonoY2Lag, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
       cudaMemcpy(_V1D, tmpV1D, _N_G1D*_N_s1D*sizeof(scalar), cudaMemcpyHostToDevice);
       cudaMemcpy(_weight,weight, _N_G1D*sizeof(scalar), cudaMemcpyHostToDevice);
-      cudaMemcpy(_neighbors,  neighbors,_N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice);
+      cudaMemcpy(_neighbors,  m.getNeighbors(),_N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice);
 
       delete[] tmpLag2MonoX;
       delete[] tmpMonoX2MonoY;
@@ -294,34 +295,34 @@ class Limiting
       blasGemm('N','N', _N_s, _N_s, _N_s, 1, _MonoX2MonoY, _N_s, _Lag2MonoX, _N_s, 0.0, _Lag2MonoY, _N_s);
 
 #ifdef USE_CPU
-      _rho      = new scalar[_N_s*_N_E]; _rhoMono      = new scalar[_N_s*(_N_E+_N_ghosts)]; _rhoLim      = new scalar[_N_s*_N_E];
-      _rhou     = new scalar[_N_s*_N_E]; _rhouMono     = new scalar[_N_s*(_N_E+_N_ghosts)]; _rhouLim     = new scalar[_N_s*_N_E];
-      _rhov     = new scalar[_N_s*_N_E]; _rhovMono     = new scalar[_N_s*(_N_E+_N_ghosts)]; _rhovLim     = new scalar[_N_s*_N_E];
-      _pressure = new scalar[_N_s*_N_E]; _pressureMono = new scalar[_N_s*(_N_E+_N_ghosts)]; _pressureLim = new scalar[_N_s*_N_E];
+      _rho      = new scalar[_N_s*(_N_E+_N_ghosts)]; _rhoMono      = new scalar[_N_s*(_N_E+_N_ghosts)]; _rhoLim      = new scalar[_N_s*_N_E];
+      _rhou     = new scalar[_N_s*(_N_E+_N_ghosts)]; _rhouMono     = new scalar[_N_s*(_N_E+_N_ghosts)]; _rhouLim     = new scalar[_N_s*_N_E];
+      _rhov     = new scalar[_N_s*(_N_E+_N_ghosts)]; _rhovMono     = new scalar[_N_s*(_N_E+_N_ghosts)]; _rhovLim     = new scalar[_N_s*_N_E];
+      _pressure = new scalar[_N_s*(_N_E+_N_ghosts)]; _pressureMono = new scalar[_N_s*(_N_E+_N_ghosts)]; _pressureLim = new scalar[_N_s*_N_E];
       _K        = new scalar[_N_s*_N_E];  _KLim         = new scalar[_N_s*_N_E];
       _E        = new scalar[_N_s*_N_E];  _EMono        = new scalar[_N_s*_N_E];  _ELim        = new scalar[_N_s*_N_E]; makeZero(_ELim, _N_s*_N_E);
-      _gamma    = new scalar[_N_s*_N_E]; _gammaMono    = new scalar[_N_s*(_N_E+_N_ghosts)]; _gammaLim    = new scalar[_N_s*_N_E];
+      _gamma    = new scalar[_N_s*(_N_E+_N_ghosts)]; _gammaMono    = new scalar[_N_s*(_N_E+_N_ghosts)]; _gammaLim    = new scalar[_N_s*_N_E];
       _rhoeLim  = new scalar[_N_s*_N_E];
 #ifdef STIFFENED
-      _beta    = new scalar[_N_s*_N_E]; _betaMono    = new scalar[_N_s*(_N_E+_N_ghosts)]; _betaLim    = new scalar[_N_s*_N_E];
+      _beta    = new scalar[_N_s*(_N_E+_N_ghosts)]; _betaMono    = new scalar[_N_s*(_N_E+_N_ghosts)]; _betaLim    = new scalar[_N_s*_N_E];
 #endif
       // Mass fractions initializations
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) _Y(x) = new scalar[_N_s*_N_E]; _YMono(x) = new scalar[_N_s*(_N_E+_N_ghosts)]; _YLim(x) = new scalar[_N_s*_N_E];
+#define MACRO(x) _Y(x) = new scalar[_N_s*(_N_E+_N_ghosts)]; _YMono(x) = new scalar[_N_s*(_N_E+_N_ghosts)]; _YLim(x) = new scalar[_N_s*_N_E];
 #include "loop.h"
 
 #elif USE_GPU
-      cudaMalloc((void**) &_rho,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rho,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
       cudaMalloc((void**) &_rhoMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
       cudaMalloc((void**) &_rhoLim,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_rhou,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhou,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
       cudaMalloc((void**) &_rhouMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
       cudaMalloc((void**) &_rhouLim,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_rhov,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhov,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
       cudaMalloc((void**) &_rhovMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
       cudaMalloc((void**) &_rhovLim,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_pressure,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
       cudaMalloc((void**) &_pressureMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
       cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_K,_N_s*_N_E*sizeof(scalar));
@@ -329,19 +330,19 @@ class Limiting
       cudaMalloc((void**) &_E,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_EMono,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_ELim,_N_s*_N_E*sizeof(scalar));       cudaMemset(_ELim, (scalar)0.0, _N_s*N_E*sizeof(scalar));
-      cudaMalloc((void**) &_gamma,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_gamma,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
       cudaMalloc((void**) &_gammaMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
       cudaMalloc((void**) &_gammaLim,_N_s*_N_E*sizeof(scalar));
       cudaMalloc((void**) &_rhoeLim,_N_s*_N_E*sizeof(scalar));
 #ifdef STIFFENED
-      cudaMalloc((void**) &_beta,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_beta,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
       cudaMalloc((void**) &_betaMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
       cudaMalloc((void**) &_betaLim,_N_s*_N_E*sizeof(scalar));
 #endif
       // Mass fractions initializations
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) cudaMalloc((void**) &_Y(x),_N_s*_N_E*sizeof(scalar)); \
+#define MACRO(x) cudaMalloc((void**) &_Y(x),_N_s*(_N_E+_N_ghosts)*sizeof(scalar)); \
       cudaMalloc((void**) &_YMono(x),_N_s*(_N_E+_N_ghosts)*sizeof(scalar));        \
       cudaMalloc((void**) &_YLim(x),_N_s*_N_E*sizeof(scalar)); 
 #include "loop.h"
@@ -353,7 +354,7 @@ class Limiting
   }// end 2D constructor for structured mesh
   
   // 2D limiting constructor for unstructured mesh
- Limiting(int method, int N_s, int N_E, int N_G, int N_N, int L, int order, int L2Msize1, int L2Msize2, int* neighbors, fullMatrix<scalar> Lag2Mono, fullMatrix<scalar> Mono2Lag, fullMatrix<scalar> XYZCen, scalar* powersXYZG, scalar* weight, scalar refArea, int* TaylorDxIdx, int* TaylorDyIdx)
+ Limiting(int method, int N_s, int N_E, int N_G, int N_N, int L, int order, int L2Msize1, int L2Msize2, simpleMesh &m, fullMatrix<scalar> Lag2Mono, fullMatrix<scalar> Mono2Lag, fullMatrix<scalar> XYZCen, scalar* powersXYZG, scalar* weight, scalar refArea, int* TaylorDxIdx, int* TaylorDyIdx)
    : _method(method), _D(D),_N_s(N_s), _N_E(N_E), _N_G(N_G), _N_N(N_N), _L(L), _order(order), _L2Msize1(L2Msize1), _L2Msize2(L2Msize2), _refArea(refArea){
 
     common_ctor();
@@ -383,7 +384,7 @@ class Limiting
       	    _Lag2Mono[(e*_L2Msize1+i)*_L2Msize2+j] = Lag2Mono(e,i*_L2Msize2+j);
       	    _Mono2Lag[(e*_L2Msize2+j)*_L2Msize1+i] = Mono2Lag(e,j*_L2Msize1+i);}}}
       memcpy(_powersXYZG,  powersXYZG,  _L2Msize1*_N_G*(_N_N+1)*_N_E*sizeof(scalar));
-      memcpy(_neighbors,   neighbors,   _N_N*_N_E*sizeof(int));
+      memcpy(_neighbors,   m.getNeighbors(),   _N_N*_N_E*sizeof(int));
       memcpy(_weight,      weight,      _N_G*sizeof(scalar));
       memcpy(_TaylorDxIdx, TaylorDxIdx, _L*sizeof(int));
       memcpy(_TaylorDyIdx, TaylorDyIdx, _L*sizeof(int));
@@ -417,7 +418,7 @@ class Limiting
       cudaMemcpy(_Mono2Lag,   tmpMono2Lag, _L2Msize2*_L2Msize1*_N_E*sizeof(scalar), cudaMemcpyHostToDevice);
       cudaMemcpy(_XYZCen,     tmpXYZCen,   _D*_N_E*sizeof(scalar), cudaMemcpyHostToDevice);
       cudaMemcpy(_powersXYZG, powersXYZG,  _L2Msize1*_N_G*(_N_N+1)*_N_E*sizeof(scalar), cudaMemcpyHostToDevice);
-      cudaMemcpy(_neighbors,  neighbors,   _N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice);
+      cudaMemcpy(_neighbors,  m.getNeighbors(),   _N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice);
       cudaMemcpy(_weight,     weight,      _N_G*sizeof(scalar), cudaMemcpyHostToDevice);
       cudaMemcpy(_TaylorDxIdx,TaylorDxIdx, _L*sizeof(int), cudaMemcpyHostToDevice);
       cudaMemcpy(_TaylorDyIdx,TaylorDyIdx, _L*sizeof(int), cudaMemcpyHostToDevice);
@@ -703,37 +704,32 @@ class Limiting
       // 
       
       // Get the density field, transform to monomial basis, limit in x, transform to Lagrange basis
-      Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,0,0,U,_rho); // copy from U into rho
-      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _rho, _N_s, 0.0, _rhoMono, _N_s);
-      communicator.CommunicateGhosts(1, _rhoMono);
+      Lstridedcopy((_N_E+_N_ghosts),_N_s,_N_s*N_F,_N_s,0,0,U,_rho); // copy from U into rho
+      blasGemm('N','N', _N_s, (_N_E+_N_ghosts), _N_s, 1, _Lag2MonoX, _N_s, _rho, _N_s, 0.0, _rhoMono, _N_s);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _rhoMono, _rhoLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _rhoLim, _N_s, 0.0, _rho, _N_s);
       
       // Get the momentum x field, transform to monomial basis, limit in x, transform to Lagrange basis
-      Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,_N_s,0,U,_rhou); // copy from U into rhou
-      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _rhou, _N_s, 0.0, _rhouMono, _N_s);
-      communicator.CommunicateGhosts(1, _rhouMono);
+      Lstridedcopy((_N_E+_N_ghosts),_N_s,_N_s*N_F,_N_s,_N_s,0,U,_rhou); // copy from U into rhou
+      blasGemm('N','N', _N_s, (_N_E+_N_ghosts), _N_s, 1, _Lag2MonoX, _N_s, _rhou, _N_s, 0.0, _rhouMono, _N_s);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _rhouMono, _rhouLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _rhouLim, _N_s, 0.0, _rhou, _N_s);
 
       // Get the momentum y field, transform to monomial basis, limit in x, transform to Lagrange basis
-      Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,2*_N_s,0,U,_rhov); // copy from U into rhov
-      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _rhov, _N_s, 0.0, _rhovMono, _N_s);
-      communicator.CommunicateGhosts(1, _rhovMono);
+      Lstridedcopy((_N_E+_N_ghosts),_N_s,_N_s*N_F,_N_s,2*_N_s,0,U,_rhov); // copy from U into rhov
+      blasGemm('N','N', _N_s, (_N_E+_N_ghosts), _N_s, 1, _Lag2MonoX, _N_s, _rhov, _N_s, 0.0, _rhovMono, _N_s);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _rhovMono, _rhovLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _rhovLim, _N_s, 0.0, _rhov, _N_s);
     
       // Get the 1/gamma-1 field, transform to monomial basis, limit in x, transform to Lagrange basis
-      Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,4*_N_s,0,U,_gamma); // copy from U into gamma
-      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _gamma, _N_s, 0.0, _gammaMono, _N_s);
-      communicator.CommunicateGhosts(1, _gammaMono);
+      Lstridedcopy((_N_E+_N_ghosts),_N_s,_N_s*N_F,_N_s,4*_N_s,0,U,_gamma); // copy from U into gamma
+      blasGemm('N','N', _N_s, (_N_E+_N_ghosts), _N_s, 1, _Lag2MonoX, _N_s, _gamma, _N_s, 0.0, _gammaMono, _N_s);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _gammaMono, _gammaLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _gammaLim, _N_s, 0.0, _gamma, _N_s);
 
       // Get the pressure field, transform to monomial basis, limit in x, transform to Lagrange basis
-      Lpressure(_N_s, _N_E, U, _pressure);
-      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
-      communicator.CommunicateGhosts(1, _pressureMono);
+      Lpressure(_N_s, (_N_E+_N_ghosts), U, _pressure);
+      blasGemm('N','N', _N_s, (_N_E+_N_ghosts), _N_s, 1, _Lag2MonoX, _N_s, _pressure, _N_s, 0.0, _pressureMono, _N_s);
       Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _pressureMono, _pressureLim);
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _pressureLim, _N_s, 0.0, _pressure, _N_s);
 
@@ -755,18 +751,9 @@ class Limiting
       // Get the mass fraction field, transform to monomial basis, limit in x, transform to Lagrange basis
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,(5+x)*_N_s,0,U,_Y(x)); \
-      blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s);
-#include "loop.h"    
-#ifdef USE_MPI
-#include "loopstart.h"
-#define LOOP_END N_Y
-#define MACRO(x) communicator.CommunicateGhosts(1, _YMono(x));
-#include "loop.h"    
-#endif
-#include "loopstart.h"
-#define LOOP_END N_Y
-#define MACRO(x) Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _YMono(x), _YLim(x)); \
+#define MACRO(x) Lstridedcopy((_N_E+_N_ghosts),_N_s,_N_s*N_F,_N_s,(5+x)*_N_s,0,U,_Y(x)); \
+      blasGemm('N','N', _N_s, (_N_E+_N_ghosts), _N_s, 1, _Lag2MonoX, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s); \
+      Lcpu_hrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _YMono(x), _YLim(x)); \
       blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _YLim(x), _N_s, 0.0, _Y(x), _N_s);
 #include "loop.h"    
 

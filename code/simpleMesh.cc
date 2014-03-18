@@ -979,8 +979,3 @@ inline scalar simpleMesh::distance_to_edge(scalar x0,scalar y0,scalar x1,scalar 
 }
 
 
-simpleMesh::~simpleMesh(){
-  //delete[] _boundary;
-  //delete _boundaryIdx;
-}
-

@@ -228,8 +228,6 @@ int main (int argc, char **argv)
 
   m.buildCommunicators(elem_type); // build the indexes to map the ghost elements to my partition
   const std::map<int,int> & ghostElementMap = m.getGhostElementMap();
-  int* h_ghostElementSend = m.getGhostElementSend();
-  int* h_ghostElementRecv = m.getGhostElementRecv();
 
  
   ////////////////////////////////////////////////////////////////////////////   
@@ -458,8 +456,6 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
   m.buildBoundary();
-  int* h_boundaryMap = m.getBoundaryMap();
-  int* h_boundaryIdx = m.getBoundaryIdx();
   int M_B = m.getBoundarySize();
   if(myid==0){printf("M_B %i\n",M_B);}
   
@@ -480,7 +476,6 @@ int main (int argc, char **argv)
 //   fullMatrix<scalar> shifts = m.getShifts();
 
   m.buildNeighbors(N_N, N_E);
-  int* h_neighbors = m.getNeighbors();
     
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -531,10 +526,10 @@ int main (int argc, char **argv)
   //   // required for limiting in 2D
   //   if     (inputs.getElemType() == "tri"){
   //     h_powersXYZG = new scalar[N_s*N_G*(N_N+1)*N_E];
-  //     getPowersXYZG(N_E, N_s, N_G, N_N, M_B, order, XYZG, XYZCen, h_neighbors, shifts, h_powersXYZG);}
+  //     getPowersXYZG(N_E, N_s, N_G, N_N, M_B, order, XYZG, XYZCen, m.getNeighbors(), shifts, h_powersXYZG);}
   //   else if(inputs.getElemType() == "qua"){
   //     h_powersXYZG = new scalar[L2Msize1*N_G*(N_N+1)*N_E];
-  //     getPowersXYZG(N_E, L2Msize1, N_G, N_N, M_B, 2*order, XYZG, XYZCen, h_neighbors, shifts, h_powersXYZG);}
+  //     getPowersXYZG(N_E, L2Msize1, N_G, N_N, M_B, 2*order, XYZG, XYZCen, m.getNeighbors(), shifts, h_powersXYZG);}
   // }
   
 #endif
@@ -733,7 +728,7 @@ int main (int argc, char **argv)
   // Communication setup
   //
   //////////////////////////////////////////////////////////////////////////
-  COMMUNICATOR communicator(N_ghosts, N_s, h_ghostElementSend, h_ghostElementRecv);
+  COMMUNICATOR communicator(N_ghosts, N_s, m);
 
   
   //////////////////////////////////////////////////////////////////////////   
@@ -743,7 +738,7 @@ int main (int argc, char **argv)
   //////////////////////////////////////////////////////////////////////////
   scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++) h_weight[g] = (scalar)weight(g,0);  
 #ifdef ONED
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_G, N_N, h_neighbors, Lag2Mono, Mono2Lag, monoV, h_weight);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_G, N_N, m.getNeighbors(), Lag2Mono, Mono2Lag, monoV, h_weight);
 #elif TWOD
 
   //
@@ -751,7 +746,7 @@ int main (int argc, char **argv)
   //
   //if(cartesian){
   scalar* h_weightF  = new scalar[M_G]; makeZero(h_weightF,M_G); for(int g=0; g<M_G; g++) h_weightF[g] = (scalar)weightF(g,0);  
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_G, order, cartesian, N_N, N_ghosts, h_neighbors, Lag2MonoX, MonoX2MonoY, MonoY2Lag, monoV, h_weightF);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_G, order, cartesian, N_N, N_ghosts, m, Lag2MonoX, MonoX2MonoY, MonoY2Lag, monoV, h_weightF);
   delete[] h_weightF;
   //}
   
@@ -763,7 +758,7 @@ int main (int argc, char **argv)
   //   int* h_TaylorDxIdx = new int[L];
   //   int* h_TaylorDyIdx = new int[L];
   //   getTaylorDerIdx2D(order, h_TaylorDxIdx, h_TaylorDyIdx);
-  //   Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, N_N, L, order, L2Msize1, L2Msize2, h_neighbors, Lag2Mono, Mono2Lag, XYZCen, h_powersXYZG, h_weight, refArea, h_TaylorDxIdx, h_TaylorDyIdx);
+  //   Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_F, N_G, N_N, L, order, L2Msize1, L2Msize2, m.getNeighbors(), Lag2Mono, Mono2Lag, XYZCen, h_powersXYZG, h_weight, refArea, h_TaylorDxIdx, h_TaylorDyIdx);
   //   delete[] h_TaylorDxIdx; delete[] h_TaylorDyIdx;
   //   delete[] h_powersXYZG;
   // }
@@ -783,8 +778,7 @@ int main (int argc, char **argv)
   if(myid==0){printf("==== Now RK 4 steps =====\n");}
   DG_SOLVER dgsolver = DG_SOLVER(N_E, N_s, N_G, N_N, M_T, M_s, M_G, M_B,
   				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, //h_xyz, h_xyzf,
-				 h_J, h_invJac, h_JF, h_weight, h_normals,
-  				 h_boundaryMap, h_boundaryIdx);
+				 h_J, h_invJac, h_JF, h_weight, h_normals, m);
   RK rk4 = RK(4);
   
  
@@ -936,11 +930,6 @@ int main (int argc, char **argv)
   // Free stuff on the host
   //
   //////////////////////////////////////////////////////////////////////////   
-  delete[] h_ghostElementSend;
-  delete[] h_ghostElementRecv;
-  delete[] h_boundaryMap;
-  delete[] h_boundaryIdx;
-  delete[] h_neighbors;
   delete[] h_Minv;
   delete[] h_map;
   delete[] h_invmap;

@@ -1,5 +1,7 @@
 DELETIONS
-  - some things are deleted in the destructor and need a delete in the main (e.g. simpleMesh)
+  - in simpleMesh destructor, we have a problem with double frees
+  - memcpy is evil in c++, don't use it: it doesn't do a deep copy
+  - replace memcpy with blascopy?
 
 OUTPUT
   - Inefficient to build a matrix to output it...

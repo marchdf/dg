@@ -95,7 +95,15 @@ class simpleMesh {
   inline scalar distance_to_edge(scalar x0,scalar y0,scalar x1,scalar y1,scalar x2,scalar y2);
     
   // Destructor
-  ~simpleMesh();
+  ~simpleMesh(){
+    // This leads to a double free!
+    // also, initialize these as null?
+    /* delete[] _ghostElementSend; */
+    /* delete[] _ghostElementRecv; */
+    /* delete[] _boundary; */
+    /* delete[] _boundaryIdx; */
+    // delete[] _neighbors; 
+  };
 
 };
 #endif

@@ -29,6 +29,9 @@ void makeZero(scalar* A, int size){
   for(int k=0; k < size; k++) A[k] = 0.0;
 }
 
+//template<typename T>
+void hostDeepCopyArray(int* src, int* dest, int size){for(int k=0; k < size; k++) dest[k] = src[k];}
+
 int factorial(int n){
   return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;
 }

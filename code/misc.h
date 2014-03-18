@@ -22,6 +22,9 @@ int blasIdamax(int N, double* x, int INCX);
 
 void makeZero(scalar* A, int size);
 
+//template<typename T>
+//void hostDeepCopyArray(int* src, int* dest, int size);
+
 int factorial(int n);//{ return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;}
 
 void readTable(const char *fileName, fullMatrix<scalar> &XWUP, scalar &gamma, scalar &alpha, scalar &Q);

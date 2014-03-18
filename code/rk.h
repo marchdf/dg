@@ -180,7 +180,7 @@ class RK
 
       }// end loop on k
       
-      // Communications for Ustar
+      // Communications for U
       communicator.CommunicateGhosts(N_F, arch(U));
 
       // Limit solution

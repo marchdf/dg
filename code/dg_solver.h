@@ -7,6 +7,7 @@
 #include <physics.h>
 #include <boundaries.h>
 #include <stdio.h>
+#include "simpleMesh.h"
 
 class DG_SOLVER
 {
@@ -65,16 +66,18 @@ class DG_SOLVER
   // constructor
  DG_SOLVER(int N_E, int N_s, int N_G,  int N_N, int M_T, int M_s, int M_G, int M_B, 
 	   int* map, int* invmap, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* psi, scalar* psi_w, //scalar* xyz, scalar* xyzf,
-	   scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals, int* boundaryMap, int* boundaryIdx) :
+	   scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals, simpleMesh &m) :
   _N_E(N_E), _N_s(N_s), _N_G(N_G), _N_N(N_N), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B) {
 
 
     // Indexes for boundary conditions
+    int* boundaryIdx = m.getBoundaryIdx();
     _rflctiveIdx = boundaryIdx[0];       // number of reflective interfaces
     _otheroneIdx = _M_B-boundaryIdx[0];  // number of otherone interfaces
     _otheronestart = boundaryIdx[0];
     //_farfieldIdx = boundaryIdx[1]-boundaryIdx[0]; // number of farfield interfaces
     //_farfieldstart = boundaryIdx[1]; 
+    delete boundaryIdx;
     
 #ifdef USE_CPU
 
@@ -110,7 +113,7 @@ class DG_SOLVER
 
     memcpy(_map        , map        , M_s*M_T*N_F*2*sizeof(int));
     memcpy(_invmap     , invmap     , M_s*N_N*N_E*N_F*2*sizeof(int));
-    memcpy(_boundaryMap, boundaryMap, M_B*sizeof(int));
+    memcpy(_boundaryMap, m.getBoundaryMap(), M_B*sizeof(int));
     memcpy(_phi        , phi        , N_G*N_s*sizeof(scalar));
     memcpy(_phi_w      , phi_w      , N_G*N_s*sizeof(scalar));
     memcpy(_dphi       , dphi       , D*N_G*N_s*sizeof(scalar));
@@ -179,7 +182,7 @@ class DG_SOLVER
     // Send the stuff to the device
     cudaMemcpy(_map        , map        , M_s*M_T*N_F*2*sizeof(int) , cudaMemcpyHostToDevice);
     cudaMemcpy(_invmap     , invmap     , M_s*N_N*N_E*N_F*2*sizeof(int) , cudaMemcpyHostToDevice);
-    cudaMemcpy(_boundaryMap, boundaryMap, M_B*sizeof(int)         , cudaMemcpyHostToDevice);
+    cudaMemcpy(_boundaryMap, m.getBoundaryMap(), M_B*sizeof(int)         , cudaMemcpyHostToDevice);
     cudaMemcpy(_phi        , phi        , N_G*N_s*sizeof(scalar)    , cudaMemcpyHostToDevice);
     cudaMemcpy(_phi_w      , phi_w      , N_G*N_s*sizeof(scalar)    , cudaMemcpyHostToDevice);
     cudaMemcpy(_dphi       , dphi       , D*N_G*N_s*sizeof(scalar)  , cudaMemcpyHostToDevice);
