@@ -1,3 +1,8 @@
+/*!
+  \file oned_multifluid_fluxes.h
+  \brief Riemann solvers for 1D multifluid
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #ifndef ONED_MULTIFLUID_FLUXES_H
 #define ONED_MULTIFLUID_FLUXES_H
 #ifdef ONED

@@ -1,3 +1,8 @@
+/*!
+  \file twod_stiffened_fluxes.h
+  \brief Riemann solvers for 2D stiffened
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #ifndef TWOD_STIFFENED_FLUXES_H
 #define TWOD_STIFFENED_FLUXES_H
 #ifdef TWOD

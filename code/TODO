@@ -1,26 +1,30 @@
-DELETIONS
+/*! 
+\file TODO
+\brief List of things to do.
+\page mytodo The General TODO List
+\mytodo DELETIONS
   - in simpleMesh destructor, we have a problem with double frees
   - memcpy is evil in c++, don't use it: it doesn't do a deep copy
   - replace memcpy with blascopy?
 
-OUTPUT
+\mytodo OUTPUT
   - Inefficient to build a matrix to output it...
   - Add capability to output in the .txt format that gmsh can generate too
   - Make into a class to do this (yes to avoid re-initializing matrices)
   - restart files?
   - hdf5? Binary format to compress data?
 
-IC
+\mytodo IC
   - Clean initial conditions
   - Clean initialization of initial conditions... determine at compile time?
   - Design some generic ICs that can be made in the deck (maybe a LR state thing for now)
 
-RIEMANN SOLVERS
+\mytodo RIEMANN SOLVERS
   - Optimize Riemann solvers. I think they are inefficient. Also, make the 1D closer to the 2D implementation
   - Add an entropy fix for Roe (http://www.cfdbooks.com/cfdcodes/oned_euler_fluxes_v4.f90)
   - add HLLC
 
-LIMITING
+\mytodo LIMITING
   - Instead of numerical integration in HRL1D, do it exactly?
   - It's a very ugly implementation right now...
   - I have powersXYZG and V1D, could I combine the two to avoid ifdefs?
@@ -29,26 +33,35 @@ LIMITING
   - Get a 1D/2D version: put ifdef ONED in header file so I can call the class the same thing (Limiting). Actually do a strucutured/unstructured file?
   - idea to clean: instead of different constructors, have one main constructor and extra functions to set the parts that are different (eg. Limiter.setNeighbors(neighbors))
 
-PARALLEL
+\mytodo PARALLEL
   - Play with buffered send, isend, send, sendrecv_replace?
 
-2D PHYSICS
+\mytodo 2D PHYSICS
   - passive/multifluid HLL
 
-BASIS TRANSFORMS (for HR)
+\mytodo BASIS TRANSFORMS (for HR)
   - put in a separate class
 
-BLAS
+\mytodo BLAS
   - Can the axpy in rk.h be changed to a blas3 level function?
   - Can the copy in rk.h be changed/reduced?
   - see write-up for the dg_solver.h ideas
 
-PROFILER
+\mytodo PROFILER
   - Add some sort of timer to these functions?
 	
-OTHER
+\mytodo OTHER
   - Clean if conditions on dimensions: they are all over the place. Can they be reduced?
   - Remove cpu_ in the function names (not necessary now)
   - Does shifts works in 1D? It does not!
   - clean the deletes in main. Only have the class deleting the vectors it creates. (eg. in main I delete arrays created in simpleMesh)
   - change makeZero to memset functions
+  - remove Prim2Cons, Cons2Prim, Half2Cons, Cons2Half
+  - make things more object oriented to reduce the number of parameters passed around
+  - maybe make a struct for the numbers (Ns,NE, etc)
+  - factorial function is defined 3 times (at least)
+\mytodo DOXYGEN
+  - it's not documenting both versions of CommunicateGhosts properly.
+  - ifdefs with CPU and GPU will only go to one of those.
+  - constructors in limiting not all showing up
+*/

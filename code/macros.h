@@ -1,3 +1,8 @@
+/*!
+  \file macros.h
+  \brief Macros used throughout the code
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #ifndef MACROS_H
 #define MACROS_H
 

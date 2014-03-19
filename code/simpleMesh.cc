@@ -11,12 +11,18 @@
 
 bool pairPeriodic(const fullMatrix<double> &meshNodes, std::vector<int> nodes1, std::vector<int> nodes2){
 
-  /* Given a list of nodes on an interface and their coordinates,
-     figure out if they are periodic pairs.
+  /*!
+    \brief Figure out if interfaces are periodic pairs
+    \param[in] meshNodes coordinates of all the nodes in the mesh
+    \param[in] nodes1 node coordinates of the first interface
+    \param[in] nodes2 node coordinates of the second interface
+    \return true if periodic pairs
+    \section Description
+    Given a list of nodes on an interface and their coordinates,
+    figure out if they are periodic pairs.
 
-     Return true if periodic pairs.
-
-     Used by BuildInterfaces. */
+    Used by BuildInterfaces.
+  */
      
   bool paired = false;
   double eps = 1e-10;
@@ -72,15 +78,23 @@ bool pairPeriodic(const fullMatrix<double> &meshNodes, std::vector<int> nodes1, 
 
 
 int uniqueTag(int id1, int id2, int N=0){
-  /* This is not used anymore... but I keep it because it's kind of cool
+  /*!
+    \brief Generates a unique tag given two numbers
+    \param[in] id1 first number
+    \param[in] id2 second number
+    \param[in] N total number of pairs
 
-     Given two numbers (the global id of el1 and el2 of an interface),
-     create a unique number. Ideally I would use a perfect hash. But
-     for that I would need a 64-bit integer to represent all pairs of
-     32-bit integers. For a good discussion on this see
-     http://stackoverflow.com/questions/919612/mapping-two-integers-to-one-in-a-unique-and-deterministic-way
-     http://stackoverflow.com/questions/682438/hash-function-providing-unique-uint-from-an-integer-coordinate-pair
-     http://stackoverflow.com/questions/11786635/fast-bi-directional-hash-of-two-integers-in-c */
+    \section Description
+    This is not used anymore... but I keep it because it's kind of cool
+
+    Given two numbers (the global id of el1 and el2 of an interface),
+    create a unique number. Ideally I would use a perfect hash. But
+    for that I would need a 64-bit integer to represent all pairs of
+    32-bit integers. For a good discussion on this see
+    http://stackoverflow.com/questions/919612/mapping-two-integers-to-one-in-a-unique-and-deterministic-way
+    http://stackoverflow.com/questions/682438/hash-function-providing-unique-uint-from-an-integer-coordinate-pair
+    http://stackoverflow.com/questions/11786635/fast-bi-directional-hash-of-two-integers-in-c
+  */
   
   int k1 = MIN(id1,id2); 
   int k2 = MAX(id1,id2);
@@ -98,15 +112,27 @@ int uniqueTag(int id1, int id2, int N=0){
 }
 
 int cantor(int k1, int k2){
-  /* Cantor pairing function. This will overflow when for
-     (k1,k2)=(65535, 65535). You can represent all 16-bit integers
-     using 32-bit integers but you can't go further than that without
-     using a 64-bit integer.*/
+  /*!
+    \brief Cantor pairing function.
+    \param[in] k1 first number
+    \param[in] k2 second number
+    \section Description
+    Generates a number based on two other ones.
+    
+    This will overflow when for (k1,k2)=(65535, 65535). You can
+    represent all 16-bit integers using 32-bit integers but you can't
+    go further than that without using a 64-bit integer.
+  */
   return 0.5*(k1+k2)*(k1+k2+1)+k2;
 }
     
 void simpleMesh::load (const char *fileName)
 {
+  /*!
+    \brief Load a mesh file
+    \param[in] fileName mesh file to load
+  */
+
   std::ifstream input (fileName);
   std::string line;
   getline (input, line);
@@ -167,6 +193,13 @@ void simpleMesh::load (const char *fileName)
 
 void simpleMesh::buildNormals (int typeInterface, int typeElement)
 {
+  /*!
+    \brief Build the normals to all the elements
+    \param[in] typeInterface the associated key number referencing the type of interface
+    \param[in] typeElement the associated key number referencing the type of element
+    \section Description
+    Build the normals to all the elements
+  */
   
   //
   // Initialize the elements, interfaces, nodal functions and closures
@@ -276,6 +309,18 @@ void simpleMesh::buildNormals (int typeInterface, int typeElement)
 
 void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, std::string filename, std::string name, int step, double time, int append) const
 {
+  /*!
+    \brief Write the solution to a file
+    \param[in] solution matrix of solution to output
+    \param[in] type element type to output
+    \param[in] filename name of output file
+    \param[in] name name of solution
+    \param[in] step time step number
+    \param[in] time time value
+    \param[in] append true if you want to append to an existing file    
+    \section Description
+    Pretty obvious what this does.
+  */
 
 #ifdef USE_MPI
   char numstr[21]; // enough to hold all numbers up to 64-bits
@@ -309,7 +354,10 @@ void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, st
 }
 
 void simpleMesh::buildBoundary(){
-  /*
+  /*!
+    \brief Build a list of special boundaries
+    
+    \section Description
     This is just going to get us a list of the interfaces where the
     boundaries are not farfield or periodic. For example, it will have
     the list of reflective BC (and other, more complicated, ones if we
@@ -379,9 +427,16 @@ void simpleMesh::buildBoundary(){
 
 
 void simpleMesh::buildBoundaryElementShift1D(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes){ 
-  // Objective: create BoundaryElemShift
-  // elem1         | elem2         | xshift 
-  // (tgt element)   his neighbor    shifts to bring elem2 next to elem1
+  /*!
+    \brief Build 1D shifts to bring an element next to his neighbor
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] XYZNodes element node coordinates
+    \section Description
+    Objective: create BoundaryElemShift
+    elem1         | elem2         | xshift
+    (tgt element)   his neighbor    shifts to bring elem2 next to elem1
+  */
 
   // In a 1D straight line, the leftmost element is 0 and the rightmost element is N_E-1
   // The shift to bring them next to each other is equal to the length of the domain.
@@ -410,9 +465,16 @@ void simpleMesh::buildBoundaryElementShift1D(const int N_s, const int N_E, const
   
 void simpleMesh::buildBoundaryElementShift2D(int order, const fullMatrix<scalar> &XYZNodesF, std::map<int,int> &ElementMap)
 {
-  // Objective: create BoundaryElemShift
-  // elem1         | elem2         | xshift | yshift
-  // (tgt element)   his neighbor    shifts to bring elem2 next to elem1
+  /*!
+    \brief Build 2D shifts to bring an element next to his neighbor
+    \param[in] order DG order
+    \param[in] XYZNodesF nodal coordinates of interfaces
+    \param[in] ElementMap map from element id to element index
+    \section Description
+    Objective: create BoundaryElemShift
+    elem1         | elem2         | xshift | yshift
+    (tgt element)   his neighbor    shifts to bring elem2 next to elem1
+  */
   
   _shifts.resize(_N_B,2+D);
 
@@ -495,10 +557,14 @@ void simpleMesh::buildBoundaryElementShift2D(int order, const fullMatrix<scalar>
 
 void simpleMesh::buildNeighbors(int N_N, int N_E)
 {
-  // Objective: find the neighbors of each element
-  // get _neighbors, a N_N x N_E vector:
-  // | neighbor1 | ...
-  // | neighbor2 | ...
+  /*!
+    \brief Build the neighbors
+    \section Description
+    Objective: find the neighbors of each element
+    get _neighbors, a N_N x N_E vector:
+    | neighbor1 | ...
+    | neighbor2 | ...
+  */
 
   // Allocate neighbors, set to zero
   _neighbors = new int[N_N*N_E]; for(int k=0; k < N_N*N_E; k++){_neighbors[k]=0;}
@@ -581,6 +647,10 @@ void simpleMesh::buildNeighbors(int N_N, int N_E)
 
 simpleInterface::simpleInterface(int physicalTag)
 {
+  /*!
+    \brief Constructor for an interface.
+    \param[in] physicalTag the physical tag of the interface read from the mesh
+  */
   _elements[0] = NULL;
   _elements[1] = NULL;
   _physicalTag = physicalTag;
@@ -591,13 +661,23 @@ simpleInterface::simpleInterface(int physicalTag)
 
 void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterface> &interfaces, int typeInterface, int typeElement, int nsides)
 {
-  /* This function builds all the interfaces. For each interface, it
-     will find both elements on the right and left. If it's on a
-     boundary, it will use the BC information to find the correct
-     neighboring element.
+  /*!
+    \brief Generate the interfaces.
+    \param[in] mesh the mesh
+    \param[out] interfaces the interface vector
+    \param[in] typeInterface the associated key number referencing the type of interface
+    \param[in] typeElement the associated key number referencing the type of element
+    \param[in] nsides number of sides to an element
 
-     For MPI processes, there a bunch of conditions to take care of so
-     things might get a bit convoluted. Hang on to your hats.*/
+    \section Description
+    This function builds all the interfaces. For each interface, it
+    will find both elements on the right and left. If it's on a
+    boundary, it will use the BC information to find the correct
+    neighboring element.
+    
+    For MPI processes, there a bunch of conditions to take care of so
+    things might get a bit convoluted. Hang on to your hats.
+  */
 
   std::map<std::vector<int>, simpleInterface> interfacesMap;
   //
@@ -799,8 +879,12 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
 }
 
 void simpleMesh::buildElementMap(int elem_type){
-  /* Build a map: element ID -> element index in order of the U
-     matrix */
+  /*!
+    \brief Build a map relating element id to element index
+    \param[in] elem_type the associated key number referencing that element
+    \section Description
+    Map for element ID -> element index in order of the U matrix
+  */
   const std::vector<simpleElement> &elements = getElements(elem_type);
   for(int e = 0; e <elements.size(); e++){
     const simpleElement &el = elements[e];
@@ -811,22 +895,23 @@ void simpleMesh::buildElementMap(int elem_type){
 				      
 void simpleMesh::buildCommunicators(int elem_type){
 
-  /* Build the necessary maps and matrices to communicate between
-     processes.
+  /*!
+    \brief Build the necessary maps and matrices to communicate between processes.
+    \param[in] elem_type the associated key number referencing that element
 
-     Create ghostElementMap. If el2 of an interface belongs to another
-     partition, store a unique number. This will be used to access
-     back columns of U/A in the limiting procedure (using the
-     neighbors vector)
-
-     Create ghostElementSend matrix containing the element index to
-     send to other partitions, the number of that partition to send
-     to, and its global id (as tag for communication).
-
-     Create ghostElementRecv matrix containing the element index to
-     store an element from another partition, the source partition of
-     that element, and its global id (as tag for communication).
-
+    \section Description
+    Create ghostElementMap. If el2 of an interface belongs to another
+    partition, store a unique number. This will be used to access
+    back columns of U/A in the limiting procedure (using the
+    neighbors vector)
+    
+    Create ghostElementSend matrix containing the element index to
+    send to other partitions, the number of that partition to send
+    to, and its global id (as tag for communication).
+    
+    Create ghostElementRecv matrix containing the element index to
+    store an element from another partition, the source partition of
+    that element, and its global id (as tag for communication).
   */
 
   // Count the number of interfaces which have el1 and el2 on
@@ -879,8 +964,15 @@ void simpleMesh::buildCommunicators(int elem_type){
 }
 				      
 
-// Return a matrix which is N_E x D containing the element centroids
+// 
 fullMatrix<scalar> simpleMesh::getElementCentroids(const int N_E, const int ncorners, const fullMatrix<scalar> XYZNodes){
+  /*!
+    \brief Calculate the element centroid coordinates
+    \param[in] N_E number of elements
+    \param[in] ncorners number of vertices
+    \param[in] XYZNodes element nodal coordinates.
+    \return Return a matrix which is N_E x D containing the element centroids
+  */
 
   fullMatrix<scalar> XYZCen(N_E,D);
   scalar cen =0;
@@ -898,7 +990,14 @@ fullMatrix<scalar> simpleMesh::getElementCentroids(const int N_E, const int ncor
 }
 
 bool simpleMesh::iscartesian(std::string typeElement, const int elem_type){
-
+  /*!
+    \brief Figure out if the mesh is cartesian
+    \param[in] typeElement the type of element we are dealing with
+    \param[in] elem_type the associated key number referencing that element
+    \return true if it's a cartesian mesh
+  */
+  
+  
   // default is unstructured mesh
   bool cartesian = false;
 
@@ -929,16 +1028,23 @@ bool simpleMesh::iscartesian(std::string typeElement, const int elem_type){
 }
 
 void simpleMesh::setDx(const int N_N, const int N_E, const fullMatrix<scalar> &XYZCen, const fullMatrix<scalar> &XYZNodes){
-  /* This function finds the minium Dx of all the elements in the
-     mesh. It is later used for the CFL condition and the adaptive
-     time-stepping.
+  /*!
+    \brief Sets the minimum delta x in the mesh
+    \param[in] N_N number of neighbor of one element
+    \param[in] N_E number of elements
+    \param[in] XYZCen element centroid coordinates
+    \param[in] XYZNodes element nodal coordinates.
+    
+    \section Description
+    This function finds the minium Dx of all the elements in the
+    mesh. It is later used for the CFL condition and the adaptive
+    time-stepping.
 
-     For 1D, it's straight forward.  For 2D, it calculates the minimum
-     distance from the cell center to edges of the element and it sets
-     Dx to twice that value. This means Dx will be equal to the
-     conventional Dx for a square element and it will be equal to the
-     diameter of the inscribed circle for a triangular element.
-
+    For 1D, it's straight forward.  For 2D, it calculates the minimum
+    distance from the cell center to edges of the element and it sets
+    Dx to twice that value. This means Dx will be equal to the
+    conventional Dx for a square element and it will be equal to the
+    diameter of the inscribed circle for a triangular element.
   */
 
   _Dx = 0;
@@ -974,7 +1080,18 @@ void simpleMesh::setDx(const int N_N, const int N_E, const fullMatrix<scalar> &X
 }
 
 inline scalar simpleMesh::distance_to_edge(scalar x0,scalar y0,scalar x1,scalar y1,scalar x2,scalar y2){
-  // Distance from center to an edge (from http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html)
+  /*!
+    \brief Distance from center to an edge
+    \param x0 x-coordinate of cell center
+    \param y0 y-coordinate of cell center
+    \param x1 x-coordinate of first node defining the edge
+    \param y1 y-coordinate of first node defining the edge
+    \param x2 x-coordinate of secon node defining the edge
+    \param y2 y-coordinate of second node defining the edge
+    \return distance
+    \section Description
+    from http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
+  */
   return fabs((x2-x1)*(y1-y0)-(x1-x0)*(y2-y1))/sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
 }
 

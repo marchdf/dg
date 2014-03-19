@@ -1,12 +1,18 @@
+/*!
+  \file upa.h
+  \brief Find |u+a|
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \section Description
+  These functions find |u+a| for a given rho, u, E, gamma.  For 2D,
+  they return the max(|u+a|,|v+a|);
+*/
+
 #ifndef UPA_H
 #define UPA_H
 #include <scalar_def.h>
 #include <math.h>
 #include <stdio.h>
 
-/* These functions find |u+a| for a given rho, u, E, gamma.
-   For 2D, they return the max(|u+a|,|v+a|);
-*/
 #ifdef PASSIVE
 #ifdef ONED
 arch_device scalar oned_passive_upa(scalar rho,

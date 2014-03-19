@@ -1,3 +1,9 @@
+/*!
+  \file boundaries.cu
+  \brief Kernels to implement special boundary conditions
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \section Description
+*/
 #include <boundaries.h>
 #include <cstdlib>
 #include <stdio.h>
@@ -10,6 +16,15 @@
 
 //==========================================================================
 arch_global void rflctive(int M_s, int M_B, int* boundaryMap, scalar* normals, int start, scalar* UF){
+  /*!
+    \brief Implement reflective boundary conditions
+    \param[in] M_s number of nodes on an interface
+    \param[in] M_B number of boundaries to treat
+    \param[in] boundaryMap index of interfaces to treat
+    \param[in] normals normals to the interfaces
+    \param[in] start start index of reflective BC in boundaryMap
+    \param[out] UF suitably modified for BCs
+  */
 #ifdef USE_CPU
   for(int k = 0; k < M_B; k++){
     int t = boundaryMap[start+k];
@@ -57,7 +72,17 @@ arch_global void rflctive(int M_s, int M_B, int* boundaryMap, scalar* normals, i
 //==========================================================================
 extern "C"
 void LrflctiveBoundary(int M_s, int M_B, int* boundaryMap, scalar* normals, int start, scalar* UF){
-
+  /*!
+    \brief Host C function to launch rflctive kernel.
+    \param[in] M_s number of nodes on an interface
+    \param[in] M_B number of boundaries to treat
+    \param[in] boundaryMap index of interfaces to treat
+    \param[in] normals normals to the interfaces
+    \param[in] start start index of reflective BC in boundaryMap
+    \param[out] UF suitably modified for BCs
+    \section Description
+    In GPU mode, launches M_B blocks of M_s threads.
+  */
 #ifdef USE_GPU
   dim3 dimBlock(M_s,1,1);
   dim3 dimGrid(M_B,1);

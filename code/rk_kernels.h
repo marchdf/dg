@@ -1,3 +1,8 @@
+/*!
+  \file rk_kernels.h
+  \brief Functions to launch RK kernels
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #ifndef RK_KERNELS_H
 #define RK_KERNELS_H
 #include <scalar_def.h>

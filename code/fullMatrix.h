@@ -1,7 +1,12 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
-//
-// See the LICENSE.txt file for license information. Please report all
-// bugs and problems to <gmsh@geuz.org>.
+/*!
+  \file fullMatrix.h
+  \brief Header file for fullMatrix and fullVector classes
+  \copyright Gmsh - Copyright (C) 1997-2010
+  \authors C. Geuzaine, J.-F. Remacle
+  
+  See the LICENSE.txt file for license information. Please report all
+  bugs and problems to <gmsh@geuz.org>.
+*/
 
 #ifndef _FULL_MATRIX_H_
 #define _FULL_MATRIX_H_
@@ -13,7 +18,10 @@
 
 template <class scalar> class fullMatrix;
 
-// An abstract interface for vectors of scalar
+/*!
+  \brief An abstract interface for vectors of scalar
+  \class fullVector fullMatrix.h
+*/
 template <class scalar>
 class fullVector
 {
@@ -124,7 +132,10 @@ class fullVector
   }
 };
 
-// An abstract interface for dense matrix of scalar
+/*!
+  \brief An abstract interface for dense matrix of scalar
+  \class fullMatrix fullMatrix.h
+*/
 template <class scalar>
 class fullMatrix
 {

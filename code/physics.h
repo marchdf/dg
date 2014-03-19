@@ -1,3 +1,8 @@
+/*!
+  \file physics.h
+  \brief Functions to lauch kernels that deal with the physics
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #ifndef PHYSICS_H
 #define PHYSICS_H
 #include <scalar_def.h>
@@ -12,11 +17,11 @@ extern "C" void Lkinetic_energy1D(int N_s, int N_E, scalar* rho, scalar* rhou, s
 extern "C" void Lkinetic_energy2D(int N_s, int N_E, scalar* rho, scalar* rhou, scalar* rhov, scalar* K);
 extern "C" void Lpressure(int N_s, int N_E, scalar* U, scalar* p);
 
-// Possibly broken:
-extern "C" void Lcpu_evaluate_sf_shallow(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar H0, scalar G0);
-extern "C" void Lcpu_evaluate_sf_mhd(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac, scalar gamma);
-extern "C" void Lcpu_evaluate_q_shallow(int M_G, int M_T, scalar* q, scalar* UgF, scalar H0, scalar G0, scalar* normals);
-extern "C" void Lcpu_evaluate_q_mhd(int M_G, int M_T, scalar* q, scalar* UgF, scalar gamma, scalar* normals);
+/* // Possibly broken: */
+/* extern "C" void Levaluate_sf_shallow(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar H0, scalar G0); */
+/* extern "C" void Levaluate_sf_mhd(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac, scalar gamma); */
+/* extern "C" void Levaluate_q_shallow(int M_G, int M_T, scalar* q, scalar* UgF, scalar H0, scalar G0, scalar* normals); */
+/* extern "C" void Levaluate_q_mhd(int M_G, int M_T, scalar* q, scalar* UgF, scalar gamma, scalar* normals); */
 
 
 #endif

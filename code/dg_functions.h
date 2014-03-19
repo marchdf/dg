@@ -1,3 +1,8 @@
+/*!
+  \file dg_functions.h
+  \brief Functions for the DG method
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #ifndef DG_FUNCTIONS_H
 #define DG_FUNCTIONS_H
 #include "fullMatrix.h"

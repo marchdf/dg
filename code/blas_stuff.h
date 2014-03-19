@@ -1,3 +1,10 @@
+/*!
+  \file blas_stuff.h  
+  \brief Functions to wrap BLAS calls
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \section Description
+  Functions to wrap BLAS call to F77 routines
+*/
 #ifndef BLAS_STUFF_H
 #define BLAS_STUFF_H
 

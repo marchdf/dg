@@ -1,15 +1,19 @@
-/* Preprocessor for loop... shady business
-   This is straight from: http://www.codeproject.com/Tips/444338/Pre-processor-Iteration
-   And the code is on github: https://github.com/debdattabasu/pp_Iteration
+/*!
+  \file loopstart.h
+  \brief Start definitions fo preprocessor for loop
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \section Description
+  This is straight from: http://www.codeproject.com/Tips/444338/Pre-processor-Iteration
+  And the code is on github: https://github.com/debdattabasu/pp_Iteration
 
-   Right now things max out at 10 iterations but I could increase that easily
+  Right now things max out at 10 iterations but I could increase that easily
    
-   You use it by doing, for example: 
-   #include "loopstart.h"
-   #define LOOP_END 10
-   #define MACRO(x) printf("%d\n", x);
-   #include "loop.h"
- */
+  You use it by doing, for example: 
+  #include "loopstart.h"
+  #define LOOP_END 10
+  #define MACRO(x) printf("%d\n", x);
+  #include "loop.h"
+*/
 
 #ifdef LOOP_START
 #undef LOOP_START

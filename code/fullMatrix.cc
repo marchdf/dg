@@ -1,7 +1,12 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
-//
-// See the LICENSE.txt file for license information. Please report all
-// bugs and problems to <gmsh@geuz.org>.
+/*!
+  \file fullMatrix.cc
+  \brief Function definitions for fullMatrix and fullVector functions
+  \copyright Gmsh - Copyright (C) 1997-2010
+  \authors C. Geuzaine, J.-F. Remacle
+  
+  See the LICENSE.txt file for license information. Please report all
+  bugs and problems to <gmsh@geuz.org>.
+*/
 
 #include <complex>
 #include <string.h>

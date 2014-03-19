@@ -1,3 +1,12 @@
+/*!
+  \file Gauss.cc
+  \brief Generate gaussian quadratures
+  \copyright Gmsh - Copyright (C) 1997-2010
+  \authors C. Geuzaine, J.-F. Remacle
+  
+  See the LICENSE.txt file for license information. Please report all
+  bugs and problems to <gmsh@geuz.org>.
+*/
 #include "Gauss.h"
 static void pts2fullMatrix(int npts, IntPt *pts, fullMatrix<double> &pMatrix, fullMatrix<double> &wMatrix) {
   pMatrix.resize(npts,3);

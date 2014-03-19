@@ -1,6 +1,8 @@
-//
-// DG solver class
-//
+/*!
+  \file dg_solver.h  
+  \brief DG solve class
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #ifndef DG_SOLVER_H
 #define DG_SOLVER_H
 
@@ -63,7 +65,31 @@ class DG_SOLVER
   scalar* _weight; // integration weights
   
  public:
-  // constructor
+  /*!
+    \brief Constructor
+    \param[in] N_E number of elements
+    \param[in] N_s number of nodes per element
+    \param[in] N_G number of gaussian nodes per element
+    \param[in] N_N number of neighbors per element
+    \param[in] M_T number of interfaces
+    \param[in] M_s number of nodes per interface
+    \param[in] M_G number of gaussian nodes per interface
+    \param[in] M_B number of boundaries
+    \param[in] map map from elements to interfaces
+    \param[in] invmap map from interfaces to elements
+    \param[in] phi element polynomial basis
+    \param[in] phi_w element polynomial basis (premultiplied by weights)
+    \param[in] dphi element polynomial basis derivative
+    \param[in] dphi_w element polynomial basis derivative (premultiplied by weights)
+    \param[in] psi interface polynomial basis
+    \param[in] psi_w interface polynomial basis (premultiplied by weights)
+    \param[in] J jacobian of each element
+    \param[in] invJac inverse jacobian of each element
+    \param[in] JF jacobian of each interface
+    \param[in] weight integration weights
+    \param[in] normals normals to all the interfaces
+    \param[in] m mesh we are operating on
+  */
  DG_SOLVER(int N_E, int N_s, int N_G,  int N_N, int M_T, int M_s, int M_G, int M_B, 
 	   int* map, int* invmap, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* psi, scalar* psi_w, //scalar* xyz, scalar* xyzf,
 	   scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals, simpleMesh &m) :
@@ -208,7 +234,7 @@ class DG_SOLVER
     _weight  = new scalar[N_G];          memcpy(_weight,weight,_N_G*sizeof(scalar));
   };
 
-  // destructor
+  /*! Destructor */
   ~DG_SOLVER(){
     del(_map);
     del(_invmap);
@@ -247,11 +273,15 @@ class DG_SOLVER
     fclose(consf);
   };
 
-  // Main solver function
+  /*!
+    \brief Main solver function
+    \param[in] U solution
+    \param[out] f_rk f(t,U) with DG for dU/dt = f(t,U)
+  */    
   void dg_solver(scalar* U, scalar* f_rk){
 
     // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
-    Lcpu_mapToFace(_M_s, _M_T, _N_s, _map, U, _UF);
+    LmapToFace(_M_s, _M_T, _N_s, _map, U, _UF);
 
     // Apply special boundary conditions
     LrflctiveBoundary(_M_s, _rflctiveIdx,_boundaryMap,_normals,0,_UF);
@@ -268,30 +298,34 @@ class DG_SOLVER
     Levaluate_q(_M_G, _M_T, _q, _UintegF, _normals);//, _xyzf);
     
     // redistribute_sf: requires J, invJac, s, f, phi_w, dphi_w, sJ, fJ, S, F
-    Lcpu_redistribute_sf(_N_G, _N_E, _sJ, _fJ, _s, _f, _J, _invJac);
+    Lredistribute_sf(_N_G, _N_E, _sJ, _fJ, _s, _f, _J, _invJac);
       
     // matrix-matrix multiply for sf
     blasGemm('T','N', _N_s, _N_E*N_F, _N_G   , 1, _phi_w , _N_G   , _sJ, _N_G  , 0.0, _S, _N_s);
     blasGemm('T','N', _N_s, _N_E*N_F, _N_G*D, 1, _dphi_w, _N_G*D, _fJ, _N_G*D, 0.0, _F, _N_s);
 
     // redistribute_q: requires JF, q, qJ, psi_w, Qtcj,
-    Lcpu_redistribute_q(_M_G, _M_T, _qJ, _q, _JF);
+    Lredistribute_q(_M_G, _M_T, _qJ, _q, _JF);
     
     // matrix-matrix multiply for q
     blasGemm('T','N', _M_s, _M_T*N_F*2, _M_G, 1, _psi_w , _M_G, _qJ, _M_G, 0.0, _Qtcj, _M_s);
 
     // map_q: requires map, Qtcj, Q (might want to do this in the previous step)
-    Lcpu_mapToElement(_N_s, _N_E, _M_s, _N_N, _invmap, _Q, _Qtcj);
+    LmapToElement(_N_s, _N_E, _M_s, _N_N, _invmap, _Q, _Qtcj);
 
     // Make f_rk = S+F+Q
-    Lcpu_addSFQ(_N_s, _N_E, f_rk, _S, _F, _Q);
+    LaddSFQ(_N_s, _N_E, f_rk, _S, _F, _Q);
 
   }; // end solver function
 
 
-  // Function to calculate conservation of certain quantities
   void conservation(scalar* U, double time){
-
+    /*!
+      \brief Function to calculate and output conservation of certain quantities
+      \param[in] U solution to evaluate
+      \param[in] time time step
+    */
+    
     // Collocate the solution to the integration points
     hostblasGemm('N','N', _N_G, _N_E*N_F, _N_s, 1, _phiC, _N_G, U, _N_s, 0.0, _UgC, _N_G);
     

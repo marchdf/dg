@@ -1,27 +1,41 @@
-/* GPU implementation of CommunicateGhosts */
+/*!
+  \file communicator_gpu.cc
+  \brief GPU implementation of CommunicateGhosts
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \ingroup gpugroup
+*/
+
 #ifdef USE_MPI
 #ifdef USE_GPU
 #include <communicator.h>
 #include <communicator_gpu_kernels.h>
 
 void COMMUNICATOR::CommunicateGhosts(int Nfields, scalar* U){
+  /*!
+    \brief Communicate the ghosts (GPU implementation)
+    \param[in] Nfields number of fields to act on
+    \param[in] U solution to communicate
+    \ingroup gpugroup
+    \section Description
+    This function communicates the elements which are not in my
+    partition. Basically you send the elements of U that other
+    partitions need and you receive the elements from other
+    partitions that you will need. You store these in the back
+    columns of U.
+    
+    Since this is the GPU version, we do it using host buffers, which
+    involves more steps:     
+    1) copy data from device U to device buffer
+    2) copy device buffer to pinned host send buffer
+    3) loop on k for immediate send/receives
+    4) wait end of communications
+    5) copy pinned host recv buffer to device buffer
+    6) kernel to copy data from device buffer to device U
+    
+    Had to declare Nfields when we operate on just one field instead of N_F
 
-  /* This function communicates the elements which are not in my
-     partition. Basically you send the elements of U that other
-     partitions need and you receive the elements from other
-     partitions that you will need. You store these in the back
-     columns of U.
-
-     Since this is the GPU version, we do it using host buffers, which
-     involves more steps:     
-     1) copy data from device U to device buffer
-     2) copy device buffer to pinned host send buffer
-     3) loop on k for immediate send/receives
-     4) wait end of communications
-     5) copy pinned host recv buffer to device buffer
-     6) kernel to copy data from device buffer to device U
-     
-     Had to declare Nfields when we operate on just one field instead of N_F*/
+    See also \link communicator_cpu.cc CommunicateGhosts() \endlink the CPU implementation
+  */
 
   // wait until every process gets here
   MPI_Barrier(MPI_COMM_WORLD);

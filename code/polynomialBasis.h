@@ -1,7 +1,12 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
-//
-// See the LICENSE.txt file for license information. Please report all
-// bugs and problems to <gmsh@geuz.org>.
+/*!
+  \file polynomialBasis.h
+  \brief Header file for the polynomial basis
+  \copyright Gmsh - Copyright (C) 1997-2010
+  \authors C. Geuzaine, J.-F. Remacle
+  
+  See the LICENSE.txt file for license information. Please report all
+  bugs and problems to <gmsh@geuz.org>.
+*/
 
 #ifndef _POLYNOMIAL_BASIS_H_
 #define _POLYNOMIAL_BASIS_H_

@@ -1,3 +1,8 @@
+/*!
+  \file oned_passive_fluxes.h
+  \brief Riemann solvers for 1D passive
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #ifndef ONED_PASSIVE_FLUXES_H
 #define ONED_PASSIVE_FLUXES_H
 #ifdef ONED

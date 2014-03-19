@@ -1,3 +1,11 @@
+/*!
+  \file scalar_def.h
+  \brief Macros and typedef for scalar
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \section Description
+  Allows the use of switching between floats and doubles at compile
+  time.
+*/
 #ifndef SCALAR_DEF_H
 #define SCALAR_DEF_H
 

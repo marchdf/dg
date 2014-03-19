@@ -1,7 +1,20 @@
+/*!
+  \file dg_functions.cc
+  \brief Functions definitions for the DG method
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #include <dg_functions.h>
 void dg_jac_elements_fast(const int N_G, const int N_E, fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &dphi, fullMatrix<scalar> &J){
-  fullMatrix<scalar> Jac(N_E*D,N_G*D);
+  /*!
+    \brief Get the Jacobian of the elements (only, which is why it's "fast")
+    \param[in] N_G number of gaussian nodes per element
+    \param[in] N_E number of elements
+    \param[in] XYZNodes coordinates of element nodes
+    \param[in] dphi derivative of the polynomial basis
+    \param[out] J Jacobian of each element
+  */
 
+  fullMatrix<scalar> Jac(N_E*D,N_G*D);
   Jac.gemm(XYZNodes.transpose(),dphi.transpose());
   scalar det = 0.0;
   
@@ -16,6 +29,17 @@ void dg_jac_elements_fast(const int N_G, const int N_E, fullMatrix<scalar> &XYZN
 }
 
 void dg_jacobians_elements(const int N_G, const int N_E, fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &dphi, fullMatrix<scalar> &Jac, fullMatrix<scalar> &invJac, fullMatrix<scalar> &J, fullMatrix<scalar> &invJ){
+  /*!
+    \brief Get the Jacobian and inverse Jacobian of the elements
+    \param[in] N_G number of gaussian nodes per element
+    \param[in] N_E number of elements
+    \param[in] XYZNodes coordinates of element nodes
+    \param[in] dphi derivative of the polynomial basis
+    \param[out] Jac Jacobian of each element
+    \param[out] invJac inverse Jacobian of each element
+    \param[out] J Jacobian of each element
+    \param[out] invJ inverse Jacobian of each element
+  */
 
   Jac.gemm(XYZNodes.transpose(),dphi.transpose());
   scalar det = 0.0;
@@ -44,6 +68,15 @@ void dg_jacobians_elements(const int N_G, const int N_E, fullMatrix<scalar> &XYZ
 
 void dg_jacobians_face(const int M_T, fullMatrix<scalar> &XYZNodesF, fullMatrix<scalar> &dpsi, fullMatrix<scalar> &JacF, fullMatrix<scalar> &JF, fullMatrix<scalar> &invJF){
 
+  /*!
+    \brief Get the Jacobian and inverse Jacobian of the interfaces
+    \param[in] M_T number of elements
+    \param[in] XYZNodesF coordinates of element nodes
+    \param[in] dpsi derivative of the interface polynomial basis
+    \param[out] JacF Jacobian of each interface
+    \param[out] JF Jacobian of each interface
+    \param[out] invJF inverse Jacobian of each interface
+  */
   JacF.gemm(XYZNodesF.transpose(),dpsi.transpose());
   for(int t = 0; t < M_T; t++){
     for(int d = 0; d < 2; d++){
@@ -61,6 +94,16 @@ void dg_jacobians_face(const int M_T, fullMatrix<scalar> &XYZNodesF, fullMatrix<
 
 
 void dg_inverse_mass_matrix(const int order, const int elem_type, const std::string getElemType, const int N_s, const int N_E, fullMatrix<scalar> &XYZNodes, scalar* Minv){
+  /*!
+    \brief Get the inverse mass matrix for each element
+    \param[in] order DG order
+    \param[in] elem_type type of element (numerical value)
+    \param[in] getElemType type of element (string)
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] XYZNodes coordinates of element nodes
+    \param[out] Minv inverse mass matrix for each element
+  */
 
   const polynomialBasis *basis  = polynomialBases::find (elem_type);  // for the element
   fullMatrix<double> points, weight;
@@ -130,9 +173,25 @@ void dg_inverse_mass_matrix(const int order, const int elem_type, const std::str
 
 
 void dg_mappings(const int myid, const int M_s, const int M_T, const int N_s, const int N_E, const int N_N, const std::vector<simpleInterface> &interfaces, const std::map<int,int> &ElementMap, const std::map<int,int> &ghostElementMap, const std::vector<std::vector<int> > &closures, int* map, int* invmap){
-  /* Map the element matrix to the interfaces matrix and
-     vice-versa. This is a modified version of what I had
-     previously. I think it works better and is more efficient.*/
+  /*!
+    \brief Map interfaces and elements to each other
+    \param[in] myid my processor ID (eg. MPI)
+    \param[in] M_s number of nodes per interface
+    \param[in] M_T number of interfaces
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] N_N number of neighbors per element
+    \param[in] interfaces vector of all the interfaces
+    \param[in] ElementMap map of element ID to element index
+    \param[in] ghostElementMap map of element ID to element index for elements in other partitions
+    \param[in] closures closures
+    \param[out] map map from elements to interfaces
+    \param[out] invmap map from interfaces to elements
+    \section Description
+    Map the element matrix to the interfaces matrix and
+    vice-versa. This is a modified version of what I had
+    previously. I think it works better and is more efficient.
+  */
 
   // Initialize a counter for the inverse map
   int* cnt = new int[N_F*N_E]; for(int k=0;k<N_E*N_F;k++){cnt[k]=0;}

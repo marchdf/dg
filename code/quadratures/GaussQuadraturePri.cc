@@ -1,7 +1,12 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
-//
-// See the LICENSE.txt file for license information. Please report all
-// bugs and problems to <gmsh@geuz.org>.
+/*!
+  \file GaussQuadraturePri.cc
+  \brief Quadratures for prisms
+  \copyright Gmsh - Copyright (C) 1997-2010
+  \authors C. Geuzaine, J.-F. Remacle
+  
+  See the LICENSE.txt file for license information. Please report all
+  bugs and problems to <gmsh@geuz.org>.
+*/
 
 #include "Gauss.h"
 #include "GaussLegendre1D.h"

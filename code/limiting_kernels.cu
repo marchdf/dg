@@ -1,3 +1,8 @@
+/*!
+  \file limiting_kernels.cu
+  \brief Kernels used by the Limiting class
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #include <limiting_kernels.h>
 #include <stdio.h>
 
@@ -17,30 +22,34 @@ arch_device int binomial_coefficient(int n, int k);
 
 //==========================================================================
 arch_global void stridedcopy(int numblocks, int blocklen, int strideA, int strideB, int offsetA, int offsetB, scalar* A, scalar* B){
-  /* Strided copy of array A (length>= numblocks*strideA) to array B (length>= numblocks*strideB)
-     numblocks = number of blocks to copy from A to B
-     blocklen = number of elements in each block
-     strideA = number of elements between start of each block in A
-     strideB = number of elements between start of each block in B
-     offsetA = number of elements to skip at start of A
-     offsetB = number of elements to skip at start of B
-     Modeled on MPI_Type_Vector
-
-     You can test with this segment of code:
-     scalar* a = new scalar[18];
-     scalar* b = new scalar[6];
-     for(int i=0; i<18; i++){a[i] = i;printf("%i %f\n",i,a[i]);}
-     scalar* d_a;
-     scalar* d_b;
-     cudaMalloc((void**) &d_a,18*sizeof(scalar));
-     cudaMalloc((void**) &d_b,6*sizeof(scalar));
-     cudaMemcpy(d_a, a, 18*sizeof(scalar), cudaMemcpyHostToDevice);
-     Lstridedcopy(2,3,9,3,0,0,d_a,d_b);
-     cudaMemcpy(b, d_b, 6*sizeof(scalar), cudaMemcpyDeviceToHost);
-     for(int i=0; i<6; i++){printf("%i: %f\n",i,b[i]);}
-     delete[] a;
-     delete[] b;
-     exit(0);
+  /*!
+    \brief Strided copy of array A (length>= numblocks*strideA) to array B (length>= numblocks*strideB)
+    \param[in] numblocks number of blocks to copy from A to B
+    \param[in] blocklen number of elements in each block
+    \param[in] strideA number of elements between start of each block in A
+    \param[in] strideB number of elements between start of each block in B
+    \param[in] offsetA number of elements to skip at start of A
+    \param[in] offsetB number of elements to skip at start of B
+    \param[in] A source array
+    \param[out] B destination array
+    \section Description    
+    Modeled on MPI_Type_Vector
+    
+    You can test with this segment of code:
+    scalar* a = new scalar[18];
+    scalar* b = new scalar[6];
+    for(int i=0; i<18; i++){a[i] = i;printf("%i %f\n",i,a[i]);}
+    scalar* d_a;
+    scalar* d_b;
+    cudaMalloc((void**) &d_a,18*sizeof(scalar));
+    cudaMalloc((void**) &d_b,6*sizeof(scalar));
+    cudaMemcpy(d_a, a, 18*sizeof(scalar), cudaMemcpyHostToDevice);
+    Lstridedcopy(2,3,9,3,0,0,d_a,d_b);
+    cudaMemcpy(b, d_b, 6*sizeof(scalar), cudaMemcpyDeviceToHost);
+    for(int i=0; i<6; i++){printf("%i: %f\n",i,b[i]);}
+    delete[] a;
+    delete[] b;
+    exit(0);
   */
 
   
@@ -73,11 +82,20 @@ arch_global void stridedcopy(int numblocks, int blocklen, int strideA, int strid
 
 //==========================================================================
 arch_global void reconstruct_energy(int N_s, int N_E, int slicenum, scalar* rhoeLim, scalar* KLim, scalar* EMono, scalar* ELim){
-
-  /* Reconstruct the energy monomial coefficients using the internal
-     and kinetic energy monomial coefficients. Apply a correction to
-     the zeroth coefficients so that the method is conservative.*/
-     
+  /*!
+    \brief Reconstruct the energy monomial coefficients
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] slicenum to decompose higher dimensional problem into 1D slices
+    \param[in] rhoeLim limited monomial internal energy
+    \param[in] KLim limited monomial kinetic energy
+    \param[in] EMono monomial total energy
+    \param[out] ELim limited monomial total energy
+    \section Description
+    Reconstruct the energy monomial coefficients using the internal
+    and kinetic energy monomial coefficients. Apply a correction tothe
+    zeroth coefficients so that the method is conservative.
+  */
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
     for(int slice = 0; slice < slicenum; slice++){
@@ -113,9 +131,19 @@ arch_global void reconstruct_energy(int N_s, int N_E, int slicenum, scalar* rhoe
 
 //==========================================================================
 arch_global void internal_energy_multifluid(int N_s, int N_E, int slicenum, scalar* p, scalar* g, scalar* rhoe){
-  /* Reconstruct the monomial internal energy coefficients using the
-     pressure and 1/gamma-1 coefficients so that the pressure remains
-     non-oscillatory */
+  /*!
+    \brief Reconstruct the energy monomial coefficients
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] slicenum to decompose higher dimensional problem into 1D slices
+    \param[in] p monomial pressure solution
+    \param[in] g monomial 1/(gamma-1) solution
+    \param[out] rhoe monomial internal energy
+    \section Description
+    Reconstruct the monomial internal energy coefficients using the
+    pressure and 1/gamma-1 coefficients so that the pressure remains
+    non-oscillatory
+  */
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
     for(int slice = 0; slice < slicenum; slice++){
@@ -145,9 +173,20 @@ arch_global void internal_energy_multifluid(int N_s, int N_E, int slicenum, scal
 
 //==========================================================================
 arch_global void internal_energy_stiffened(int N_s, int N_E, int slicenum, scalar* p, scalar* g, scalar* b, scalar* rhoe){
-  /* Reconstruct the monomial internal energy coefficients using the
-     pressure, 1/gamma-1, and gamma*pinf/(gamma-1) coefficients so
-     that the pressure remains non-oscillatory */
+  /*!
+    \brief Reconstruct the energy monomial coefficients
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] slicenum to decompose higher dimensional problem into 1D slices
+    \param[in] p monomial pressure solution
+    \param[in] g monomial 1/(gamma-1) solution
+    \param[in] b monomial gamma*pinf/(gamma-1) solution
+    \param[out] rhoe monomial internal energy
+    \section Description
+    Reconstruct the monomial internal energy coefficients using the
+    pressure, 1/gamma-1, and gamma*pinf/(gamma-1) coefficients so that
+    the pressure remains non-oscillatory
+  */
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
     for(int slice = 0; slice < slicenum; slice++){
@@ -182,6 +221,20 @@ arch_global void internal_energy_stiffened(int N_s, int N_E, int slicenum, scala
 //==========================================================================
 extern "C" 
 void Lstridedcopy(int numblocks, int blocklen, int strideA, int strideB, int offsetA, int offsetB, scalar* A, scalar* B){
+  /*!
+    \brief Host C function to lauch stridedcopy kernel.
+    \param[in] numblocks number of blocks to copy from A to B
+    \param[in] blocklen number of elements in each block
+    \param[in] strideA number of elements between start of each block in A
+    \param[in] strideB number of elements between start of each block in B
+    \param[in] offsetA number of elements to skip at start of A
+    \param[in] offsetB number of elements to skip at start of B
+    \param[in] A source array
+    \param[out] B destination array
+    \section Description
+    In GPU mode, launches numblocks/blkE blocks of blocklen x 1 x blkE
+    threads. blkE controls the number of elements to set on each block
+  */
 #ifdef USE_GPU
   int div = numblocks/blkE;
   int mod = 0;
@@ -195,6 +248,19 @@ void Lstridedcopy(int numblocks, int blocklen, int strideA, int strideB, int off
 
 extern "C"
 void Lreconstruct_energy(int N_s, int N_E, int slicenum, scalar* rhoeLim, scalar* KLim, scalar* EMono, scalar* ELim){
+  /*!
+    \brief Host C function to lauch reconstruct_energy kernel.
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] slicenum to decompose higher dimensional problem into 1D slices
+    \param[in] rhoeLim limited monomial internal energy
+    \param[in] KLim limited monomial kinetic energy
+    \param[in] EMono monomial total energy
+    \param[out] ELim limited monomial total energy
+    \section Description
+    In GPU mode, launches N_E/blkE blocks of slicenum x 1 x blkE
+    threads. blkE controls the number of elements to set on each block
+  */
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
@@ -208,6 +274,18 @@ void Lreconstruct_energy(int N_s, int N_E, int slicenum, scalar* rhoeLim, scalar
 
 extern "C"
 void Linternal_energy_multifluid(int N_s, int N_E, int slicenum, scalar* p, scalar* g, scalar* rhoe){
+  /*!
+    \brief Host C function to lauch internal_energy_multifluid kernel.
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] slicenum to decompose higher dimensional problem into 1D slices
+    \param[in] p monomial pressure solution
+    \param[in] g monomial 1/(gamma-1) solution
+    \param[out] rhoe monomial internal energy
+    \section Description
+    In GPU mode, launches N_E/blkE blocks of N_s x slicenum x blkE
+    threads. blkE controls the number of elements to set on each block
+  */
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
@@ -222,6 +300,19 @@ void Linternal_energy_multifluid(int N_s, int N_E, int slicenum, scalar* p, scal
 
 extern "C"
 void Linternal_energy_stiffened(int N_s, int N_E, int slicenum, scalar* p, scalar* g, scalar* b, scalar* rhoe){
+  /*!
+    \brief Host C function to lauch internal_energy_multifluid kernel.
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] slicenum to decompose higher dimensional problem into 1D slices
+    \param[in] p monomial pressure solution
+    \param[in] g monomial 1/(gamma-1) solution
+    \param[in] b monomial gamma*pinf/(gamma-1) solution
+    \param[out] rhoe monomial internal energy
+    \section Description
+    In GPU mode, launches N_E/blkE blocks of N_s x slicenum x blkE
+    threads. blkE controls the number of elements to set on each block
+  */
 #ifdef USE_GPU
   int div = N_E/blkE;
   int mod = 0;
@@ -241,6 +332,11 @@ void Linternal_energy_stiffened(int N_s, int N_E, int slicenum, scalar* p, scala
 //==========================================================================
 arch_device int lim_factorial(int n)
 {
+  /*!
+    \brief Factorial function
+    \param[in] n get factorial of this number
+    \return factorial of n
+  */
   if     (n== 0) return 1;
   else if(n== 1) return 1;
   else if(n== 2) return 2;
@@ -258,8 +354,15 @@ arch_device int lim_factorial(int n)
 }
 
 arch_device int binomial_coefficient(int n, int k){
-  /* Inspired from https://gist.github.com/jeetsukumaran/5392166.
-     Does not handle super large numbers (no need really)*/
+  /*!
+    \brief Binomial coefficient function
+    \param[in] n
+    \param[in] k
+    \return C(n,k)
+    \section Description
+    Inspired from https://gist.github.com/jeetsukumaran/5392166.
+    Does not handle super large numbers (no need really)
+  */
 
   if (0 == k || n == k) {
     return 1;

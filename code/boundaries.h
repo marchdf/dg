@@ -1,3 +1,8 @@
+/*!
+  \file boundaries.h
+  \brief Functions to launch BC kernels
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #ifndef BOUNDARIES_KERNELS_H
 #define BOUNDARIES_KERNELS_H
 #include <scalar_def.h>

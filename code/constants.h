@@ -1,3 +1,10 @@
+/*!
+  \file constants.h
+  \brief Global constants
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \section Description
+  Constants such as gamma and gravity
+*/
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 #include <scalar_def.h>

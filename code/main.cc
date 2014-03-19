@@ -1,3 +1,11 @@
+/*!
+  \file main.cc
+  \brief Main file: sets up and drives the simulations
+  \param[in] argc An integer argument count of the command line arguments
+  \param[in] argv An argument vector of the command line arguments
+  \return integer 0 upon successful completion
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #include <string>
 #include <iomanip>
 #include <stdio.h>

@@ -1,12 +1,24 @@
+/*!
+  \file polynomialsJacobi.cc
+  \brief Function definitions for Jacobi polynomials  
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #include <polynomialsJacobi.h>
 
-
 void JacobiP(const fullMatrix<scalar> x, const int alpha, const int beta, const int N, fullMatrix<scalar> &P){
-
-  // Evaluate Jacobi polynomials of type (alpha, beta) > -1
-  // at points x, of order N
-  // Normalized so that they are orthornormal to each other
-  // Inspired by the book: Nodal DG... p446
+ /*!
+    \brief Evaluate Jacobi polynomials
+    \param[in] x evaluation points
+    \param[in] alpha first Jacobi type
+    \param[in] beta second Jacobi type
+    \param[in] N Jacobi polynomial order
+    \param[out] P Jacobi polynomial
+    \section Description
+    Evaluate Jacobi polynomials of type (alpha, beta) > -1 at points x, of order N
+    Normalized so that they are orthornormal to each other
+    inspired by the book: Nodal DG... p446
+  */
+    
   int Nx = x.size1();
   fullMatrix<scalar> PL(N+1, Nx);
   P.resize(Nx,1);
@@ -37,16 +49,22 @@ void JacobiP(const fullMatrix<scalar> x, const int alpha, const int beta, const 
   }
 
   for(int j=0;j<Nx;j++) P(j,0) = PL(N,j);
-  return;
-  
+  return;  
 }
 
 void JacobiGQ(const int alpha, const int beta, const int N, fullMatrix<scalar> &x, fullMatrix<scalar> &w){
-
-  //Purpose: Compute the N’th order Gauss quadrature points, x,
-  //         and weights, w, associated with the Jacobi
-  //         polynomial, of type (alpha,beta) > -1 ( <> -0.5).
-
+ /*!
+    \brief Gauss quadrature points and weights
+    \param[in] alpha first Jacobi type
+    \param[in] beta second Jacobi type
+    \param[in] N Jacobi polynomial order
+    \param[out] x gauss quadrature points
+    \param[out] w gauss quadrature weights
+    \section Description
+    Compute the N’th order Gauss quadrature points, x, and weights, w,
+    associated with the Jacobi polynomial, of type (alpha,beta) > -1 (
+    <> -0.5).
+ */
   x.resize(N+1,3);
   w.resize(N+1,1);
   
@@ -85,11 +103,18 @@ void JacobiGQ(const int alpha, const int beta, const int N, fullMatrix<scalar> &
 
 
 void JacobiGL(const int alpha, const int beta, const int N, fullMatrix<scalar> &x){
-
-  // Purpose: Compute the N’th order Gauss Lobatto quadrature
-  //          points, x, associated with the Jacobi polynomial,
-  //          of type (alpha,beta) > -1 ( <> -0.5).
-
+ /*!
+    \brief Gauss Lobatto quadrature points and weights
+    \param[in] alpha first Jacobi type
+    \param[in] beta second Jacobi type
+    \param[in] N Jacobi polynomial order
+    \param[out] x gauss quadrature points
+    \param[out] w gauss quadrature weights
+    \section Description
+    Compute the N’th order Gauss Lobatto quadrature points, x, and
+    weights, w, associated with the Jacobi polynomial, of type
+    (alpha,beta) > -1 ( <> -0.5).
+ */
   x.resize(N+1,3);
     
   if (N==1){

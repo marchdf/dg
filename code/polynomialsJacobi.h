@@ -1,3 +1,8 @@
+/*!
+  \file polynomialsJacobi.h
+  \brief Header for Jacobi polynomials  
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #ifndef POLYNOMIALS_JACOBI_H
 #define POLYNOMIALS_JACOBI_H
 #include "fullMatrix.h"

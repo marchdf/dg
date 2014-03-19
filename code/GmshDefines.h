@@ -1,8 +1,12 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
-//
-// See the LICENSE.txt file for license information. Please report all
-// bugs and problems to <gmsh@geuz.org>.
-
+/*!
+  \file GmshDefines.h
+  \brief Define tags for GMSH
+  \copyright Gmsh - Copyright (C) 1997-2010
+  \authors C. Geuzaine, J.-F. Remacle
+  
+  See the LICENSE.txt file for license information. Please report all
+  bugs and problems to <gmsh@geuz.org>.
+*/
 #ifndef _GMSH_DEFINES_H_
 #define _GMSH_DEFINES_H_
 

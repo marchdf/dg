@@ -1,3 +1,8 @@
+/*!
+  \file twod_multifluid_fluxes.h
+  \brief Riemann solvers for 2D multifluid
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #ifndef TWOD_MULTIFLUID_FLUXES_H
 #define TWOD_MULTIFLUID_FLUXES_H
 #ifdef TWOD

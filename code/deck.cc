@@ -1,3 +1,8 @@
+/*!
+  \file deck.cc
+  \brief Functions for the deck class
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #include "deck.h"
 #include <fstream>
 #include <sstream>
@@ -6,6 +11,10 @@
 
 void deck::readDeck(const char *fileName)
 {
+  /*!
+    \brief Read the input deck
+    \param[in] fileName deck filename
+  */    
   std::ifstream input;
   input.open(fileName,std::ifstream::in);
   if(input.is_open()==0){

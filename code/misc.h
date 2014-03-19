@@ -1,3 +1,8 @@
+/*!
+  \file misc.h
+  \brief Header for miscellaneous functions used by host functions
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+*/
 #ifndef MISC_H
 #define MISC_H
 
