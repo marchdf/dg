@@ -6,6 +6,7 @@
 #ifndef LIMITING_H
 #define LIMITING_H
 
+#include <cublas.h>
 #include <misc.h>
 #include <constants.h>
 #include <physics.h>
