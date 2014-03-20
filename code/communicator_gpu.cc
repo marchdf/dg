@@ -41,7 +41,7 @@ void COMMUNICATOR::CommunicateGhosts(int Nfields, scalar* U){
   MPI_Barrier(MPI_COMM_WORLD);
 
   // 1) copy data from device U to device buffer
-  Lpackager(_N_s, _N_ghosts, Nfields, _d_ghostElementRecv, _d_buffer, U);
+  Lpackager(_N_s, _N_ghosts, Nfields, _d_ghostElementSend, _d_buffer, U);
   
   // 2) copy device buffer to pinned host send buffer
   cudaMemcpy(_h_bufferSend, _d_buffer, _N_s*_N_ghosts*Nfields*sizeof(scalar), cudaMemcpyDeviceToHost);

@@ -71,7 +71,7 @@ class COMMUNICATOR
     checkCuda(cudaMallocHost((void**)&_h_bufferRecv, _N_s*_N_ghosts*N_F*sizeof(scalar)));
     cudaMalloc((void**) &_d_ghostElementSend, _N_ghosts*sizeof(int));
     cudaMalloc((void**) &_d_ghostElementRecv, _N_ghosts*sizeof(int));
-    cudaMalloc((void**) &_d_buffer, _N_s*_N_ghosts*N_F*sizeof(int));
+    cudaMalloc((void**) &_d_buffer, _N_s*_N_ghosts*N_F*sizeof(scalar));
 
     // Copy necessary data to GPU memory (using a tmp array)
     int* tmp = new int[_N_ghosts];
