@@ -18,9 +18,4 @@ extern "C" void LaddSFQ(int N_s, int N_E,  scalar* A, scalar* S, scalar* F, scal
 extern "C" void Lhrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim);
 extern "C" void Lhrl2D(int N_s, int N_E, int N_G, int N_N, int order, scalar* XYZCen, scalar* powersXYZG, int* neighbors, int* TaylorDxIdx, int* TaylorDyIdx, scalar* weight, scalar refArea, scalar* A, scalar* Alim);
 extern "C" void LChangeBasis(int size1, int size2, int N_E,  scalar* Transform, scalar* U, scalar* Unew);
-extern "C" void LPrim2Cons(int N_s, int N_E,  scalar* U, bool multifluid, bool passive, int model, scalar gamma0);
-extern "C" void LCons2Prim(int N_s, int N_E,  scalar* U, bool multifluid, bool passive, int model, scalar gamma0);
-extern "C" void LHalf2Cons(int N_s, int N_E,  scalar* U, bool multifluid, bool passive, int model, scalar gamma0);
-extern "C" void LCons2Half(int N_s, int N_E,  scalar* U, bool multifluid, bool passive, int model, scalar gamma0);
-
 #endif

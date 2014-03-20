@@ -2,6 +2,7 @@
   \file limiting.cc
   \brief Function definitions for Limiting class.
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \ingroup limiting
 */
 #include <limiting.h>
 

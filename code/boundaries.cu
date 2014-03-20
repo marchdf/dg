@@ -2,7 +2,7 @@
   \file boundaries.cu
   \brief Kernels to implement special boundary conditions
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
-  \section Description
+  \ingroup boundaries
 */
 #include <boundaries.h>
 #include <cstdlib>

@@ -2,6 +2,7 @@
   \file rk.h
   \brief Runge-Kutta time integration class
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \defgroup rk Runge-Kutta
 */
 #ifndef RK_H
 #define RK_H
@@ -56,8 +57,7 @@ class RK
 		      int N_E, int N_s, int N_G, int M_T, int M_s, int N_ghosts,
 		      scalar* h_Minv, 
 		      scalar* h_U,
-		      Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator, PRINTER &printer,
-		      int elem_type, simpleMesh &m);
+		      Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator, PRINTER &printer);
     
   scalar DtFromCFL(const int N_s, const int N_E, const scalar CFL, scalar* U, scalar* UPA);
   

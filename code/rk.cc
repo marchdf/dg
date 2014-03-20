@@ -2,6 +2,7 @@
   \file rk.cc
   \brief Runge-Kutta time integration function definitions
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \ingroup rk
 */
 #include "rk.h"
 
@@ -9,8 +10,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
 		    int N_E, int N_s, int N_G, int M_T, int M_s, int N_ghosts,
 		    scalar* h_Minv, 
 		    scalar* h_U,
-		    Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator, PRINTER &printer,
-		    int elem_type, simpleMesh &m){
+		    Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator, PRINTER &printer){
   /*!
     \brief Main RK integration function
     \param[in] DtOut output time step
@@ -28,8 +28,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
     \param[in] order0 true if DG p=0
     \param[in] dgsolver solver object
     \param[in] communicator communicator object
-    \param[in] elem_type type of the element
-    \param[in] m mesh we are operating on
+    \param[in] printer printer object
   */
 
   // Initialize some vars
@@ -93,7 +92,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
   // print the initial condition to the file
   if(CFL>=0){
     if(myid==0){printf("Initial condition written to output file.\n");}
-    printer.print(h_U, m, elem_type, 0, 0, false);
+    printer.print(arch(U), 0, 0, false);
     
     // Output conservation of the fields
     dgsolver.conservation(h_U,0.0);
@@ -168,13 +167,8 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
     // Output the solution
     if(output){
 
-      // Get the solution to the CPU
-#ifdef  USE_GPU
-      cudaMemcpy(h_U, d_U, N_s*N_F*N_E*sizeof(scalar), cudaMemcpyDeviceToHost);
-#endif
-
       if(myid==0){printf("Solution written to file at step %7i and time %e (current CFL time step:%e).\n",n,T,DtCFL);}
-      printer.print(h_U, m, elem_type, count, T, true);
+      printer.print(arch(U), count, T, true);
       Tout = T + DtOut; // update the new output time
       count++;
 

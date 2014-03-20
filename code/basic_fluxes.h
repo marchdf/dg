@@ -2,6 +2,7 @@
   \file basic_fluxes.h  
   \brief Functions to calculate simple flux products  
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \ingroup fluxes
   \section Description
   Simple flux products often used
 */

@@ -2,6 +2,8 @@
   \file boundaries.h
   \brief Functions to launch BC kernels
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \defgroup boundaries Boundary Conditions
+  \ingroup boundaries
 */
 #ifndef BOUNDARIES_KERNELS_H
 #define BOUNDARIES_KERNELS_H

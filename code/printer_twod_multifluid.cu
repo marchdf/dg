@@ -84,7 +84,7 @@ void Lformater(int N_s, int N_E, scalar* U, scalar* output){
   dim3 dimBlock(N_s,1,blkE);
   dim3 dimGrid(div+mod,1);
 #endif
-
+  
   formater arch_args (N_s, N_E, U, output);
 };
 #endif

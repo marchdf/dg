@@ -2,6 +2,7 @@
   \file limiting_kernels.cu
   \brief Kernels used by the Limiting class
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \ingroup limiting
 */
 #include <limiting_kernels.h>
 #include <stdio.h>

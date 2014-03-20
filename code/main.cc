@@ -754,7 +754,7 @@ int main (int argc, char **argv)
   // Printer setup
   //
   //////////////////////////////////////////////////////////////////////////
-  PRINTER printer(N_s,N_E);
+  PRINTER printer(N_s,N_E,elem_type,m);
   printer.set_names();
   
   //////////////////////////////////////////////////////////////////////////   
@@ -806,7 +806,6 @@ int main (int argc, char **argv)
   				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, //h_xyz, h_xyzf,
 				 h_J, h_invJac, h_JF, h_weight, h_normals, m);
   RK rk4 = RK(4);
-  
  
   // RK integration
   rk_start = std::clock();
@@ -814,8 +813,7 @@ int main (int argc, char **argv)
   		     N_E, N_s, N_G, M_T, M_s, N_ghosts,
   		     h_Minv, 
   		     h_U,
-  		     Limiter, order0, dgsolver, communicator, printer,
-  		     elem_type, m);
+  		     Limiter, order0, dgsolver, communicator, printer);
   rk_time = ( std::clock() - rk_start ) / (double) CLOCKS_PER_SEC;
   printf("RK time = %20.16e for proc %i\n", rk_time, myid);
 

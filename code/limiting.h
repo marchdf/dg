@@ -2,6 +2,8 @@
   \file limiting.h
   \brief Class deals with solution limiting.
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \defgroup limiting Limiting
+  \ingroup limiting
 */
 #ifndef LIMITING_H
 #define LIMITING_H

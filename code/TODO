@@ -9,9 +9,7 @@
   - one idea is to have the arrays in simpleMesh be fullMatrix
 
 \mytodo OUTPUT
-  - Inefficient to build a matrix to output it...
   - Add capability to output in the .txt format that gmsh can generate too
-  - Make into a class to do this (yes to avoid re-initializing matrices)
   - restart files?
   - hdf5? Binary format to compress data?
   - check for NAN
@@ -54,11 +52,9 @@
 	
 \mytodo OTHER
   - Clean if conditions on dimensions: they are all over the place. Can they be reduced?
-  - Remove cpu_ in the function names (not necessary now)
   - Does shifts works in 1D? It does not!
   - clean the deletes in main. Only have the class deleting the vectors it creates. (eg. in main I delete arrays created in simpleMesh)
   - change makeZero to memset functions
-  - remove Prim2Cons, Cons2Prim, Half2Cons, Cons2Half
   - make things more object oriented to reduce the number of parameters passed around
   - maybe make a struct for the numbers (Ns,NE, etc)
   - factorial function is defined 3 times (at least)

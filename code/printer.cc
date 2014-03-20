@@ -1,15 +1,12 @@
 /*!
-  \file printer.h
+  \file printer.cc
   \brief Function definitions for the PRINTER class.
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
-  \defgroup printer Printer
+  \ingroup printer
 */
 #include "printer.h"
 
 void PRINTER::set_names(){
-  /*!
-    \brief Set the filenames and field names for the PRINTER class
-  */
 #ifdef ONED
 #ifdef PASSIVE
   _names.push_back("Rho");   _fnames.push_back("rho");
@@ -65,7 +62,7 @@ void PRINTER::set_names(){
 } // end set names
 
 
-void PRINTER::print(scalar* U, const simpleMesh m, const int elem_type, const int step, const double time, const bool append){
+void PRINTER::print(scalar* U, const int step, const double time, const bool append){
   /*!
     \brief Output solution for the PRINTER class
   */
@@ -77,8 +74,9 @@ void PRINTER::print(scalar* U, const simpleMesh m, const int elem_type, const in
   Lformater(_N_s,_N_E,U,_d_output);
   cudaMemcpy(_output, _d_output, _N_s*_N_E*N_F*sizeof(scalar), cudaMemcpyDeviceToHost);
 #endif
+
   
   // print to the output file
-  m.writeSolution(_output, _N_s, _N_E, elem_type, _fnames, _names, step, time, append);
+  _m.writeSolution(_output, _N_s, _N_E, _elem_type, _fnames, _names, step, time, append);
   
 } // end print_dg

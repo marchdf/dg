@@ -3,6 +3,7 @@
   \brief Class deals with the solution output.
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
   \defgroup printer Printer
+  \ingroup printer
 */
 #ifndef PRINTER_H
 #define PRINTER_H
@@ -13,6 +14,7 @@
 #include <constants.h>
 #include <vector>
 #include <string>
+#include <stdio.h>
 #include "printer_kernels.h"
 #ifdef USE_GPU
 #include "misc_cuda.h"
@@ -27,15 +29,18 @@ class PRINTER{
   scalar* _d_output;
   std::vector<std::string> _names;
   std::vector<std::string> _fnames;
-
+  simpleMesh &_m; 
+    
  public:
 
   /*!
     \brief Constructor
-    \param N_s number of nodes per element
-    \param N_E number of elements
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] elem_type type of element to output
+    \param[in] m mesh we are operating on
   */     
- PRINTER(int N_s, int N_E): _N_s(N_s), _N_E(N_E){
+ PRINTER(int N_s, int N_E, int elem_type, simpleMesh &m): _N_s(N_s), _N_E(N_E), _elem_type(elem_type), _m(m){
 #ifdef USE_CPU
     _output = new scalar[_N_s*_N_E*N_F];
 #elif USE_GPU
@@ -54,7 +59,9 @@ class PRINTER{
 #endif
   }
 
-  void set_names();  
-  void print(scalar* U, const simpleMesh m, const int elem_type, const int step, const double time, const bool append);
+  /*!\brief Set the filenames and field names for the PRINTER class*/
+  void set_names();
+  
+  void print(scalar* U, const int step, const double time, const bool append);
 };
 #endif

@@ -2,6 +2,7 @@
   \file twod_passive_fluxes.h
   \brief Riemann solvers for 2D passive
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \ingroup fluxes
 */
 #ifndef TWOD_PASSIVE_FLUXES_H
 #define TWOD_PASSIVE_FLUXES_H

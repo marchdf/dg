@@ -2,6 +2,7 @@
   \file oned_stiffened_fluxes.h
   \brief Riemann solvers for 1D stiffened
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \ingroup fluxes
 */
 #ifndef ONED_STIFFENED_FLUXES_H
 #define ONED_STIFFENED_FLUXES_H

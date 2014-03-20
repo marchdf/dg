@@ -2,6 +2,7 @@
   \file limiting_kernels.h
   \brief Functions to launch Limiting kernels
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \ingroup limiting
 */
 #ifndef LIMITING_KERNELS_H
 #define LIMITING_KERNELS_H

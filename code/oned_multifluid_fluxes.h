@@ -2,6 +2,8 @@
   \file oned_multifluid_fluxes.h
   \brief Riemann solvers for 1D multifluid
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \defgroup fluxes Fluxes and Riemann solvers
+  \ingroup fluxes
 */
 #ifndef ONED_MULTIFLUID_FLUXES_H
 #define ONED_MULTIFLUID_FLUXES_H

@@ -2,6 +2,7 @@
   \file rk_kernels.cu
   \brief Kernels used by the RK class
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \ingroup rk
 */
 #include <rk_kernels.h>
 #include <cstdlib>
