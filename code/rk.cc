@@ -93,7 +93,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
   // print the initial condition to the file
   if(CFL>=0){
     if(myid==0){printf("Initial condition written to output file.\n");}
-    print_dg(N_s, N_E, h_U, m, elem_type, 0, 0, 0);
+    print_dg(N_s, N_E, h_U, m, elem_type, 0, 0, false);
     
     // Output conservation of the fields
     dgsolver.conservation(h_U,0.0);
@@ -174,7 +174,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
 #endif
 
       if(myid==0){printf("Solution written to file at step %7i and time %e (current CFL time step:%e).\n",n,T,DtCFL);}
-      print_dg(N_s, N_E, h_U, m, elem_type, count, T, 1);
+      print_dg(N_s, N_E, h_U, m, elem_type, count, T, true);
       Tout = T + DtOut; // update the new output time
       count++;
 

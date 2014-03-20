@@ -11,7 +11,7 @@
 // Used to define dynamically variables
 #define Y(x) Y ##x 
 
-void print_dg(const int N_s, const int N_E, scalar* U, const simpleMesh m, const int elem_type, const int step, const double time, const int append){
+void print_dg(const int N_s, const int N_E, scalar* U, const simpleMesh m, const int elem_type, const int step, const double time, const bool append){
 
   fullMatrix<scalar> Rho(N_s, N_E);
   fullMatrix<scalar> Ux(N_s, N_E);

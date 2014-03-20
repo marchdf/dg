@@ -12,10 +12,10 @@
 #ifndef COMMUNICATOR_H
 #define COMMUNICATOR_H
 
+#include "simpleMesh.h"
 #ifdef USE_MPI
 #include <scalar_def.h>
 #include "mpi.h"
-#include "simpleMesh.h"
 #include "misc.h"
 #ifdef USE_GPU
 #include <cuda_runtime_api.h>

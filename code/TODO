@@ -6,6 +6,7 @@
   - in simpleMesh destructor, we have a problem with double frees
   - memcpy is evil in c++, don't use it: it doesn't do a deep copy
   - replace memcpy with blascopy?
+  - one idea is to have the arrays in simpleMesh be fullMatrix
 
 \mytodo OUTPUT
   - Inefficient to build a matrix to output it...
@@ -60,6 +61,8 @@
   - make things more object oriented to reduce the number of parameters passed around
   - maybe make a struct for the numbers (Ns,NE, etc)
   - factorial function is defined 3 times (at least)
+  - macros to wrap functions: eg. GPU(communicateGhosts) or GAMMAMODEL(...)
+
 \mytodo DOXYGEN
   - it's not documenting both versions of CommunicateGhosts properly.
   - ifdefs with CPU and GPU will only go to one of those.

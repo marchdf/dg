@@ -307,7 +307,7 @@ void simpleMesh::buildNormals (int typeInterface, int typeElement)
 }
 
 
-void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, std::string filename, std::string name, int step, double time, int append) const
+void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, std::string filename, std::string name, int step, double time, bool append) const
 {
   /*!
     \brief Write the solution to a file
@@ -332,7 +332,7 @@ void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, st
   if (list.size() != solution.size2())
     printf("bad solution for this element\n");
   std::ofstream output;
-  if (append == 1)  output.open(filename.c_str(),std::ios_base::app);
+  if (append)  output.open(filename.c_str(),std::ios_base::app);
   else output.open(filename.c_str());
   output.precision(20);
   output << "$MeshFormat\n2.1 0 8\n$EndMeshFormat\n";
@@ -351,6 +351,7 @@ void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, st
     output << "\n";
   }
   output << "$EndElementNodeData\n";
+  output.close();
 }
 
 void simpleMesh::buildBoundary(){
