@@ -33,7 +33,7 @@
 #include <limiting.h>
 #include <dg_solver.h>
 #include <communicator.h>
-
+#include <printer.h>
 //
 // Function prototypes
 //
@@ -749,6 +749,13 @@ int main (int argc, char **argv)
   //////////////////////////////////////////////////////////////////////////
   COMMUNICATOR communicator(N_ghosts, N_s, m);
 
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Printer setup
+  //
+  //////////////////////////////////////////////////////////////////////////
+  PRINTER printer(N_s,N_E);
+  printer.set_names();
   
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -757,7 +764,7 @@ int main (int argc, char **argv)
   //////////////////////////////////////////////////////////////////////////
   scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++) h_weight[g] = (scalar)weight(g,0);  
 #ifdef ONED
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_G, N_N, m.getNeighbors(), Lag2Mono, Mono2Lag, monoV, h_weight);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_G, N_N, m, Lag2Mono, Mono2Lag, monoV, h_weight);
 #elif TWOD
 
   //
@@ -807,7 +814,7 @@ int main (int argc, char **argv)
   		     N_E, N_s, N_G, M_T, M_s, N_ghosts,
   		     h_Minv, 
   		     h_U,
-  		     Limiter, order0, dgsolver, communicator,
+  		     Limiter, order0, dgsolver, communicator, printer,
   		     elem_type, m);
   rk_time = ( std::clock() - rk_start ) / (double) CLOCKS_PER_SEC;
   printf("RK time = %20.16e for proc %i\n", rk_time, myid);

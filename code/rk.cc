@@ -9,7 +9,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
 		    int N_E, int N_s, int N_G, int M_T, int M_s, int N_ghosts,
 		    scalar* h_Minv, 
 		    scalar* h_U,
-		    Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator,
+		    Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator, PRINTER &printer,
 		    int elem_type, simpleMesh &m){
   /*!
     \brief Main RK integration function
@@ -93,7 +93,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
   // print the initial condition to the file
   if(CFL>=0){
     if(myid==0){printf("Initial condition written to output file.\n");}
-    print_dg(N_s, N_E, h_U, m, elem_type, 0, 0, false);
+    printer.print(h_U, m, elem_type, 0, 0, false);
     
     // Output conservation of the fields
     dgsolver.conservation(h_U,0.0);
@@ -174,7 +174,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
 #endif
 
       if(myid==0){printf("Solution written to file at step %7i and time %e (current CFL time step:%e).\n",n,T,DtCFL);}
-      print_dg(N_s, N_E, h_U, m, elem_type, count, T, true);
+      printer.print(h_U, m, elem_type, count, T, true);
       Tout = T + DtOut; // update the new output time
       count++;
 

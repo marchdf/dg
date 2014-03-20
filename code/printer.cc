@@ -1,0 +1,84 @@
+/*!
+  \file printer.h
+  \brief Function definitions for the PRINTER class.
+  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \defgroup printer Printer
+*/
+#include "printer.h"
+
+void PRINTER::set_names(){
+  /*!
+    \brief Set the filenames and field names for the PRINTER class
+  */
+#ifdef ONED
+#ifdef PASSIVE
+  _names.push_back("Rho");   _fnames.push_back("rho");
+  _names.push_back("Ux");    _fnames.push_back("ux"); 
+  _names.push_back("P");     _fnames.push_back("p");
+  _names.push_back("PhiC");  _fnames.push_back("phic");
+  _names.push_back("PhiNC"); _fnames.push_back("phinc");
+#elif MULTIFLUID
+  _names.push_back("Rho");   _fnames.push_back("rho");
+  _names.push_back("Ux");    _fnames.push_back("ux"); 
+  _names.push_back("G");     _fnames.push_back("g");  
+  _names.push_back("P");     _fnames.push_back("p");  
+#elif STIFFENED
+  _names.push_back("Rho");   _fnames.push_back("rho");
+  _names.push_back("Ux");    _fnames.push_back("ux"); 
+  _names.push_back("G");     _fnames.push_back("g");
+  _names.push_back("Pinf");  _fnames.push_back("pinf");  
+  _names.push_back("P");     _fnames.push_back("p");  
+#endif // problem type
+#elif TWOD
+#ifdef PASSIVE
+  _names.push_back("Rho");   _fnames.push_back("rho");
+  _names.push_back("Ux");    _fnames.push_back("ux");
+  _names.push_back("Uy");    _fnames.push_back("uy"); 
+  _names.push_back("P");     _fnames.push_back("p");
+  _names.push_back("PhiC");  _fnames.push_back("phic");
+  _names.push_back("PhiNC"); _fnames.push_back("phinc");
+#elif MULTIFLUID
+  _names.push_back("Rho");   _fnames.push_back("rho");
+  _names.push_back("Ux");    _fnames.push_back("ux"); 
+  _names.push_back("Uy");    _fnames.push_back("uy"); 
+  _names.push_back("G");     _fnames.push_back("g");  
+  _names.push_back("P");     _fnames.push_back("p");  
+#elif STIFFENED
+  _names.push_back("Rho");   _fnames.push_back("rho");
+  _names.push_back("Ux");    _fnames.push_back("ux");
+  _names.push_back("Uy");    _fnames.push_back("uy"); 
+  _names.push_back("G");     _fnames.push_back("g");
+  _names.push_back("Pinf");  _fnames.push_back("pinf");  
+  _names.push_back("P");     _fnames.push_back("p");  
+#endif // problem type
+#endif // dimensions
+
+  // Mass fraction names
+  char buffer1 [5]; char buffer2 [2];
+  std::string fname;
+  std::string name;
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) sprintf(buffer2, "Y%i", x); name = buffer2; sprintf(buffer1, "y%i", x); fname = buffer1;  _names.push_back(name); _fnames.push_back(fname);
+#include "loop.h"
+
+} // end set names
+
+
+void PRINTER::print(scalar* U, const simpleMesh m, const int elem_type, const int step, const double time, const bool append){
+  /*!
+    \brief Output solution for the PRINTER class
+  */
+
+  // format output variables
+#ifdef USE_CPU
+  Lformater(_N_s,_N_E,U,_output);
+#elif USE_GPU
+  Lformater(_N_s,_N_E,U,_d_output);
+  cudaMemcpy(_output, _d_output, _N_s*_N_E*N_F*sizeof(scalar), cudaMemcpyDeviceToHost);
+#endif
+  
+  // print to the output file
+  m.writeSolution(_output, _N_s, _N_E, elem_type, _fnames, _names, step, time, append);
+  
+} // end print_dg

@@ -14,6 +14,7 @@
   - Make into a class to do this (yes to avoid re-initializing matrices)
   - restart files?
   - hdf5? Binary format to compress data?
+  - check for NAN
 
 \mytodo IC
   - Clean initial conditions

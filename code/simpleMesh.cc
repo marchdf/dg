@@ -307,14 +307,16 @@ void simpleMesh::buildNormals (int typeInterface, int typeElement)
 }
 
 
-void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, std::string filename, std::string name, int step, double time, bool append) const
+void simpleMesh::writeSolution (const scalar* solution, const int N_s, const int N_E, int type, std::vector<std::string> fnames, std::vector<std::string> names, int step, double time, bool append) const
 {
   /*!
     \brief Write the solution to a file
-    \param[in] solution matrix of solution to output
+    \param[in] solution array of solution to output
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
     \param[in] type element type to output
-    \param[in] filename name of output file
-    \param[in] name name of solution
+    \param[in] fnames vector of output file names (w/o extension)
+    \param[in] names vector of output field names
     \param[in] step time step number
     \param[in] time time value
     \param[in] append true if you want to append to an existing file    
@@ -322,36 +324,41 @@ void simpleMesh::writeSolution (const fullMatrix<scalar> &solution, int type, st
     Pretty obvious what this does.
   */
 
-#ifdef USE_MPI
-  char numstr[21]; // enough to hold all numbers up to 64-bits
-  sprintf(numstr, "%d", _myid);
-  filename += numstr;
-#endif
-  
   const std::vector<simpleElement> &list = _elements[type];
-  if (list.size() != solution.size2())
+  if (list.size() != N_E)
     printf("bad solution for this element\n");
-  std::ofstream output;
-  if (append)  output.open(filename.c_str(),std::ios_base::app);
-  else output.open(filename.c_str());
-  output.precision(20);
-  output << "$MeshFormat\n2.1 0 8\n$EndMeshFormat\n";
-  output << "$ElementNodeData\n";
-  output << "1\n\"" << name << "\"\n";
-  output << "1\n" << time << "\n";
-  output << "4\n" << step<< "\n1\n" << list.size() << "\n" << _myid << "\n";
-  for (int i = 0; i < list.size(); i++) {
-    const simpleElement &element = list[i];
-    output << element.getId() << " " << element.getNbNodes() <<" ";
-    if (element.getNbNodes() != solution.size1())
-      printf("bad solution for this element\n");
-    for (int j = 0; j < element.getNbNodes(); j++) {
-      output << solution (j,i)<< " ";
+
+  // Loop on number of fields for output
+  for(int fc=0; fc<N_F; fc++){
+    std::ofstream output;
+    std::string filename = fnames[fc];
+    filename += ".pos"; // add extension
+#ifdef USE_MPI
+    char numstr[21]; // enough to hold all numbers up to 64-bits
+    sprintf(numstr, "%d", _myid);
+    filename += numstr;
+#endif
+    if (append)  output.open(filename.c_str(),std::ios_base::app);
+    else output.open(filename.c_str());
+    output.precision(20);
+    output << "$MeshFormat\n2.1 0 8\n$EndMeshFormat\n";
+    output << "$ElementNodeData\n";
+    output << "1\n\"" << names[fc] << "\"\n";
+    output << "1\n" << time << "\n";
+    output << "4\n" << step<< "\n1\n" << list.size() << "\n" << _myid << "\n";
+    for (int e = 0; e < list.size(); e++) {
+      const simpleElement &element = list[e];
+      output << element.getId() << " " << element.getNbNodes() <<" ";
+      if (element.getNbNodes() != N_s)
+      	printf("bad solution for this element\n");
+      for (int i = 0; i < element.getNbNodes(); i++) {
+	output << solution[(e*N_F+fc)*N_s+i]<< " ";
+      }
+      output << "\n";
     }
-    output << "\n";
-  }
-  output << "$EndElementNodeData\n";
-  output.close();
+    output << "$EndElementNodeData\n";
+    output.close();
+  } // end loop on fields
 }
 
 void simpleMesh::buildBoundary(){
