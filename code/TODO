@@ -10,6 +10,7 @@
 
 \mytodo OUTPUT
   - Add capability to output in the .txt format that gmsh can generate too
+  - output at each time step
   - restart files?
   - hdf5? Binary format to compress data?
   - check for NAN
