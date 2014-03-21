@@ -102,8 +102,8 @@ class DG_SOLVER
     _otheroneIdx = _M_B-boundaryIdx[0];  // number of otherone interfaces
     _otheronestart = boundaryIdx[0];
     //_farfieldIdx = boundaryIdx[1]-boundaryIdx[0]; // number of farfield interfaces
-    //_farfieldstart = boundaryIdx[1]; 
-    delete boundaryIdx;
+    //_farfieldstart = boundaryIdx[1];
+    boundaryIdx = NULL;
     
 #ifdef USE_CPU
 

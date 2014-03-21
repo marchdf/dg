@@ -8,6 +8,7 @@
 #include "polynomialBasis.h"
 #include "quadratures/Gauss.h"
 #include <stdexcept>      // std::out_of_range
+#include <bitset>
 
 bool pairPeriodic(const fullMatrix<double> &meshNodes, std::vector<int> nodes1, std::vector<int> nodes2){
 
@@ -307,7 +308,7 @@ void simpleMesh::buildNormals (int typeInterface, int typeElement)
 }
 
 
-void simpleMesh::writeSolution (const scalar* solution, const int N_s, const int N_E, int type, std::vector<std::string> fnames, std::vector<std::string> names, int step, double time, bool append) const
+void simpleMesh::writeSolution (const scalar* solution, const int N_s, const int N_E, int type, std::vector<std::string> fnames, std::vector<std::string> names, int step, double time) const
 {
   /*!
     \brief Write the solution to a file
@@ -319,7 +320,6 @@ void simpleMesh::writeSolution (const scalar* solution, const int N_s, const int
     \param[in] names vector of output field names
     \param[in] step time step number
     \param[in] time time value
-    \param[in] append true if you want to append to an existing file    
     \section Description
     Pretty obvious what this does.
   */
@@ -332,14 +332,16 @@ void simpleMesh::writeSolution (const scalar* solution, const int N_s, const int
   for(int fc=0; fc<N_F; fc++){
     std::ofstream output;
     std::string filename = fnames[fc];
+    char stepstr[21];
+    sprintf(stepstr, "%010i", step);
+    filename += stepstr;
     filename += ".pos"; // add extension
 #ifdef USE_MPI
-    char numstr[21]; // enough to hold all numbers up to 64-bits
-    sprintf(numstr, "%d", _myid);
-    filename += numstr;
+    char myidstr[21]; // enough to hold all numbers up to 64-bits
+    sprintf(myidstr, "%d", _myid);
+    filename += myidstr;
 #endif
-    if (append)  output.open(filename.c_str(),std::ios_base::app);
-    else output.open(filename.c_str());
+    output.open(filename.c_str());
     output.precision(20);
     output << "$MeshFormat\n2.1 0 8\n$EndMeshFormat\n";
     output << "$ElementNodeData\n";
@@ -360,6 +362,7 @@ void simpleMesh::writeSolution (const scalar* solution, const int N_s, const int
     output.close();
   } // end loop on fields
 }
+
 
 void simpleMesh::buildBoundary(){
   /*!

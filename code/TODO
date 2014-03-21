@@ -2,11 +2,6 @@
 \file TODO
 \brief List of things to do.
 \page mytodo The General TODO List
-\mytodo DELETIONS
-  - in simpleMesh destructor, we have a problem with double frees
-  - memcpy is evil in c++, don't use it: it doesn't do a deep copy
-  - replace memcpy with blascopy?
-  - one idea is to have the arrays in simpleMesh be fullMatrix
 
 \mytodo OUTPUT
   - Add capability to output in the .txt format that gmsh can generate too
@@ -60,6 +55,7 @@
   - maybe make a struct for the numbers (Ns,NE, etc)
   - factorial function is defined 3 times (at least)
   - macros to wrap functions: eg. GPU(communicateGhosts) or GAMMAMODEL(...)
+  - memcpy is evil in c++, don't use it: it doesn't do a deep copy. replace memcpy with blascopy?
 
 \mytodo DOXYGEN
   - it's not documenting both versions of CommunicateGhosts properly.

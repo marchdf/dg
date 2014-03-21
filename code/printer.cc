@@ -62,7 +62,7 @@ void PRINTER::set_names(){
 } // end set names
 
 
-void PRINTER::print(scalar* U, const int step, const double time, const bool append){
+void PRINTER::print(scalar* U, const int step, const double time){
   /*!
     \brief Output solution for the PRINTER class
   */
@@ -77,6 +77,6 @@ void PRINTER::print(scalar* U, const int step, const double time, const bool app
 
   
   // print to the output file
-  _m.writeSolution(_output, _N_s, _N_E, _elem_type, _fnames, _names, step, time, append);
+  _m.writeSolution(_output, _N_s, _N_E, _elem_type, _fnames, _names, step, time);
   
 } // end print_dg

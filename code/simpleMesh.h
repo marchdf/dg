@@ -93,7 +93,7 @@ class simpleMesh {
   inline const std::map<int,int> & getElementMap () const {/*! Return elements mappings*/return _elementMap;}
   inline const std::map<int,int> & getGhostElementMap () const {/*! Return ghost elements mappings*/return _ghostElementMap;}
   void load (const char *fileName);
-  void writeSolution (const scalar* solution, const int N_s, const int N_E, int type, std::vector<std::string> fnames, std::vector<std::string> names, int step, double time, bool append) const;
+  void writeSolution (const scalar* solution, const int N_s, const int N_E, int type, std::vector<std::string> fnames, std::vector<std::string> names, int step, double time) const;
   inline void buildInterfaces(int typeInterface, int typeElement, int nsides) {
     /*! Calls BuildInterfaces*/
     simpleInterface::BuildInterfaces(*this, _interfaces, typeInterface, typeElement, nsides);
@@ -125,13 +125,11 @@ class simpleMesh {
     
   // Destructor
   ~simpleMesh(){
-    // This leads to a double free!
-    // also, initialize these as null?
-    /* delete[] _ghostElementSend; */
-    /* delete[] _ghostElementRecv; */
-    /* delete[] _boundary; */
-    /* delete[] _boundaryIdx; */
-    // delete[] _neighbors; 
+    delete[] _ghostElementSend;
+    delete[] _ghostElementRecv;
+    delete[] _boundary;
+    delete[] _boundaryIdx;
+    delete[] _neighbors; 
   };
 
 };

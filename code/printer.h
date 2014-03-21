@@ -62,6 +62,6 @@ class PRINTER{
   /*!\brief Set the filenames and field names for the PRINTER class*/
   void set_names();
   
-  void print(scalar* U, const int step, const double time, const bool append);
+  void print(scalar* U, const int step, const double time);
 };
 #endif
