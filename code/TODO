@@ -5,8 +5,6 @@
 
 \mytodo OUTPUT
   - Add capability to output in the .txt format that gmsh can generate too
-  - output at each time step
-  - restart files?
   - hdf5? Binary format to compress data?
   - check for NAN
 
@@ -49,13 +47,14 @@
 \mytodo OTHER
   - Clean if conditions on dimensions: they are all over the place. Can they be reduced?
   - Does shifts works in 1D? It does not!
-  - clean the deletes in main. Only have the class deleting the vectors it creates. (eg. in main I delete arrays created in simpleMesh)
   - change makeZero to memset functions
   - make things more object oriented to reduce the number of parameters passed around
   - maybe make a struct for the numbers (Ns,NE, etc)
   - factorial function is defined 3 times (at least)
   - macros to wrap functions: eg. GPU(communicateGhosts) or GAMMAMODEL(...)
   - memcpy is evil in c++, don't use it: it doesn't do a deep copy. replace memcpy with blascopy?
+  - restart functionality (read initial condition from last output file)
+  - put common used ints (N_E, M_T, etc) into a struct/class to pass around?
 
 \mytodo DOXYGEN
   - it's not documenting both versions of CommunicateGhosts properly.

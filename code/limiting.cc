@@ -354,17 +354,9 @@ void Limiting::M2limiting(COMMUNICATOR &communicator, scalar* U){
     // Get the mass fraction field, transform to monomial basis, limit in y, transform to Lagrange basis, copy to U
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s);
-#include "loop.h"
-#ifdef USE_MPI
-#include "loopstart.h"
-#define LOOP_END N_Y
-#define MACRO(x) communicator.CommunicateGhosts(1, _YMono(x));
-#include "loop.h"
-#endif
-#include "loopstart.h"
-#define LOOP_END N_Y
-#define MACRO(x) Lhrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _YMono(x), _YLim(x)); \
+#define MACRO(x) blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s); \
+    communicator.CommunicateGhosts(1, _YMono(x)); \
+    Lhrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _YMono(x), _YLim(x)); \
     blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _YLim(x), _N_s, 0.0, _Y(x), _N_s); \
     Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,(5+x)*_N_s,_Y(x),U);
 #include "loop.h"
@@ -443,17 +435,9 @@ void Limiting::M2limiting(COMMUNICATOR &communicator, scalar* U){
 #include "loopstart.h"
 #define LOOP_END N_Y
 #define MACRO(x) Lstridedcopy(_N_E,_N_s,_N_s*N_F,_N_s,(6+x)*_N_s,0,U,_Y(x)); \
-    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s);
-#include "loop.h"    
-#ifdef USE_MPI
-#include "loopstart.h"
-#define LOOP_END N_Y
-#define MACRO(x) communicator.CommunicateGhosts(1, _YMono(x));
-#include "loop.h"    
-#endif
-#include "loopstart.h"
-#define LOOP_END N_Y
-#define MACRO(x) Lhrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _YMono(x), _YLim(x)); \
+    blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoX, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s); \
+    communicator.CommunicateGhosts(1, _YMono(x)); \
+    Lhrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 0, _weight, _V1D, _YMono(x), _YLim(x)); \
     blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoX2Lag, _N_s, _YLim(x), _N_s, 0.0, _Y(x), _N_s);
 #include "loop.h"    
 
@@ -521,17 +505,9 @@ void Limiting::M2limiting(COMMUNICATOR &communicator, scalar* U){
     // Get the mass fraction field, transform to monomial basis, limit in y, transform to Lagrange basis, copy to U
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s);
-#include "loop.h"
-#ifdef USE_MPI
-#include "loopstart.h"
-#define LOOP_END N_Y
-#define MACRO(x) communicator.CommunicateGhosts(1, _YMono(x));
-#include "loop.h"
-#endif
-#include "loopstart.h"
-#define LOOP_END N_Y
-#define MACRO(x) Lhrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _YMono(x), _YLim(x)); \
+#define MACRO(x) blasGemm('N','N', _N_s, _N_E, _N_s, 1, _Lag2MonoY, _N_s, _Y(x), _N_s, 0.0, _YMono(x), _N_s); \
+    communicator.CommunicateGhosts(1, _YMono(x)); \
+    Lhrl1D(_N_s1D, _N_E, _N_G1D, 1, _N_N, _N_s1D, _neighbors, 2, _weight, _V1D, _YMono(x), _YLim(x)); \
     blasGemm('N','N', _N_s, _N_E, _N_s, 1, _MonoY2Lag, _N_s, _YLim(x), _N_s, 0.0, _Y(x), _N_s); \
     Lstridedcopy(_N_E,_N_s,_N_s,_N_s*N_F,0,(6+x)*_N_s,_Y(x),U);
 #include "loop.h"
