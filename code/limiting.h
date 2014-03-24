@@ -12,7 +12,6 @@
 #include <constants.h>
 #include <physics.h>
 #include <limiting_kernels.h>
-#include <kernels.h>
 #include <communicator.h>
 #include "simpleMesh.h"
 #ifdef USE_GPU
