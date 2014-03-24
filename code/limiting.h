@@ -36,8 +36,7 @@ class Limiting
   scalar* _MonoY2Lag;
   scalar* _XYZCen;
   scalar* _powersXYZG;
-  scalar* _V1D;
-  scalar* _weight; // integration weights
+
   scalar* _A;      // monomial solution
   scalar* _Alim;   // limited monomial solution
 
@@ -60,13 +59,11 @@ class Limiting
   int     _D;
   int     _N_s;
   int     _N_E;
-  int     _N_G;
   int     _N_N;
   int     _N_ghosts;
   int     _L;  // size of TaylorDxIdx
   int     _order;
   int     _N_s1D;
-  int     _N_G1D;
   int     _L2Msize1;
   int     _L2Msize2;
   int     _boundaryMap;
@@ -86,8 +83,6 @@ class Limiting
     _MonoY2Lag=NULL;
     _XYZCen=NULL;
     _powersXYZG=NULL;
-    _V1D=NULL;
-    _weight=NULL; // integration weights
     _A=NULL;      // monomial solution
     _Alim=NULL;   // holds the limited monomial solution
 
@@ -115,8 +110,8 @@ class Limiting
  Limiting(int method,bool cartesian) : _method(method), _cartesian(cartesian){}
 
   /*!\brief Constructor for 1D limiting*/
- Limiting(int method, int N_s, int N_E, int N_G, int N_N, simpleMesh &m, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, fullMatrix<scalar> &V1D, scalar* weight)
-   : _method(method), _N_s(N_s), _N_E(N_E), _N_G(N_G), _N_N(N_N){
+ Limiting(int method, int N_s, int N_E, int N_N, simpleMesh &m, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag)
+   : _method(method), _N_s(N_s), _N_E(N_E), _N_N(N_N){
     common_ctor();
 
     switch (_method){
@@ -125,8 +120,6 @@ class Limiting
 #ifdef USE_CPU
       _Lag2Mono = new scalar[_N_s*_N_s];     Lag2Mono.copyMatrixToPointer(_Lag2Mono);
       _Mono2Lag = new scalar[_N_s*_N_s];     Mono2Lag.copyMatrixToPointer(_Mono2Lag);
-      _V1D      = new scalar[_N_G*_N_s];     V1D.copyMatrixToPointer(_V1D);
-      _weight   = new scalar[_N_G];          memcpy(_weight,weight,N_G*sizeof(scalar));
       _neighbors  = new int[_N_N*_N_E];
       memcpy(_neighbors,   m.getNeighbors(),   _N_N*_N_E*sizeof(int));
 
@@ -134,25 +127,19 @@ class Limiting
       // tmp host pointers to copy data to gpu
       scalar* tmpLag2Mono = new scalar[_N_s*_N_s];     Lag2Mono.copyMatrixToPointer(tmpLag2Mono);
       scalar* tmpMono2Lag = new scalar[_N_s*_N_s];     Mono2Lag.copyMatrixToPointer(tmpMono2Lag);
-      scalar* tmpV1D      = new scalar[_N_G*_N_s];     V1D.copyMatrixToPointer(tmpV1D);
 
       // Allocate on GPU
       cudaMalloc((void**) &_Lag2Mono,_N_s*_N_s*sizeof(scalar));
       cudaMalloc((void**) &_Mono2Lag,_N_s*_N_s*sizeof(scalar));
-      cudaMalloc((void**) &_V1D,_N_G*_N_s*sizeof(scalar));
-      cudaMalloc((void**) &_weight,_N_G*sizeof(scalar));
       cudaMalloc((void**) &_neighbors  ,_N_N*_N_E*sizeof(int));
 
       // Copy data to GPU
       cudaMemcpy(_Lag2Mono, tmpLag2Mono, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
       cudaMemcpy(_Mono2Lag, tmpMono2Lag, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
-      cudaMemcpy(_V1D, tmpV1D, N_G*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
-      cudaMemcpy(_weight,weight, N_G*sizeof(scalar), cudaMemcpyHostToDevice);
       cudaMemcpy(_neighbors,  m.getNeighbors(),_N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice);
       
       delete[] tmpLag2Mono;	
       delete[] tmpMono2Lag;	
-      delete[] tmpV1D;	
 #endif
       }
       break;
@@ -229,10 +216,9 @@ class Limiting
   } // end 1D constructor
 
   /*!\brief Constructor for 2D limiting for structured mesh*/
- Limiting(int method, int N_s, int N_E, int N_G, int order, bool cartesian, int N_N, int N_ghosts, simpleMesh &m, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, fullMatrix<scalar> &V1D, scalar* weight) : _method(method), _N_s(N_s), _N_E(N_E), _N_G(N_G), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(N_ghosts){
+ Limiting(int method, int N_s, int N_E, int order, bool cartesian, int N_N, int N_ghosts, simpleMesh &m, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag) : _method(method), _N_s(N_s), _N_E(N_E), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(N_ghosts){
 
     _N_s1D = (order+1);
-    _N_G1D = (order+1);
     common_ctor();
     
     switch (_method){
@@ -245,8 +231,6 @@ class Limiting
       _MonoX2MonoY = new scalar[_N_s*_N_s];     MonoX2MonoY.copyMatrixToPointer(_MonoX2MonoY);
       _MonoX2Lag   = new scalar[_N_s*_N_s];
       _MonoY2Lag   = new scalar[_N_s*_N_s];     MonoY2Lag.copyMatrixToPointer(_MonoY2Lag);
-      _V1D      = new scalar[_N_G1D*_N_s1D];    V1D.copyMatrixToPointer(_V1D);
-      _weight   = new scalar[_N_G1D];           memcpy(_weight,weight,_N_G1D*sizeof(scalar));
       _neighbors  = new int[_N_N*_N_E];         memcpy(_neighbors,   m.getNeighbors(),   _N_N*_N_E*sizeof(int));
      
 #elif USE_GPU
@@ -254,7 +238,6 @@ class Limiting
       scalar* tmpLag2MonoX   = new scalar[_N_s*_N_s];     Lag2MonoX.copyMatrixToPointer(tmpLag2MonoX);
       scalar* tmpMonoX2MonoY = new scalar[_N_s*_N_s];     MonoX2MonoY.copyMatrixToPointer(tmpMonoX2MonoY);
       scalar* tmpMonoY2Lag   = new scalar[_N_s*_N_s];     MonoY2Lag.copyMatrixToPointer(tmpMonoY2Lag);
-      scalar* tmpV1D         = new scalar[_N_G1D*_N_s1D]; V1D.copyMatrixToPointer(tmpV1D);
 
       // Allocate on GPU
       cudaMalloc((void**) &_Lag2MonoX  ,_N_s*_N_s*sizeof(scalar));
@@ -262,22 +245,17 @@ class Limiting
       cudaMalloc((void**) &_MonoX2MonoY,_N_s*_N_s*sizeof(scalar));
       cudaMalloc((void**) &_MonoX2Lag  ,_N_s*_N_s*sizeof(scalar));
       cudaMalloc((void**) &_MonoY2Lag  ,_N_s*_N_s*sizeof(scalar));
-      cudaMalloc((void**) &_V1D        ,_N_G1D*_N_s1D*sizeof(scalar));
-      cudaMalloc((void**) &_weight     ,_N_G1D*sizeof(scalar));
       cudaMalloc((void**) &_neighbors  ,_N_N*_N_E*sizeof(int));
 	    
       // Copy data to GPU
       cudaMemcpy(_Lag2MonoX,   tmpLag2MonoX, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
       cudaMemcpy(_MonoX2MonoY, tmpMonoX2MonoY, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
       cudaMemcpy(_MonoY2Lag,   tmpMonoY2Lag, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
-      cudaMemcpy(_V1D, tmpV1D, _N_G1D*_N_s1D*sizeof(scalar), cudaMemcpyHostToDevice);
-      cudaMemcpy(_weight,weight, _N_G1D*sizeof(scalar), cudaMemcpyHostToDevice);
       cudaMemcpy(_neighbors,  m.getNeighbors(),_N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice);
 
       delete[] tmpLag2MonoX;
       delete[] tmpMonoX2MonoY;
       delete[] tmpMonoY2Lag;
-      delete[] tmpV1D;
 #endif
 
       }
@@ -363,90 +341,90 @@ class Limiting
     }
   }// end 2D constructor for structured mesh
   
-  /*!\brief Constructor for 2D limiting for unstructured mesh*/
- Limiting(int method, int N_s, int N_E, int N_G, int N_N, int L, int order, int L2Msize1, int L2Msize2, simpleMesh &m, fullMatrix<scalar> Lag2Mono, fullMatrix<scalar> Mono2Lag, fullMatrix<scalar> XYZCen, scalar* powersXYZG, scalar* weight, scalar refArea, int* TaylorDxIdx, int* TaylorDyIdx)
-   : _method(method), _D(D),_N_s(N_s), _N_E(N_E), _N_G(N_G), _N_N(N_N), _L(L), _order(order), _L2Msize1(L2Msize1), _L2Msize2(L2Msize2), _refArea(refArea){
+/*   /\*!\brief Constructor for 2D limiting for unstructured mesh*\/ */
+/*  Limiting(int method, int N_s, int N_E, int N_G, int N_N, int L, int order, int L2Msize1, int L2Msize2, simpleMesh &m, fullMatrix<scalar> Lag2Mono, fullMatrix<scalar> Mono2Lag, fullMatrix<scalar> XYZCen, scalar* powersXYZG, scalar* weight, scalar refArea, int* TaylorDxIdx, int* TaylorDyIdx) */
+/*    : _method(method), _D(D),_N_s(N_s), _N_E(N_E), _N_G(N_G), _N_N(N_N), _L(L), _order(order), _L2Msize1(L2Msize1), _L2Msize2(L2Msize2), _refArea(refArea){ */
 
-    common_ctor();
+/*     common_ctor(); */
     
-    switch (_method){
-    case 1:
-    case 2:
-    case 3:{
-#ifdef USE_CPU
-      // Allocate
-      _Lag2Mono   = new scalar[_L2Msize1*_L2Msize2*_N_E];
-      _Mono2Lag   = new scalar[_L2Msize2*_L2Msize1*_N_E];
-      _XYZCen     = new scalar[_N_E*_D];
-      _powersXYZG = new scalar[_L2Msize1*_N_G*(_N_N+1)*_N_E];
-      _neighbors  = new int[_N_N*_N_E];
-      _weight     = new scalar[_N_G];
-      _TaylorDxIdx= new int[_L];
-      _TaylorDyIdx= new int[_L];
-      _A          = new scalar[_L2Msize1*_N_E*N_F]; makeZero(_A,    _L2Msize1*_N_E*N_F);
-      _Alim       = new scalar[_L2Msize1*_N_E*N_F]; makeZero(_Alim, _L2Msize1*_N_E*N_F);
+/*     switch (_method){ */
+/*     case 1: */
+/*     case 2: */
+/*     case 3:{ */
+/* #ifdef USE_CPU */
+/*       // Allocate */
+/*       _Lag2Mono   = new scalar[_L2Msize1*_L2Msize2*_N_E]; */
+/*       _Mono2Lag   = new scalar[_L2Msize2*_L2Msize1*_N_E]; */
+/*       _XYZCen     = new scalar[_N_E*_D]; */
+/*       _powersXYZG = new scalar[_L2Msize1*_N_G*(_N_N+1)*_N_E]; */
+/*       _neighbors  = new int[_N_N*_N_E]; */
+/*       _weight     = new scalar[_N_G]; */
+/*       _TaylorDxIdx= new int[_L]; */
+/*       _TaylorDyIdx= new int[_L]; */
+/*       _A          = new scalar[_L2Msize1*_N_E*N_F]; makeZero(_A,    _L2Msize1*_N_E*N_F); */
+/*       _Alim       = new scalar[_L2Msize1*_N_E*N_F]; makeZero(_Alim, _L2Msize1*_N_E*N_F); */
 
-      // Copy the data to these new pointers
-      for(int e = 0; e < _N_E; e++){
-	for(int alpha = 0; alpha < D; alpha++){ _XYZCen[e*D+alpha] = XYZCen(e,alpha);}
-      	for(int i = 0; i < _L2Msize1; i++){
-      	  for(int j = 0; j < _L2Msize2; j++){
-      	    _Lag2Mono[(e*_L2Msize1+i)*_L2Msize2+j] = Lag2Mono(e,i*_L2Msize2+j);
-      	    _Mono2Lag[(e*_L2Msize2+j)*_L2Msize1+i] = Mono2Lag(e,j*_L2Msize1+i);}}}
-      memcpy(_powersXYZG,  powersXYZG,  _L2Msize1*_N_G*(_N_N+1)*_N_E*sizeof(scalar));
-      memcpy(_neighbors,   m.getNeighbors(),   _N_N*_N_E*sizeof(int));
-      memcpy(_weight,      weight,      _N_G*sizeof(scalar));
-      memcpy(_TaylorDxIdx, TaylorDxIdx, _L*sizeof(int));
-      memcpy(_TaylorDyIdx, TaylorDyIdx, _L*sizeof(int));
+/*       // Copy the data to these new pointers */
+/*       for(int e = 0; e < _N_E; e++){ */
+/* 	for(int alpha = 0; alpha < D; alpha++){ _XYZCen[e*D+alpha] = XYZCen(e,alpha);} */
+/*       	for(int i = 0; i < _L2Msize1; i++){ */
+/*       	  for(int j = 0; j < _L2Msize2; j++){ */
+/*       	    _Lag2Mono[(e*_L2Msize1+i)*_L2Msize2+j] = Lag2Mono(e,i*_L2Msize2+j); */
+/*       	    _Mono2Lag[(e*_L2Msize2+j)*_L2Msize1+i] = Mono2Lag(e,j*_L2Msize1+i);}}} */
+/*       memcpy(_powersXYZG,  powersXYZG,  _L2Msize1*_N_G*(_N_N+1)*_N_E*sizeof(scalar)); */
+/*       memcpy(_neighbors,   m.getNeighbors(),   _N_N*_N_E*sizeof(int)); */
+/*       memcpy(_weight,      weight,      _N_G*sizeof(scalar)); */
+/*       memcpy(_TaylorDxIdx, TaylorDxIdx, _L*sizeof(int)); */
+/*       memcpy(_TaylorDyIdx, TaylorDyIdx, _L*sizeof(int)); */
       
-#elif USE_GPU
-      // tmp host pointers to copy data to gpu
-      scalar* tmpLag2Mono   = new scalar[_L2Msize1*_L2Msize2*_N_E];
-      scalar* tmpMono2Lag   = new scalar[_L2Msize2*_L2Msize1*_N_E];
-      scalar* tmpXYZCen     = new scalar[_N_E*_D];
-      for(int e = 0; e < _N_E; e++){
-	for(int alpha = 0; alpha < D; alpha++){ tmpXYZCen[e*D+alpha] = XYZCen(e,alpha);}
-	for(int i = 0; i < _L2Msize1; i++){
-	  for(int j = 0; j < _L2Msize2; j++){
-      	    tmpLag2Mono[(e*_L2Msize1+i)*_L2Msize2+j] = Lag2Mono(e,i*_L2Msize2+j);
-      	    tmpMono2Lag[(e*_L2Msize2+j)*_L2Msize1+i] = Mono2Lag(e,j*_L2Msize1+i);}}}
+/* #elif USE_GPU */
+/*       // tmp host pointers to copy data to gpu */
+/*       scalar* tmpLag2Mono   = new scalar[_L2Msize1*_L2Msize2*_N_E]; */
+/*       scalar* tmpMono2Lag   = new scalar[_L2Msize2*_L2Msize1*_N_E]; */
+/*       scalar* tmpXYZCen     = new scalar[_N_E*_D]; */
+/*       for(int e = 0; e < _N_E; e++){ */
+/* 	for(int alpha = 0; alpha < D; alpha++){ tmpXYZCen[e*D+alpha] = XYZCen(e,alpha);} */
+/* 	for(int i = 0; i < _L2Msize1; i++){ */
+/* 	  for(int j = 0; j < _L2Msize2; j++){ */
+/*       	    tmpLag2Mono[(e*_L2Msize1+i)*_L2Msize2+j] = Lag2Mono(e,i*_L2Msize2+j); */
+/*       	    tmpMono2Lag[(e*_L2Msize2+j)*_L2Msize1+i] = Mono2Lag(e,j*_L2Msize1+i);}}} */
 
-      // Allocate on GPU
-      cudaMalloc((void**) &_Lag2Mono,_L2Msize1*_L2Msize2*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_Mono2Lag,_L2Msize2*_L2Msize1*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_XYZCen,_D*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_powersXYZG,_L2Msize1*_N_G*(_N_N+1)*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_neighbors,_N_N*_N_E*sizeof(int));
-      cudaMalloc((void**) &_weight,_N_G*sizeof(scalar));
-      cudaMalloc((void**) &_TaylorDxIdx,_L*sizeof(int));
-      cudaMalloc((void**) &_TaylorDyIdx,_L*sizeof(int));
-      cudaMalloc((void**) &_A,_L2Msize1*_N_E*N_F*sizeof(scalar));
-      cudaMalloc((void**) &_Alim,_L2Msize1*_N_E*N_F*sizeof(scalar));
+/*       // Allocate on GPU */
+/*       cudaMalloc((void**) &_Lag2Mono,_L2Msize1*_L2Msize2*_N_E*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_Mono2Lag,_L2Msize2*_L2Msize1*_N_E*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_XYZCen,_D*_N_E*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_powersXYZG,_L2Msize1*_N_G*(_N_N+1)*_N_E*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_neighbors,_N_N*_N_E*sizeof(int)); */
+/*       cudaMalloc((void**) &_weight,_N_G*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_TaylorDxIdx,_L*sizeof(int)); */
+/*       cudaMalloc((void**) &_TaylorDyIdx,_L*sizeof(int)); */
+/*       cudaMalloc((void**) &_A,_L2Msize1*_N_E*N_F*sizeof(scalar)); */
+/*       cudaMalloc((void**) &_Alim,_L2Msize1*_N_E*N_F*sizeof(scalar)); */
 
-      // Copy data to GPU
-      cudaMemcpy(_Lag2Mono,   tmpLag2Mono, _L2Msize1*_L2Msize2*_N_E*sizeof(scalar), cudaMemcpyHostToDevice);
-      cudaMemcpy(_Mono2Lag,   tmpMono2Lag, _L2Msize2*_L2Msize1*_N_E*sizeof(scalar), cudaMemcpyHostToDevice);
-      cudaMemcpy(_XYZCen,     tmpXYZCen,   _D*_N_E*sizeof(scalar), cudaMemcpyHostToDevice);
-      cudaMemcpy(_powersXYZG, powersXYZG,  _L2Msize1*_N_G*(_N_N+1)*_N_E*sizeof(scalar), cudaMemcpyHostToDevice);
-      cudaMemcpy(_neighbors,  m.getNeighbors(),   _N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice);
-      cudaMemcpy(_weight,     weight,      _N_G*sizeof(scalar), cudaMemcpyHostToDevice);
-      cudaMemcpy(_TaylorDxIdx,TaylorDxIdx, _L*sizeof(int), cudaMemcpyHostToDevice);
-      cudaMemcpy(_TaylorDyIdx,TaylorDyIdx, _L*sizeof(int), cudaMemcpyHostToDevice);
-      cudaMemset(_A,    (scalar)0.0, _L2Msize1*_N_E*N_F*sizeof(scalar));
-      cudaMemset(_Alim, (scalar)0.0, _L2Msize1*_N_E*N_F*sizeof(scalar));
+/*       // Copy data to GPU */
+/*       cudaMemcpy(_Lag2Mono,   tmpLag2Mono, _L2Msize1*_L2Msize2*_N_E*sizeof(scalar), cudaMemcpyHostToDevice); */
+/*       cudaMemcpy(_Mono2Lag,   tmpMono2Lag, _L2Msize2*_L2Msize1*_N_E*sizeof(scalar), cudaMemcpyHostToDevice); */
+/*       cudaMemcpy(_XYZCen,     tmpXYZCen,   _D*_N_E*sizeof(scalar), cudaMemcpyHostToDevice); */
+/*       cudaMemcpy(_powersXYZG, powersXYZG,  _L2Msize1*_N_G*(_N_N+1)*_N_E*sizeof(scalar), cudaMemcpyHostToDevice); */
+/*       cudaMemcpy(_neighbors,  m.getNeighbors(),   _N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice); */
+/*       cudaMemcpy(_weight,     weight,      _N_G*sizeof(scalar), cudaMemcpyHostToDevice); */
+/*       cudaMemcpy(_TaylorDxIdx,TaylorDxIdx, _L*sizeof(int), cudaMemcpyHostToDevice); */
+/*       cudaMemcpy(_TaylorDyIdx,TaylorDyIdx, _L*sizeof(int), cudaMemcpyHostToDevice); */
+/*       cudaMemset(_A,    (scalar)0.0, _L2Msize1*_N_E*N_F*sizeof(scalar)); */
+/*       cudaMemset(_Alim, (scalar)0.0, _L2Msize1*_N_E*N_F*sizeof(scalar)); */
       
-      delete[] tmpLag2Mono;
-      delete[] tmpMono2Lag;
-      delete[] tmpXYZCen;
-#endif
-      }
-      break;
-    default:
-      _method = 0;
-    }
+/*       delete[] tmpLag2Mono; */
+/*       delete[] tmpMono2Lag; */
+/*       delete[] tmpXYZCen; */
+/* #endif */
+/*       } */
+/*       break; */
+/*     default: */
+/*       _method = 0; */
+/*     } */
     
-    // For case specific stuff:
-  } // end 2D constructor
+/*     // For case specific stuff: */
+/*   } // end 2D constructor */
   
   // destructor
   ~Limiting(){
@@ -457,7 +435,6 @@ class Limiting
     if(_MonoX2MonoY)  del(_MonoX2MonoY);
     if(_MonoX2Lag)    del(_MonoX2Lag);
     if(_MonoY2Lag)    del(_MonoY2Lag);
-    if(_weight)       del(_weight);
     if(_A)            del(_A);
     if(_Alim)         del(_Alim);
     if(_rho){         del(_rho); del(_rhoMono); del(_rhoLim);}
@@ -473,7 +450,6 @@ class Limiting
 #define LOOP_END N_Y
 #define MACRO(x) if(_Y(x)) del(_Y(x)); del(_YMono(x)); del(_YLim(x));
 #include "loop.h"
-    if(_V1D)          del(_V1D);
     if(_XYZCen)       del(_XYZCen);
     if(_powersXYZG)   del(_powersXYZG);
     if(_neighbors)    del(_neighbors);

@@ -762,18 +762,16 @@ int main (int argc, char **argv)
   // Setup the limiter
   //
   //////////////////////////////////////////////////////////////////////////
-  scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++) h_weight[g] = (scalar)weight(g,0);  
 #ifdef ONED
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_G, N_N, m, Lag2Mono, Mono2Lag, monoV, h_weight);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_N, m, Lag2Mono, Mono2Lag);
 #elif TWOD
 
   //
   // Structured mesh
   //
   //if(cartesian){
-  scalar* h_weightF  = new scalar[M_G]; makeZero(h_weightF,M_G); for(int g=0; g<M_G; g++) h_weightF[g] = (scalar)weightF(g,0);  
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_G, order, cartesian, N_N, N_ghosts, m, Lag2MonoX, MonoX2MonoY, MonoY2Lag, monoV, h_weightF);
-  delete[] h_weightF;
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, order, cartesian, N_N, N_ghosts, m, Lag2MonoX, MonoX2MonoY, MonoY2Lag);
+
   //}
   
   // //
@@ -802,6 +800,7 @@ int main (int argc, char **argv)
   scalar CFL   = inputs.getCFL()*m.getDx()/(2.0*order+1);
 
   if(myid==0){printf("==== Now RK 4 steps =====\n");}
+  scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++) h_weight[g] = (scalar)weight(g,0);  
   DG_SOLVER dgsolver = DG_SOLVER(N_E, N_s, N_G, N_N, M_T, M_s, M_G, M_B,
   				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, //h_xyz, h_xyzf,
 				 h_J, h_invJac, h_JF, h_weight, h_normals, m);
@@ -1012,9 +1011,9 @@ void average_cell_p0(const int N_s, const int N_E, fullMatrix<scalar> &U){
 }
 
 void vandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scalar> &V1D){
-
-  // Purpose : Initialize the 1D Vandermonde Matrix, V_{ij} = phi_j(r_i);
-  
+  /*!
+    \brief Initialize the 1D Vandermonde Matrix, V_{ij} = phi_j(r_i);
+  */  
   V1D.resize(r.size1(),order+1);
   fullMatrix<scalar> P;
   for(int j=0;j<order+1;j++){
@@ -1024,8 +1023,9 @@ void vandermonde1d(const int order, const fullMatrix<scalar> r, fullMatrix<scala
 }
 
 void monovandermonde1d(const int order, const fullMatrix<double> r, fullMatrix<scalar> &V1D){
-
-  // Purpose : Initialize the 1D Vandermonde Matrix, V_{ij} = (r_i)^j/factorial(j);
+  /*!
+    \brief Initialize the 1D Vandermonde Matrix, V_{ij} = (r_i)^j/factorial(j);
+  */
   
   V1D.resize(r.size1(),order+1);
   for(int j=0;j<order+1;j++){
@@ -1036,9 +1036,10 @@ void monovandermonde1d(const int order, const fullMatrix<double> r, fullMatrix<s
 }
 
 void monovandermonde2d(const int order, const fullMatrix<double> r, fullMatrix<scalar> &V2D){
-
-  // Purpose : Initialize the 2D Vandermonde Matrix, V = (x_i)^nx (y_i)^ny / (factorial(nx)*factorial(ny));
-  // ith line = [1, x_i, y_i, x_i^2/2!, x_i*y_i, y_i^2/2!, x_i^3/3!, x_i^2*y_i/2!, x_i*y_i^2/2!, y_i^3/3!, ...]
+  /*!
+    \brief Initialize the 2D Vandermonde Matrix, V = (x_i)^nx (y_i)^ny / (factorial(nx)*factorial(ny)).
+    ith line = [1, x_i, y_i, x_i^2/2!, x_i*y_i, y_i^2/2!, x_i^3/3!, x_i^2*y_i/2!, x_i*y_i^2/2!, y_i^3/3!, ...]
+  */
 
   V2D.resize(r.size1(),(int)((order+1)*(order+2)/2.0));
 
@@ -1056,11 +1057,12 @@ void monovandermonde2d(const int order, const fullMatrix<double> r, fullMatrix<s
   }
 }
 
-// Returns the transforms (and inverse) from Lagrange to Taylor
-// polynomials NB: In >< to the 1D transforms, these are in the physical
-// space! So there is one transform per element
 void LagMono2DTransforms(const int N_E, const int N_s, const int order, const int L2Msize1, const int L2Msize2, std::string ElemType, const fullMatrix<scalar> XYZNodes, const fullMatrix<scalar> XYZCen, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag){
-
+  /*!
+    \brief Returns the transforms (and inverse) from Lagrange to Taylor polynomials.
+    NB: In >< to the 1D transforms, these are in the physical space! So there is one transform per element.
+  */
+  
   fullMatrix<scalar> M2L;
   fullMatrix<scalar> L2M;
   fullMatrix<double> points(N_s,D);
@@ -1126,10 +1128,12 @@ void LagMono2DTransforms(const int N_E, const int N_s, const int order, const in
 }
 
 
-// Get the powers of XZYG-XYZCen for each element and his neighbors
-// This is precalculated for increased speed in 2D limiting
 void getPowersXYZG(const int N_E, const int N_s, const int N_G, const int N_N, const int M_B, const int order, const fullMatrix<scalar> XYZG, const fullMatrix<scalar> XYZCen, const int* neighbors, const fullMatrix<scalar> shifts, scalar* powers){
-
+  /*!
+    \brief Get the powers of XZYG-XYZCen for each element and his neighbors/
+    This is precalculated for increased speed in 2D limiting.
+  */
+    
   fullMatrix<scalar> V;
   fullMatrix<double> points(N_G,D);
   int el = 0; // index of the neighboring element (or itself)
@@ -1169,17 +1173,20 @@ void getPowersXYZG(const int N_E, const int N_s, const int N_G, const int N_N, c
 }
 
 
-// Get the x and y derivative index. Basically gives you the index for
-// various derivatives of a Taylor polynomial. order is the DG order
-// dxIdx =[idx for 0th derivative wrt x, idx for 1st derivative wrt x, ...]
 int getTaylorDerIdx2DLength(const int order){
-  // Calculate the length of these indexes
+  /*! Calculate the length of these indexes*/
   int L = 0;
   for(int p = order; p >= 0; p--) L+=(p+1)*(p+2)/2;  // DOES THIS WORK ONLY FOR TRIANGLES?
   return L;
 }
 
 void getTaylorDerIdx2D(const int order, int* TaylorDxIdx, int* TaylorDyIdx){
+  /*!
+    \brief Get the x and y derivative index.
+    Basically gives you the index for various derivatives of a Taylor
+    polynomial. order is the DG order dxIdx =[idx for 0th derivative wrt
+    x, idx for 1st derivative wrt x, ...]
+  */
 
   // Fill these vectors with the appropriate indexes
   // wrt x
@@ -1219,11 +1226,13 @@ void getTaylorDerIdx2D(const int order, int* TaylorDxIdx, int* TaylorDyIdx){
 
 void cartesian_permutations(const int order, const fullMatrix<scalar> XYZNodes, fullMatrix<scalar> &Px, fullMatrix<scalar> &Py){
 
-  /* This function should be used for a cartesian mesh.  The idea is
-   to find the permutation matrix to go from the numbering system in
-   gmsh to a system where the nodes are numbered in increasing order
-   for increasing x and decreasing y. Best shown by example: for p=2,
-   the values of U are stored at the following indexes:
+  /*!
+    \brief Permutations for the cartesian mesh.
+    This function should be used for a cartesian mesh.  The idea is to
+    find the permutation matrix to go from the numbering system in gmsh
+    to a system where the nodes are numbered in increasing order for
+    increasing x and decreasing y. Best shown by example: for p=2, the
+    values of U are stored at the following indexes:
 
     0--4--1                                     3--5--4
     |  |  |                                     |  |  |
@@ -1338,9 +1347,12 @@ void cartesian_permutations(const int order, const fullMatrix<scalar> XYZNodes, 
 
 
 void LagMono2DTransformsCartesian(const int order, const int msh_lin, const fullMatrix<scalar> Px, const fullMatrix<scalar> Py, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag){
-  /* This function returns the 1D transforms for 2D transforms of
-     Lagrangian basis. Ax = Lag2MonoX * U, Ay = MonoX2MonoY * Ax,
-     U = MonoY2Lag Ay. */
+  /*!
+    \brief This function returns the 1D transforms for 2D transforms of Lagrangian basis.
+    Ax = Lag2MonoX * U, Ay = MonoX2MonoY * Ax, U = MonoY2Lag Ay.
+    This might be unnecessarily complicated (bc of the use of the GL
+    points) or very smart (i.e stable bc of the use of GL points)
+  */
 
   int N_s = (order+1)*(order+1);
   // 1D basis: phi and integration points

@@ -23,6 +23,9 @@ scalar cminmod (scalar* c, int n, scalar eps); // eq 2.21 of "Hierarchical recon
 scalar cminmod2(scalar* c, int n, scalar eps); // eq 2.21 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
 #endif
 arch_device int kernel_factorial(int n);
+arch_device inline scalar integrate_monomial_derivative(int k, int n);
+arch_device inline scalar integrate_monomial_derivative_left(int k, int n);
+arch_device inline scalar integrate_monomial_derivative_right(int k, int n);
 
 arch_device void getTaylorDerivative(int order, int N_s, scalar* T, int mx, int my, int* DxIdx, int* DyIdx, scalar* ddT);
 arch_device scalar CellAvg(int N_G, int ioff, scalar* weight, scalar refArea, scalar* powers, int N_s, scalar* T);
@@ -280,19 +283,16 @@ arch_global void addSFQ(int N_s, int N_E, scalar* A, scalar* S, scalar* F, scala
 
 
 //==========================================================================
-arch_global void hrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim){
+arch_global void hrl1D(int N_s, int N_E, int Nfields, int N_N, int slicenum, int* neighbors, int offxy, scalar* A, scalar* Alim){
   /*!
     \brief HR limiting function (assumes 1D decomposition)
     \param[in] N_s number of nodes per element
     \param[in] N_E number of elements
-    \param[in] N_G number of gaussian nodes per element
     \param[in] Nfields number of fields to operate on (eg. one field instead of N_F)
     \param[in] N_N number of neighbors per element
     \param[in] slicenum to decompose higher dimensional problem into 1D slices
     \param[in] neighbors array containing an element's neighbors
     \param[in] offxy offset if limiting in x or y
-    \param[in] weight gaussian integration weights
-    \param[in] V vandermonde matrix evaluated at gaussian nodes
     \param[in] A solution to limit (monomial form)
     \param[out] Alim limited solution (monomial form)
   */
@@ -312,12 +312,10 @@ arch_global void hrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int slic
 #endif  
 
 	int N = N_s-1;
-	scalar avgdUL = 0, avgdUC=0, avgdUR=0;
-	scalar dUL = 0, dUC = 0, dUR = 0;
-	scalar RL = 0, RC=0, RR=0;
-	scalar avgRL = 0, avgRC=0, avgRR=0;
+	scalar avgdUL = 0, avgdUC=0, avgdUR=0; scalar integral = 0;
+	scalar avgRL = 0, avgRC=0, avgRR=0; scalar alim = 0;
 	scalar avgLL = 0, avgLC=0, avgLR=0;
-
+	
 	int left  = neighbors[e*N_N+offxy+0];
 	int right = neighbors[e*N_N+offxy+1];
 	//printf("e:%i ; left:%i; right:%i\n",e,neighbors[e*N_N+offxy+0],neighbors[e*N_N+offxy+1]);
@@ -335,32 +333,24 @@ arch_global void hrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int slic
 	// Loop on derivatives
 	for(int m = N; m > 0; m--){
 	  avgdUL = 0; avgdUC=0; avgdUR=0;
+	  avgRL = 0; avgRC = 0; avgRR = 0;
 
-	  // Calculate the derivative average in the cells: left, center,
-	  // right calculate the remainder polynomial in our cells and its
-	  // two neighbors
-	  for(int g = 0; g < N_G; g++){
-	    dUL = 0; dUC = 0; dUR = 0;
-	    RL  = 0; RC  = 0; RR  = 0;
-
-	    for(int j=0;j<=N-(m-1);j++){
-	      dUL += A[(left *Nfields+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
-	      dUC += A[(e    *Nfields+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
-	      dUR += A[(right*Nfields+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
-	      if(j>=2){
-	    	RL += Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*pow(V[1*N_G+g]-2,j)/(scalar)kernel_factorial(j);
-	    	RC += Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*V[j*N_G+g];
-	    	RR += Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+(j+m-1)]*pow(V[1*N_G+g]+2,j)/(scalar)kernel_factorial(j);
-	      }// end if
+	  // Calculate the derivative average in the cells: left,
+	  // center, right. Calculate the remainder polynomial in our
+	  // cells and its two neighbors
+	  for(int n=m-1; n<=N; n++){
+	    integral = integrate_monomial_derivative(m-1,n);
+	    avgdUL += A[(left *Nfields+fc)*N_s*slicenum+slice*N_s+n]*integral;
+	    avgdUC += A[(e    *Nfields+fc)*N_s*slicenum+slice*N_s+n]*integral;
+	    avgdUR += A[(right*Nfields+fc)*N_s*slicenum+slice*N_s+n]*integral;
+	    if(n>=m+1){
+	      alim = Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+n];
+	      avgRL += alim*integrate_monomial_derivative_left(m-1,n);
+	      avgRC += alim*integral;
+	      avgRR += alim*integrate_monomial_derivative_right(m-1,n);
 	    }
-	    avgdUL += dUL*weight[g];
-	    avgdUC += dUC*weight[g];
-	    avgdUR += dUR*weight[g];
-	    avgRL  += RL*weight[g];
-	    avgRC  += RC*weight[g]; 
-	    avgRR  += RR*weight[g];
-	  }// end integration loop
-
+	  }
+	  
 	  // Approximate the average of the linear part
 	  avgLL = 0.5*(avgdUL - avgRL); // avg = \frac{1}{2} \int_{-1}^1 U \ud x
 	  avgLC = 0.5*(avgdUC - avgRC);
@@ -387,8 +377,6 @@ arch_global void hrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int slic
 	    //or use minmod2(c,2), minmod(c,2,eps), cminmod(c,2,0.01); cminmod2(c,2,eps)
 	    if(m==1){Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+0] = avgLC;}
 	  }
-	  
-	  avgRL=0; avgRC=0; avgRR=0;
 	}// end loop on m
 
 #ifdef USE_CPU
@@ -722,19 +710,16 @@ void LaddSFQ(int N_s, int N_E, scalar* A, scalar* S, scalar* F, scalar* Q){
 }
 
 extern "C"
-void Lhrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int slicenum, int* neighbors, int offxy, scalar* weight, scalar* V, scalar* A, scalar* Alim){
+void Lhrl1D(int N_s, int N_E, int Nfields, int N_N, int slicenum, int* neighbors, int offxy, scalar* A, scalar* Alim){
   /*!
     \brief Host C function to launch hrl1D kernel.
     \param[in] N_s number of nodes per element
     \param[in] N_E number of elements
-    \param[in] N_G number of gaussian nodes per element
     \param[in] Nfields number of fields to operate on (eg. one field instead of N_F)
     \param[in] N_N number of neighbors per element
     \param[in] slicenum to decompose higher dimensional problem into 1D slices
     \param[in] neighbors array containing an element's neighbors
     \param[in] offxy offset if limiting in x or y
-    \param[in] weight gaussian integration weights
-    \param[in] V vandermonde matrix evaluated at gaussian nodes
     \param[in] A solution to limit (monomial form)
     \param[out] Alim limited solution (monomial form)
     \section Description
@@ -749,7 +734,7 @@ void Lhrl1D(int N_s, int N_E, int N_G, int Nfields, int N_N, int slicenum, int* 
   dim3 dimGrid(div+mod,1);
 #endif
 
-  hrl1D arch_args_array(blkE*slicenum*Nfields*2*sizeof(scalar)) (N_s, N_E, N_G, Nfields, N_N, slicenum, neighbors, offxy, weight, V, A, Alim);
+  hrl1D arch_args_array(blkE*slicenum*Nfields*2*sizeof(scalar)) (N_s, N_E, Nfields, N_N, slicenum, neighbors, offxy, A, Alim);
 }
 
 extern "C"
@@ -940,6 +925,46 @@ arch_device int kernel_factorial(int n)
   return 1; // default return for kernel_factorial
 }
 
+
+arch_device inline scalar integrate_monomial_derivative(int k, int n)
+{
+  /*!
+    \brief The integral of the kth derivative of nth order monomial (from -1 to 1)
+    \param[in] k kth derivative of the polynomial
+    \param[in] n monomial order
+    \return \frac{2}{(n-k+1)!} if n-k+1 is odd, 0 otherwise
+    Calculates $\int_{-1}^1 \frac{\partial^k}{\partialx^k} \frac{x^n}{n!} \mathrm{d} x$
+  */
+  int num = n-k+1;
+  if (num%2) return 2.0/(scalar)kernel_factorial(num);
+  else return 0.0;
+}
+
+arch_device inline scalar integrate_monomial_derivative_left(int k, int n)
+{
+  /*!
+    \brief The integral of the kth derivative of nth order monomial in the left cell (from -3 to -1).
+    \param[in] k kth derivative of the polynomial
+    \param[in] n monomial order
+    \return the integral
+    Calculates $\int_{-3}^{-1} \frac{\partial^k}{\partialx^k} \frac{x^n}{n!} \mathrm{d} x$
+  */
+  int num = n-k+1;
+  return (pow(-1,num) - pow(-3,num))/(scalar)kernel_factorial(num);
+}
+
+arch_device inline scalar integrate_monomial_derivative_right(int k, int n)
+{
+  /*!
+    \brief The integral of the kth derivative of nth order monomial in the right cell (from 1 to 3).
+    \param[in] k kth derivative of the polynomial
+    \param[in] n monomial order
+    \return the integral
+    Calculates $\int_{1}^{3} \frac{\partial^k}{\partialx^k} \frac{x^n}{n!} \mathrm{d} x$
+  */
+  int num = n-k+1;
+  return (pow(3,num) - pow(1,num))/(scalar)kernel_factorial(num);
+}
 
 arch_device void getTaylorDerivative(int order, int N_s, scalar* T, int mx, int my, int* DxIdx, int* DyIdx, scalar* ddT){
   /*!
