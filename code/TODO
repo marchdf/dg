@@ -19,7 +19,6 @@
   - add HLLC
 
 \mytodo LIMITING
-  - Instead of numerical integration in HRL1D, do it exactly?
   - It's a very ugly implementation right now...
   - I have powersXYZG and V1D, could I combine the two to avoid ifdefs?
   - ifdefs on dims in HRL, MYL, M2L
