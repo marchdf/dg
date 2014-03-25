@@ -160,6 +160,7 @@ int main (int argc, char **argv)
   bool stffrnt = false;
   bool stfshck = false;
   bool stfbubl = false;
+  bool shckdrp = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
   else if (inputs.getInitialCondition()=="contact") contact = true;
@@ -186,6 +187,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="stffrnt") stffrnt = true;
   else if (inputs.getInitialCondition()=="stfshck") stfshck = true;
   else if (inputs.getInitialCondition()=="stfbubl") stfbubl = true;
+  else if (inputs.getInitialCondition()=="shckdrp") shckdrp = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // setup the boundary condition type
@@ -619,6 +621,7 @@ int main (int argc, char **argv)
   if (stffrnt) init_dg_stffrnt_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
   if (stfshck) init_dg_stfshck_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
   if (stfbubl) init_dg_stfbubl_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
+  if (shckdrp) init_dg_shckdrp_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
 #endif
 
   if (order0) average_cell_p0(N_s, N_E, U);

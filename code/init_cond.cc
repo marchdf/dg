@@ -2128,7 +2128,7 @@ void init_dg_stfbubl_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar gammaS= gamma_water;
   scalar pinfS = pinf_water/(rho_air*cs_air*cs_air);
   scalar pS    = pSwater/(rho_air*cs_air*cs_air);
-  scalar EtS   = 1.0/(gammaS-1.0)*pS + gammaS*pinfS/(gammaS-1) + 0.5*rhoS*uS*uS;
+  scalar EtS   = 1.0/(gammaS-1.0)*pS + gammaS*pinfS/(gammaS-1) + 0.5*rhoS*(uS*uS+vS*vS);
   scalar GS    = 1.0/(gammaS-1.0);
   scalar xshckpos = -2;
   printf("rhoSwater=%f, uSwater=%f, pSwater=%f\n",rhoSwater,uSwater,pSwater);
@@ -2141,7 +2141,7 @@ void init_dg_stfbubl_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar gammaW = gamma_water;
   scalar pinfW  = pinf_water/(rho_air*cs_air*cs_air);
   scalar pW     = patm/(rho_air*cs_air*cs_air);
-  scalar EtW    = 1.0/(gammaW-1.0)*pW + gammaW*pinfW/(gammaW-1)  + 0.5*rhoW*uW*uW;
+  scalar EtW    = 1.0/(gammaW-1.0)*pW + gammaW*pinfW/(gammaW-1)  + 0.5*rhoW*(uW*uW+vW*vW);
   scalar GW     = 1.0/(gammaW-1.0);
   printf("rhoW=%f, uW=%f, pW=%f\n",rhoW,uW,pW);
   
@@ -2152,7 +2152,7 @@ void init_dg_stfbubl_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar gammaB = gamma_air;
   scalar pinfB  = 0;
   scalar pB     = patm/(rho_air*cs_air*cs_air);
-  scalar EtB    = 1.0/(gammaB-1.0)*pB + gammaB*pinfB/(gammaB-1)  + 0.5*rhoB*uB*uB;
+  scalar EtB    = 1.0/(gammaB-1.0)*pB + gammaB*pinfB/(gammaB-1)  + 0.5*rhoB*(uB*uB+vB*vB);
   scalar GB     = 1.0/(gammaB-1.0);
   scalar radius = 1;
   printf("rhoB=%f, uB=%f, pB=%f\n",rhoB,uB,pB);
@@ -2185,6 +2185,101 @@ void init_dg_stfbubl_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 	U(i,e*N_F+3) = EtW;
 	U(i,e*N_F+4) = GW;
 	U(i,e*N_F+5) = gammaW*pinfW/(gammaW-1);
+      }
+    }
+  }
+}
+
+void init_dg_shckdrp_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+
+  // Shock-droplet interaction: water drop in air
+  // From: ISSW29 proceeding 0246-000311
+  // Pressure and pinf normalized by (rho_air*cs_air^2)
+
+  // Material properties
+  // air at 300K/27C from http://www.mhtl.uwaterloo.ca/old/onlinetools/airprop/airprop.html
+  scalar rho_air = 1.1765;
+  scalar gamma_air = 1.4;
+  scalar patm = 101325;
+  scalar cs_air = sqrt(gamma_air*patm/rho_air);
+
+  // water at 300K
+  scalar rho_water = 996; // use 970 if gelatine/water mixture as in Bourne1992
+  scalar gamma_water = 5.5;// Shahab uses different EoS model and so 2.35;
+  scalar pinf_water = 492115000;// Shahab uses: 1e9;
+  scalar cs_water = sqrt(gamma_water*(patm+pinf_water)/rho_water);
+  
+  // Shock properties
+  scalar Ms = 2.5;
+  printf("Shock mach number = %g\n",Ms);
+  
+  // post-shock state (in air)
+  scalar rhoSair = rho_air*(gamma_air+1)*Ms*Ms/(2+(gamma_air-1)*Ms*Ms);
+  scalar uSair = Ms*cs_air*(2*(Ms*Ms-1))/(gamma_air+1)/(Ms*Ms);
+  scalar pSair = patm*(1+2*gamma_air/(gamma_air+1)*(Ms*Ms-1));
+  scalar rhoS  = rhoSair/rho_air;
+  scalar uS    = uSair/cs_air;
+  scalar vS    = 0;
+  scalar gammaS= gamma_air;
+  scalar pinfS = 0;
+  scalar pS    = pSair/(rho_air*cs_air*cs_air);
+  scalar EtS   = 1.0/(gammaS-1.0)*pS + gammaS*pinfS/(gammaS-1) + 0.5*rhoS*(uS*uS+vS*vS);
+  scalar GS    = 1.0/(gammaS-1.0);
+  scalar xshckpos = -2;
+  printf("rhoSair=%f, uSair=%f, pSair=%f\n",rhoSair,uSair,pSair);
+  printf("rhoS=%f, uS=%f, pS=%f\n",rhoS,uS,pS);
+    
+  // Background air
+  scalar rhoA   = rho_air/rho_air;
+  scalar uA     = 0.0;
+  scalar vA     = 0.0;
+  scalar gammaA = gamma_air;
+  scalar pinfA  = 0;
+  scalar pA     = patm/(rho_air*cs_air*cs_air);
+  scalar EtA    = 1.0/(gammaA-1.0)*pA + gammaA*pinfA/(gammaA-1)  + 0.5*rhoA*(uA*uA+vA*vA);
+  scalar GA     = 1.0/(gammaA-1.0);
+  printf("rhoA=%f, uA=%f, pA=%f\n",rhoA,uA,pA);
+  
+  // Water bubble properties
+  scalar rhoB   = rho_water/rho_air;
+  scalar uB     = 0.0;
+  scalar vB     = 0.0;
+  scalar gammaB = gamma_water;
+  scalar pinfB  = pinf_water/(rho_air*cs_air*cs_air);
+  scalar pB     = patm/(rho_air*cs_air*cs_air);
+  scalar EtB    = 1.0/(gammaB-1.0)*pB + gammaB*pinfB/(gammaB-1)  + 0.5*rhoB*(uB*uB+vB*vB);
+  scalar GB     = 1.0/(gammaB-1.0);
+  scalar radius = 1;
+  printf("rhoB=%f, uB=%f, pB=%f\n",rhoB,uB,pB);
+
+  scalar xc=0,yc=0;
+  for(int e = 0; e < N_E; e++){
+    xc = XYZCen(e,0);
+    yc = XYZCen(e,1);
+    for(int i = 0; i < N_s; i++){
+      if (xc*xc+yc*yc<radius*radius){ // inside the bubble
+	U(i,e*N_F+0) = rhoB;
+	U(i,e*N_F+1) = rhoB*uB;
+	U(i,e*N_F+2) = rhoB*vB;
+	U(i,e*N_F+3) = EtB;
+	U(i,e*N_F+4) = GB;
+	U(i,e*N_F+5) = gammaB*pinfB/(gammaB-1);
+      }
+      else if (xc<xshckpos){
+	U(i,e*N_F+0) = rhoS;
+	U(i,e*N_F+1) = rhoS*uS;
+	U(i,e*N_F+2) = rhoS*vS;
+	U(i,e*N_F+3) = EtS;
+	U(i,e*N_F+4) = GS;
+	U(i,e*N_F+5) = gammaS*pinfS/(gammaS-1);
+      }
+      else {
+	U(i,e*N_F+0) = rhoA;
+	U(i,e*N_F+1) = rhoA*uA;
+	U(i,e*N_F+2) = rhoA*vA;
+	U(i,e*N_F+3) = EtA;
+	U(i,e*N_F+4) = GA;
+	U(i,e*N_F+5) = gammaA*pinfA/(gammaA-1);
       }
     }
   }

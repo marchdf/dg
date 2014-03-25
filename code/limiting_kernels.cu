@@ -22,8 +22,7 @@ scalar cminmod (scalar* c, int n, scalar eps); // eq 2.21 of "Hierarchical recon
 scalar cminmod2(scalar* c, int n, scalar eps); // eq 2.21 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
 #endif
 arch_device inline scalar integrate_monomial_derivative(int k, int n);
-arch_device inline scalar integrate_monomial_derivative_left(int k, int n);
-arch_device inline scalar integrate_monomial_derivative_right(int k, int n);
+arch_device inline scalar integrate_monomial_derivative_bounds(int k, int n,scalar a, scalar b);
 
 arch_device void getTaylorDerivative(int order, int N_s, scalar* T, int mx, int my, int* DxIdx, int* DyIdx, scalar* ddT);
 arch_device scalar CellAvg(int N_G, int ioff, scalar* weight, scalar refArea, scalar* powers, int N_s, scalar* T);
@@ -294,9 +293,9 @@ arch_global void hrl1D(int N_s, int N_E, int Nfields, int N_N, int slicenum, int
 	    avgdUR += A[(right*Nfields+fc)*N_s*slicenum+slice*N_s+n]*integral;
 	    if(n>=m+1){
 	      alim = Alim[(e*Nfields+fc)*N_s*slicenum+slice*N_s+n];
-	      avgRL += alim*integrate_monomial_derivative_left(m-1,n);
+	      avgRL += alim*integrate_monomial_derivative_bounds(m-1,n,-3,-1);
 	      avgRC += alim*integral;
-	      avgRR += alim*integrate_monomial_derivative_right(m-1,n);
+	      avgRR += alim*integrate_monomial_derivative_bounds(m-1,n,1,3);
 	    }
 	  }
 	  
@@ -923,30 +922,19 @@ arch_device inline scalar integrate_monomial_derivative(int k, int n)
   else return 0.0;
 }
 
-arch_device inline scalar integrate_monomial_derivative_left(int k, int n)
+arch_device inline scalar integrate_monomial_derivative_bounds(int k, int n, scalar a, scalar b)
 {
   /*!
-    \brief The integral of the kth derivative of nth order monomial in the left cell (from -3 to -1).
+    \brief The integral of the kth derivative of nth order monomial.
     \param[in] k kth derivative of the polynomial
     \param[in] n monomial order
+    \param[in] a lower integral bound
+    \param[in] b upper integral bound
     \return the integral
-    Calculates $\int_{-3}^{-1} \frac{\partial^k}{\partialx^k} \frac{x^n}{n!} \mathrm{d} x$
+    Calculates $\int_{a}^{b} \frac{\partial^k}{\partialx^k} \frac{x^n}{n!} \mathrm{d} x$
   */
   int num = n-k+1;
-  return (pow(-1,num) - pow(-3,num))/(scalar)kernel_factorial(num);
-}
-
-arch_device inline scalar integrate_monomial_derivative_right(int k, int n)
-{
-  /*!
-    \brief The integral of the kth derivative of nth order monomial in the right cell (from 1 to 3).
-    \param[in] k kth derivative of the polynomial
-    \param[in] n monomial order
-    \return the integral
-    Calculates $\int_{1}^{3} \frac{\partial^k}{\partialx^k} \frac{x^n}{n!} \mathrm{d} x$
-  */
-  int num = n-k+1;
-  return (pow(3,num) - pow(1,num))/(scalar)kernel_factorial(num);
+  return (pow(b,num) - pow(a,num))/(scalar)kernel_factorial(num);
 }
 
 arch_device void getTaylorDerivative(int order, int N_s, scalar* T, int mx, int my, int* DxIdx, int* DyIdx, scalar* ddT){
