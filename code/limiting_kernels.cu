@@ -715,7 +715,6 @@ void LChangeBasis(int size1, int size2, int N_E, scalar* Transform, scalar* U, s
   ChangeBasis arch_args (size1, size2, N_E, Transform, U, Unew);
 }
 
-
 //==========================================================================
 //
 //  Internal functions
