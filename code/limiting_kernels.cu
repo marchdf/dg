@@ -6,6 +6,7 @@
 */
 #include <limiting_kernels.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 //==========================================================================
 //
@@ -273,10 +274,8 @@ arch_global void hrl1D(int N_s, int N_E, int Nfields, int N_N, int slicenum, int
 	// farfield (i.e. zero-gradient) = 2
 	// reflective = 3
 	int physical = 0;
-	bool L = false; // L = true if I don't have a neighbor on the left
-	bool R = false;
-	if (left  < 0){physical = -left;  left  = e; L = true;}
-	if (right < 0){physical = -right; right = e; R = true;}
+	if (left  < 0){physical = -left;  left  = e;}
+	if (right < 0){physical = -right; right = e;}
 	
 	// Loop on derivatives
 	for(int m = N; m > 0; m--){
@@ -333,6 +332,156 @@ arch_global void hrl1D(int N_s, int N_E, int Nfields, int N_N, int slicenum, int
     delete[] c;
 #endif
   }
+}
+
+//==========================================================================
+arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U){
+  /*!
+    \brief HR limiting function for individual elements (assumes 1D decomposition)
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] N_N number of neighbors per element
+    \param[in] neighbors array containing an element's neighbors
+    \param[in] N_s1D number of nodes in a slice (1D element)
+    \param[in] slicenum number of slices (in 2D N_s1D = slicenum)
+    \param[in] offxy offset if limiting in x or y
+    \param[out] U solution to limit (Lagrange form)
+  */
+
+  // Allocations 
+  scalar* AL = new scalar[N_s*N_F];
+  scalar* AC = new scalar[N_s*N_F];
+  scalar* AR = new scalar[N_s*N_F];
+  scalar* Alim = new scalar[N_s*N_F];
+  scalar sumL=0, sumC=0, sumR=0;
+
+  // Initializations
+  scalar avgdUL = 0, avgdUC=0, avgdUR=0; scalar integral = 0;
+  scalar avgRL = 0, avgRC=0, avgRR=0; scalar alim = 0;
+  scalar avgLL = 0, avgLC=0, avgLR=0;
+  scalar c1,c2;
+  scalar l2m;
+  scalar* uL, *uC, *uR;
+  int N = N_s1D-1; // polynomial order
+  
+  for(int e=0; e<N_E; e++){
+
+    // Neighbors
+    int left  = neighbors[e*N_N+offxy+0];
+    int right = neighbors[e*N_N+offxy+1];
+
+    // pointer to data of this element
+    uL = &U[N_s*left*N_F];
+    uC = &U[N_s*e*N_F];
+    uR = &U[N_s*right*N_F];
+    
+    // Check to see if we are at a boundary
+    // periodic = 1
+    // farfield (i.e. zero-gradient) = 2
+    // reflective = 3
+    // gravity = 4
+    int physical = 0;
+    if (left  < 0){physical = -left;  left  = e;}
+    if (right < 0){physical = -right; right = e;}
+
+    // Lagrange -> Monomial transformation
+    for(int m=0; m<N_s; m++){
+      for(int n=0; n<N_F; n++){
+	for(int p=0; p<N_s; p++){
+	  l2m = Lag2Mono[p*N_s+m];
+	  sumL += l2m*uL[n*N_s+p];
+	  sumC += l2m*uC[n*N_s+p];
+	  sumR += l2m*uR[n*N_s+p];
+	}
+	AL[n*N_s+m] = sumL; sumL = 0;
+	AC[n*N_s+m] = sumC; sumC = 0; Alim[n*N_s+m] = AC[n*N_s+m];
+	AR[n*N_s+m] = sumR; sumR = 0;
+      }
+    }
+
+    if (physical==4){} // gravity field: leave data unchanged. This is a problem if we also have shocks...
+    
+    // farfield (zero-gradient) and reflective BC
+    // Not necessary actually (I think... maybe it is for reflective BC...)
+    // set to average in the cell (ie set slopes to 0)
+    else if ((physical==2)||(physical==3)){ 
+      scalar avgU = 0;
+      for(int fc=0; fc<N_F; fc++){                      // loop on fields
+	for(int slice = 0; slice < slicenum; slice++){ 	// loop on slices 
+	  avgU = 0;
+	  // Calculate the cell average and set limited slopes to 0
+	  for(int n=0; n<=N; n++){
+	    avgU += AC[fc*N_s1D*slicenum+slice*N_s1D+n]*integrate_monomial_derivative(0,n);
+	    Alim[fc*N_s1D*slicenum+slice*N_s1D+n] = 0;
+	  }
+
+	  // set to cell average
+	  Alim[fc*N_s1D*slicenum+slice*N_s1D+0] = 0.5*avgU;
+	}
+      }
+    }
+
+    //Otherwise do the full limiting
+    else{
+      // loop on fields (in HR: all fields are treated the same way)
+      for(int fc=0; fc<N_F; fc++){
+	// loop on slices 
+	for(int slice = 0; slice < slicenum; slice++){
+	
+	  // Loop on derivatives
+	  for(int m = N; m > 0; m--){
+	    avgdUL = 0; avgdUC=0; avgdUR=0;
+	    avgRL = 0; avgRC = 0; avgRR = 0;
+
+	    // Calculate the derivative average in the cells: left,
+	    // center, right. Calculate the remainder polynomial in our
+	    // cells and its two neighbors
+	    for(int n=m-1; n<=N; n++){
+	      integral = integrate_monomial_derivative(m-1,n);
+	      avgdUL += AL[fc*N_s1D*slicenum+slice*N_s1D+n]*integral;
+	      avgdUC += AC[fc*N_s1D*slicenum+slice*N_s1D+n]*integral;
+	      avgdUR += AR[fc*N_s1D*slicenum+slice*N_s1D+n]*integral;
+	      if(n>=m+1){
+		alim = Alim[fc*N_s1D*slicenum+slice*N_s1D+n];
+		avgRL += alim*integrate_monomial_derivative_bounds(m-1,n,-3,-1);
+		avgRC += alim*integral;
+		avgRR += alim*integrate_monomial_derivative_bounds(m-1,n,1,3);
+	      }
+	    }
+	  
+	    // Approximate the average of the linear part
+	    avgLL = 0.5*(avgdUL - avgRL); // avg = \frac{1}{2} \int_{-1}^1 U \ud x
+	    avgLC = 0.5*(avgdUC - avgRC);
+	    avgLR = 0.5*(avgdUR - avgRR);
+	
+	    // MUSCL approach to get candidate coefficients
+	    c1 = 0.5*(avgLC - avgLL);  // 1/dx = 1/2 = 0.5
+	    c2 = 0.5*(avgLR - avgLC);
+
+	    // Limited value
+	    Alim[fc*N_s1D*slicenum+slice*N_s1D+m] = minmod(c1,c2); 
+	    //if(m==1){Alim[fc*N_s1D*slicenum+slice*N_s1D+0] = avgLC;}
+	  }// end loop on m
+	  Alim[fc*N_s1D*slicenum+slice*N_s1D+0] = avgLC;
+	} // end loop on slices
+      } // end loop on fields
+
+    } // end else on physicals
+    
+    // Monomial -> Lagrange transformation
+    for(int m=0; m<N_s; m++){
+      for(int n=0; n<N_F; n++){
+	for(int p=0; p<N_s; p++){ sumC += Mono2Lag[p*N_s+m]*Alim[n*N_s+p];}
+	uC[n*N_s+m] = sumC; sumC = 0;}}
+  } // end loop on elements
+
+  
+  // Clean up
+  delete[] AL;
+  delete[] AC;
+  delete[] AR;
+  delete[] Alim;
+  uL = NULL; uC = NULL; uR = NULL;
 }
 
 //==========================================================================
@@ -657,6 +806,11 @@ void Lhrl1D(int N_s, int N_E, int Nfields, int N_N, int slicenum, int* neighbors
   hrl1D arch_args_array(blkE*slicenum*Nfields*2*sizeof(scalar)) (N_s, N_E, Nfields, N_N, slicenum, neighbors, offxy, A, Alim);
 }
 
+extern "C" 
+void Lhri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U){
+  hri1D(N_s, N_E, N_N, neighbors, N_s1D, slicenum, offxy, Lag2Mono, Mono2Lag, U);
+}
+ 
 extern "C"
 void Lhrl2D(int N_s, int N_E, int N_G, int N_N, int order, scalar* XYZCen, scalar* powersXYZG, int* neighbors, int* TaylorDxIdx, int* TaylorDyIdx, scalar* weight, scalar refArea, scalar* A, scalar* Alim){
   /*!

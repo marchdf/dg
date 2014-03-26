@@ -140,6 +140,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
       if(k>0){
 	if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(communicator, _Ustar);
 	else if (Limiter.getLimitingMethod()==2) Limiter.M2limiting(communicator, _Ustar);
+	else if (Limiter.getLimitingMethod()==3) Limiter.HRIlimiting(communicator, _Ustar);
       }
 
       // Now you have to calculate f(Ustar)
@@ -159,8 +160,10 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
     // Communicate and limit solution
     if      (Limiter.getLimitingMethod()==1){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.HRlimiting(communicator, arch(U));}
     else if (Limiter.getLimitingMethod()==2){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.M2limiting(communicator, arch(U));}
+    else if (Limiter.getLimitingMethod()==3){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.HRIlimiting(communicator, arch(U));}
 
 
+        
     T = T + Dt; // update current time
     n++;        // update the time step counter
 
@@ -168,7 +171,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
     if(output){
 
       if(myid==0){printf("Solution written to file at step %7i and time %e (current CFL time step:%e).\n",n,T,DtCFL);}
-      printer.print(arch(U), count, T);
+      printer.print(arch(U), count, T); 
       Tout = T + DtOut; // update the new output time
       count++;
 

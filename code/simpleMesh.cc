@@ -341,7 +341,7 @@ void simpleMesh::writeSolution (const scalar* solution, const int N_s, const int
     sprintf(myidstr, "%d", _myid);
     filename += myidstr;
 #endif
-    output.open(filename.c_str());
+    output.open(filename.c_str()); //output.open(filename.c_str(),std::ios_base::app); 
     output.precision(20);
     output << "$MeshFormat\n2.1 0 8\n$EndMeshFormat\n";
     output << "$ElementNodeData\n";

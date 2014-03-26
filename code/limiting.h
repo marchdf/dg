@@ -115,7 +115,8 @@ class Limiting
 
     switch (_method){
     case 1:
-    case 2:{
+    case 2:
+    case 3:{
 #ifdef USE_CPU
       _Lag2Mono = new scalar[_N_s*_N_s];     Lag2Mono.copyMatrixToPointer(_Lag2Mono);
       _Mono2Lag = new scalar[_N_s*_N_s];     Mono2Lag.copyMatrixToPointer(_Mono2Lag);
@@ -337,6 +338,12 @@ class Limiting
 #endif
     }
       break;
+    case 3:{
+      // Some extra modal-nodal transforms
+      blasGemm('N','N', _N_s, _N_s, _N_s, 1, _MonoY2Lag, _N_s, _MonoX2MonoY, _N_s, 0.0, _MonoX2Lag, _N_s);
+      blasGemm('N','N', _N_s, _N_s, _N_s, 1, _MonoX2MonoY, _N_s, _Lag2MonoX, _N_s, 0.0, _Lag2MonoY, _N_s);
+    }
+      break;
     }
   }// end 2D constructor for structured mesh
   
@@ -459,5 +466,6 @@ class Limiting
   int getLimitingMethod() const {/*!Return limiting method*/return _method;}
   void HRlimiting(COMMUNICATOR &communicator, scalar* U);
   void M2limiting(COMMUNICATOR &communicator, scalar* U);
+  void HRIlimiting(COMMUNICATOR &communicator, scalar* U);
 };
 #endif
