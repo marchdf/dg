@@ -6,30 +6,29 @@
 */
 #include <limiting_kernels.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 //==========================================================================
 //
 // Internal prototype function definitions
 //
 //==========================================================================
-arch_device inline int signum(scalar val){/*!Return sign of a scalar*/return val>0? 1 : (val<0? -1 : 0);}
-arch_device inline scalar minabs(scalar* c, int n);
-arch_device scalar minmod  (scalar* c, int n); // eq 2.19 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
-arch_device scalar minmod  (scalar a, scalar b); 
-arch_device scalar minmod2 (scalar* c, int n); // eq 2.20 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
-#ifdef USE_CPU
-scalar cminmod (scalar* c, int n, scalar eps); // eq 2.21 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
-scalar cminmod2(scalar* c, int n, scalar eps); // eq 2.21 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
-#endif
-arch_device inline scalar integrate_monomial_derivative(int k, int n);
-arch_device inline scalar integrate_monomial_derivative_bounds(int k, int n,scalar a, scalar b);
 
 arch_device void getTaylorDerivative(int order, int N_s, scalar* T, int mx, int my, int* DxIdx, int* DyIdx, scalar* ddT);
 arch_device scalar CellAvg(int N_G, int ioff, scalar* weight, scalar refArea, scalar* powers, int N_s, scalar* T);
 
+arch_device inline int signum(scalar val){return val>0? 1 : (val<0? -1 : 0);}
+arch_device scalar minmod(scalar a, scalar b);
+arch_device inline scalar minabs(scalar* c, int n);
+arch_device scalar minmod(scalar* c, int n);
+arch_device scalar minmod2(scalar* c, int n);
 arch_device int lim_factorial(int n);
+arch_device void limit_monomial(int N, scalar* AL, scalar* AC, scalar* AR, scalar* Alim);
 arch_device int binomial_coefficient(int n, int k);
+arch_device void gemm(int M, int N, int K, scalar* A, scalar* B, scalar*C);
+arch_device void gemm3(int M, int N, int K, scalar* A, scalar* B1, scalar*C1, scalar* B2, scalar*C2, scalar* B3, scalar*C3);
+arch_device inline scalar integrate_monomial_derivative(int k, int n);
+arch_device inline scalar integrate_monomial_derivative_bounds(int k, int n, scalar a, scalar b);
+
 
 //==========================================================================
 //
@@ -276,7 +275,7 @@ arch_global void hrl1D(int N_s, int N_E, int Nfields, int N_N, int slicenum, int
 	int physical = 0;
 	if (left  < 0){physical = -left;  left  = e;}
 	if (right < 0){physical = -right; right = e;}
-	
+
 	// Loop on derivatives
 	for(int m = N; m > 0; m--){
 	  avgdUL = 0; avgdUC=0; avgdUR=0;
@@ -353,14 +352,8 @@ arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
   scalar* AC = new scalar[N_s*N_F];
   scalar* AR = new scalar[N_s*N_F];
   scalar* Alim = new scalar[N_s*N_F];
-  scalar sumL=0, sumC=0, sumR=0;
 
   // Initializations
-  scalar avgdUL = 0, avgdUC=0, avgdUR=0; scalar integral = 0;
-  scalar avgRL = 0, avgRC=0, avgRR=0; scalar alim = 0;
-  scalar avgLL = 0, avgLC=0, avgLR=0;
-  scalar c1,c2;
-  scalar l2m;
   scalar* uL, *uC, *uR;
   int N = N_s1D-1; // polynomial order
   
@@ -371,44 +364,28 @@ arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
     int right = neighbors[e*N_N+offxy+1];
 
     // pointer to data of this element
-    uL = &U[N_s*left*N_F];
     uC = &U[N_s*e*N_F];
-    uR = &U[N_s*right*N_F];
     
     // Check to see if we are at a boundary
-    // periodic = 1
-    // farfield (i.e. zero-gradient) = 2
-    // reflective = 3
-    // gravity = 4
     int physical = 0;
     if (left  < 0){physical = -left;  left  = e;}
     if (right < 0){physical = -right; right = e;}
 
-    // Lagrange -> Monomial transformation
-    for(int m=0; m<N_s; m++){
-      for(int n=0; n<N_F; n++){
-	for(int p=0; p<N_s; p++){
-	  l2m = Lag2Mono[p*N_s+m];
-	  sumL += l2m*uL[n*N_s+p];
-	  sumC += l2m*uC[n*N_s+p];
-	  sumR += l2m*uR[n*N_s+p];
-	}
-	AL[n*N_s+m] = sumL; sumL = 0;
-	AC[n*N_s+m] = sumC; sumC = 0; Alim[n*N_s+m] = AC[n*N_s+m];
-	AR[n*N_s+m] = sumR; sumR = 0;
-      }
-    }
 
-    if (physical==4){} // gravity field: leave data unchanged. This is a problem if we also have shocks...
+    // gravity field: leave data unchanged. This is a problem if we
+    // also have shocks...
+    if (physical==4){} 
     
-    // farfield (zero-gradient) and reflective BC
-    // Not necessary actually (I think... maybe it is for reflective BC...)
-    // set to average in the cell (ie set slopes to 0)
+    // farfield (zero-gradient) and reflective BC: set to average in
+    // the cell (ie set slopes to 0)
     else if ((physical==2)||(physical==3)){ 
-      scalar avgU = 0;
+
+      // Lagrange -> Monomial transformation
+      gemm(N_s, N_F, N_s, Lag2Mono, uC, AC);
+
       for(int fc=0; fc<N_F; fc++){                      // loop on fields
 	for(int slice = 0; slice < slicenum; slice++){ 	// loop on slices 
-	  avgU = 0;
+	  scalar avgU = 0;
 	  // Calculate the cell average and set limited slopes to 0
 	  for(int n=0; n<=N; n++){
 	    avgU += AC[fc*N_s1D*slicenum+slice*N_s1D+n]*integrate_monomial_derivative(0,n);
@@ -419,60 +396,39 @@ arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 	  Alim[fc*N_s1D*slicenum+slice*N_s1D+0] = 0.5*avgU;
 	}
       }
+
+      // Monomial -> Lagrange transformation
+      gemm(N_s, N_F, N_s, Mono2Lag, Alim, uC);
+
     }
 
     //Otherwise do the full limiting
     else{
+
+      // Pointer to neighbors
+      uL = &U[N_s*left*N_F];
+      uR = &U[N_s*right*N_F];
+
+      // Lagrange -> Monomial transformation
+      gemm3(N_s,N_F,N_s, Lag2Mono, uL, AL, uC, AC, uR, AR);
+
       // loop on fields (in HR: all fields are treated the same way)
       for(int fc=0; fc<N_F; fc++){
 	// loop on slices 
 	for(int slice = 0; slice < slicenum; slice++){
-	
-	  // Loop on derivatives
-	  for(int m = N; m > 0; m--){
-	    avgdUL = 0; avgdUC=0; avgdUR=0;
-	    avgRL = 0; avgRC = 0; avgRR = 0;
 
-	    // Calculate the derivative average in the cells: left,
-	    // center, right. Calculate the remainder polynomial in our
-	    // cells and its two neighbors
-	    for(int n=m-1; n<=N; n++){
-	      integral = integrate_monomial_derivative(m-1,n);
-	      avgdUL += AL[fc*N_s1D*slicenum+slice*N_s1D+n]*integral;
-	      avgdUC += AC[fc*N_s1D*slicenum+slice*N_s1D+n]*integral;
-	      avgdUR += AR[fc*N_s1D*slicenum+slice*N_s1D+n]*integral;
-	      if(n>=m+1){
-		alim = Alim[fc*N_s1D*slicenum+slice*N_s1D+n];
-		avgRL += alim*integrate_monomial_derivative_bounds(m-1,n,-3,-1);
-		avgRC += alim*integral;
-		avgRR += alim*integrate_monomial_derivative_bounds(m-1,n,1,3);
-	      }
-	    }
-	  
-	    // Approximate the average of the linear part
-	    avgLL = 0.5*(avgdUL - avgRL); // avg = \frac{1}{2} \int_{-1}^1 U \ud x
-	    avgLC = 0.5*(avgdUC - avgRC);
-	    avgLR = 0.5*(avgdUR - avgRR);
-	
-	    // MUSCL approach to get candidate coefficients
-	    c1 = 0.5*(avgLC - avgLL);  // 1/dx = 1/2 = 0.5
-	    c2 = 0.5*(avgLR - avgLC);
-
-	    // Limited value
-	    Alim[fc*N_s1D*slicenum+slice*N_s1D+m] = minmod(c1,c2); 
-	    //if(m==1){Alim[fc*N_s1D*slicenum+slice*N_s1D+0] = avgLC;}
-	  }// end loop on m
-	  Alim[fc*N_s1D*slicenum+slice*N_s1D+0] = avgLC;
+	  // limit the monomial
+	  int ind = fc*N_s1D*slicenum+slice*N_s1D;
+	  limit_monomial(N,&AL[ind],&AC[ind],&AR[ind],&Alim[ind]);
+	  	  
 	} // end loop on slices
       } // end loop on fields
 
-    } // end else on physicals
-    
-    // Monomial -> Lagrange transformation
-    for(int m=0; m<N_s; m++){
-      for(int n=0; n<N_F; n++){
-	for(int p=0; p<N_s; p++){ sumC += Mono2Lag[p*N_s+m]*Alim[n*N_s+p];}
-	uC[n*N_s+m] = sumC; sumC = 0;}}
+      // Monomial -> Lagrange transformation
+      gemm(N_s, N_F, N_s, Mono2Lag, Alim, uC);
+
+    } // end if on physicals
+
   } // end loop on elements
 
   
@@ -874,60 +830,7 @@ void LChangeBasis(int size1, int size2, int N_E, scalar* Transform, scalar* U, s
 //  Internal functions
 //
 //==========================================================================
-arch_device int lim_factorial(int n)
-{
-  /*!
-    \brief Factorial function
-    \param[in] n get factorial of this number
-    \return factorial of n
-  */
-  if     (n== 0) return 1;
-  else if(n== 1) return 1;
-  else if(n== 2) return 2;
-  else if(n== 3) return 6;
-  else if(n== 4) return 24;
-  else if(n== 5) return 120;
-  else if(n== 6) return 720;
-  else if(n== 7) return 5040;
-  else if(n== 8) return 40320;
-  else if(n== 9) return 362880;
-  else if(n==10) return 3628800;
-  else if(n==11) return 39916800;
-  else if(n==12) return 479001600;
-  return 1; // default return for factorial
-}
 
-arch_device int binomial_coefficient(int n, int k){
-  /*!
-    \brief Binomial coefficient function
-    \param[in] n
-    \param[in] k
-    \return C(n,k)
-    \section Description
-    Inspired from https://gist.github.com/jeetsukumaran/5392166.
-    Does not handle super large numbers (no need really)
-  */
-
-  if (0 == k || n == k) {
-    return 1;
-  }
-  if (k > n) {
-    return 0;
-  }
-  if (k > (n - k)) {
-    k = n - k;
-  }
-  if (1 == k) {
-    return n;
-  }
-  int b = 1;
-  for (int i = 1; i <= k; ++i) {
-    b *= (n - (k - i));
-    if (b < 0) return -1; /* Overflow */
-    b /= i;
-  }
-  return b;
-}
 
  
 //==========================================================================
@@ -935,160 +838,8 @@ arch_device int binomial_coefficient(int n, int k){
 //  Limiter functions
 //
 //==========================================================================
-arch_device inline scalar minabs(scalar* c, int n){
-  /*!
-    \brief Minimum of the absolute value of c
-    \param[in] c array to find minabs of
-    \param[in] n number of elements in c
-    \return minabs of c
-  */
-  scalar minabs = fabs(c[0]);
-  for(int i=1;i<n;i++) if (minabs>fabs(c[i])) minabs = fabs(c[i]);
-  return minabs;
-}
-
-arch_device scalar minmod(scalar* c, int n){
-  /*!
-    \brief Generalized minmod function
-    \param[in] c array to find minmod of
-    \param[in] n number of elements in c
-    \return minmod of c
-    \section Description
-    eq 2.19 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
-  */
-  int sign = signum(c[0]);
-  for(int i=1; i<n; i++){
-    if (sign!=signum(c[i])) return 0;
-  }
-  return sign*minabs(c,n);
-}
-
-arch_device scalar minmod(scalar a, scalar b){
-  /*!
-    \brief Minmod function for 2 arguments
-    \param[in] a first arg
-    \param[in] b second arg
-    \return minmod(a,b)
-    \section Description
-    eq 2.19 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
-  */
-  int signa = signum(a);
-  if (signa != signum(b)) return 0;
-
-  scalar fabsa = fabs(a);
-  scalar fabsb = fabs(b);
-  if (fabsa<fabsb) return signa*fabsa;
-  else return signa*fabsb;
-}
-
-arch_device scalar minmod2(scalar* c, int n){
-  /*!
-    \brief Generalized minmod function (alternate)
-    \param[in] c array to find minmod of
-    \param[in] n number of elements in c
-    \return minmod of c
-    \section Description
-    eq 2.20 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
-  */
-  scalar min = c[0];
-  for(int i=1; i<n; i++) if(fabs(c[i])<fabs(min)) min = c[i];
-  return min;
-}
-
-#ifdef USE_CPU
-scalar cminmod(scalar* c, int n, scalar eps){
-  /*!
-    \brief Generalized minmod function (cpu version)
-    \param[in] c array to find minmod of
-    \param[in] n number of elements in c
-    \param[in] eps smallness comparison
-    \return minmod of c
-    \section Description
-    eq 2.21 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
-  */
-  scalar* cc = new scalar[2];
-  scalar sum = 0;
-  for(int i=0;i<n;i++) sum += c[i];
-  cc[0] =(1+eps)*minmod(c,n);
-  cc[1] =(scalar)sum/n;
-  scalar m = minmod(cc,2);
-  delete[] cc;
-  return m;    
-}
-
-scalar cminmod2(scalar* c, int n, scalar eps){
-  /*!
-    \brief Generalized minmod function (alternate, cpu version)
-    \param[in] c array to find minmod of
-    \param[in] n number of elements in c
-    \param[in] eps smallness comparison
-    \return minmod of c
-    \section Description
-    eq 2.21 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
-  */
-  scalar* cc = new scalar[2];
-  scalar sum = 0;
-  for(int i=0;i<n;i++) sum += c[i];
-  cc[0] =(1+eps)*minmod(c,n);
-  cc[1] =(scalar)sum/n;
-  scalar m = minmod2(cc,2);
-  delete[] cc;
-  return m;    
-}
-#endif
-
-arch_device int kernel_factorial(int n)
-{
-  /*!
-    \brief Factorial function
-    \param[in] n get factorial of this number
-    \return factorial of n
-  */
-  if     (n== 0) return 1;
-  else if(n== 1) return 1;
-  else if(n== 2) return 2;
-  else if(n== 3) return 6;
-  else if(n== 4) return 24;
-  else if(n== 5) return 120;
-  else if(n== 6) return 720;
-  else if(n== 7) return 5040;
-  else if(n== 8) return 40320;
-  else if(n== 9) return 362880;
-  else if(n==10) return 3628800;
-  else if(n==11) return 39916800;
-  else if(n==12) return 479001600;
-  return 1; // default return for kernel_factorial
-}
 
 
-arch_device inline scalar integrate_monomial_derivative(int k, int n)
-{
-  /*!
-    \brief The integral of the kth derivative of nth order monomial (from -1 to 1)
-    \param[in] k kth derivative of the polynomial
-    \param[in] n monomial order
-    \return \frac{2}{(n-k+1)!} if n-k+1 is odd, 0 otherwise
-    Calculates $\int_{-1}^1 \frac{\partial^k}{\partialx^k} \frac{x^n}{n!} \mathrm{d} x$
-  */
-  int num = n-k+1;
-  if (num%2) return 2.0/(scalar)kernel_factorial(num);
-  else return 0.0;
-}
-
-arch_device inline scalar integrate_monomial_derivative_bounds(int k, int n, scalar a, scalar b)
-{
-  /*!
-    \brief The integral of the kth derivative of nth order monomial.
-    \param[in] k kth derivative of the polynomial
-    \param[in] n monomial order
-    \param[in] a lower integral bound
-    \param[in] b upper integral bound
-    \return the integral
-    Calculates $\int_{a}^{b} \frac{\partial^k}{\partialx^k} \frac{x^n}{n!} \mathrm{d} x$
-  */
-  int num = n-k+1;
-  return (pow(b,num) - pow(a,num))/(scalar)kernel_factorial(num);
-}
 
 arch_device void getTaylorDerivative(int order, int N_s, scalar* T, int mx, int my, int* DxIdx, int* DyIdx, scalar* ddT){
   /*!
@@ -1139,4 +890,265 @@ arch_device scalar CellAvg(int N_G, int ioff, scalar* weight, scalar refArea, sc
   //     = \frac{1}{J |\omega|} \sum_k w_k U(x_k,y_k) J
   //     = \frac{1}{|\omega|} \sum_k w_k U(x_k,y_k)
   return I/refArea; // omega = 1/2 for a triangle
+}
+
+
+//==========================================================================
+arch_device scalar minmod(scalar a, scalar b){
+  /*!
+    \brief Minmod function for 2 arguments
+    \param[in] a first arg
+    \param[in] b second arg
+    \return minmod(a,b)
+    \section Description
+    eq 2.19 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
+  */
+  int signa = signum(a);
+  if (signa != signum(b)) return 0;
+
+  scalar fabsa = fabs(a);
+  scalar fabsb = fabs(b);
+  if (fabsa<fabsb) return signa*fabsa;
+  else return signa*fabsb;
+}
+
+//==========================================================================
+arch_device inline scalar minabs(scalar* c, int n){
+  /*!
+    \brief Minimum of the absolute value of c
+    \param[in] c array to find minabs of
+    \param[in] n number of elements in c
+    \return minabs of c
+  */
+  scalar minabs = fabs(c[0]);
+  for(int i=1;i<n;i++) if (minabs>fabs(c[i])) minabs = fabs(c[i]);
+  return minabs;
+}
+
+//==========================================================================
+arch_device scalar minmod(scalar* c, int n){
+  /*!
+    \brief Generalized minmod function
+    \param[in] c array to find minmod of
+    \param[in] n number of elements in c
+    \return minmod of c
+    \section Description
+    eq 2.19 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
+  */
+  int sign = signum(c[0]);
+  for(int i=1; i<n; i++){
+    if (sign!=signum(c[i])) return 0;
+  }
+  return sign*minabs(c,n);
+}
+
+//==========================================================================
+arch_device scalar minmod2(scalar* c, int n){
+  /*!
+    \brief Generalized minmod function (alternate)
+    \param[in] c array to find minmod of
+    \param[in] n number of elements in c
+    \return minmod of c
+    \section Description
+    eq 2.20 of "Hierarchical reconstruction for discontinuous Galerkin methods..."
+  */
+  scalar min = c[0];
+  for(int i=1; i<n; i++) if(fabs(c[i])<fabs(min)) min = c[i];
+  return min;
+}
+
+//==========================================================================
+arch_device void limit_monomial(int N, scalar* AL, scalar* AC, scalar* AR, scalar* Alim){
+  /*!
+    \brief Limit a 1D monomial using HR
+    \param[in] N monomial order
+    \param[in] AL left cell monomial
+    \param[in] AC center cell monomial
+    \param[in] AR right cell monomial
+    \param[out] Alim limited center cell monomial
+  */
+
+  scalar avgdUL = 0, avgdUC=0, avgdUR=0; scalar integral = 0;
+  scalar avgRL = 0, avgRC=0, avgRR=0; scalar alim = 0;
+  scalar avgLL = 0, avgLC=0, avgLR=0;
+  scalar c1,c2;
+
+  // Loop on derivatives
+  for(int m = N; m > 0; m--){
+    avgdUL = 0; avgdUC=0; avgdUR=0;
+    avgRL = 0; avgRC = 0; avgRR = 0;
+
+    // Calculate the derivative average in the cells: left,
+    // center, right. Calculate the remainder polynomial in our
+    // cells and its two neighbors
+    for(int n=m-1; n<=N; n++){
+      integral = integrate_monomial_derivative(m-1,n);
+      avgdUL += AL[n]*integral;
+      avgdUC += AC[n]*integral;
+      avgdUR += AR[n]*integral;
+      if(n>=m+1){
+	alim = Alim[n];
+	avgRL += alim*integrate_monomial_derivative_bounds(m-1,n,-3,-1);
+	avgRC += alim*integral;
+	avgRR += alim*integrate_monomial_derivative_bounds(m-1,n,1,3);
+      }
+    }
+	  
+    // Approximate the average of the linear part
+    avgLL = 0.5*(avgdUL - avgRL); // avg = \frac{1}{2} \int_{-1}^1 U \ud x
+    avgLC = 0.5*(avgdUC - avgRC);
+    avgLR = 0.5*(avgdUR - avgRR);
+	
+    // MUSCL approach to get candidate coefficients
+    c1 = 0.5*(avgLC - avgLL);  // 1/dx = 1/2 = 0.5
+    c2 = 0.5*(avgLR - avgLC);
+
+    // Limited value
+    Alim[m] = minmod(c1,c2); 
+    //if(m==1){Alim[fc*N_s1D*slicenum+slice*N_s1D+0] = avgLC;}
+  }// end loop on m
+  Alim[0] = avgLC;
+}
+
+
+//==========================================================================
+arch_device int lim_factorial(int n)
+{
+  /*!
+    \brief Factorial function
+    \param[in] n get factorial of this number
+    \return factorial of n
+  */
+  if     (n== 0) return 1;
+  else if(n== 1) return 1;
+  else if(n== 2) return 2;
+  else if(n== 3) return 6;
+  else if(n== 4) return 24;
+  else if(n== 5) return 120;
+  else if(n== 6) return 720;
+  else if(n== 7) return 5040;
+  else if(n== 8) return 40320;
+  else if(n== 9) return 362880;
+  else if(n==10) return 3628800;
+  else if(n==11) return 39916800;
+  else if(n==12) return 479001600;
+  return 1; // default return for lim_factorial
+}
+
+//==========================================================================
+arch_device int binomial_coefficient(int n, int k){
+  /*!
+    \brief Binomial coefficient function
+    \param[in] n
+    \param[in] k
+    \return C(n,k)
+    \section Description
+    Inspired from https://gist.github.com/jeetsukumaran/5392166.
+    Does not handle super large numbers (no need really)
+  */
+
+  if (0 == k || n == k) {
+    return 1;
+  }
+  if (k > n) {
+    return 0;
+  }
+  if (k > (n - k)) {
+    k = n - k;
+  }
+  if (1 == k) {
+    return n;
+  }
+  int b = 1;
+  for (int i = 1; i <= k; ++i) {
+    b *= (n - (k - i));
+    if (b < 0) return -1; /* Overflow */
+    b /= i;
+  }
+  return b;
+}
+
+//==========================================================================
+arch_device void gemm(int M, int N, int K, scalar* A, scalar* B, scalar*C){
+  /*!
+    \brief Matrix-matrix mutliplication C = A*B
+    \param[in] M rows of A = rows of C
+    \param[in] N columns of B = columns of C
+    \param[in] K columns of A = rows of B
+    \param[in] A first matrix
+    \param[in] B second matrix
+    \param[out] C C=A*B
+    Assume column major order. Modeled on BLAS gemm.
+  */
+  scalar sum = 0;
+  for(int m=0; m<M; m++){
+    for(int n=0; n<N; n++){
+      for(int k=0; k<K; k++){
+	sum += A[k*M+m]*B[n*K+k];
+      }
+      C[n*M+m] = sum; sum = 0;
+    }
+  }
+}
+
+//==========================================================================
+arch_device void gemm3(int M, int N, int K, scalar* A, scalar* B1, scalar*C1, scalar* B2, scalar*C2, scalar* B3, scalar*C3){
+  /*!
+    \brief Three matrix-matrix mutliplications: C1 = A*B1, C2 = A*B2, C3 = A*B3
+    \param[in] M rows of A = rows of C
+    \param[in] N columns of B = columns of C
+    \param[in] K columns of A = rows of B
+    \param[in] A first matrix
+    \param[in] B1 second matrix (first gemm)
+    \param[in] B2 second matrix (second gemm)
+    \param[in] B3 second matrix (third gemm)
+    \param[out] C1 C=A*B1
+    \param[out] C2 C=A*B2
+    \param[out] C3 C=A*B3
+    Assume column major order. Modeled on BLAS gemm.
+  */
+  scalar sum1=0, sum2=0, sum3=0;
+  scalar a;
+  for(int m=0; m<M; m++){
+    for(int n=0; n<N; n++){
+      for(int k=0; k<K; k++){
+	a = A[k*M+m]; // avoid mem fetches for all 3 products
+	sum1 += a*B1[n*K+k];
+	sum2 += a*B2[n*K+k];
+	sum3 += a*B3[n*K+k];
+      }
+      C1[n*M+m] = sum1; sum1 = 0;
+      C2[n*M+m] = sum2; sum2 = 0;
+      C3[n*M+m] = sum3; sum3 = 0;
+    }
+  }
+}
+
+arch_device inline scalar integrate_monomial_derivative(int k, int n)
+{
+  /*!
+    \brief The integral of the kth derivative of nth order monomial (from -1 to 1)
+    \param[in] k kth derivative of the polynomial
+    \param[in] n monomial order
+    \return \frac{2}{(n-k+1)!} if n-k+1 is odd, 0 otherwise
+    Calculates $\int_{-1}^1 \frac{\partial^k}{\partialx^k} \frac{x^n}{n!} \mathrm{d} x$
+  */
+  int num = n-k+1;
+  if (num%2) return 2.0/(scalar)lim_factorial(num);
+  else return 0.0;
+}
+
+arch_device inline scalar integrate_monomial_derivative_bounds(int k, int n, scalar a, scalar b)
+{
+  /*!
+    \brief The integral of the kth derivative of nth order monomial.
+    \param[in] k kth derivative of the polynomial
+    \param[in] n monomial order
+    \param[in] a lower integral bound
+    \param[in] b upper integral bound
+    \return the integral
+    Calculates $\int_{a}^{b} \frac{\partial^k}{\partialx^k} \frac{x^n}{n!} \mathrm{d} x$
+  */
+  int num = n-k+1;
+  return (pow(b,num) - pow(a,num))/(scalar)lim_factorial(num);
 }
