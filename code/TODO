@@ -19,7 +19,9 @@
   - add HLLC
 
 \mytodo LIMITING
-  - It's a very ugly implementation right now...
+  - combine both reconstruct energy implementations
+  - It's a very ugly implementation right now... 
+  - hrl1D could be cleaned a little to copy what we do for hri
   - I have powersXYZG and V1D, could I combine the two to avoid ifdefs?
   - ifdefs on dims in HRL, MYL, M2L
   - move some of these functions to .cc files?

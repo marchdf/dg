@@ -92,7 +92,7 @@ void Limiting::HRlimiting(COMMUNICATOR &communicator, scalar* U){
 
 void Limiting::M2limiting(COMMUNICATOR &communicator, scalar* U){
   /*!
-    \brief M2 limiting function
+    \brief Modified limiting function (see jcp2014)
     \param[in] communicator communicator object for MPI communications
     \param[out] U solution to be limited
   */
@@ -541,6 +541,32 @@ void Limiting::HRIlimiting(COMMUNICATOR &communicator, scalar* U){
 
     // Call limiting function in y
     Lhri1D(_N_s, _N_E, _N_N, _neighbors, _N_s1D, _N_s1D, 2, _Lag2MonoY, _MonoY2Lag, U);
+  }
+#endif
+}
+
+void Limiting::M2Ilimiting(COMMUNICATOR &communicator, scalar* U){
+  /*!
+    \brief modified limiting function (see jcp2014) for limiting each element individually
+    \param[in] communicator communicator object for MPI communications
+    \param[out] U solution to be limited
+  */
+#ifdef ONED
+
+  // Call limiting function
+  Lm2i1D(_N_s, _N_E, _N_N, _neighbors, _N_s, 1, 0, _Lag2Mono, _Mono2Lag, U);
+  
+#elif TWOD
+  if(_cartesian){
+
+    // Call limiting function in x
+    Lm2i1D(_N_s, _N_E, _N_N, _neighbors, _N_s1D, _N_s1D, 0, _Lag2MonoX, _MonoX2Lag, U);
+
+    // Communicate the elements on different partitions if necessary
+    communicator.CommunicateGhosts(N_F, U);
+
+    // Call limiting function in y
+    Lm2i1D(_N_s, _N_E, _N_N, _neighbors, _N_s1D, _N_s1D, 2, _Lag2MonoY, _MonoY2Lag, U);
   }
 #endif
 }

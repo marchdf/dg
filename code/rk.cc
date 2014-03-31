@@ -141,6 +141,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
 	if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(communicator, _Ustar);
 	else if (Limiter.getLimitingMethod()==2) Limiter.M2limiting(communicator, _Ustar);
 	else if (Limiter.getLimitingMethod()==3) Limiter.HRIlimiting(communicator, _Ustar);
+	else if (Limiter.getLimitingMethod()==4) Limiter.M2Ilimiting(communicator, _Ustar);
       }
 
       // Now you have to calculate f(Ustar)
@@ -161,6 +162,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
     if      (Limiter.getLimitingMethod()==1){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.HRlimiting(communicator, arch(U));}
     else if (Limiter.getLimitingMethod()==2){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.M2limiting(communicator, arch(U));}
     else if (Limiter.getLimitingMethod()==3){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.HRIlimiting(communicator, arch(U));}
+    else if (Limiter.getLimitingMethod()==4){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.M2Ilimiting(communicator, arch(U));}
 
 
         
