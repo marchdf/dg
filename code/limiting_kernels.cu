@@ -26,11 +26,15 @@ arch_device void limit_monomial(int N, scalar* AL, scalar* AC, scalar* AR, scala
 arch_device int binomial_coefficient(int n, int k);
 arch_device void gemm(int M, int N, int K, scalar* A, scalar* B, scalar*C);
 arch_device void gemm3(int M, int N, int K, scalar* A, scalar* B1, scalar*C1, scalar* B2, scalar*C2, scalar* B3, scalar*C3);
+arch_device void gemv(int M, int N, scalar* A, scalar* B, scalar*C);
+arch_device void gemv3(int M, int N, scalar* A, scalar* B1, scalar*C1, scalar* B2, scalar*C2, scalar* B3, scalar*C3);
 arch_device inline scalar integrate_monomial_derivative(int k, int n);
 arch_device inline scalar integrate_monomial_derivative_bounds(int k, int n, scalar a, scalar b);
 arch_device void reconstruct_energy_individual(int N_s1D, int slicenum, scalar* rhoeLim, scalar* KLim, scalar* EMono, scalar* ELim);
-
 arch_device void average_monomial(int N, scalar* A, scalar* Alim);
+
+arch_device void set2average(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* tmp, scalar* U);
+arch_device void HR(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* tmp, scalar* UL, scalar* UC, scalar* UR);
 
 //==========================================================================
 //
@@ -306,98 +310,44 @@ arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
     \param[out] U solution to limit (Lagrange form)
   */
  
-#ifdef USE_CPU
-  // Allocations 
-  scalar* AL = new scalar[N_s*N_F];
-  scalar* AC = new scalar[N_s*N_F];
-  scalar* AR = new scalar[N_s*N_F];
-  scalar* Alim = new scalar[N_s*N_F];
 
-  // Initializations
-  scalar* uL, *uC, *uR;
   int N = N_s1D-1; // polynomial order
-  
+
+#ifdef USE_CPU
+  scalar* tmp = new scalar[4*N_s];
+
   for(int e=0; e<N_E; e++){
 
     // Neighbors
     int left  = neighbors[e*N_N+offxy+0];
     int right = neighbors[e*N_N+offxy+1];
 
-    // pointer to data of this element
-    uC = &U[N_s*e*N_F];
-    
     // Check to see if we are at a boundary
     int physical = 0;
-    if (left  < 0){physical = -left;  left  = e;}
-    if (right < 0){physical = -right; right = e;}
-
-
-    // gravity field: leave data unchanged. This is a problem if we
-    // also have shocks...
-    if (physical==4){} 
+    if (left  < 0){physical = -left;}
+    if (right < 0){physical = -right;}
     
-    // farfield (zero-gradient) and reflective BC: set to average in
-    // the cell (ie set slopes to 0)
-    else if ((physical==2)||(physical==3)){ 
+    for(int fc=0; fc<N_F; fc++){
 
-      // Lagrange -> Monomial transformation
-      gemm(N_s, N_F, N_s, Lag2Mono, uC, AC);
-
-      for(int fc=0; fc<N_F; fc++){                      // loop on fields
-	for(int slice = 0; slice < slicenum; slice++){ 	// loop on slices 
-	  scalar avgU = 0;
-	  // Calculate the cell average and set limited slopes to 0
-	  for(int n=0; n<=N; n++){
-	    avgU += AC[fc*N_s1D*slicenum+slice*N_s1D+n]*integrate_monomial_derivative(0,n);
-	    Alim[fc*N_s1D*slicenum+slice*N_s1D+n] = 0;
-	  }
-
-	  // set to cell average
-	  Alim[fc*N_s1D*slicenum+slice*N_s1D+0] = 0.5*avgU;
-	}
+      // gravity field: leave data unchanged. This is a problem if we
+      // also have shocks...
+      if (physical==4){} 
+    
+      // farfield (zero-gradient) and reflective BC: set to average in
+      // the cell (ie set slopes to 0)
+      else if ((physical==2)||(physical==3)){
+	set2average(N_s,N,N_s1D,slicenum,Lag2Mono,Mono2Lag,tmp,&U[(e*N_F+fc)*N_s]);
       }
+      //Otherwise do the full limiting
+      else{
+	HR(N_s,N,N_s1D,slicenum,Lag2Mono,Mono2Lag,tmp,&U[(left*N_F+fc)*N_s],&U[(e*N_F+fc)*N_s],&U[(right*N_F+fc)*N_s]);
+      } // end if on physicals
 
-      // Monomial -> Lagrange transformation
-      gemm(N_s, N_F, N_s, Mono2Lag, Alim, uC);
+    } // loop on fields
 
-    }
+  } // loop on elements
 
-    //Otherwise do the full limiting
-    else{
-
-      // Pointer to neighbors
-      uL = &U[N_s*left*N_F];
-      uR = &U[N_s*right*N_F];
-
-      // Lagrange -> Monomial transformation
-      gemm3(N_s,N_F,N_s, Lag2Mono, uL, AL, uC, AC, uR, AR);
-
-      // loop on fields (in HR: all fields are treated the same way)
-      for(int fc=0; fc<N_F; fc++){
-	// loop on slices 
-	for(int slice = 0; slice < slicenum; slice++){
-
-	  // limit the monomial
-	  int ind = fc*N_s1D*slicenum+slice*N_s1D;
-	  limit_monomial(N,&AL[ind],&AC[ind],&AR[ind],&Alim[ind]);
-	  	  
-	} // end loop on slices
-      } // end loop on fields
-
-      // Monomial -> Lagrange transformation
-      gemm(N_s, N_F, N_s, Mono2Lag, Alim, uC);
-
-    } // end if on physicals
-
-  } // end loop on elements
-
-  
-  // Clean up
-  delete[] AL;
-  delete[] AC;
-  delete[] AR;
-  delete[] Alim;
-  uL = NULL; uC = NULL; uR = NULL;
+  delete[] tmp;
 
 #elif USE_GPU
 
@@ -405,8 +355,6 @@ arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
   int fc= threadIdx.y;
   extern __shared__ scalar share[];
 
-  int N = N_s1D-1; // polynomial order
-    
   // offset wrt other shared data
   int offset = fc*(2*N_s*N_s + 7*N_s);
   scalar* Lag2MonoLocal = &share[offset];          // N_s*N_s scalars
@@ -1406,6 +1354,55 @@ arch_device void gemm3(int M, int N, int K, scalar* A, scalar* B1, scalar*C1, sc
   }
 }
 
+arch_device void gemv(int M, int N, scalar* A, scalar* B, scalar*C){
+  /*!
+    \brief Matrix-vector mutliplication C = A*B
+    \param[in] M rows of A = rows of C
+    \param[in] N columns of A = rows of B
+    \param[in] A first matrix
+    \param[in] B second matrix
+    \param[out] C C=A*B
+    Assume column major order. Modeled on BLAS gemv.
+  */
+  scalar sum = 0;
+  for(int m=0; m<M; m++){
+    for(int n=0; n<N; n++){
+      sum += A[n*M+m]*B[n];
+    }
+    C[m] = sum; sum = 0;
+  }
+}
+
+//==========================================================================
+arch_device void gemv3(int M, int N, scalar* A, scalar* B1, scalar*C1, scalar* B2, scalar*C2, scalar* B3, scalar*C3){
+  /*!
+    \brief Three matrix-vector mutliplications: C1 = A*B1, C2 = A*B2, C3 = A*B3
+    \param[in] M rows of A = rows of C
+    \param[in] N columns of A = rows of B
+    \param[in] A first matrix
+    \param[in] B1 second matrix (first gemv)
+    \param[in] B2 second matrix (second gemv)
+    \param[in] B3 second matrix (third gemv)
+    \param[out] C1 C=A*B1
+    \param[out] C2 C=A*B2
+    \param[out] C3 C=A*B3
+    Assume column major order. Modeled on BLAS gemv.
+  */
+  scalar sum1=0, sum2=0, sum3=0;
+  scalar a;
+  for(int m=0; m<M; m++){
+    for(int n=0; n<N; n++){
+      a = A[n*M+m]; // avoid mem fetches for all 3 products
+      sum1 += a*B1[n];
+      sum2 += a*B2[n];
+      sum3 += a*B3[n];
+    }
+    C1[m] = sum1; sum1 = 0;
+    C2[m] = sum2; sum2 = 0;
+    C3[m] = sum3; sum3 = 0;
+  }
+}
+
 arch_device inline scalar integrate_monomial_derivative(int k, int n)
 {
   /*!
@@ -1483,4 +1480,76 @@ arch_device void average_monomial(int N, scalar* A, scalar* Alim){
     Alim[n] = 0;  // set slopes to 0
   }
   Alim[0] = 0.5*avg;
+}
+
+arch_device void set2average(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* tmp, scalar* U){
+  /*!
+    \brief Set a nodal solution U to its cell average
+    \param[in] N_s number of nodes per element
+    \param[in] N 1D monomial order
+    \param[in] N_s1D number of nodes in 1D elemement
+    \param[in] slicenum number of slices
+    \param[in] L2M Lagrange -> Monomial transform
+    \param[in] M2L Monomial -> Lagrange transform
+    \param[in] tmp temporary array to store intermediate values
+    \param[out] U solution to be averaged
+  */
+
+  // Initializations
+  int cnt = 0;
+  scalar* A    = &tmp[cnt]; cnt+=N_s;
+  scalar* Alim = &tmp[cnt]; 
+
+  // Lagrange -> monomial transform
+  gemv(N_s,N_s,L2M,U,A);
+
+  // Limit
+  for(int slice=0; slice<slicenum; slice++){
+    int idx = slice*N_s1D;
+    average_monomial(N,&A[idx],&Alim[idx]);
+  }
+
+  // Monomial -> lagrange transform
+  gemv(N_s,N_s,M2L,Alim,U);
+  
+  A = NULL;
+  Alim = NULL;  
+}
+
+arch_device void HR(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* tmp, scalar* UL, scalar* UC, scalar* UR){
+  /*!
+    \brief Limit a nodal solution U using HR (1D decomposition)
+    \param[in] N_s number of nodes per element
+    \param[in] N 1D monomial order
+    \param[in] N_s1D number of nodes in 1D elemement
+    \param[in] slicenum number of slices
+    \param[in] L2M Lagrange -> Monomial transform
+    \param[in] M2L Monomial -> Lagrange transform
+    \param[in] tmp temporary array to store intermediate values
+    \param[out] U solution on the left
+    \param[out] U solution to be averaged
+    \param[out] U solution on the right
+  */
+
+  // Initializations
+  int cnt = 0;
+  scalar* AL   = &tmp[cnt]; cnt+=N_s;
+  scalar* AC   = &tmp[cnt]; cnt+=N_s;
+  scalar* AR   = &tmp[cnt]; cnt+=N_s;
+  scalar* Alim = &tmp[cnt]; 
+
+  // Lagrange -> monomial transform
+  gemv3(N_s,N_s,L2M,UL,AL,UC,AC,UR,AR);
+
+  // Limit
+  for(int slice=0; slice<slicenum; slice++){
+    int idx = slice*N_s1D;
+    limit_monomial(N,&AL[idx],&AC[idx],&AR[idx],&Alim[idx]);
+  }
+
+  // Monomial -> lagrange transform
+  gemv(N_s,N_s,M2L,Alim,UC);
+  
+  AR = NULL; AC = NULL; AL = NULL;
+  Alim = NULL;
 }
