@@ -297,7 +297,7 @@ arch_global void hrl1D(int N_s, int N_E, int Nfields, int N_N, int slicenum, int
 }
 
 //==========================================================================
-arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U){
+arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U, scalar* Unew){
   /*!
     \brief HR limiting function for individual elements (assumes 1D decomposition)
     \param[in] N_s number of nodes per element
@@ -307,178 +307,81 @@ arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
     \param[in] N_s1D number of nodes in a slice (1D element)
     \param[in] slicenum number of slices (in 2D N_s1D = slicenum)
     \param[in] offxy offset if limiting in x or y
-    \param[out] U solution to limit (Lagrange form)
-  */
- 
+    \param[in] U solution to limit (Lagrange form)
+    \param[out] Unew limited solution (only some may be limited bc of sensor)
+    Unew was necessary because you need to wait until all the elements
+    have been limited before updating the solution.
+  */ 
 
   int N = N_s1D-1; // polynomial order
 
 #ifdef USE_CPU
-  scalar* tmp = new scalar[4*N_s];
-
+  scalar* share = new scalar[7*N_s];
+  int cnt = 0;
+  scalar* UL  = &share[cnt]; cnt += N_s;
+  scalar* UC  = &share[cnt]; cnt += N_s;
+  scalar* UR  = &share[cnt]; cnt += N_s;
+  scalar* tmp = &share[cnt]; //cnt += 4*N_s;
+  scalar* L2M = Lag2Mono;
+  scalar* M2L = Mono2Lag;
   for(int e=0; e<N_E; e++){
-
-    // Neighbors
-    int left  = neighbors[e*N_N+offxy+0];
-    int right = neighbors[e*N_N+offxy+1];
-
-    // Check to see if we are at a boundary
-    int physical = 0;
-    if (left  < 0){physical = -left;}
-    if (right < 0){physical = -right;}
-    
     for(int fc=0; fc<N_F; fc++){
-
-      // gravity field: leave data unchanged. Not good for shocks
-      if (physical==4){} 
-
-      // Zero-gradient and reflective BC: average in cell, slopes to 0
-      else if ((physical==2)||(physical==3)){
-	set2average(N_s,N,N_s1D,slicenum,Lag2Mono,Mono2Lag,tmp,&U[(e*N_F+fc)*N_s]);
-      }
-
-      //Otherwise do the full limiting
-      else{
-	HR(N_s,N,N_s1D,slicenum,Lag2Mono,Mono2Lag,tmp,&U[(left*N_F+fc)*N_s],&U[(e*N_F+fc)*N_s],&U[(right*N_F+fc)*N_s]);
-      } // end if on physicals
-    } // loop on fields
-  } // loop on elements
-
-  delete[] tmp;
 
 #elif USE_GPU
 
   int e = blockIdx.x;
   int fc= threadIdx.y;
   extern __shared__ scalar share[];
- 
-   
+
   // offset wrt other shared data
   int cnt = fc*(2*N_s*N_s + 7*N_s);
-  scalar* Lag2MonoLocal = &share[cnt]; cnt += N_s*N_s;
-  scalar* Mono2LagLocal = &share[cnt]; cnt += N_s*N_s;
-  scalar* UL            = &share[cnt]; cnt += N_s;
-  scalar* UC            = &share[cnt]; cnt += N_s;
-  scalar* UR            = &share[cnt]; cnt += N_s;
-  scalar* tmp           = &share[cnt]; //cnt += 4*N_s;
+  scalar* L2M = &share[cnt]; cnt += N_s*N_s;
+  scalar* M2L = &share[cnt]; cnt += N_s*N_s;
+  scalar* UL  = &share[cnt]; cnt += N_s;
+  scalar* UC  = &share[cnt]; cnt += N_s;
+  scalar* UR  = &share[cnt]; cnt += N_s;
+  scalar* tmp = &share[cnt]; //cnt += 4*N_s;
+  // Copy some data to shared memory
+  for(int k=0;k<N_s*N_s;k++){L2M[k] = Lag2Mono[k];}
+  for(int k=0;k<N_s*N_s;k++){M2L[k] = Mono2Lag[k];}
+#endif
 
   // Neighbors
   int left  = neighbors[e*N_N+offxy+0];
   int right = neighbors[e*N_N+offxy+1];
-    
-  // Copy some data to shared memory
-  for(int k=0;k<N_s*N_s;k++){Lag2MonoLocal[k] = Lag2Mono[k];}
-  for(int k=0;k<N_s*N_s;k++){Mono2LagLocal[k] = Mono2Lag[k];}
-  for(int i=0;i<N_s;i++){UC[i]=U[(e*N_F+fc)*N_s+i];}
   
   // Check to see if we are at a boundary
   int physical = 0;
   if (left  < 0){physical = -left;}
   if (right < 0){physical = -right;}
+
+  // Copy some data to shared memory
+  for(int i=0;i<N_s;i++){UC[i]=U[(e*N_F+fc)*N_s+i];}
   
   // gravity field: leave data unchanged. Not good for shocks
-  if (physical==4){}
-
+  if (physical==4){} 
+  
   // Zero-gradient and reflective BC: average in cell, slopes to 0
   else if ((physical==2)||(physical==3)){
-    set2average(N_s,N,N_s1D,slicenum,Lag2MonoLocal,Mono2LagLocal,tmp,UC);
+    set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,UC);
   }
-
+  
   //Otherwise do the full limiting
   else{
     for(int i=0;i<N_s;i++){UL[i]=U[(left *N_F+fc)*N_s+i];}
     for(int i=0;i<N_s;i++){UR[i]=U[(right*N_F+fc)*N_s+i];}
-    HR(N_s,N,N_s1D,slicenum,Lag2MonoLocal,Mono2LagLocal,tmp,UL,UC,UR);
+    HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,UL,UC,UR);
   } // end if on physicals
   
   // Copy solution back to main memory
-  for(int i=0;i<N_s;i++){U[(e*N_F+fc)*N_s+i] = UC[i];}
+  for(int i=0;i<N_s;i++){Unew[(e*N_F+fc)*N_s+i] = UC[i];}
 
-  
-  // // offset wrt other shared data
-  // int offset = fc*(2*N_s*N_s + 7*N_s);
-  // scalar* Lag2MonoLocal = &share[offset];          // N_s*N_s scalars
-  // scalar* Mono2LagLocal = &Lag2MonoLocal[N_s*N_s]; // N_s*N_s scalars
-  // scalar* uL = &Mono2LagLocal[N_s*N_s];            // N_s scalars
-  // scalar* uC = &uL[N_s];                           // N_s scalars
-  // scalar* uR = &uC[N_s];                           // N_s scalars
-  // scalar* AL = &uR[N_s];                           // N_s scalars
-  // scalar* AC = &AL[N_s];                           // N_s scalars
-  // scalar* AR = &AC[N_s];                           // N_s scalars
-  // scalar* Alim = &AR[N_s];
-  
-  // // Neighbors
-  // int left  = neighbors[e*N_N+offxy+0];
-  // int right = neighbors[e*N_N+offxy+1];
-    
-  // // Copy some data to shared memory
-  // for(int k=0;k<N_s*N_s;k++){
-  //   Lag2MonoLocal[k] = Lag2Mono[k];
-  //   Mono2LagLocal[k] = Mono2Lag[k];
-  // }
-  // for(int i=0;i<N_s;i++){uC[i]=U[(e*N_F+fc)*N_s+i];}
-
-  // // Check to see if we are at a boundary
-  // int physical = 0;
-  // if (left  < 0){physical = -left;  left  = e;}
-  // if (right < 0){physical = -right; right = e;}
-  
-  // // gravity field: leave data unchanged. This is a problem if we
-  // // also have shocks...
-  // if (physical==4){}
-
-  // // farfield (zero-gradient) and reflective BC: set to average in
-  // // the cell (ie set slopes to 0)
-  // else if ((physical==2)||(physical==3)){ 
-
-  //   // Lagrange -> Monomial transformation
-  //   gemm(N_s, 1, N_s, Lag2MonoLocal, uC, AC);
-
-  //   for(int slice = 0; slice < slicenum; slice++){ 
-  //     scalar avgU = 0;
-  //     // Calculate the cell average and set limited slopes to 0
-  //     for(int n=0; n<=N; n++){
-  //   	avgU += AC[slice*N_s1D+n]*integrate_monomial_derivative(0,n);
-  //   	Alim[slice*N_s1D+n] = 0;
-  //     }
-	
-  //     // set to cell average
-  //     Alim[slice*N_s1D+0] = 0.5*avgU;
-  //   }
-      
-  //   // Monomial -> Lagrange transformation
-  //   gemm(N_s, 1, N_s, Mono2LagLocal, Alim, uC);
-
-  //   // Copy solution back to main memory
-  //   for(int i=0;i<N_s;i++){ U[(e*N_F+fc)*N_s+i] = uC[i];}
-  // }
-
-  // //Otherwise do the full limiting
-  // else{
-  //   // copy neighbors data into shared memory
-  //   for(int i=0;i<N_s;i++){
-  //     uL[i]=U[(left *N_F+fc)*N_s+i];
-  //     uR[i]=U[(right*N_F+fc)*N_s+i];
-  //   }
-
-  //   // Lagrange -> Monomial transformation
-  //   gemm3(N_s,1,N_s, Lag2MonoLocal, uL, AL, uC, AC, uR, AR);
-
-  //   // limit the monomial by looping on slices 
-  //   for(int slice = 0; slice < slicenum; slice++){
-
-  //     int ind = slice*N_s1D;
-  //     limit_monomial(N,&AL[ind],&AC[ind],&AR[ind],&Alim[ind]);	  	  
-  //   } // end loop on slices
-
-  //   // Monomial -> Lagrange transformation
-  //   gemm(N_s, 1, N_s, Mono2LagLocal, Alim, uC);
-
-  //   // Copy solution back to main memory
-  //   for(int i=0;i<N_s;i++){ U[(e*N_F+fc)*N_s+i] = uC[i];}
-    
-  // } // end loop on physicals
-#endif  
+#ifdef USE_CPU
+    } // loop on fields
+  } // loop on elements
+  delete[] share;
+#endif
+  L2M = NULL; M2L = NULL; UL=NULL; UC = NULL; UR = NULL; tmp = NULL;   
 }
 
 
@@ -1016,14 +919,14 @@ void Lhrl1D(int N_s, int N_E, int Nfields, int N_N, int slicenum, int* neighbors
 }
 
 extern "C" 
-void Lhri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U){
+  void Lhri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U, scalar* Unew){
 
 #ifdef USE_GPU
   dim3 dimBlock(1,N_F,1);
   dim3 dimGrid(N_E,1);
 #endif
   
-  hri1D arch_args_array(N_F*(2*N_s*N_s + 7*N_s)*sizeof(scalar)) (N_s, N_E, N_N, neighbors, N_s1D, slicenum, offxy, Lag2Mono, Mono2Lag, U);
+  hri1D arch_args_array(N_F*(2*N_s*N_s + 7*N_s)*sizeof(scalar)) (N_s, N_E, N_N, neighbors, N_s1D, slicenum, offxy, Lag2Mono, Mono2Lag, U, Unew);
 }
 
 extern "C" 
@@ -1551,8 +1454,7 @@ arch_device void set2average(int N_s, int N, int N_s1D, int slicenum, scalar* L2
   // Monomial -> lagrange transform
   gemv(N_s,N_s,M2L,Alim,U);
   
-  A = NULL;
-  Alim = NULL;  
+  A = NULL;  Alim = NULL;  
 }
 
 arch_device void HR(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* tmp, scalar* UL, scalar* UC, scalar* UR){
@@ -1565,9 +1467,9 @@ arch_device void HR(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar
     \param[in] L2M Lagrange -> Monomial transform
     \param[in] M2L Monomial -> Lagrange transform
     \param[in] tmp temporary array to store intermediate values
-    \param[out] U solution on the left
-    \param[out] U solution to be averaged
-    \param[out] U solution on the right
+    \param[in] UL solution on the left
+    \param[out] UC solution to be averaged
+    \param[in] UR solution on the right
   */
 
   // Initializations
@@ -1586,11 +1488,8 @@ arch_device void HR(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar
     limit_monomial(N,&AL[idx],&AC[idx],&AR[idx],&Alim[idx]);
   }
 
-  //for(int i=0; i<N_s; i++){Alim[i] = AC[i];}
-  
   // Monomial -> lagrange transform
   gemv(N_s,N_s,M2L,Alim,UC);
   
-  AR = NULL; AC = NULL; AL = NULL;
-  Alim = NULL;
+  AR = NULL; AC = NULL; AL = NULL;  Alim = NULL;
 }

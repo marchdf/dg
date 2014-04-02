@@ -38,7 +38,8 @@ class Limiting
 
   scalar* _A;      // monomial solution
   scalar* _Alim;   // limited monomial solution
-
+  scalar* _Utmp;   // for hri/m2i, need a tmp to store limited solution
+  
   scalar* _rho, * _rhoMono, * _rhoLim;
   scalar* _rhou, * _rhouMono, * _rhouLim;
   scalar* _rhov, * _rhovMono, * _rhovLim;
@@ -84,7 +85,8 @@ class Limiting
     _powersXYZG=NULL;
     _A=NULL;      // monomial solution
     _Alim=NULL;   // holds the limited monomial solution
-
+    _Utmp=NULL;
+    
     _rho=NULL; _rhoMono=NULL; _rhoLim=NULL;
     _rhou=NULL; _rhouMono=NULL; _rhouLim=NULL;
     _rhov=NULL; _rhovMono=NULL; _rhovLim=NULL;
@@ -158,7 +160,7 @@ class Limiting
       cudaMalloc((void**) &_A,_N_s*_N_E*N_F*sizeof(scalar));
       cudaMalloc((void**) &_Alim,_N_s*_N_E*N_F*sizeof(scalar));
 #endif
-      }
+    }
       break;
     case 2:{
 #ifdef USE_CPU
@@ -211,7 +213,16 @@ class Limiting
 #include "loop.h"
 
 #endif
-      }
+    }
+      break;
+    case 3:
+    case 4:{
+#ifdef USE_CPU
+      _Utmp     = new scalar[_N_s*_N_E*N_F]; 
+#elif USE_GPU
+      cudaMalloc((void**) &_Utmp,_N_s*_N_E*N_F*sizeof(scalar));
+#endif
+    }
       break;
     }
   } // end 1D constructor
@@ -341,14 +352,16 @@ class Limiting
     }
       break;
     case 3:
+    case 4:{
       // Some extra modal-nodal transforms
       blasGemm('N','N', _N_s, _N_s, _N_s, 1, _MonoY2Lag, _N_s, _MonoX2MonoY, _N_s, 0.0, _MonoX2Lag, _N_s);
       blasGemm('N','N', _N_s, _N_s, _N_s, 1, _MonoX2MonoY, _N_s, _Lag2MonoX, _N_s, 0.0, _Lag2MonoY, _N_s);
-      break;
-    case 4:
-      // Some extra modal-nodal transforms
-      blasGemm('N','N', _N_s, _N_s, _N_s, 1, _MonoY2Lag, _N_s, _MonoX2MonoY, _N_s, 0.0, _MonoX2Lag, _N_s);
-      blasGemm('N','N', _N_s, _N_s, _N_s, 1, _MonoX2MonoY, _N_s, _Lag2MonoX, _N_s, 0.0, _Lag2MonoY, _N_s);
+#ifdef USE_CPU
+      _Utmp     = new scalar[_N_s*_N_E*N_F]; 
+#elif USE_GPU
+      cudaMalloc((void**) &_Utmp,_N_s*_N_E*N_F*sizeof(scalar));
+#endif
+    }
       break;
     }
   }// end 2D constructor for structured mesh
@@ -449,6 +462,7 @@ class Limiting
     if(_MonoY2Lag)    del(_MonoY2Lag);
     if(_A)            del(_A);
     if(_Alim)         del(_Alim);
+    if(_Utmp)         del(_Utmp);
     if(_rho){         del(_rho); del(_rhoMono); del(_rhoLim);}
     if(_rhou){        del(_rhou); del(_rhouMono); del(_rhouLim);}
     if(_rhov){        del(_rhov); del(_rhovMono); del(_rhovLim);}
