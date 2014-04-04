@@ -10,6 +10,11 @@
 #include <math.h>
 #include <macros.h>
 
+// Used to define dynamically variables (mass fractions)
+#define YL(x) YL ##x
+#define YC(x) YC ##x
+#define YR(x) YR ##x
+
 // Strided copy (cpu and gpu version) used in limiting procedure
 extern "C" void Lstridedcopy(int count, int blocklen, int strideA, int strideB, int offsetA, int offsetB, scalar* A, scalar* B);
 

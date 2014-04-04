@@ -407,8 +407,8 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
  
   int N = N_s1D-1; // polynomial order
 
-  int size_share = N_F*3*N_s + // room for L/C/R for all the fields
-    N_s + // for gammaLim
+  int size_share = N_F*3*N_s +  // room for L/C/R for all the fields
+    N_s +  // for gammaLim
 #ifdef STIFFENED
     N_s + // for betaLim
 #endif 
@@ -456,6 +456,14 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
   scalar* rhoeLim = &share[cnt]; cnt += N_s;
   scalar* tmp = &share[cnt]; cnt+= 4*N_s;
 
+  // Mass fractions
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) scalar* YL(x) = &share[cnt]; cnt+=N_s; \
+  scalar* YC(x) = &share[cnt]; cnt+=N_s;		\
+  scalar* YR(x) = &share[cnt]; cnt+=N_s;
+#include "loop.h"    
+  
   scalar* L2M = Lag2Mono;
   scalar* M2L = Mono2Lag;
   
@@ -481,6 +489,10 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 #ifdef STIFFENED
     for(int i=0; i<N_s; i++){betaC[i]  = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
 #endif 
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)  for(int i=0; i<N_s; i++){YC(x)[i]  = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
+#include "loop.h"    
 
     // Get the pressure
     pressure(N_s,rhoC,rhouC,rhovC,EC,gammaC,betaC,pressureC);
@@ -500,6 +512,10 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
     set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,betaC,betaLim);
 #endif
     set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,pressureC,pressureLim);
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,YC(x),NULL);
+#include "loop.h"    
   }
 
   //Otherwise do the full limiting
@@ -522,6 +538,11 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
     for(int i=0; i<N_s; i++){betaL[i]  = U[(left *N_F+fcnt)*N_s+i];} 
     for(int i=0; i<N_s; i++){betaR[i]  = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
 #endif 
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)  for(int i=0; i<N_s; i++){YL(x)[i]  = U[(left *N_F+fcnt)*N_s+i];} \
+                  for(int i=0; i<N_s; i++){YR(x)[i]  = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
+#include "loop.h"    
 
     // Get the pressure
     pressure(N_s,rhoL,rhouL,rhovL,EL,gammaL,betaL,pressureL);
@@ -538,7 +559,10 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
     HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,betaL,betaC,betaR,betaLim);
 #endif
     HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,pressureL,pressureC,pressureR,pressureLim);
-
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,YL(x),YC(x),YR(x),NULL); 
+#include "loop.h"    
   } // end if on physicals
 
   // Reconstruct the energies
@@ -563,6 +587,10 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 #ifdef STIFFENED	                         
   for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = betaC[i];} fcnt++;
 #endif 
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)  for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = YC(x)[i];} fcnt++;
+#include "loop.h"    
     
   } // loop on elements
   
@@ -577,6 +605,10 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 #endif
   pressureL=NULL; pressureC=NULL; pressureL=NULL; pressureLim=NULL;
   KLim=NULL; rhoeLim=NULL; tmp=NULL;
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x)  YL(x)=NULL; YC(x)=NULL; YR(x)=NULL; 
+#include "loop.h"
 }
   
 //==========================================================================
