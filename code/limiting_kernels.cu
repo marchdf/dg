@@ -405,8 +405,6 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
     have been limited before updating the solution.
   */
  
-  int N = N_s1D-1; // polynomial order
-
   int size_share = N_F*3*N_s +  // room for L/C/R for all the fields
     N_s +  // for gammaLim
 #ifdef STIFFENED
@@ -418,8 +416,22 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
     N_s + // for rhoeLim
     4*N_s; // for tmp
 
-  scalar* share = new scalar[size_share];
+  int N = N_s1D-1; // polynomial order
   int cnt = 0;
+  
+#ifdef USE_CPU  
+  scalar* share = new scalar[size_share];
+  scalar* L2M = Lag2Mono;
+  scalar* M2L = Mono2Lag;
+#elif USE_GPU
+  extern __shared__ scalar share[];
+  scalar* L2M = &share[cnt]; cnt+=N_s*N_s;
+  scalar* M2L = &share[cnt]; cnt+=N_s*N_s;
+  for(int k=0;k<N_s*N_s;k++){L2M[k] = Lag2Mono[k];}
+  for(int k=0;k<N_s*N_s;k++){M2L[k] = Mono2Lag[k];}
+#endif
+
+  // Initialize pointers
   scalar* rhoL = &share[cnt]; cnt += N_s;
   scalar* rhoC = &share[cnt]; cnt += N_s;
   scalar* rhoR = &share[cnt]; cnt += N_s;
@@ -463,11 +475,13 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
   scalar* YC(x) = &share[cnt]; cnt+=N_s;		\
   scalar* YR(x) = &share[cnt]; cnt+=N_s;
 #include "loop.h"    
-  
-  scalar* L2M = Lag2Mono;
-  scalar* M2L = Mono2Lag;
-  
+
+#ifdef USE_CPU
   for(int e=0; e<N_E; e++){
+#elif USE_GPU
+  int e = blockIdx.x;
+#endif
+    
     // Neighbors
     int left  = neighbors[e*N_N+offxy+0];
     int right = neighbors[e*N_N+offxy+1];
@@ -491,7 +505,7 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 #endif 
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x)  for(int i=0; i<N_s; i++){YC(x)[i]  = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
+#define MACRO(x)  for(int i=0; i<N_s; i++){YC(x)[i] = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
 #include "loop.h"    
 
     // Get the pressure
@@ -516,6 +530,16 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 #define LOOP_END N_Y
 #define MACRO(x) set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,YC(x),NULL);
 #include "loop.h"    
+
+    // Reconstruct the energies
+    // Kinetic (with limited Lagrange rho,rhou,rhov)
+    kinetic_energy(N_s, L2M, rhoC, rhouC, rhovC, tmp, KLim);
+
+    // Internal (with limited monomial p, gamma, beta)
+    internal_energy(N_s1D, slicenum, pressureLim, gammaLim, betaLim, rhoeLim);
+
+    // Total
+    reconstruct_total_energy(N_s, N_s1D, slicenum, L2M, M2L, rhoeLim, KLim, tmp, EC);
   }
 
   //Otherwise do the full limiting
@@ -563,17 +587,17 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 #define LOOP_END N_Y
 #define MACRO(x) HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,YL(x),YC(x),YR(x),NULL); 
 #include "loop.h"    
+
+    // Reconstruct the energies
+    // Kinetic (with limited Lagrange rho,rhou,rhov)
+    kinetic_energy(N_s, L2M, rhoC, rhouC, rhovC, tmp, KLim);
+
+    // Internal (with limited monomial p, gamma, beta)
+    internal_energy(N_s1D, slicenum, pressureLim, gammaLim, betaLim, rhoeLim);
+
+    // Total
+    reconstruct_total_energy(N_s, N_s1D, slicenum, L2M, M2L, rhoeLim, KLim, tmp, EC);
   } // end if on physicals
-
-  // Reconstruct the energies
-  // Kinetic (with limited Lagrange rho,rhou,rhov)
-  kinetic_energy(N_s, L2M, rhoC, rhouC, rhovC, tmp, KLim);
-
-  // Internal (with limited monomial p, gamma, beta)
-  internal_energy(N_s1D, slicenum, pressureLim, gammaLim, betaLim, rhoeLim);
-
-  // Total
-  reconstruct_total_energy(N_s, N_s1D, slicenum, L2M, M2L, rhoeLim, KLim, tmp, EC);
   
   // Copy solution back to main memory
   fcnt=0;
@@ -592,9 +616,11 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 #define MACRO(x)  for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = YC(x)[i];} fcnt++;
 #include "loop.h"    
     
+#ifdef USE_CPU
   } // loop on elements
-  
   delete[] share;
+#endif
+  
   rhoL=NULL; rhoC=NULL; rhoR=NULL; rhouL=NULL; rhouC=NULL; rhouR=NULL;
 #ifdef TWOD
   rhovL=NULL; rhovC=NULL; rhovR=NULL;
@@ -962,11 +988,23 @@ extern "C"
 void Lm2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U, scalar* Unew){
 
 #ifdef USE_GPU
-  dim3 dimBlock(1,N_F,1);
+  dim3 dimBlock(1,1,1);
   dim3 dimGrid(N_E,1);
 #endif
-  
-  m2i1D arch_args_array(N_F*(2*N_s*N_s + 7*N_s)*sizeof(scalar)) (N_s, N_E, N_N, neighbors, N_s1D, slicenum, offxy, Lag2Mono, Mono2Lag, U, Unew);
+
+  int size_share = 2*N_s*N_s + // for L2M/M2L
+    N_F*3*N_s +  // room for L/C/R for all the fields
+    N_s +  // for gammaLim
+#ifdef STIFFENED
+    N_s + // for betaLim
+#endif 
+    N_s +  // for pressureLim
+    3*N_s + // for E L/C/R
+    N_s + // for KLim
+    N_s + // for rhoeLim
+    4*N_s; // for tmp
+
+  m2i1D arch_args_array(size_share*sizeof(scalar)) (N_s, N_E, N_N, neighbors, N_s1D, slicenum, offxy, Lag2Mono, Mono2Lag, U, Unew);
 }
 
 extern "C"
@@ -1572,11 +1610,10 @@ arch_device void internal_energy(int N_s1D, int slicenum, scalar* p, scalar* g, 
       for(int k=0; k<i+1; k++){
 	I += (scalar)binomial_coefficient(i,k) * p[slice*N_s1D+i-k] * g[slice*N_s1D+k];
       }
-#ifdef MULTIFLUID
-      rhoe[slice*N_s1D+i] = I;
-#elif STIFFENED
-      rhoe[slice*N_s1D+i] = I + b[slice*N_s1D+i];
+#ifdef STIFFENED
+      I += b[slice*N_s1D+i];
 #endif
+      rhoe[slice*N_s1D+i] = I;
     } // loop on N_s1D
   } // loop on slices
 }
