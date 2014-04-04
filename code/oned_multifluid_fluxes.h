@@ -163,8 +163,8 @@ arch_device void oned_multifluid_hll(scalar rhoL,
     SR = ubar*nx + sqrt(dbar2);
     break;}
   default: // Toro 10.48
-    SL = MIN(vxL*nx-aL,vxR*nx-aR);
-    SR = MAX(vxL*nx+aL,vxR*nx+aR);
+    SL = MIN(vxL*nx-aL,vxR*nx-aR); // add 0 to min (see Saurel SIAM 99)
+    SR = MAX(vxL*nx+aL,vxR*nx+aR); // add 0 to max (see Saurel SIAM 99)
   }
 
   // Non-conservative terms (see paper by Rhebergen)

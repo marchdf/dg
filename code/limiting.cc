@@ -559,19 +559,22 @@ void Limiting::M2Ilimiting(COMMUNICATOR &communicator, scalar* U){
 #ifdef ONED
 
   // Call limiting function
-  Lm2i1D(_N_s, _N_E, _N_N, _neighbors, _N_s, 1, 0, _Lag2Mono, _Mono2Lag, U);
+  Lm2i1D(_N_s, _N_E, _N_N, _neighbors, _N_s, 1, 0, _Lag2Mono, _Mono2Lag, U, _Utmp);
+  blasCopy(_N_s*_N_E*N_F, _Utmp, 1, U, 1); // REPLACE WITH A KERNEL
   
 #elif TWOD
   if(_cartesian){
 
     // Call limiting function in x
-    Lm2i1D(_N_s, _N_E, _N_N, _neighbors, _N_s1D, _N_s1D, 0, _Lag2MonoX, _MonoX2Lag, U);
-
+    Lm2i1D(_N_s, _N_E, _N_N, _neighbors, _N_s1D, _N_s1D, 0, _Lag2MonoX, _MonoX2Lag, U, _Utmp);
+    blasCopy(_N_s*_N_E*N_F, _Utmp, 1, U, 1); // REPLACE WITH A KERNEL
+    
     // Communicate the elements on different partitions if necessary
     communicator.CommunicateGhosts(N_F, U);
 
     // Call limiting function in y
-    Lm2i1D(_N_s, _N_E, _N_N, _neighbors, _N_s1D, _N_s1D, 2, _Lag2MonoY, _MonoY2Lag, U);
+    Lm2i1D(_N_s, _N_E, _N_N, _neighbors, _N_s1D, _N_s1D, 2, _Lag2MonoY, _MonoY2Lag, U, _Utmp);
+    blasCopy(_N_s*_N_E*N_F, _Utmp, 1, U, 1); // REPLACE WITH A KERNEL
   }
 #endif
 }

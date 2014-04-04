@@ -56,6 +56,7 @@
   - memcpy is evil in c++, don't use it: it doesn't do a deep copy. replace memcpy with blascopy?
   - restart functionality (read initial condition from last output file)
   - put common used ints (N_E, M_T, etc) into a struct/class to pass around?
+  - solve kernel: make the matrix-matrix product more efficient?
 
 \mytodo DOXYGEN
   - it's not documenting both versions of CommunicateGhosts properly.

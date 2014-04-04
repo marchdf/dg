@@ -30,11 +30,14 @@ arch_device void gemv(int M, int N, scalar* A, scalar* B, scalar*C);
 arch_device void gemv3(int M, int N, scalar* A, scalar* B1, scalar*C1, scalar* B2, scalar*C2, scalar* B3, scalar*C3);
 arch_device inline scalar integrate_monomial_derivative(int k, int n);
 arch_device inline scalar integrate_monomial_derivative_bounds(int k, int n, scalar a, scalar b);
-arch_device void reconstruct_energy_individual(int N_s1D, int slicenum, scalar* rhoeLim, scalar* KLim, scalar* EMono, scalar* ELim);
 arch_device void average_monomial(int N, scalar* A, scalar* Alim);
 
-arch_device void set2average(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* tmp, scalar* U);
-arch_device void HR(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* tmp, scalar* UL, scalar* UC, scalar* UR);
+arch_device void set2average(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* tmp, scalar* U, scalar* UMonoLim);
+arch_device void HR(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* tmp, scalar* UL, scalar* UC, scalar* UR, scalar* UMonoLim);
+arch_device void pressure(int N_s, scalar* rho, scalar* rhou, scalar* rhov, scalar* E, scalar* gamma, scalar* beta, scalar* p);
+arch_device void kinetic_energy(int N_s, scalar* L2M, scalar* rho, scalar* rhou, scalar* rhov, scalar* tmp, scalar* K);
+arch_device void internal_energy(int N_s1D, int slicenum, scalar* p, scalar* g, scalar* b, scalar* rhoe);
+arch_device void reconstruct_total_energy(int N_s, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* rhoeLim, scalar* KLim, scalar* tmp, scalar* E);
 
 //==========================================================================
 //
@@ -363,14 +366,14 @@ arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
   
   // Zero-gradient and reflective BC: average in cell, slopes to 0
   else if ((physical==2)||(physical==3)){
-    set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,UC);
+    set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,UC,NULL);
   }
   
   //Otherwise do the full limiting
   else{
     for(int i=0;i<N_s;i++){UL[i]=U[(left *N_F+fc)*N_s+i];}
     for(int i=0;i<N_s;i++){UR[i]=U[(right*N_F+fc)*N_s+i];}
-    HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,UL,UC,UR);
+    HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,UL,UC,UR,NULL);
   } // end if on physicals
   
   // Copy solution back to main memory
@@ -385,8 +388,8 @@ arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 }
 
 
- //==========================================================================
-arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U){
+//==========================================================================
+arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U, scalar* Unew){
   /*!
     \brief Modified limiting function for individual elements (assumes 1D decomposition)
     \param[in] N_s number of nodes per element
@@ -396,204 +399,184 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
     \param[in] N_s1D number of nodes in a slice (1D element)
     \param[in] slicenum number of slices (in 2D N_s1D = slicenum)
     \param[in] offxy offset if limiting in x or y
-    \param[out] U solution to limit (Lagrange form)
+    \param[in] U solution to limit (Lagrange form)
+    \param[out] Unew limited solution (only some may be limited bc of sensor)
+    Unew was necessary because you need to wait until all the elements
+    have been limited before updating the solution.
   */
  
-  //#ifdef USE_CPU
+  int N = N_s1D-1; // polynomial order
+
+  int size_share = N_F*3*N_s + // room for L/C/R for all the fields
+    N_s + // for gammaLim
+#ifdef STIFFENED
+    N_s + // for betaLim
+#endif 
+    N_s +  // for pressureLim
+    3*N_s + // for E L/C/R
+    N_s + // for KLim
+    N_s + // for rhoeLim
+    4*N_s; // for tmp
+
+  scalar* share = new scalar[size_share];
+  int cnt = 0;
+  scalar* rhoL = &share[cnt]; cnt += N_s;
+  scalar* rhoC = &share[cnt]; cnt += N_s;
+  scalar* rhoR = &share[cnt]; cnt += N_s;
+  scalar* rhouL = &share[cnt]; cnt += N_s;
+  scalar* rhouC = &share[cnt]; cnt += N_s;
+  scalar* rhouR = &share[cnt]; cnt += N_s;
+#ifdef TWOD
+  scalar* rhovL = &share[cnt]; cnt += N_s;
+  scalar* rhovC = &share[cnt]; cnt += N_s;
+  scalar* rhovR = &share[cnt]; cnt += N_s;
+#else
+  scalar* rhovL=NULL, *rhovC=NULL, *rhovR=NULL;
+#endif
+  scalar* EL = &share[cnt]; cnt += N_s;
+  scalar* EC = &share[cnt]; cnt += N_s;
+  scalar* ER = &share[cnt]; cnt += N_s;
+  scalar* gammaL = &share[cnt]; cnt += N_s;
+  scalar* gammaC = &share[cnt]; cnt += N_s;
+  scalar* gammaR = &share[cnt]; cnt += N_s;
+  scalar* gammaLim = &share[cnt]; cnt += N_s;
+#ifdef STIFFENED
+  scalar* betaL = &share[cnt]; cnt += N_s;
+  scalar* betaC = &share[cnt]; cnt += N_s;
+  scalar* betaR = &share[cnt]; cnt += N_s;
+  scalar* betaLim = &share[cnt]; cnt += N_s;
+#else
+  scalar* betaL=NULL, *betaC = NULL, *betaR = NULL, *betaLim = NULL;
+#endif
+  scalar* pressureL = &share[cnt]; cnt += N_s;
+  scalar* pressureC = &share[cnt]; cnt += N_s;
+  scalar* pressureR = &share[cnt]; cnt += N_s;
+  scalar* pressureLim = &share[cnt]; cnt += N_s;
+  scalar* KLim = &share[cnt]; cnt += N_s;
+  scalar* rhoeLim = &share[cnt]; cnt += N_s;
+  scalar* tmp = &share[cnt]; cnt+= 4*N_s;
+
+  scalar* L2M = Lag2Mono;
+  scalar* M2L = Mono2Lag;
+  
   for(int e=0; e<N_E; e++){
-    int N = N_s1D-1; // polynomial order
-    scalar* share = new scalar[2*N_s*N_s + 36*N_s];
-
-    int cnt = 0;
-    scalar* Lag2MonoLocal = &share[cnt]; cnt+=N_s*N_s; // N_s*N_s scalars
-    scalar* Mono2LagLocal = &share[cnt]; cnt+=N_s*N_s; // N_s*N_s scalars
-    scalar* rhoL          = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* rhoC          = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* rhoR          = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* rhoMonoL      = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* rhoMonoC      = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* rhoMonoR      = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* rhoLim        = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* rhouL         = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* rhouC         = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* rhouR         = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* rhouMonoL     = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* rhouMonoC     = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* rhouMonoR     = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* rhouLim       = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* pressureL     = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* pressureC     = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* pressureR     = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* pressureMonoL = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* pressureMonoC = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* pressureMonoR = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* pressureLim   = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* K             = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* KLim          = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* EL            = &share[cnt]; cnt+=N_s;     // N_s scalars
-    scalar* EC            = &share[cnt]; cnt+=N_s;     // N_s scalars
-    scalar* ER            = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* EMono         = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* ELim          = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* gammaL        = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* gammaC        = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* gammaR        = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* gammaMonoL    = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* gammaMonoC    = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* gammaMonoR    = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* gammaLim      = &share[cnt]; cnt+=N_s;     // N_s scalars 
-    scalar* rhoeLim       = &share[cnt]; cnt+=N_s;     // N_s scalars  
-
     // Neighbors
     int left  = neighbors[e*N_N+offxy+0];
     int right = neighbors[e*N_N+offxy+1];
     
-    // Copy some data to shared memory
-    for(int k=0;k<N_s*N_s;k++){
-      Lag2MonoLocal[k] = Lag2Mono[k];
-      Mono2LagLocal[k] = Mono2Lag[k];
-    }
-    for(int i=0;i<N_s;i++){
-      rhoC[i]      = U[(e*N_F+0)*N_s+i];
-      rhouC[i]     = U[(e*N_F+1)*N_s+i];
-      EC[i]        = U[(e*N_F+2)*N_s+i];
-      gammaC[i]    = U[(e*N_F+3)*N_s+i];
-      pressureC[i] = (1.0/gammaC[i]) * (EC[i] - 0.5 * rhouC[i]*rhouC[i]/rhoC[i]);
-    }
-
     // Check to see if we are at a boundary
     int physical = 0;
-    if (left  < 0){physical = -left;  left  = e;}
-    if (right < 0){physical = -right; right = e;}
+    if (left  < 0){physical = -left;}
+    if (right < 0){physical = -right;}
 
-    // gravity field: leave data unchanged. This is a problem if we
-    // also have shocks...
-    if (physical==4){}
+    // Copy some data to shared memory
+    int fcnt=0;
+    for(int i=0; i<N_s; i++){rhoC[i]   = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
+    for(int i=0; i<N_s; i++){rhouC[i]  = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
+#ifdef TWOD
+    for(int i=0; i<N_s; i++){rhovC[i]  = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
+#endif
+    for(int i=0; i<N_s; i++){EC[i]     = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
+    for(int i=0; i<N_s; i++){gammaC[i] = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
+#ifdef STIFFENED
+    for(int i=0; i<N_s; i++){betaC[i]  = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
+#endif 
+
+    // Get the pressure
+    pressure(N_s,rhoC,rhouC,rhovC,EC,gammaC,betaC,pressureC);
+
+    // gravity field: leave data unchanged. Not good for shocks
+  if (physical==4){} 
   
-    // farfield (zero-gradient) and reflective BC: set to average in
-    // the cell (ie set slopes to 0)
-    else if ((physical==2)||(physical==3)){ 
-      // // Lagrange -> Monomial transform
-      // gemm(N_s,1,N_s, Lag2MonoLocal, rhoC, rhoMonoC);
-      // gemm(N_s,1,N_s, Lag2MonoLocal, rhouC, rhouMonoC);
-      // gemm(N_s,1,N_s, Lag2MonoLocal, gammaC, gammaMonoC);
-      // gemm(N_s,1,N_s, Lag2MonoLocal, pressureC, pressureMonoC);
-      
-      // for(int slice = 0; slice < slicenum; slice++){ 
-      // 	scalar avgrho = 0;
-      // 	scalar avgrhou = 0;
-      // 	scalar avggamma = 0;
-      // 	scalar avgpressure =0;
-      // 	// Calculate the cell average and set limited slopes to 0
-      // 	for(int n=0; n<=N; n++){
-      // 	  avgrho      += rhoMonoC[slice*N_s1D+n]*integrate_monomial_derivative(0,n);
-      // 	  avgrhou     += rhouMonoC[slice*N_s1D+n]*integrate_monomial_derivative(0,n);
-      // 	  avggamma    += gammaMonoC[slice*N_s1D+n]*integrate_monomial_derivative(0,n);
-      // 	  avgpressure += pressureMonoC[slice*N_s1D+n]*integrate_monomial_derivative(0,n);
-      // 	  rhoLim[slice*N_s1D+n] = 0;
-      // 	  rhouLim[slice*N_s1D+n] = 0;
-      // 	  gammaLim[slice*N_s1D+n] = 0;
-      // 	  pressureLim[slice*N_s1D+n] = 0;
-      // 	}
-      // 	// set to cell average
-      // 	rhoLim[slice*N_s1D+0]      = 0.5*avgrho;
-      // 	rhouLim[slice*N_s1D+0]     = 0.5*avgrhou;
-      // 	gammaLim[slice*N_s1D+0]    = 0.5*avggamma;
-      // 	pressureLim[slice*N_s1D+0] = 0.5*avgpressure;
-      // }
-      
-      // // Monomial -> Lagrange transformation
-      // gemm(N_s, 1, N_s, Mono2LagLocal, rhoLim, rhoC);
-      // gemm(N_s, 1, N_s, Mono2LagLocal, rhouLim, rhouC);
-      // gemm(N_s, 1, N_s, Mono2LagLocal, gammaLim, gammaC);
+  // Zero-gradient and reflective BC: average in cell, slopes to 0
+  else if ((physical==2)||(physical==3)){
+    set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhoC,NULL);
+    set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhouC,NULL);
+#ifdef TWOD
+    set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhovC,NULL);
+#endif
+    set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,gammaC,gammaLim);
+#ifdef STIFFENED
+    set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,betaC,betaLim);
+#endif
+    set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,pressureC,pressureLim);
+  }
 
-      // // Get the limited kinetic energy by using the limited rho and limited rhou
-      // // Start in Lagrange formulation then transform to monomial basis
-      // for(int i=0;i<N_s;i++){K[i] = 0.5*rhouC[i]*rhouC[i]/rhoC[i];}
-      // gemm(N_s, 1, N_s, Lag2MonoLocal, K, KLim);
+  //Otherwise do the full limiting
+  else{
+    // Copy left/right data to shared memory
+    fcnt=0;
+    for(int i=0; i<N_s; i++){rhoL[i]   = U[(left *N_F+fcnt)*N_s+i];} 
+    for(int i=0; i<N_s; i++){rhoR[i]   = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
+    for(int i=0; i<N_s; i++){rhouL[i]  = U[(left *N_F+fcnt)*N_s+i];} 
+    for(int i=0; i<N_s; i++){rhouR[i]  = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
+#ifdef TWOD
+    for(int i=0; i<N_s; i++){rhovL[i]  = U[(left *N_F+fcnt)*N_s+i];} 
+    for(int i=0; i<N_s; i++){rhovR[i]  = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
+#endif
+    for(int i=0; i<N_s; i++){EL[i]     = U[(left *N_F+fcnt)*N_s+i];} 
+    for(int i=0; i<N_s; i++){ER[i]     = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
+    for(int i=0; i<N_s; i++){gammaL[i] = U[(left *N_F+fcnt)*N_s+i];} 
+    for(int i=0; i<N_s; i++){gammaR[i] = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
+#ifdef STIFFENED
+    for(int i=0; i<N_s; i++){betaL[i]  = U[(left *N_F+fcnt)*N_s+i];} 
+    for(int i=0; i<N_s; i++){betaR[i]  = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
+#endif 
 
-      // // Get the limited internal energy
-      // for(int i=0;i<N_s;i++){rhoeLim[i] = pressureLim[i]*gammaLim[i];}
+    // Get the pressure
+    pressure(N_s,rhoL,rhouL,rhovL,EL,gammaL,betaL,pressureL);
+    pressure(N_s,rhoR,rhouR,rhovR,ER,gammaR,betaR,pressureR);
 
-      // // Reconstruct the limited energy coefficients, go back to lagrange basis
-      // reconstruct_energy_individual(N_s1D,slicenum,rhoeLim,KLim,EMono,ELim);
-      // gemm(N_s, 1, N_s, Mono2LagLocal, ELim, EC);
+    // Limit
+    HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhoL,rhoC,rhoR,NULL);
+    HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhouL,rhouC,rhouR,NULL);
+#ifdef TWOD
+    HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhovL,rhovC,rhovR,NULL);
+#endif
+    HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,gammaL,gammaC,gammaR,gammaLim);
+#ifdef STIFFENED
+    HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,betaL,betaC,betaR,betaLim);
+#endif
+    HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,pressureL,pressureC,pressureR,pressureLim);
 
-      // Copy limited solutions back to main memory
-      for(int i=0;i<N_s;i++){ 
-      	U[(e*N_F+0)*N_s+i] = rhoC[i];
-      	U[(e*N_F+1)*N_s+i] = rhouC[i];
-      	U[(e*N_F+2)*N_s+i] = EC[i];
-      	U[(e*N_F+3)*N_s+i] = gammaC[i];
-      }
-    }
+  } // end if on physicals
 
-    //Otherwise do the full limiting
-    else{
-      // copy neighbors data into shared memory
-      for(int i=0;i<N_s;i++){
-      	rhoL[i]   = U[(left*N_F+0)*N_s+i];
-      	rhouL[i]  = U[(left*N_F+1)*N_s+i];
-      	EL[i]     = U[(left*N_F+2)*N_s+i];
-      	gammaL[i] = U[(left*N_F+3)*N_s+i];
-      	pressureL[i] = (1.0/gammaL[i]) * (EL[i] - 0.5 * rhouL[i]*rhouL[i]/rhoL[i]);
-      }
-      for(int i=0;i<N_s;i++){
-      	rhoR[i]   = U[(right*N_F+0)*N_s+i];
-      	rhouR[i]  = U[(right*N_F+1)*N_s+i];
-      	ER[i]     = U[(right*N_F+2)*N_s+i];
-      	gammaR[i] = U[(right*N_F+3)*N_s+i];
-      	pressureR[i] = (1.0/gammaR[i]) * (ER[i] - 0.5 * rhouR[i]*rhouR[i]/rhoR[i]);
-      }
+  // Reconstruct the energies
+  // Kinetic (with limited Lagrange rho,rhou,rhov)
+  kinetic_energy(N_s, L2M, rhoC, rhouC, rhovC, tmp, KLim);
 
-      //
-      // Limit density, momentum, gamma, pressure
-      //
-      // Lagrange -> Monomial transform
-      gemm3(N_s,1,N_s, Lag2MonoLocal, rhoL, rhoMonoL, rhoC, rhoMonoC, rhoR, rhoMonoR);
-      gemm3(N_s,1,N_s, Lag2MonoLocal, rhouL, rhouMonoL, rhouC, rhouMonoC, rhouR, rhouMonoR);
-      gemm3(N_s,1,N_s, Lag2MonoLocal, gammaL, gammaMonoL, gammaC, gammaMonoC, gammaR, gammaMonoR);
-      gemm3(N_s,1,N_s, Lag2MonoLocal, pressureL, pressureMonoL, pressureC, pressureMonoC, pressureR, pressureMonoR);
+  // Internal (with limited monomial p, gamma, beta)
+  internal_energy(N_s1D, slicenum, pressureLim, gammaLim, betaLim, rhoeLim);
 
-      // limit the monomial by looping on slices 
-      for(int slice = 0; slice < slicenum; slice++){
-	
-      	int ind = slice*N_s1D;
-      	limit_monomial(N,&rhoMonoL[ind],&rhoMonoC[ind],&rhoMonoR[ind],&rhoLim[ind]);
-      	limit_monomial(N,&rhouMonoL[ind],&rhouMonoC[ind],&rhouMonoR[ind],&rhouLim[ind]);
-      	limit_monomial(N,&gammaMonoL[ind],&gammaMonoC[ind],&gammaMonoR[ind],&gammaLim[ind]);
-      	limit_monomial(N,&pressureMonoL[ind],&pressureMonoC[ind],&pressureMonoR[ind],&pressureLim[ind]);	
-      } // end loop on slices
-      
-      // Monomial -> Lagrange transformation
-      gemm(N_s, 1, N_s, Mono2LagLocal, rhoLim, rhoC);
-      gemm(N_s, 1, N_s, Mono2LagLocal, rhouLim, rhouC);
-      gemm(N_s, 1, N_s, Mono2LagLocal, gammaLim, gammaC);
-
-      // Get the limited kinetic energy by using the limited rho and limited rhou
-      // Start in Lagrange formulation then transform to monomial basis
-      for(int i=0;i<N_s;i++){K[i] = 0.5*rhouC[i]*rhouC[i]/rhoC[i];}
-      gemm(N_s, 1, N_s, Lag2MonoLocal, K, KLim);
-
-      // Get the limited internal energy
-      for(int i=0;i<N_s;i++){rhoeLim[i] = pressureLim[i]*gammaLim[i];}
-
-      // Reconstruct the limited energy coefficients, go back to lagrange basis
-      reconstruct_energy_individual(N_s,1,rhoeLim,KLim,EMono,ELim);
-      gemm(N_s, 1, N_s, Mono2LagLocal, ELim, EC);
-      
-      // Copy limited solutions back to main memory
-      for(int i=0;i<N_s;i++){ 
-      	U[(e*N_F+0)*N_s+i] = rhoC[i];
-      	U[(e*N_F+1)*N_s+i] = rhouC[i];
-      	U[(e*N_F+2)*N_s+i] = EC[i];
-      	U[(e*N_F+3)*N_s+i] = gammaC[i];
-      }
-
-    } // end if on physicals
+  // Total
+  reconstruct_total_energy(N_s, N_s1D, slicenum, L2M, M2L, rhoeLim, KLim, tmp, EC);
+  
+  // Copy solution back to main memory
+  fcnt=0;
+  for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = rhoC[i];} fcnt++;
+  for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = rhouC[i];} fcnt++;
+#ifdef TWOD		                         
+  for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = rhovC[i];} fcnt++;
+#endif			                         
+  for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = EC[i];} fcnt++;
+  for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = gammaC[i];} fcnt++;
+#ifdef STIFFENED	                         
+  for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = betaC[i];} fcnt++;
+#endif 
     
-    delete[] share;
-  }// end loop on elements
+  } // loop on elements
+  
+  delete[] share;
+  rhoL=NULL; rhoC=NULL; rhoR=NULL; rhouL=NULL; rhouC=NULL; rhouR=NULL;
+#ifdef TWOD
+  rhovL=NULL; rhovC=NULL; rhovR=NULL;
+#endif
+  EL=NULL; EC=NULL; ER=NULL; gammaL=NULL; gammaC=NULL; gammaR=NULL; gammaLim=NULL;
+#ifdef STIFFENED
+  betaL=NULL; betaC=NULL; betaR=NULL; betaLim=NULL;
+#endif
+  pressureL=NULL; pressureC=NULL; pressureL=NULL; pressureLim=NULL;
+  KLim=NULL; rhoeLim=NULL; tmp=NULL;
 }
   
 //==========================================================================
@@ -920,6 +903,20 @@ void Lhrl1D(int N_s, int N_E, int Nfields, int N_N, int slicenum, int* neighbors
 
 extern "C" 
   void Lhri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U, scalar* Unew){
+  /*!
+    \brief HR limiting function for individual elements (assumes 1D decomposition)
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] N_N number of neighbors per element
+    \param[in] neighbors array containing an element's neighbors
+    \param[in] N_s1D number of nodes in a slice (1D element)
+    \param[in] slicenum number of slices (in 2D N_s1D = slicenum)
+    \param[in] offxy offset if limiting in x or y
+    \param[in] U solution to limit (Lagrange form)
+    \param[out] Unew limited solution (only some may be limited bc of sensor)
+    \section Description
+    In GPU mode, launches N_E blocks of 1 x N_F x 1 threads. 
+  */ 
 
 #ifdef USE_GPU
   dim3 dimBlock(1,N_F,1);
@@ -930,14 +927,14 @@ extern "C"
 }
 
 extern "C" 
-void Lm2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U){
+void Lm2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U, scalar* Unew){
 
 #ifdef USE_GPU
   dim3 dimBlock(1,N_F,1);
   dim3 dimGrid(N_E,1);
 #endif
   
-  m2i1D arch_args_array(N_F*(2*N_s*N_s + 7*N_s)*sizeof(scalar)) (N_s, N_E, N_N, neighbors, N_s1D, slicenum, offxy, Lag2Mono, Mono2Lag, U);
+  m2i1D arch_args_array(N_F*(2*N_s*N_s + 7*N_s)*sizeof(scalar)) (N_s, N_E, N_N, neighbors, N_s1D, slicenum, offxy, Lag2Mono, Mono2Lag, U, Unew);
 }
 
 extern "C"
@@ -1374,41 +1371,6 @@ arch_device inline scalar integrate_monomial_derivative_bounds(int k, int n, sca
   return (pow(b,num) - pow(a,num))/(scalar)lim_factorial(num);
 }
 
-arch_device void reconstruct_energy_individual(int N_s1D, int slicenum, scalar* rhoeLim, scalar* KLim, scalar* EMono, scalar* ELim){
-    /*!
-    \brief Reconstruct the energy monomial coefficients for an individual element
-    \param[in] N_s1D number of nodes per slice
-    \param[in] rhoeLim limited monomial internal energy
-    \param[in] KLim limited monomial kinetic energy
-    \param[in] EMono monomial total energy
-    \param[out] ELim limited monomial total energy
-    \section Description
-    Reconstruct the energy monomial coefficients using the internal
-    and kinetic energy monomial coefficients. Apply a correction to the
-    zeroth coefficients so that the method is conservative.
-  */
-
-  for(int slice = 0; slice < slicenum; slice++){
-    int idx  = 0;
-    int idx0 = slice*N_s1D + 0;
-
-    // Start at idx 1 because we will do the zeroth coefficient separately
-    for(int i = 1; i < N_s1D; i++){
-      idx = slice*N_s1D+i;
-      ELim[idx] = rhoeLim[idx]+KLim[idx];
-    }
-
-    // Correct the zeroth coefficient to conserve energy
-    scalar E0 = EMono[idx0];
-    for(int k = 2; k<N_s1D; k+=2){
-      idx = slice*N_s1D+k;
-      E0 -= 1.0/((scalar)lim_factorial(k+1)) * (ELim[idx]-EMono[idx]);
-    }
-    ELim[idx0] = E0;
-
-  } // loop on slices    
-}
-
 arch_device void average_monomial(int N, scalar* A, scalar* Alim){
   /*!
     \brief Given a monomial, make all the slopes 0, return the average
@@ -1424,7 +1386,7 @@ arch_device void average_monomial(int N, scalar* A, scalar* Alim){
   Alim[0] = 0.5*avg;
 }
 
-arch_device void set2average(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* tmp, scalar* U){
+arch_device void set2average(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* tmp, scalar* U, scalar* UMonoLim){
   /*!
     \brief Set a nodal solution U to its cell average
     \param[in] N_s number of nodes per element
@@ -1435,6 +1397,7 @@ arch_device void set2average(int N_s, int N, int N_s1D, int slicenum, scalar* L2
     \param[in] M2L Monomial -> Lagrange transform
     \param[in] tmp temporary array to store intermediate values
     \param[out] U solution to be averaged
+    \param[out] UMonoLim (optional) array to hold limited monomial values
   */
 
   // Initializations
@@ -1453,11 +1416,14 @@ arch_device void set2average(int N_s, int N, int N_s1D, int slicenum, scalar* L2
 
   // Monomial -> lagrange transform
   gemv(N_s,N_s,M2L,Alim,U);
+
+  // If desired, also return the limited monomial values
+  if(UMonoLim != NULL){for(int i=0; i<N_s; i++){UMonoLim[i] = Alim[i];}}
   
   A = NULL;  Alim = NULL;  
 }
 
-arch_device void HR(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* tmp, scalar* UL, scalar* UC, scalar* UR){
+arch_device void HR(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* tmp, scalar* UL, scalar* UC, scalar* UR, scalar* UMonoLim){
   /*!
     \brief Limit a nodal solution U using HR (1D decomposition)
     \param[in] N_s number of nodes per element
@@ -1470,6 +1436,7 @@ arch_device void HR(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar
     \param[in] UL solution on the left
     \param[out] UC solution to be averaged
     \param[in] UR solution on the right
+    \param[out] UMonoLim (optional) array to hold limited monomial values
   */
 
   // Initializations
@@ -1491,5 +1458,142 @@ arch_device void HR(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar
   // Monomial -> lagrange transform
   gemv(N_s,N_s,M2L,Alim,UC);
   
+  // If desired, also return the limited monomial values
+  if(UMonoLim != NULL){for(int i=0; i<N_s; i++){UMonoLim[i] = Alim[i];}}
+
   AR = NULL; AC = NULL; AL = NULL;  Alim = NULL;
+}
+
+arch_device void pressure(int N_s, scalar* rho, scalar* rhou, scalar* rhov, scalar* E, scalar* gamma, scalar* beta, scalar* p){
+  /*!
+    \brief Get the pressure in an individual element
+    \param[in] N_s number of nodes in an element
+    \param[in] rho density
+    \param[in] rhou x-momentum
+    \param[in] rhov y-momentum
+    \param[in] E total energy
+    \param[in] gamma 1/(gamma-1)
+    \param[in] beta pinf*gamma/(gamma-1)
+    \param[out] p pressure
+  */
+  for(int i=0; i<N_s; i++){
+#ifdef ONED
+#ifdef MULTIFLUID
+    p[i] = (E[i] - 0.5*rhou[i]*rhou[i]/rho[i])/gamma[i];
+#elif STIFFENED
+    p[i] = (E[i] - beta[i] - 0.5*rhou[i]*rhou[i]/rho[i])/gamma[i];
+#endif 
+#elif TWOD
+#ifdef MULTIFLUID
+    p[i] = (E[i] - 0.5*(rhou[i]*rhou[i]+rhov[i]*rhov[i])/rho[i])/gamma[i];
+#elif STIFFENED
+    p[i] = (E[i] - beta[i] - 0.5*(rhou[i]*rhou[i]+rhov[i]*rhov[i])/rho[i])/gamma[i];
+#endif
+#endif    
+  }
+}
+
+arch_device void kinetic_energy(int N_s, scalar* L2M, scalar* rho, scalar* rhou, scalar* rhov, scalar* tmp, scalar* K){
+  /*!
+    \brief Get the kinetic energy in monomial form
+    \param[in] N_s number of nodes per element
+    \param[in] L2M Lagrange -> Monomial transform
+    \param[in] rho density (Lagrange form)
+    \param[in] rhou x-momentum (Lagrange form)
+    \param[in] rhov y-momentum (Lagrange form)
+    \param[in] tmp temporary array to store intermediate values
+    \param[out] K kinetic energy (Monomial form)
+  */
+
+  // Nodal kinetic energy stored in tmp
+  for(int i=0; i<N_s; i++){
+#ifdef ONED
+    tmp[i] = 0.5*(rhou[i]*rhou[i])/rho[i];
+#elif TWOD
+    tmp[i] = 0.5*(rhou[i]*rhou[i]+rhov[i]*rhov[i])/rho[i];
+#endif
+  }
+
+  // Lagrange -> monomial transform
+  gemv(N_s,N_s,L2M,tmp,K);
+}
+
+arch_device void internal_energy(int N_s1D, int slicenum, scalar* p, scalar* g, scalar* b, scalar* rhoe){
+  /*!
+    \brief Reconstruct the internal energy in monomial form
+    \param[in] N_s1D number of nodes in 1D elemement
+    \param[in] slicenum number of slices
+    \param[in] p monomial pressure solution
+    \param[in] g monomial 1/(gamma-1) solution
+    \param[in] b monomial gamma*pinf/(gamma-1) solution
+    \param[out] rhoe monomial internal energy
+    \section Description
+    Reconstruct the monomial internal energy coefficients using the
+    pressure, 1/gamma-1, and gamma*pinf/(gamma-1) coefficients so that
+    the pressure remains non-oscillatory
+  */
+
+  for(int slice=0; slice<slicenum; slice++){
+    for(int i=0; i<N_s1D; i++){
+
+      scalar I = 0;
+      for(int k=0; k<i+1; k++){
+	I += (scalar)binomial_coefficient(i,k) * p[slice*N_s1D+i-k] * g[slice*N_s1D+k];
+      }
+#ifdef MULTIFLUID
+      rhoe[slice*N_s1D+i] = I;
+#elif STIFFENED
+      rhoe[slice*N_s1D+i] = I + b[slice*N_s1D+i];
+#endif
+    } // loop on N_s1D
+  } // loop on slices
+}
+
+
+arch_device void reconstruct_total_energy(int N_s, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* rhoeLim, scalar* KLim, scalar* tmp, scalar* E){
+    /*!
+    \brief Reconstruct the energy lagrange polynomial for an individual element
+    \param[in] N_s number of nodes per element
+    \param[in] N_s1D number of nodes per slice
+    \param[in] rhoeLim limited monomial internal energy
+    \param[in] KLim limited monomial kinetic energy
+    \param[out] E limited total energy (lagrange form)
+    \section Description
+    Reconstruct the energy Lagrange coefficients using the internal
+    and kinetic energy monomial coefficients. Apply a correction to the
+    zeroth coefficients so that the method is conservative.
+  */
+
+  int cnt = 0;
+  scalar* EMono = &tmp[cnt]; cnt+=N_s;
+  scalar* ELim  = &tmp[cnt];
+
+  // Lagrange -> monomial transform
+  gemv(N_s,N_s,L2M,E,EMono);
+
+  // Reconstruct the total energy   
+  int idx= 0, idx0 = 0;
+  for(int slice = 0; slice < slicenum; slice++){
+    idx0 = slice*N_s1D + 0;
+
+    // Start at idx 1 because we will do the zeroth coefficient separately
+    for(int i = 1; i < N_s1D; i++){
+      idx = slice*N_s1D+i;
+      ELim[idx] = rhoeLim[idx]+KLim[idx];
+    }
+
+    // Correct the zeroth coefficient to conserve energy
+    scalar E0 = EMono[idx0];
+    for(int k = 2; k<N_s1D; k+=2){
+      idx = slice*N_s1D+k;
+      E0 -= 1.0/((scalar)lim_factorial(k+1)) * (ELim[idx]-EMono[idx]);
+    }
+    ELim[idx0] = E0;
+
+  } // loop on slices
+
+  // Monomial -> lagrange transform
+  gemv(N_s,N_s,M2L,ELim,E);
+
+  EMono = NULL; ELim = NULL;
 }
