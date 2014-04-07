@@ -300,7 +300,7 @@ arch_global void hrl1D(int N_s, int N_E, int Nfields, int N_N, int slicenum, int
 }
 
 //==========================================================================
-arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U, scalar* Unew){
+arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, int* sensors, scalar* U, scalar* Unew){
   /*!
     \brief HR limiting function for individual elements (assumes 1D decomposition)
     \param[in] N_s number of nodes per element
@@ -310,6 +310,7 @@ arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
     \param[in] N_s1D number of nodes in a slice (1D element)
     \param[in] slicenum number of slices (in 2D N_s1D = slicenum)
     \param[in] offxy offset if limiting in x or y
+    \param[in] sensors array of sensors
     \param[in] U solution to limit (Lagrange form)
     \param[out] Unew limited solution (only some may be limited bc of sensor)
     Unew was necessary because you need to wait until all the elements
@@ -320,76 +321,81 @@ arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 
 #ifdef USE_CPU
   scalar* share = new scalar[7*N_s];
-  int cnt = 0;
-  scalar* UL  = &share[cnt]; cnt += N_s;
-  scalar* UC  = &share[cnt]; cnt += N_s;
-  scalar* UR  = &share[cnt]; cnt += N_s;
-  scalar* tmp = &share[cnt]; //cnt += 4*N_s;
-  scalar* L2M = Lag2Mono;
-  scalar* M2L = Mono2Lag;
   for(int e=0; e<N_E; e++){
-    for(int fc=0; fc<N_F; fc++){
+    int sen = sensors[e];
+    if (sen != 0){
+      for(int fc=0; fc<N_F; fc++){
+	int cnt = 0;
+	scalar* UL  = &share[cnt]; cnt += N_s;
+	scalar* UC  = &share[cnt]; cnt += N_s;
+	scalar* UR  = &share[cnt]; cnt += N_s;
+	scalar* tmp = &share[cnt]; //cnt += 4*N_s;
+	scalar* L2M = Lag2Mono;
+	scalar* M2L = Mono2Lag;
 
 #elif USE_GPU
-
-  int e = blockIdx.x;
-  int fc= threadIdx.y;
-  extern __shared__ scalar share[];
-
-  // offset wrt other shared data
-  int cnt = fc*(2*N_s*N_s + 7*N_s);
-  scalar* L2M = &share[cnt]; cnt += N_s*N_s;
-  scalar* M2L = &share[cnt]; cnt += N_s*N_s;
-  scalar* UL  = &share[cnt]; cnt += N_s;
-  scalar* UC  = &share[cnt]; cnt += N_s;
-  scalar* UR  = &share[cnt]; cnt += N_s;
-  scalar* tmp = &share[cnt]; //cnt += 4*N_s;
-  // Copy some data to shared memory
-  for(int k=0;k<N_s*N_s;k++){L2M[k] = Lag2Mono[k];}
-  for(int k=0;k<N_s*N_s;k++){M2L[k] = Mono2Lag[k];}
+  int e = blockIdx.x;{
+    int sen = sensors[e];
+    if (sen != 0){
+      int fc= threadIdx.y;{
+	extern __shared__ scalar share[];
+      
+	// offset wrt other shared data
+	int cnt = fc*(2*N_s*N_s + 7*N_s);
+	scalar* L2M = &share[cnt]; cnt += N_s*N_s;
+	scalar* M2L = &share[cnt]; cnt += N_s*N_s;
+	scalar* UL  = &share[cnt]; cnt += N_s;
+	scalar* UC  = &share[cnt]; cnt += N_s;
+	scalar* UR  = &share[cnt]; cnt += N_s;
+	scalar* tmp = &share[cnt]; //cnt += 4*N_s;
+	// Copy some data to shared memory
+	for(int k=0;k<N_s*N_s;k++){L2M[k] = Lag2Mono[k];}
+	for(int k=0;k<N_s*N_s;k++){M2L[k] = Mono2Lag[k];}
 #endif
 
-  // Neighbors
-  int left  = neighbors[e*N_N+offxy+0];
-  int right = neighbors[e*N_N+offxy+1];
+	// Neighbors
+	int left  = neighbors[e*N_N+offxy+0];
+	int right = neighbors[e*N_N+offxy+1];
+    
+	// Check to see if we are at a boundary
+	int physical = 0;
+	if (left  < 0){physical = -left;}
+	if (right < 0){physical = -right;}
+    
+	// Copy some data to shared memory
+	for(int i=0;i<N_s;i++){UC[i]=U[(e*N_F+fc)*N_s+i];}
+    
+	// gravity field: leave data unchanged. Not good for shocks
+	if (physical==4){} 
+    
+	// Zero-gradient and reflective BC: average in cell, slopes to 0
+	else if ((physical==2)||(physical==3)){
+	  set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,UC,NULL);
+	}
   
-  // Check to see if we are at a boundary
-  int physical = 0;
-  if (left  < 0){physical = -left;}
-  if (right < 0){physical = -right;}
-
-  // Copy some data to shared memory
-  for(int i=0;i<N_s;i++){UC[i]=U[(e*N_F+fc)*N_s+i];}
+	//Otherwise do the full limiting
+	else{
+	  for(int i=0;i<N_s;i++){UL[i]=U[(left *N_F+fc)*N_s+i];}
+	  for(int i=0;i<N_s;i++){UR[i]=U[(right*N_F+fc)*N_s+i];}
+	  HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,UL,UC,UR,NULL);
+	} // end if on physicals
   
-  // gravity field: leave data unchanged. Not good for shocks
-  if (physical==4){} 
-  
-  // Zero-gradient and reflective BC: average in cell, slopes to 0
-  else if ((physical==2)||(physical==3)){
-    set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,UC,NULL);
-  }
-  
-  //Otherwise do the full limiting
-  else{
-    for(int i=0;i<N_s;i++){UL[i]=U[(left *N_F+fc)*N_s+i];}
-    for(int i=0;i<N_s;i++){UR[i]=U[(right*N_F+fc)*N_s+i];}
-    HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,UL,UC,UR,NULL);
-  } // end if on physicals
-  
-  // Copy solution back to main memory
-  for(int i=0;i<N_s;i++){Unew[(e*N_F+fc)*N_s+i] = UC[i];}
+	// Copy solution back to main memory
+	for(int i=0;i<N_s;i++){Unew[(e*N_F+fc)*N_s+i] = UC[i];}
+	
+	L2M = NULL; M2L = NULL; UL=NULL; UC = NULL; UR = NULL; tmp = NULL;
+      } // loop on fields
+    } // if on sensor
+  } // loop on elements
 
 #ifdef USE_CPU
-    } // loop on fields
-  } // loop on elements
   delete[] share;
 #endif
-  L2M = NULL; M2L = NULL; UL=NULL; UC = NULL; UR = NULL; tmp = NULL;   
 }
 
 
 //==========================================================================
-arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U, scalar* Unew){
+arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, int* sensors, scalar* U, scalar* Unew){
   /*!
     \brief Modified limiting function for individual elements (assumes 1D decomposition)
     \param[in] N_s number of nodes per element
@@ -399,6 +405,7 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
     \param[in] N_s1D number of nodes in a slice (1D element)
     \param[in] slicenum number of slices (in 2D N_s1D = slicenum)
     \param[in] offxy offset if limiting in x or y
+    \param[in] sensors array of sensors
     \param[in] U solution to limit (Lagrange form)
     \param[out] Unew limited solution (only some may be limited bc of sensor)
     Unew was necessary because you need to wait until all the elements
@@ -418,223 +425,225 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 
   int N = N_s1D-1; // polynomial order
   int cnt = 0;
-  
+
 #ifdef USE_CPU  
   scalar* share = new scalar[size_share];
-  scalar* L2M = Lag2Mono;
-  scalar* M2L = Mono2Lag;
+  for(int e=0; e<N_E; e++){
+    int sen = sensors[e];
+    if (sen != 0){
+      scalar* L2M = Lag2Mono;
+      scalar* M2L = Mono2Lag;
 #elif USE_GPU
   extern __shared__ scalar share[];
-  scalar* L2M = &share[cnt]; cnt+=N_s*N_s;
-  scalar* M2L = &share[cnt]; cnt+=N_s*N_s;
-  for(int k=0;k<N_s*N_s;k++){L2M[k] = Lag2Mono[k];}
-  for(int k=0;k<N_s*N_s;k++){M2L[k] = Mono2Lag[k];}
+  int e = blockIdx.x;{
+    int sen = sensors[e];
+    if (sen != 0){
+      scalar* L2M = &share[cnt]; cnt+=N_s*N_s;
+      scalar* M2L = &share[cnt]; cnt+=N_s*N_s;
+      for(int k=0;k<N_s*N_s;k++){L2M[k] = Lag2Mono[k];}
+      for(int k=0;k<N_s*N_s;k++){M2L[k] = Mono2Lag[k];}
 #endif
 
-  // Initialize pointers
-  scalar* rhoL = &share[cnt]; cnt += N_s;
-  scalar* rhoC = &share[cnt]; cnt += N_s;
-  scalar* rhoR = &share[cnt]; cnt += N_s;
-  scalar* rhouL = &share[cnt]; cnt += N_s;
-  scalar* rhouC = &share[cnt]; cnt += N_s;
-  scalar* rhouR = &share[cnt]; cnt += N_s;
+      // Initialize pointers
+      scalar* rhoL = &share[cnt]; cnt += N_s;
+      scalar* rhoC = &share[cnt]; cnt += N_s;
+      scalar* rhoR = &share[cnt]; cnt += N_s;
+      scalar* rhouL = &share[cnt]; cnt += N_s;
+      scalar* rhouC = &share[cnt]; cnt += N_s;
+      scalar* rhouR = &share[cnt]; cnt += N_s;
 #ifdef TWOD
-  scalar* rhovL = &share[cnt]; cnt += N_s;
-  scalar* rhovC = &share[cnt]; cnt += N_s;
-  scalar* rhovR = &share[cnt]; cnt += N_s;
+      scalar* rhovL = &share[cnt]; cnt += N_s;
+      scalar* rhovC = &share[cnt]; cnt += N_s;
+      scalar* rhovR = &share[cnt]; cnt += N_s;
 #else
-  scalar* rhovL=NULL, *rhovC=NULL, *rhovR=NULL;
+      scalar* rhovL=NULL, *rhovC=NULL, *rhovR=NULL;
 #endif
-  scalar* EL = &share[cnt]; cnt += N_s;
-  scalar* EC = &share[cnt]; cnt += N_s;
-  scalar* ER = &share[cnt]; cnt += N_s;
-  scalar* gammaL = &share[cnt]; cnt += N_s;
-  scalar* gammaC = &share[cnt]; cnt += N_s;
-  scalar* gammaR = &share[cnt]; cnt += N_s;
-  scalar* gammaLim = &share[cnt]; cnt += N_s;
+      scalar* EL = &share[cnt]; cnt += N_s;
+      scalar* EC = &share[cnt]; cnt += N_s;
+      scalar* ER = &share[cnt]; cnt += N_s;
+      scalar* gammaL = &share[cnt]; cnt += N_s;
+      scalar* gammaC = &share[cnt]; cnt += N_s;
+      scalar* gammaR = &share[cnt]; cnt += N_s;
+      scalar* gammaLim = &share[cnt]; cnt += N_s;
 #ifdef STIFFENED
-  scalar* betaL = &share[cnt]; cnt += N_s;
-  scalar* betaC = &share[cnt]; cnt += N_s;
-  scalar* betaR = &share[cnt]; cnt += N_s;
-  scalar* betaLim = &share[cnt]; cnt += N_s;
+      scalar* betaL = &share[cnt]; cnt += N_s;
+      scalar* betaC = &share[cnt]; cnt += N_s;
+      scalar* betaR = &share[cnt]; cnt += N_s;
+      scalar* betaLim = &share[cnt]; cnt += N_s;
 #else
-  scalar* betaL=NULL, *betaC = NULL, *betaR = NULL, *betaLim = NULL;
+      scalar* betaL=NULL, *betaC = NULL, *betaR = NULL, *betaLim = NULL;
 #endif
-  scalar* pressureL = &share[cnt]; cnt += N_s;
-  scalar* pressureC = &share[cnt]; cnt += N_s;
-  scalar* pressureR = &share[cnt]; cnt += N_s;
-  scalar* pressureLim = &share[cnt]; cnt += N_s;
-  scalar* KLim = &share[cnt]; cnt += N_s;
-  scalar* rhoeLim = &share[cnt]; cnt += N_s;
-  scalar* tmp = &share[cnt]; cnt+= 4*N_s;
+      scalar* pressureL = &share[cnt]; cnt += N_s;
+      scalar* pressureC = &share[cnt]; cnt += N_s;
+      scalar* pressureR = &share[cnt]; cnt += N_s;
+      scalar* pressureLim = &share[cnt]; cnt += N_s;
+      scalar* KLim = &share[cnt]; cnt += N_s;
+      scalar* rhoeLim = &share[cnt]; cnt += N_s;
+      scalar* tmp = &share[cnt]; cnt+= 4*N_s;
 
-  // Mass fractions
+      // Mass fractions
 #include "loopstart.h"
 #define LOOP_END N_Y
 #define MACRO(x) scalar* YL(x) = &share[cnt]; cnt+=N_s; \
-  scalar* YC(x) = &share[cnt]; cnt+=N_s;		\
-  scalar* YR(x) = &share[cnt]; cnt+=N_s;
+      scalar* YC(x) = &share[cnt]; cnt+=N_s;		\
+      scalar* YR(x) = &share[cnt]; cnt+=N_s;
 #include "loop.h"    
 
-#ifdef USE_CPU
-  for(int e=0; e<N_E; e++){
-#elif USE_GPU
-  int e = blockIdx.x;
-#endif
+      // Neighbors
+      int left  = neighbors[e*N_N+offxy+0];
+      int right = neighbors[e*N_N+offxy+1];
     
-    // Neighbors
-    int left  = neighbors[e*N_N+offxy+0];
-    int right = neighbors[e*N_N+offxy+1];
-    
-    // Check to see if we are at a boundary
-    int physical = 0;
-    if (left  < 0){physical = -left;}
-    if (right < 0){physical = -right;}
+      // Check to see if we are at a boundary
+      int physical = 0;
+      if (left  < 0){physical = -left;}
+      if (right < 0){physical = -right;}
 
-    // Copy some data to shared memory
-    int fcnt=0;
-    for(int i=0; i<N_s; i++){rhoC[i]   = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
-    for(int i=0; i<N_s; i++){rhouC[i]  = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
+      // Copy some data to shared memory
+      int fcnt=0;
+      for(int i=0; i<N_s; i++){rhoC[i]   = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
+      for(int i=0; i<N_s; i++){rhouC[i]  = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
 #ifdef TWOD
-    for(int i=0; i<N_s; i++){rhovC[i]  = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
+      for(int i=0; i<N_s; i++){rhovC[i]  = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
 #endif
-    for(int i=0; i<N_s; i++){EC[i]     = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
-    for(int i=0; i<N_s; i++){gammaC[i] = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
+      for(int i=0; i<N_s; i++){EC[i]     = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
+      for(int i=0; i<N_s; i++){gammaC[i] = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
 #ifdef STIFFENED
-    for(int i=0; i<N_s; i++){betaC[i]  = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
+      for(int i=0; i<N_s; i++){betaC[i]  = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
 #endif 
 #include "loopstart.h"
 #define LOOP_END N_Y
 #define MACRO(x)  for(int i=0; i<N_s; i++){YC(x)[i] = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
 #include "loop.h"    
 
-    // Get the pressure
-    pressure(N_s,rhoC,rhouC,rhovC,EC,gammaC,betaC,pressureC);
+      // Get the pressure
+      pressure(N_s,rhoC,rhouC,rhovC,EC,gammaC,betaC,pressureC);
 
-    // gravity field: leave data unchanged. Not good for shocks
-  if (physical==4){} 
+      // gravity field: leave data unchanged. Not good for shocks
+      if (physical==4){} 
   
-  // Zero-gradient and reflective BC: average in cell, slopes to 0
-  else if ((physical==2)||(physical==3)){
-    set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhoC,NULL);
-    set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhouC,NULL);
+      // Zero-gradient and reflective BC: average in cell, slopes to 0
+      else if ((physical==2)||(physical==3)){
+	set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhoC,NULL);
+	set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhouC,NULL);
 #ifdef TWOD
-    set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhovC,NULL);
+	set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhovC,NULL);
 #endif
-    set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,gammaC,gammaLim);
+	set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,gammaC,gammaLim);
 #ifdef STIFFENED
-    set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,betaC,betaLim);
+	set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,betaC,betaLim);
 #endif
-    set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,pressureC,pressureLim);
+	set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,pressureC,pressureLim);
 #include "loopstart.h"
 #define LOOP_END N_Y
 #define MACRO(x) set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,YC(x),NULL);
 #include "loop.h"    
 
-    // Reconstruct the energies
-    // Kinetic (with limited Lagrange rho,rhou,rhov)
-    kinetic_energy(N_s, L2M, rhoC, rhouC, rhovC, tmp, KLim);
+	// Reconstruct the energies
+	// Kinetic (with limited Lagrange rho,rhou,rhov)
+	kinetic_energy(N_s, L2M, rhoC, rhouC, rhovC, tmp, KLim);
 
-    // Internal (with limited monomial p, gamma, beta)
-    internal_energy(N_s1D, slicenum, pressureLim, gammaLim, betaLim, rhoeLim);
+	// Internal (with limited monomial p, gamma, beta)
+	internal_energy(N_s1D, slicenum, pressureLim, gammaLim, betaLim, rhoeLim);
 
-    // Total
-    reconstruct_total_energy(N_s, N_s1D, slicenum, L2M, M2L, rhoeLim, KLim, tmp, EC);
-  }
+	// Total
+	reconstruct_total_energy(N_s, N_s1D, slicenum, L2M, M2L, rhoeLim, KLim, tmp, EC);
+      }
 
-  //Otherwise do the full limiting
-  else{
-    // Copy left/right data to shared memory
-    fcnt=0;
-    for(int i=0; i<N_s; i++){rhoL[i]   = U[(left *N_F+fcnt)*N_s+i];} 
-    for(int i=0; i<N_s; i++){rhoR[i]   = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
-    for(int i=0; i<N_s; i++){rhouL[i]  = U[(left *N_F+fcnt)*N_s+i];} 
-    for(int i=0; i<N_s; i++){rhouR[i]  = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
+      //Otherwise do the full limiting
+      else{
+	// Copy left/right data to shared memory
+	fcnt=0;
+	for(int i=0; i<N_s; i++){rhoL[i]   = U[(left *N_F+fcnt)*N_s+i];} 
+	for(int i=0; i<N_s; i++){rhoR[i]   = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
+	for(int i=0; i<N_s; i++){rhouL[i]  = U[(left *N_F+fcnt)*N_s+i];} 
+	for(int i=0; i<N_s; i++){rhouR[i]  = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
 #ifdef TWOD
-    for(int i=0; i<N_s; i++){rhovL[i]  = U[(left *N_F+fcnt)*N_s+i];} 
-    for(int i=0; i<N_s; i++){rhovR[i]  = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
+	for(int i=0; i<N_s; i++){rhovL[i]  = U[(left *N_F+fcnt)*N_s+i];} 
+	for(int i=0; i<N_s; i++){rhovR[i]  = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
 #endif
-    for(int i=0; i<N_s; i++){EL[i]     = U[(left *N_F+fcnt)*N_s+i];} 
-    for(int i=0; i<N_s; i++){ER[i]     = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
-    for(int i=0; i<N_s; i++){gammaL[i] = U[(left *N_F+fcnt)*N_s+i];} 
-    for(int i=0; i<N_s; i++){gammaR[i] = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
+	for(int i=0; i<N_s; i++){EL[i]     = U[(left *N_F+fcnt)*N_s+i];} 
+	for(int i=0; i<N_s; i++){ER[i]     = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
+	for(int i=0; i<N_s; i++){gammaL[i] = U[(left *N_F+fcnt)*N_s+i];} 
+	for(int i=0; i<N_s; i++){gammaR[i] = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
 #ifdef STIFFENED
-    for(int i=0; i<N_s; i++){betaL[i]  = U[(left *N_F+fcnt)*N_s+i];} 
-    for(int i=0; i<N_s; i++){betaR[i]  = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
+	for(int i=0; i<N_s; i++){betaL[i]  = U[(left *N_F+fcnt)*N_s+i];} 
+	for(int i=0; i<N_s; i++){betaR[i]  = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
 #endif 
 #include "loopstart.h"
 #define LOOP_END N_Y
 #define MACRO(x)  for(int i=0; i<N_s; i++){YL(x)[i]  = U[(left *N_F+fcnt)*N_s+i];} \
-                  for(int i=0; i<N_s; i++){YR(x)[i]  = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
+	for(int i=0; i<N_s; i++){YR(x)[i]  = U[(right*N_F+fcnt)*N_s+i];} fcnt++;
 #include "loop.h"    
 
-    // Get the pressure
-    pressure(N_s,rhoL,rhouL,rhovL,EL,gammaL,betaL,pressureL);
-    pressure(N_s,rhoR,rhouR,rhovR,ER,gammaR,betaR,pressureR);
+	// Get the pressure
+	pressure(N_s,rhoL,rhouL,rhovL,EL,gammaL,betaL,pressureL);
+	pressure(N_s,rhoR,rhouR,rhovR,ER,gammaR,betaR,pressureR);
 
-    // Limit
-    HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhoL,rhoC,rhoR,NULL);
-    HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhouL,rhouC,rhouR,NULL);
+	// Limit
+	HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhoL,rhoC,rhoR,NULL);
+	HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhouL,rhouC,rhouR,NULL);
 #ifdef TWOD
-    HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhovL,rhovC,rhovR,NULL);
+	HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhovL,rhovC,rhovR,NULL);
 #endif
-    HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,gammaL,gammaC,gammaR,gammaLim);
+	HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,gammaL,gammaC,gammaR,gammaLim);
 #ifdef STIFFENED
-    HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,betaL,betaC,betaR,betaLim);
+	HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,betaL,betaC,betaR,betaLim);
 #endif
-    HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,pressureL,pressureC,pressureR,pressureLim);
+	HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,pressureL,pressureC,pressureR,pressureLim);
 #include "loopstart.h"
 #define LOOP_END N_Y
 #define MACRO(x) HR(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,YL(x),YC(x),YR(x),NULL); 
 #include "loop.h"    
 
-    // Reconstruct the energies
-    // Kinetic (with limited Lagrange rho,rhou,rhov)
-    kinetic_energy(N_s, L2M, rhoC, rhouC, rhovC, tmp, KLim);
+	// Reconstruct the energies
+	// Kinetic (with limited Lagrange rho,rhou,rhov)
+	kinetic_energy(N_s, L2M, rhoC, rhouC, rhovC, tmp, KLim);
 
-    // Internal (with limited monomial p, gamma, beta)
-    internal_energy(N_s1D, slicenum, pressureLim, gammaLim, betaLim, rhoeLim);
+	// Internal (with limited monomial p, gamma, beta)
+	internal_energy(N_s1D, slicenum, pressureLim, gammaLim, betaLim, rhoeLim);
 
-    // Total
-    reconstruct_total_energy(N_s, N_s1D, slicenum, L2M, M2L, rhoeLim, KLim, tmp, EC);
-  } // end if on physicals
+	// Total
+	reconstruct_total_energy(N_s, N_s1D, slicenum, L2M, M2L, rhoeLim, KLim, tmp, EC);
+      } // end if on physicals
   
-  // Copy solution back to main memory
-  fcnt=0;
-  for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = rhoC[i];} fcnt++;
-  for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = rhouC[i];} fcnt++;
+      // Copy solution back to main memory
+      fcnt=0;
+      for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = rhoC[i];} fcnt++;
+      for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = rhouC[i];} fcnt++;
 #ifdef TWOD		                         
-  for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = rhovC[i];} fcnt++;
+      for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = rhovC[i];} fcnt++;
 #endif			                         
-  for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = EC[i];} fcnt++;
-  for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = gammaC[i];} fcnt++;
+      for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = EC[i];} fcnt++;
+      for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = gammaC[i];} fcnt++;
 #ifdef STIFFENED	                         
-  for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = betaC[i];} fcnt++;
+      for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = betaC[i];} fcnt++;
 #endif 
 #include "loopstart.h"
 #define LOOP_END N_Y
 #define MACRO(x)  for(int i=0; i<N_s; i++){Unew[(e*N_F+fcnt)*N_s+i] = YC(x)[i];} fcnt++;
 #include "loop.h"    
-    
-#ifdef USE_CPU
-  } // loop on elements
-  delete[] share;
-#endif
-  
-  rhoL=NULL; rhoC=NULL; rhoR=NULL; rhouL=NULL; rhouC=NULL; rhouR=NULL;
+
+      // Delete pointers
+      rhoL=NULL; rhoC=NULL; rhoR=NULL; rhouL=NULL; rhouC=NULL; rhouR=NULL;
 #ifdef TWOD
-  rhovL=NULL; rhovC=NULL; rhovR=NULL;
+      rhovL=NULL; rhovC=NULL; rhovR=NULL;
 #endif
-  EL=NULL; EC=NULL; ER=NULL; gammaL=NULL; gammaC=NULL; gammaR=NULL; gammaLim=NULL;
+      EL=NULL; EC=NULL; ER=NULL; gammaL=NULL; gammaC=NULL; gammaR=NULL; gammaLim=NULL;
 #ifdef STIFFENED
-  betaL=NULL; betaC=NULL; betaR=NULL; betaLim=NULL;
+      betaL=NULL; betaC=NULL; betaR=NULL; betaLim=NULL;
 #endif
-  pressureL=NULL; pressureC=NULL; pressureL=NULL; pressureLim=NULL;
-  KLim=NULL; rhoeLim=NULL; tmp=NULL;
+      pressureL=NULL; pressureC=NULL; pressureL=NULL; pressureLim=NULL;
+      KLim=NULL; rhoeLim=NULL; tmp=NULL;
 #include "loopstart.h"
 #define LOOP_END N_Y
 #define MACRO(x)  YL(x)=NULL; YC(x)=NULL; YR(x)=NULL; 
 #include "loop.h"
+    } // if on sensor
+  } // loop on elements
+#ifdef USE_CPU
+  delete[] share;
+#endif
+  
 }
   
 //==========================================================================
@@ -960,7 +969,7 @@ void Lhrl1D(int N_s, int N_E, int Nfields, int N_N, int slicenum, int* neighbors
 }
 
 extern "C" 
-  void Lhri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U, scalar* Unew){
+  void Lhri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, int* sensor, scalar* U, scalar* Unew){
   /*!
     \brief HR limiting function for individual elements (assumes 1D decomposition)
     \param[in] N_s number of nodes per element
@@ -970,6 +979,7 @@ extern "C"
     \param[in] N_s1D number of nodes in a slice (1D element)
     \param[in] slicenum number of slices (in 2D N_s1D = slicenum)
     \param[in] offxy offset if limiting in x or y
+    \param[in] sensors array of sensors
     \param[in] U solution to limit (Lagrange form)
     \param[out] Unew limited solution (only some may be limited bc of sensor)
     \section Description
@@ -981,11 +991,11 @@ extern "C"
   dim3 dimGrid(N_E,1);
 #endif
   
-  hri1D arch_args_array(N_F*(2*N_s*N_s + 7*N_s)*sizeof(scalar)) (N_s, N_E, N_N, neighbors, N_s1D, slicenum, offxy, Lag2Mono, Mono2Lag, U, Unew);
+  hri1D arch_args_array(N_F*(2*N_s*N_s + 7*N_s)*sizeof(scalar)) (N_s, N_E, N_N, neighbors, N_s1D, slicenum, offxy, Lag2Mono, Mono2Lag, sensor, U, Unew);
 }
 
 extern "C" 
-void Lm2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U, scalar* Unew){
+void Lm2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, int* sensors, scalar* U, scalar* Unew){
   /*!
     \brief Modified limiting function for individual elements (assumes 1D decomposition)
     \param[in] N_s number of nodes per element
@@ -995,6 +1005,7 @@ void Lm2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, 
     \param[in] N_s1D number of nodes in a slice (1D element)
     \param[in] slicenum number of slices (in 2D N_s1D = slicenum)
     \param[in] offxy offset if limiting in x or y
+    \param[in] sensors array of sensors
     \param[in] U solution to limit (Lagrange form)
     \param[out] Unew limited solution (only some may be limited bc of sensor)
     \section Description
@@ -1018,7 +1029,7 @@ void Lm2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, 
     N_s + // for rhoeLim
     4*N_s; // for tmp
 
-  m2i1D arch_args_array(size_share*sizeof(scalar)) (N_s, N_E, N_N, neighbors, N_s1D, slicenum, offxy, Lag2Mono, Mono2Lag, U, Unew);
+  m2i1D arch_args_array(size_share*sizeof(scalar)) (N_s, N_E, N_N, neighbors, N_s1D, slicenum, offxy, Lag2Mono, Mono2Lag, sensors, U, Unew);
 }
 
 extern "C"
