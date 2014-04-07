@@ -10,5 +10,6 @@
 #include <macros.h>
 
 extern "C" void Lformater(int N_s, int N_E, scalar* U, scalar* output);
+extern "C" void Lformat_sensor(int N_s, int N_E, int* sensork, scalar* output);
 
 #endif

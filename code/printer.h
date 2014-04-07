@@ -16,9 +16,11 @@
 #include <string>
 #include <stdio.h>
 #include "printer_kernels.h"
+#include <sensor.h>
 #ifdef USE_GPU
 #include "misc_cuda.h"
 #endif
+
 class PRINTER{
 
  private:
@@ -29,6 +31,7 @@ class PRINTER{
   scalar* _d_output;
   std::vector<std::string> _names;
   std::vector<std::string> _fnames;
+  std::vector<std::string> _sname; // for the sensor
   simpleMesh &_m; 
     
  public:
@@ -63,5 +66,6 @@ class PRINTER{
   void set_names();
   
   void print(scalar* U, const int step, const double time);
+  void print_sensor(SENSOR &sensor, const int step, const double time);
 };
 #endif

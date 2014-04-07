@@ -519,62 +519,69 @@ void Limiting::M2limiting(COMMUNICATOR &communicator, scalar* U){
 
 } // end m2limiting
 
-void Limiting::HRIlimiting(COMMUNICATOR &communicator, scalar* U){
+void Limiting::HRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U){
   /*!
     \brief HR limiting function for limiting each element individually
     \param[in] communicator communicator object for MPI communications
     \param[out] U solution to be limited
   */
 
+  // Calculate the sensor
+  sensor.sensing(U);
+
 #ifdef ONED
 
   // Call limiting function
   Lhri1D(_N_s, _N_E, _N_N, _neighbors, _N_s, 1, 0, _Lag2Mono, _Mono2Lag, U, _Utmp);
-  blasCopy(_N_s*_N_E*N_F, _Utmp, 1, U, 1); // REPLACE WITH A KERNEL
+  sensor.copy_detected_elements(_Utmp, U);
   
 #elif TWOD
   if(_cartesian){
 
     // Call limiting function in x
     Lhri1D(_N_s, _N_E, _N_N, _neighbors, _N_s1D, _N_s1D, 0, _Lag2MonoX, _MonoX2Lag, U, _Utmp);
-    blasCopy(_N_s*_N_E*N_F, _Utmp, 1, U, 1); // REPLACE WITH A KERNEL
+    sensor.copy_detected_elements(_Utmp, U);
     
     // Communicate the elements on different partitions if necessary
     communicator.CommunicateGhosts(N_F, U);
 
     // Call limiting function in y
     Lhri1D(_N_s, _N_E, _N_N, _neighbors, _N_s1D, _N_s1D, 2, _Lag2MonoY, _MonoY2Lag, U, _Utmp);
-    blasCopy(_N_s*_N_E*N_F, _Utmp, 1, U, 1); // REPLACE WITH A KERNEL
+    sensor.copy_detected_elements(_Utmp, U);
   }
 #endif
 
 }
 
-void Limiting::M2Ilimiting(COMMUNICATOR &communicator, scalar* U){
+void Limiting::M2Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U){
   /*!
     \brief modified limiting function (see jcp2014) for limiting each element individually
     \param[in] communicator communicator object for MPI communications
     \param[out] U solution to be limited
   */
+
+  // Calculate the sensor
+  sensor.sensing(U);
+
 #ifdef ONED
 
   // Call limiting function
   Lm2i1D(_N_s, _N_E, _N_N, _neighbors, _N_s, 1, 0, _Lag2Mono, _Mono2Lag, U, _Utmp);
-  blasCopy(_N_s*_N_E*N_F, _Utmp, 1, U, 1); // REPLACE WITH A KERNEL
+  sensor.copy_detected_elements(_Utmp, U);
   
 #elif TWOD
   if(_cartesian){
 
     // Call limiting function in x
     Lm2i1D(_N_s, _N_E, _N_N, _neighbors, _N_s1D, _N_s1D, 0, _Lag2MonoX, _MonoX2Lag, U, _Utmp);
-    blasCopy(_N_s*_N_E*N_F, _Utmp, 1, U, 1); // REPLACE WITH A KERNEL
+    sensor.copy_detected_elements(_Utmp, U);
     
     // Communicate the elements on different partitions if necessary
     communicator.CommunicateGhosts(N_F, U);
 
     // Call limiting function in y
     Lm2i1D(_N_s, _N_E, _N_N, _neighbors, _N_s1D, _N_s1D, 2, _Lag2MonoY, _MonoY2Lag, U, _Utmp);
-    blasCopy(_N_s*_N_E*N_F, _Utmp, 1, U, 1); // REPLACE WITH A KERNEL
+    sensor.copy_detected_elements(_Utmp, U);
   }
 #endif
 }

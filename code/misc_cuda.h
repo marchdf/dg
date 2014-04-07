@@ -6,6 +6,7 @@
 #ifdef USE_GPU
 #ifndef MISC_CUDA_H
 #define MISC_CUDA_H
+#include <stdio.h>
 #include <assert.h>
 #include <cuda_runtime_api.h>
 

@@ -329,7 +329,8 @@ void simpleMesh::writeSolution (const scalar* solution, const int N_s, const int
     printf("bad solution for this element\n");
 
   // Loop on number of fields for output
-  for(int fc=0; fc<N_F; fc++){
+  int _N_F = fnames.size();
+  for(int fc=0; fc< _N_F; fc++){
     std::ofstream output;
     std::string filename = fnames[fc];
     char stepstr[21];
@@ -354,7 +355,7 @@ void simpleMesh::writeSolution (const scalar* solution, const int N_s, const int
       if (element.getNbNodes() != N_s)
       	printf("bad solution for this element\n");
       for (int i = 0; i < element.getNbNodes(); i++) {
-	output << solution[(e*N_F+fc)*N_s+i]<< " ";
+	output << solution[(e*_N_F+fc)*N_s+i]<< " ";
       }
       output << "\n";
     }

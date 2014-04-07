@@ -986,6 +986,20 @@ extern "C"
 
 extern "C" 
 void Lm2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, scalar* U, scalar* Unew){
+  /*!
+    \brief Modified limiting function for individual elements (assumes 1D decomposition)
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] N_N number of neighbors per element
+    \param[in] neighbors array containing an element's neighbors
+    \param[in] N_s1D number of nodes in a slice (1D element)
+    \param[in] slicenum number of slices (in 2D N_s1D = slicenum)
+    \param[in] offxy offset if limiting in x or y
+    \param[in] U solution to limit (Lagrange form)
+    \param[out] Unew limited solution (only some may be limited bc of sensor)
+    \section Description
+    In GPU mode, launches N_E blocks of 1 x 1 x 1 threads.
+  */
 
 #ifdef USE_GPU
   dim3 dimBlock(1,1,1);

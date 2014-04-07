@@ -34,6 +34,8 @@
 #include <dg_solver.h>
 #include <communicator.h>
 #include <printer.h>
+#include <sensor.h>
+
 //
 // Function prototypes
 //
@@ -761,7 +763,14 @@ int main (int argc, char **argv)
   //////////////////////////////////////////////////////////////////////////
   PRINTER printer(N_s,N_E,elem_type,m);
   printer.set_names();
-  
+
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Sensor setup
+  //
+  //////////////////////////////////////////////////////////////////////////
+  SENSOR sensor(N_s, N_E,true);
+
   //////////////////////////////////////////////////////////////////////////   
   //
   // Setup the limiter
@@ -817,7 +826,7 @@ int main (int argc, char **argv)
   		     N_E, N_s, N_G, M_T, M_s, N_ghosts,
   		     h_Minv, 
   		     h_U,
-  		     Limiter, order0, dgsolver, communicator, printer);
+  		     Limiter, order0, dgsolver, communicator, printer, sensor);
   rk_time = ( std::clock() - rk_start ) / (double) CLOCKS_PER_SEC;
   printf("RK time = %20.16e for proc %i\n", rk_time, myid);
 

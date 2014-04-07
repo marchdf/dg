@@ -1,12 +1,11 @@
 /*!
-  \file printer_oned_stiffened.cu
-  \brief Kernel to output 1D stiffened solution used by the PRINTER class
+  \file printer_sensor.cu
+  \brief Kernel to output the sensor
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
   \ingroup printer
 */
-#ifdef ONED
-#ifdef STIFFENED
 #include <printer_kernels.h>
+
 
 //==========================================================================
 //
@@ -15,41 +14,27 @@
 //==========================================================================
 
 //==========================================================================
-arch_global void formater(int N_s, int N_E, scalar* U, scalar* output){
+arch_global void format_sensor(int N_s, int N_E, int* sensor, scalar* output){
   /*!
-    \brief Format solution kernel.
+    \brief Format sensor kernel.
     \param[in] N_s number of nodes per element
     \param[in] N_E number of elements
-    \param[in] U solution to format to output
+    \param[in] sensor sensor array
     \param[out] output output solution array
   */
+
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
+    int sen = sensor[e];
     for(int i = 0; i < N_s; i++){
 #elif USE_GPU
   int e = blockIdx.x*blkE+threadIdx.z;{
   if (e < N_E){
+    int sen = sensor[e];
     int i = threadIdx.x;
 #endif
 
-    // Separate the fields
-    scalar rho = U[(e*N_F+0)*N_s+i];
-    scalar ux  = U[(e*N_F+1)*N_s+i]/rho;
-    scalar et  = U[(e*N_F+2)*N_s+i];
-    scalar gamma = 1+1.0/U[(e*N_F+3)*N_s+i];
-    scalar pinf = (1-1.0/gamma)*U[(e*N_F+4)*N_s+i];
-    
-    output[(e*N_F+0)*N_s+i] = rho;
-    output[(e*N_F+1)*N_s+i] = ux;
-    output[(e*N_F+2)*N_s+i] = gamma;
-    output[(e*N_F+3)*N_s+i] = pinf;
-    output[(e*N_F+4)*N_s+i] = (gamma-1)*(et - gamma*pinf/(gamma-1) - 0.5*ux*ux*rho);
-      
-    // Mass fractions
-#include "loopstart.h"
-#define LOOP_END N_Y
-#define MACRO(x) output[(e*N_F+5+x)*N_s+i] = U[(e*N_F+5+x)*N_s+i]/rho;
-#include "loop.h"
+    output[e*N_s+i] = sen;
   }
   }
 }
@@ -62,12 +47,12 @@ arch_global void formater(int N_s, int N_E, scalar* U, scalar* output){
 //==========================================================================
 
 extern "C"
-void Lformater(int N_s, int N_E, scalar* U, scalar* output){
+void Lformat_sensor(int N_s, int N_E, int* sensor, scalar* output){
   /*!
     \brief Host C function to lauch format kernel.
     \param[in] N_s number of nodes per element
     \param[in] N_E number of elements
-    \param[in] U solution to format to output
+    \param[in] sensor sensor array
     \param[out] output output solution array
     \section Description
     In GPU mode, launches N_E/blkE blocks of N_s x 1 x blkE
@@ -81,7 +66,9 @@ void Lformater(int N_s, int N_E, scalar* U, scalar* output){
   dim3 dimGrid(div+mod,1);
 #endif
 
-  formater arch_args (N_s, N_E, U, output);
+  format_sensor arch_args (N_s, N_E, sensor, output);
 };
-#endif
-#endif
+
+
+
+

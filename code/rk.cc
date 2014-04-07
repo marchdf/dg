@@ -7,10 +7,10 @@
 #include "rk.h"
 
 void RK::RK_integration(double DtOut, double Tf, scalar CFL,
-		    int N_E, int N_s, int N_G, int M_T, int M_s, int N_ghosts,
-		    scalar* h_Minv, 
-		    scalar* h_U,
-		    Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator, PRINTER &printer){
+			int N_E, int N_s, int N_G, int M_T, int M_s, int N_ghosts,
+			scalar* h_Minv, 
+			scalar* h_U,
+			Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator, PRINTER &printer, SENSOR &sensor){
   /*!
     \brief Main RK integration function
     \param[in] DtOut output time step
@@ -93,6 +93,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
   if(CFL>=0){
     if(myid==0){printf("Initial condition written to output file.\n");}
     printer.print(arch(U), 0, 0);
+    printer.print_sensor(sensor, 0, 0);
     
     // Output conservation of the fields
     dgsolver.conservation(h_U,0.0);
@@ -140,8 +141,8 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
       if(k>0){
 	if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(communicator, _Ustar);
 	else if (Limiter.getLimitingMethod()==2) Limiter.M2limiting(communicator, _Ustar);
-	else if (Limiter.getLimitingMethod()==3) Limiter.HRIlimiting(communicator, _Ustar);
-	else if (Limiter.getLimitingMethod()==4) Limiter.M2Ilimiting(communicator, _Ustar);
+	else if (Limiter.getLimitingMethod()==3) Limiter.HRIlimiting(communicator, sensor, _Ustar);
+	else if (Limiter.getLimitingMethod()==4) Limiter.M2Ilimiting(communicator, sensor, _Ustar);
       }
 
       // Now you have to calculate f(Ustar)
@@ -161,8 +162,8 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
     // Communicate and limit solution
     if      (Limiter.getLimitingMethod()==1){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.HRlimiting(communicator, arch(U));}
     else if (Limiter.getLimitingMethod()==2){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.M2limiting(communicator, arch(U));}
-    else if (Limiter.getLimitingMethod()==3){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.HRIlimiting(communicator, arch(U));}
-    else if (Limiter.getLimitingMethod()==4){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.M2Ilimiting(communicator, arch(U));}
+    else if (Limiter.getLimitingMethod()==3){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.HRIlimiting(communicator, sensor, arch(U));}
+    else if (Limiter.getLimitingMethod()==4){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.M2Ilimiting(communicator, sensor, arch(U));}
 
 
         
@@ -173,7 +174,8 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
     if(output){
 
       if(myid==0){printf("Solution written to file at step %7i and time %e (current CFL time step:%e).\n",n,T,DtCFL);}
-      printer.print(arch(U), count, T); 
+      printer.print(arch(U), count, T);
+      printer.print_sensor(sensor, count, T);
       Tout = T + DtOut; // update the new output time
       count++;
 

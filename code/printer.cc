@@ -7,6 +7,7 @@
 #include "printer.h"
 
 void PRINTER::set_names(){
+  _sname.push_back("sensor"); // sensor name
 #ifdef ONED
 #ifdef PASSIVE
   _names.push_back("Rho");   _fnames.push_back("rho");
@@ -80,3 +81,27 @@ void PRINTER::print(scalar* U, const int step, const double time){
   _m.writeSolution(_output, _N_s, _N_E, _elem_type, _fnames, _names, step, time);
   
 } // end print_dg
+
+
+void PRINTER::print_sensor(SENSOR &sensor, const int step, const double time){
+  /*!
+    \brief Output sensor if needed
+  */
+
+  // Check to make sure a sensor is on
+  if(sensor.isSensor()){
+  
+  // format output variables
+#ifdef USE_CPU
+    Lformat_sensor(_N_s,_N_E,sensor.getSensors(),_output);
+#elif USE_GPU
+    Lformat_sensor(_N_s,_N_E,sensor.getSensors(),_d_output);
+    cudaMemcpy(_output, _d_output, _N_s*_N_E*sizeof(scalar), cudaMemcpyDeviceToHost);
+#endif
+
+  
+    // print to the output file
+    _m.writeSolution(_output, _N_s, _N_E, _elem_type, _sname, _sname, step, time);
+  }
+} 
+

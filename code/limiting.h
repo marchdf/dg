@@ -13,6 +13,7 @@
 #include <physics.h>
 #include <limiting_kernels.h>
 #include <communicator.h>
+#include <sensor.h>
 #include "simpleMesh.h"
 #ifdef USE_GPU
 #include <cublas.h>
@@ -451,7 +452,7 @@ class Limiting
 /*     // For case specific stuff: */
 /*   } // end 2D constructor */
   
-  // destructor
+  /*! \brief Destructor */
   ~Limiting(){
     if(_Lag2Mono)     del(_Lag2Mono);
     if(_Mono2Lag)     del(_Mono2Lag);
@@ -486,7 +487,7 @@ class Limiting
   int getLimitingMethod() const {/*!Return limiting method*/return _method;}
   void HRlimiting(COMMUNICATOR &communicator, scalar* U);
   void M2limiting(COMMUNICATOR &communicator, scalar* U);
-  void HRIlimiting(COMMUNICATOR &communicator, scalar* U);
-  void M2Ilimiting(COMMUNICATOR &communicator, scalar* U);
+  void HRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U);
+  void M2Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U);
 };
 #endif

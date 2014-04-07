@@ -17,7 +17,7 @@
 //==========================================================================
 arch_global void formater(int N_s, int N_E, scalar* U, scalar* output){
   /*!
-    \brief Host C function to lauch format kernel.
+    \brief Format solution kernel.
     \param[in] N_s number of nodes per element
     \param[in] N_E number of elements
     \param[in] U solution to format to output
