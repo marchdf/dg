@@ -6,22 +6,26 @@
 */
 #include <sensor.h>
 
-void SENSOR::sensing(scalar* U){
+void SENSOR::sensing(int* neighbors, scalar* U){
   /*!
     \brief Main sensor function to drive all the sensor calculations
+    \param[in] neighbors array of neighbor element indices
     \param[in] U main solution
   */
 
-  // Use the first sensor
-  if (_sensor1){
-    Lsensor1(_N_s,_N_E,U,_sensors);
-  }
-
-  // Use the second sensor
-  if (_sensor2){
-    
-  }
-
+  // Set the sensors to 0
+#ifdef USE_CPU
+  for(int e=0; e<_N_E; e++){ _sensors[e] = 0;}
+#elif USE_GPU
+  cudaMemset(_sensors, 0, _N_E*sizeof(int));
+#endif
+  
+  // Calculate the average solution in each cell. This is NOT the same
+  // thing as a cell average.
+  blasGemm('N','N', 1, _N_E*N_F, _N_s, one_div_N_s, _ones, 1, U, _N_s, 0.0, _Uavg, 1);
+  
+  // Call sensor calculation function
+  Lcalc_sensors(_N_E,_N_N,_sensor1,_thresh1,_sensor2,_thresh2,neighbors,_Uavg,_sensors);
 }
 
 

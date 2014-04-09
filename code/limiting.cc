@@ -527,7 +527,7 @@ void Limiting::HRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U
   */
 
   // Calculate the sensor
-  sensor.sensing(U);
+  sensor.sensing(_neighbors,U);
 
 #ifdef ONED
 
@@ -561,7 +561,7 @@ void Limiting::M2Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U
   */
 
   // Calculate the sensor
-  sensor.sensing(U);
+  sensor.sensing(_neighbors,U);
 
 #ifdef ONED
 

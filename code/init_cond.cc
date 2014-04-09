@@ -2285,6 +2285,100 @@ void init_dg_shckdrp_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   }
 }
 
+void init_dg_drpwall_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+
+  // Water drop hitting a wall at a constant velocity
+  // Pressure and pinf normalized by (rho_air*cs_air^2)
+
+  // Material properties
+  // air at 300K/27C from http://www.mhtl.uwaterloo.ca/old/onlinetools/airprop/airprop.html
+  scalar rho_air = 1.1765;
+  scalar gamma_air = 1.4;
+  scalar patm = 101325;
+  scalar cs_air = sqrt(gamma_air*patm/rho_air);
+
+  // water at 300K
+  scalar rho_water = 996; // use 970 if gelatine/water mixture as in Bourne1992
+  scalar gamma_water = 5.5;// Shahab uses different EoS model and so 2.35;
+  scalar pinf_water = 492115000;// Shahab uses: 1e9;
+  scalar cs_water = sqrt(gamma_water*(patm+pinf_water)/rho_water);
+  
+  // Background air
+  scalar rhoA   = rho_air/rho_air;
+  scalar uA     = 0.0;
+  scalar vA     = 0.0;
+  scalar gammaA = gamma_air;
+  scalar pinfA  = 0;
+  scalar pA     = patm/(rho_air*cs_air*cs_air);
+  scalar EtA    = 1.0/(gammaA-1.0)*pA + gammaA*pinfA/(gammaA-1)  + 0.5*rhoA*(uA*uA+vA*vA);
+  scalar GA     = 1.0/(gammaA-1.0);
+  printf("rhoA=%f, uA=%f, pA=%f\n",rhoA,uA,pA);
+  
+  // Water bubble properties
+  scalar rhoB   = rho_water/rho_air;
+  scalar uB     = 0.1; // ND by air sound speed
+  scalar vB     = 0.0;
+  scalar gammaB = gamma_water;
+  scalar pinfB  = pinf_water/(rho_air*cs_air*cs_air);
+  scalar pB     = patm/(rho_air*cs_air*cs_air);
+  scalar EtB    = 1.0/(gammaB-1.0)*pB + gammaB*pinfB/(gammaB-1)  + 0.5*rhoB*(uB*uB+vB*vB);
+  scalar GB     = 1.0/(gammaB-1.0);
+  scalar radius = 1;
+  scalar xcenter = 0;
+  scalar ycenter = 0;
+  printf("rhoB=%f, uB=%f, pB=%f\n",rhoB,uB,pB);
+
+  // Jet properties
+  scalar J = 2; // multiple of bubble radius for jet radius
+  scalar MJ = 0.0; // mach number in the jet
+  scalar rhoJair = rho_air;
+  scalar uJair = MJ*cs_air;
+  scalar pJair = patm;
+  scalar rhoJ  = rhoJair/rho_air;
+  scalar uJ    = uJair/cs_air;
+  scalar vJ    = 0;
+  scalar gammaJ= gamma_air;
+  scalar pinfJ = 0;
+  scalar pJ    = pJair/(rho_air*cs_air*cs_air);
+  scalar EtJ   = 1.0/(gammaJ-1.0)*pJ + gammaJ*pinfJ/(gammaJ-1) + 0.5*rhoJ*(uJ*uJ+vJ*vJ);
+  scalar GJ    = 1.0/(gammaJ-1.0);
+  scalar jet_radius = J*radius;
+  printf("Velocity in jet = %g. Mach number in jet =%g\n",uJ,MJ);
+  printf("Jet radius = %g bubble radii\n",J);
+
+  scalar xc=0,yc=0;
+  for(int e = 0; e < N_E; e++){
+    xc = XYZCen(e,0);
+    yc = XYZCen(e,1);
+    for(int i = 0; i < N_s; i++){
+      if ((xc-xcenter)*(xc-xcenter)+(yc-ycenter)*(yc-ycenter)<radius*radius){ // inside the bubble
+	U(i,e*N_F+0) = rhoB;
+	U(i,e*N_F+1) = rhoB*uB;
+	U(i,e*N_F+2) = rhoB*vB;
+	U(i,e*N_F+3) = EtB;
+	U(i,e*N_F+4) = GB;
+	U(i,e*N_F+5) = gammaB*pinfB/(gammaB-1);
+      }
+      else if (abs(yc)<jet_radius){
+	U(i,e*N_F+0) = rhoJ;
+	U(i,e*N_F+1) = rhoJ*uJ;
+	U(i,e*N_F+2) = rhoJ*vJ;
+	U(i,e*N_F+3) = EtJ;
+	U(i,e*N_F+4) = GJ;
+	U(i,e*N_F+5) = gammaJ*pinfJ/(gammaJ-1);
+      }
+      else {
+	U(i,e*N_F+0) = rhoA;
+	U(i,e*N_F+1) = rhoA*uA;
+	U(i,e*N_F+2) = rhoA*vA;
+	U(i,e*N_F+3) = EtA;
+	U(i,e*N_F+4) = GA;
+	U(i,e*N_F+5) = gammaA*pinfA/(gammaA-1);
+      }
+    }
+  }
+}
+
 
 // void init_dg_euler1D_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
 

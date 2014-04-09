@@ -352,7 +352,7 @@ arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 	for(int k=0;k<N_s*N_s;k++){L2M[k] = Lag2Mono[k];}
 	for(int k=0;k<N_s*N_s;k++){M2L[k] = Mono2Lag[k];}
 #endif
-
+    
 	// Neighbors
 	int left  = neighbors[e*N_N+offxy+0];
 	int right = neighbors[e*N_N+offxy+1];
@@ -361,7 +361,7 @@ arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 	int physical = 0;
 	if (left  < 0){physical = -left;}
 	if (right < 0){physical = -right;}
-    
+
 	// Copy some data to shared memory
 	for(int i=0;i<N_s;i++){UC[i]=U[(e*N_F+fc)*N_s+i];}
     
@@ -424,11 +424,11 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
     4*N_s; // for tmp
 
   int N = N_s1D-1; // polynomial order
-  int cnt = 0;
 
 #ifdef USE_CPU  
   scalar* share = new scalar[size_share];
   for(int e=0; e<N_E; e++){
+    int cnt = 0;
     int sen = sensors[e];
     if (sen != 0){
       scalar* L2M = Lag2Mono;
@@ -436,6 +436,7 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 #elif USE_GPU
   extern __shared__ scalar share[];
   int e = blockIdx.x;{
+    int cnt = 0;
     int sen = sensors[e];
     if (sen != 0){
       scalar* L2M = &share[cnt]; cnt+=N_s*N_s;

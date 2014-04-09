@@ -57,6 +57,7 @@
   - restart functionality (read initial condition from last output file)
   - put common used ints (N_E, M_T, etc) into a struct/class to pass around?
   - solve kernel: make the matrix-matrix product more efficient?
+  - idea to speed up UPA computation: do it on the nodal average (computed in sensor) (instead of at each node)
 
 \mytodo DOXYGEN
   - it's not documenting both versions of CommunicateGhosts properly.

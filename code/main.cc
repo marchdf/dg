@@ -165,6 +165,7 @@ int main (int argc, char **argv)
   bool stfshck = false;
   bool stfbubl = false;
   bool shckdrp = false;
+  bool drpwall = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
   else if (inputs.getInitialCondition()=="contact") contact = true;
@@ -192,6 +193,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="stfshck") stfshck = true;
   else if (inputs.getInitialCondition()=="stfbubl") stfbubl = true;
   else if (inputs.getInitialCondition()=="shckdrp") shckdrp = true;
+  else if (inputs.getInitialCondition()=="drpwall") drpwall = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // setup the boundary condition type
@@ -626,6 +628,7 @@ int main (int argc, char **argv)
   if (stfshck) init_dg_stfshck_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
   if (stfbubl) init_dg_stfbubl_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
   if (shckdrp) init_dg_shckdrp_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
+  if (drpwall) init_dg_drpwall_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
 #endif
 
   if (order0) average_cell_p0(N_s, N_E, U);
@@ -769,7 +772,7 @@ int main (int argc, char **argv)
   // Sensor setup
   //
   //////////////////////////////////////////////////////////////////////////
-  SENSOR sensor(N_s, N_E,true);
+  SENSOR sensor(N_s, N_E, N_N, true, true);
 
   //////////////////////////////////////////////////////////////////////////   
   //

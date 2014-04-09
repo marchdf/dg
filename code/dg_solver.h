@@ -322,7 +322,7 @@ class DG_SOLVER
   void conservation(scalar* U, double time){
     /*!
       \brief Function to calculate and output conservation of certain quantities
-      \param[in] U solution to evaluate
+      \param[in] U solution to evaluate (Lagrange nodal)
       \param[in] time time step
     */
     

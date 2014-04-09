@@ -263,8 +263,6 @@ arch_device void oned_multifluid_roe(scalar rhoL,
   
   scalar aL = sqrt((gammaL*pL)/rhoL);
   scalar aR = sqrt((gammaR*pR)/rhoR);
-
-
   
   // Compute Roe averages
   scalar RT    = sqrt(rhoR/rhoL);

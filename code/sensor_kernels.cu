@@ -5,7 +5,7 @@
   \ingroup sensor
 */
 #include <sensor_kernels.h>
-
+#include <stdio.h>
 
 //==========================================================================
 //
@@ -14,12 +14,17 @@
 //==========================================================================
 
 //==========================================================================
-arch_global void sensor1(int N_s, int N_E, scalar* U, int* sensors){
+arch_global void calc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bool sensor2, scalar thresh2, int* neighbors, scalar* Uavg, int* sensors){
   /*!
-    \brief sensor1 kernel
-    \param[in] N_s number of nodes per element.
+    \brief Calculate the sensors kernel
     \param[in] N_E number of elements
-    \param[in] U main solution
+    \param[in] N_E number of neighbors
+    \param[in] sensor1 true if using first sensor
+    \param[in] thresh1 threshold value for first sensor
+    \param[in] sensor2 true if using second sensor
+    \param[in] thresh2 threshold value for second sensor
+    \param[in] neighbors array of neighbor element indices
+    \param[in] Uavg average of solution in element
     \param[out] sensors array to hold the sensor
   */
 #ifdef USE_CPU
@@ -28,8 +33,118 @@ arch_global void sensor1(int N_s, int N_E, scalar* U, int* sensors){
   int e = blockIdx.x*blkE+threadIdx.z;
   if (e < N_E){
 #endif
-    sensors[e] = 1;    
-  }
+
+    // Check only if it hasn't been flagged yet
+    if(sensors[e] == 0){
+
+      // Initialize
+      scalar rhoL,vxL,vyL=0,alphaL,gammaL,betaL=0,EtL,pL,iL,aL,HL;
+      scalar rhoR,vxR,vyR=0,alphaR,gammaR,betaR=0,EtR,pR,iR,aR,HR;
+      scalar RT, vx, vy=0, alpha, gamma, a, i, H, drho, dp, dV2,G,PHI,PSI,W;
+
+      // Get variables for this element (call it left)
+      int fc=0;
+      rhoL   = Uavg[e*N_F+fc];       fc++;
+      vxL    = Uavg[e*N_F+fc]/rhoL;  fc++;
+#ifdef TWOD
+      vyL    = Uavg[e*N_F+fc]/rhoL;  fc++;
+#endif
+      EtL    = Uavg[e*N_F+fc];       fc++;
+#ifdef PASSIVE
+      alphaL = 1/(constants::GLOBAL_GAMMA-1);
+#else
+      alphaL = Uavg[e*N_F+fc];       fc++;
+#endif
+#ifdef STIFFENED
+      betaL  = Uavg[e*N_F+fc];       fc++;
+#endif 
+#ifdef GAMCONS
+      alphaL = alphaL/rhoL;
+#endif
+      gammaL = 1.0+1.0/alphaL;
+      pL = (gammaL-1)*(EtL - betaL - 0.5*rhoL*(vxL*vxL+vyL*vyL));
+      iL = pL*alphaL;
+      aL = sqrt((gammaL*pL)/rhoL);
+      HL = (EtL + pL)/rhoL;
+    
+      // Loop on neighbors
+      bool done_detecting = false;
+      for(int nn = 0; (nn < N_N) && (!done_detecting) ; nn++){
+	int right = neighbors[e*N_N+nn]; // neighbor index
+	if (right >= 0){
+
+	  // Get variables for this neighbor (call it right)
+	  fc=0;
+	  rhoR   = Uavg[right*N_F+fc];       fc++;
+	  vxR    = Uavg[right*N_F+fc]/rhoR;  fc++;
+#ifdef TWOD
+	  vyR    = Uavg[right*N_F+fc]/rhoR;  fc++;
+#endif
+	  EtR    = Uavg[right*N_F+fc];       fc++;
+#ifdef PASSIVE
+	  alphaR = 1/(constants::GLOBAL_GAMMA-1);
+#else
+	  alphaR = Uavg[right*N_F+fc];       fc++;
+#endif
+#ifdef STIFFENED
+	  betaR  = Uavg[right*N_F+fc];       fc++;
+#endif 
+#ifdef GAMCONS
+	  alphaR = alphaR/rhoR;
+#endif
+	  gammaR = 1.0+1.0/alphaR;
+	  pR = (gammaR-1)*(EtR - betaR - 0.5*rhoR*(vxR*vxR+vyR*vyR));
+	  iR = pR*alphaR;
+	  aR = sqrt((gammaR*pR)/rhoR);
+	  HR = (EtR + pR)/rhoR;
+
+	  // Roe averages
+	  RT    = sqrt(rhoR/rhoL);
+	  vx    = (vxL+RT*vxR)/(1+RT);
+	  vy    = (vyL+RT*vyR)/(1+RT);
+	  alpha = (alphaL+RT*alphaR)/(1+RT);
+	  gamma = 1+1.0/alpha;
+	  H     = (HL+RT*HR)/(1+RT);
+	  a     = sqrt((gamma-1)*(H-0.5*(vx*vx+vy*vy)));
+	  i     =  (iL+RT*iR)/(1+RT);
+      
+	  // First sensor (contact sensor from Sreenivas)
+	  if(sensor1){
+	    // Wave strength for contact
+	    drho = rhoR - rhoL;
+	    dp   = (gamma-1)*(gamma-1)*(alpha*(iR-iL) - i*(alphaR-alphaL));
+	    dV2 = drho - dp/(a*a);
+
+	    G = fabs(dV2)/(rhoL+rhoR);
+	    PHI = 2*G/((1+G)*(1+G));
+	    if(PHI>thresh1){
+	      sensors[e]     = 1;
+	      sensors[right] = 1;
+	      done_detecting = true;
+	    }
+	  } // sensor 1
+
+	  // Second sensor (shock sensor from Sreenivas)
+	  if((sensor2)||(!done_detecting)){
+	    if((vxL-aL > vx-a) && (vx-a > vxR-aR)){
+	      PSI = fabs(pR-pL)/(pL+pR);
+	      W   = 2*PSI/((1+PSI)*(1+PSI));
+	      if(W>thresh2){
+		sensors[e]     = 2;
+		sensors[right] = 2;
+		done_detecting = true;
+	      }
+	    }
+	  } // sensor 2
+	}
+
+	// If right < 0 then we are at a interesting boundary (and we
+	// turn on the sensor)
+	else{sensors[e] = 1; done_detecting = true;}
+      
+      } // loop on neighbors
+    } // if sensor is zero
+  } // loop on elements
 }
 
 arch_global void copy_detected(int N_s, int N_E, int* sensors, scalar* Uold, scalar* U){
@@ -72,12 +187,17 @@ arch_global void copy_detected(int N_s, int N_E, int* sensors, scalar* Uold, sca
 //
 //==========================================================================
 extern "C"
-void Lsensor1(int N_s, int N_E, scalar* U, int* sensors){
+void Lcalc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bool sensor2, scalar thresh2, int* neighbors, scalar* Uavg, int* sensors){
   /*!
-    \brief Host C function to launch sensor1 kernel.
-    \param[in] N_s number of nodes per element.
+    \brief Host C function to launch calc_sensors kernel.
     \param[in] N_E number of elements
-    \param[in] U main solution
+    \param[in] N_E number of neighbors
+    \param[in] sensor1 true if using first sensor
+    \param[in] thresh1 threshold value for first sensor
+    \param[in] sensor2 true if using second sensor
+    \param[in] thresh2 threshold value for second sensor
+    \param[in] neighbors array of neighbor element indices
+    \param[in] Uavg average of solution in element
     \param[out] sensors array to hold the sensor
     \section Description
     In GPU mode, launches N_E/blkE blocks of 1 x 1 x blkE
@@ -92,7 +212,7 @@ void Lsensor1(int N_s, int N_E, scalar* U, int* sensors){
   dim3 dimGrid(div+mod,1);
 #endif
 
-sensor1 arch_args (N_s, N_E, U, sensors);
+  calc_sensors arch_args (N_E,N_N,sensor1,thresh1,sensor2,thresh2,neighbors,Uavg,sensors);
 };
 
 extern "C"
