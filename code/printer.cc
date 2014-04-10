@@ -66,6 +66,9 @@ void PRINTER::set_names(){
 void PRINTER::print(scalar* U, const int step, const double time){
   /*!
     \brief Output solution for the PRINTER class
+    \param[in] U solution to output
+    \param[in] step time step number
+    \param[in] time time value
   */
 
   // format output variables
@@ -75,17 +78,40 @@ void PRINTER::print(scalar* U, const int step, const double time){
   Lformater(_N_s,_N_E,U,_d_output);
   cudaMemcpy(_output, _d_output, _N_s*_N_E*N_F*sizeof(scalar), cudaMemcpyDeviceToHost);
 #endif
-
   
   // print to the output file
   _m.writeSolution(_output, _N_s, _N_E, _elem_type, _fnames, _names, step, time);
   
-} // end print_dg
+} // end print
+
+void PRINTER::read(const int step, double &time, scalar* U){
+  /*!
+    \brief Read solution from output files for the PRINTER class
+    \param[in] step time step number
+    \param[out] time time of the output solution
+    \param[out] U solution to populate from files
+  */
+
+  // Read the output files
+  _m.readSolution(_N_s, _N_E, _elem_type, _fnames, _names, step, time, _output);
+
+  // format the output to the main solution
+#ifdef USE_CPU
+  Lformater(_N_s,_N_E,U,_output,true);
+#elif USE_GPU
+  cudaMemcpy(_d_output, _output, _N_s*_N_E*N_F*sizeof(scalar), cudaMemcpyHostToDevice);
+  Lformater(_N_s,_N_E,U,_d_output,true);
+#endif
+  
+} // end read
 
 
 void PRINTER::print_sensor(SENSOR &sensor, const int step, const double time){
   /*!
     \brief Output sensor if needed
+    \param[in] U solution to output
+    \param[in] step time step number
+    \param[in] time time value
   */
 
   // Check to make sure a sensor is on

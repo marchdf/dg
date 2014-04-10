@@ -364,6 +364,89 @@ void simpleMesh::writeSolution (const scalar* solution, const int N_s, const int
   } // end loop on fields
 }
 
+void simpleMesh::readSolution (const int N_s, const int N_E, int type, std::vector<std::string> fnames, std::vector<std::string> names, const int step, double &time, scalar* solution){
+  /*!
+    \brief Read the solution from input files
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] type element type to output
+    \param[in] fnames vector of output file names (w/o extension)
+    \param[in] names vector of output field names
+    \param[in] step time step number (of file to read)
+    \param[out] time time value
+    \param[out] solution array of solution to output
+    \section Description
+    Pretty obvious what this does.
+  */
+
+  const std::vector<simpleElement> &list = _elements[type];
+  if (list.size() != N_E)
+    printf("bad solution for this element\n");
+
+  // Loop on number of fields for output
+  int _N_F = fnames.size();
+  for(int fc=0; fc< _N_F; fc++){
+    std::ifstream input;
+    std::string filename = fnames[fc];
+    char stepstr[21];
+    sprintf(stepstr, "%010i", step);
+    filename += stepstr;
+    filename += ".pos"; // add extension
+#ifdef USE_MPI
+    char myidstr[21]; // enough to hold all numbers up to 64-bits
+    sprintf(myidstr, "%d", _myid);
+    filename += myidstr;
+#endif
+    input.open(filename.c_str(),std::ifstream::in);
+    if(input.is_open()==0){
+      std::cout << "No file named " << filename << ". Exiting." << std::endl;
+      exit(1);
+    }
+    std::string line;
+    getline(input,line); // ignore $MeshFormat
+    getline(input,line); // ignore 2.1 0 8
+    getline(input,line); // ignore $EndMeshFormat
+    getline(input,line); // ignore $ElementNodeData
+    getline(input,line); // ignore 1
+    getline(input,line); // ignore name
+    getline(input,line); // ignore 1
+    input >> time; getline(input,line); // get time
+    getline(input,line); // ignore 4
+    getline(input,line); // ignore step
+    getline(input,line); // ignore 1
+    int fsize; input >> fsize; getline(input,line); // test list size
+    if(fsize != list.size()){
+      std::cout << "File has a different number of elements than current mesh. Exiting." << std::endl;
+      exit(1);
+    }
+    int fmyid; input >> fmyid; getline(input,line); // test partition
+    if(fmyid != _myid){
+      std::cout << "File has a different partition number than me. Exiting." << std::endl;
+      exit(1);
+    }
+
+    // Read the data
+    for (int e = 0; e < list.size(); e++) {
+      const simpleElement &element = list[e];
+      int f_elementId;
+      int f_NbNodes;
+      input >> f_elementId;
+      input >> f_NbNodes;
+      if ((f_elementId != element.getId()) || (f_NbNodes != element.getNbNodes())){
+	std::cout << "File has a problem (element id or element number of nodes). Exiting." << std::endl;
+	exit(1);
+      }
+
+      // loop on nodal data
+      for (int i = 0; i < element.getNbNodes(); i++) {
+	input >> solution[(e*_N_F+fc)*N_s+i];
+      }
+      getline(input,line); // get the rest of the line
+    }
+    input.close();
+  } // end loop on fields
+}
+
 
 void simpleMesh::buildBoundary(){
   /*!

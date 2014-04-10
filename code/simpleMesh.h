@@ -94,6 +94,7 @@ class simpleMesh {
   inline const std::map<int,int> & getGhostElementMap () const {/*! Return ghost elements mappings*/return _ghostElementMap;}
   void load (const char *fileName);
   void writeSolution (const scalar* solution, const int N_s, const int N_E, int type, std::vector<std::string> fnames, std::vector<std::string> names, int step, double time) const;
+  void readSolution (const int N_s, const int N_E, int type, std::vector<std::string> fnames, std::vector<std::string> names, const int step, double &time, scalar* solution);
   inline void buildInterfaces(int typeInterface, int typeElement, int nsides) {
     /*! Calls BuildInterfaces*/
     simpleInterface::BuildInterfaces(*this, _interfaces, typeInterface, typeElement, nsides);

@@ -29,19 +29,46 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
     \param[in] dgsolver solver object
     \param[in] communicator communicator object
     \param[in] printer printer object
+    \param[in] sensor sensor object
   */
 
+  // Get cpu id
+  int myid = 0;
+#ifdef USE_MPI 
+  MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+#endif
+
+  int restart_step = 49;
+  
   // Initialize some vars
-  double T = 0;          // current time
+  double T = 0;             // current time
+  int count = restart_step; // counts the output steps
   double Tstar = 0;
-  double Tout = T+DtOut; // next output time
+  double Tout = 0;          // next output time
   scalar Dt = 0;
   scalar DtCFL = 0;
-  int n = 0;             // counts the time steps
-  int count = 1;         // counts the output steps
+  int n = 0;                // counts the time steps
   bool output = false;
   bool done = false;
-  
+
+  // If count is not equal to zero, read output files for restart
+  if (count!=0){
+    printer.read(count,T,arch(U));
+  }
+  else{ // print the initial condition to the file
+    if(CFL>=0){
+      if(myid==0){printf("Initial condition written to output file.\n");}
+      printer.print(arch(U), count, T);
+      printer.print_sensor(sensor, count, T);
+    
+      // Output conservation of the fields
+      dgsolver.conservation(h_U,T);
+    }
+  }
+  Tout = T+DtOut;
+  count++;
+
+  // Arrays
   scalar* _Us;
   scalar* _Ustar;
   scalar* _DU;
@@ -78,26 +105,6 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
   cudaMemcpy(d_U, h_U, N_s*N_E*N_F*sizeof(scalar), cudaMemcpyHostToDevice);
   cudaMemcpy(_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar), cudaMemcpyHostToDevice);
 #endif
-  
-  /* // Limit solution */
-  /* if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(arch(U)); */
-  /* else if (Limiter.getLimitingMethod()==2) Limiter.M2limiting(arch(U)); */
-  
-  // Get cpu id
-  int myid = 0;
-#ifdef USE_MPI 
-  MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-#endif
-  
-  // print the initial condition to the file
-  if(CFL>=0){
-    if(myid==0){printf("Initial condition written to output file.\n");}
-    printer.print(arch(U), 0, 0);
-    printer.print_sensor(sensor, 0, 0);
-    
-    // Output conservation of the fields
-    dgsolver.conservation(h_U,0.0);
-  }
   
   // Time integration
   while (!done){
@@ -164,8 +171,6 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
     else if (Limiter.getLimitingMethod()==2){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.M2limiting(communicator, arch(U));}
     else if (Limiter.getLimitingMethod()==3){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.HRIlimiting(communicator, sensor, arch(U));}
     else if (Limiter.getLimitingMethod()==4){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.M2Ilimiting(communicator, sensor, arch(U));}
-
-
         
     T = T + Dt; // update current time
     n++;        // update the time step counter

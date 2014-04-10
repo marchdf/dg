@@ -66,6 +66,7 @@ class PRINTER{
   void set_names();
   
   void print(scalar* U, const int step, const double time);
+  void read(const int step, double &time, scalar* U);
   void print_sensor(SENSOR &sensor, const int step, const double time);
 };
 #endif
