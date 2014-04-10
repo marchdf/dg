@@ -6,6 +6,11 @@
 #ifndef DECK_H
 #define DECK_H
 #include <string>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <stdlib.h>
+#include <vector>
 
 class deck {
 
@@ -15,12 +20,11 @@ class deck {
   double _tf;
   double _cfl;
   int _order;
-  std::string _flux;
   std::string _meshfile;
   std::string _elemType;
   std::string _limiter;
   std::string _ic;
-  std::string _bc;
+  std::vector<double> _thresholds;
   
  public:
   inline std::string getTimeMeth() {/*!Return time integration method*/ return _timeMeth;}
@@ -32,7 +36,7 @@ class deck {
   inline std::string getElemType() {/*!Return type of element in the mesh*/return _elemType;}
   inline std::string getLimiter() {/*!Return limiting method*/return _limiter;}
   inline std::string getInitialCondition() {/*!Return initial condition*/return _ic;}
-  inline std::string getBoundaryCondition() {/*!Return BC (not used anymore)*/return _bc;}
+  inline const std::vector<double> & getThresholds() const {/*!Return initial condition*/return _thresholds;}
   void readDeck(const char *fileName);
 };
 #endif

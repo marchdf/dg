@@ -119,19 +119,19 @@ arch_global void calc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bo
 	    PHI = 2*G/((1+G)*(1+G));
 	    if(PHI>thresh1){
 	      sensors[e]     = 1;
-	      sensors[right] = 1;
+	      sensors[right] = 1;  // this is basically a race condition (another thread could be messing with this too)
 	      done_detecting = true;
 	    }
 	  } // sensor 1
 
 	  // Second sensor (shock sensor from Sreenivas)
 	  if((sensor2)||(!done_detecting)){
-	    if((vxL-aL > vx-a) && (vx-a > vxR-aR)){
+	    if(((vxL-aL > vx-a) && (vx-a > vxR-aR)) || ((vyL-aL > vy-a) && (vy-a > vyR-aR))){
 	      PSI = fabs(pR-pL)/(pL+pR);
 	      W   = 2*PSI/((1+PSI)*(1+PSI));
 	      if(W>thresh2){
 		sensors[e]     = 2;
-		sensors[right] = 2;
+		sensors[right] = 2; 
 		done_detecting = true;
 	      }
 	    }

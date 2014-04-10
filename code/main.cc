@@ -196,13 +196,6 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="drpwall") drpwall = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
 
-  // setup the boundary condition type
-  int boundaryType = 0;
-  if      (inputs.getBoundaryCondition()=="periodic") boundaryType = 0;
-  else if (inputs.getBoundaryCondition()=="farfield") boundaryType = 1;
-  else if (inputs.getBoundaryCondition()=="rflctive") boundaryType = 2;
-  else if (inputs.getBoundaryCondition()=="whatever") boundaryType = 1000; // 2D doesn't need a boundary type
-  else{ printf("Invalid boundary condition setup. Correct the deck.\n");}    
 
   //==========================================================================
   //
@@ -772,7 +765,7 @@ int main (int argc, char **argv)
   // Sensor setup
   //
   //////////////////////////////////////////////////////////////////////////
-  SENSOR sensor(N_s, N_E, N_N, true, true);
+  SENSOR sensor(N_s, N_E, N_N, true, true, inputs.getThresholds());
 
   //////////////////////////////////////////////////////////////////////////   
   //

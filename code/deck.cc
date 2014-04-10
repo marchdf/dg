@@ -4,9 +4,6 @@
   \author Marc T. Henry de Frahan <marchdf@gmail.com>
 */
 #include "deck.h"
-#include <fstream>
-#include <sstream>
-#include <iostream>
 
 
 void deck::readDeck(const char *fileName)
@@ -20,49 +17,43 @@ void deck::readDeck(const char *fileName)
   if(input.is_open()==0){
     printf("No file named %s. Defaulting to deck.inp\n",fileName);
     input.open("deck.inp",std::ifstream::in);
+    if(input.is_open()==0){
+      printf("No file named deck.inp. Exiting.\n");
+      exit(1);
+    }
   }
+
+  // Ignore the lines before the code options
   std::string line;
   getline(input,line);
   while (line!="#Code options"){
     getline(input,line);
   }
-  getline(input,line);
-  if (line!="#time integration")
-    printf("Invalid file format (at time integration)\n");
-  getline(input,_timeMeth);
-  getline(input,line);
-  if (line!="#output time step size")
-    printf("Invalid file format (at output time step size)\n");
-  input>>_Dt;
-  getline(input,line); getline(input,line);
-  if (line!="#final time")
-    printf("Invalid file format (at final time)\n");
-  input>>_tf;
-  getline(input,line); getline(input,line);
-  if (line!="#Courant-Friedrichs-Lewy condition")
-    printf("Invalid file format (at Courant-Friedrichs-Lewy condition)\n");
-  input>>_cfl;
-  getline(input,line); getline(input,line);
-  if (line!="#order")
-    printf("Invalid file format (at order)\n");
-  input>>_order;
-  getline(input,line); getline(input,line);
-  if (line!="#mesh file")
-    printf("Invalid file format (at mesh file)\n");
-  getline(input,_meshfile);
-  getline(input,_elemType);
-  getline(input,line);
-  if (line!="#limiter")
-    printf("Invalid file format (at limiter)\n");
-  getline(input,_limiter);
-  getline(input,line);
-  if (line!="#initial condition")
-    printf("Invalid file format (at initial condition)\n");
-  getline(input,_ic);
-  getline(input,line);
-  if (line!="#boundary condition")
-    printf("Invalid file format (at boundary condition)\n");
-  getline(input,_bc);
+
+  // Parse the deck
+  int cnt = 0;
+  while(getline(input, line)){
+    //std::cout<< "Parsing line: "<<line<<std::endl;
+    if      (line=="#time integration")                 {getline(input,_timeMeth); cnt++;}
+    else if (line=="#output time step size")            {input>>_Dt; getline(input,line); cnt++;}
+    else if (line=="#final time")                       {input>>_tf;getline(input,line); cnt++;}
+    else if (line=="#Courant-Friedrichs-Lewy condition"){input>>_cfl; getline(input,line); cnt++;}
+    else if (line=="#order")                            {input>>_order; getline(input,line); cnt++;}
+    else if (line=="#mesh file")                        {getline(input,_meshfile); cnt++; getline(input,_elemType); cnt++;}
+    else if (line=="#limiter")                          {getline(input,_limiter); cnt++;}
+    else if (line=="#initial condition")                {getline(input,_ic); cnt++;}
+    else if (line=="#sensor thresholds")                {double t; while(input>> t){_thresholds.push_back(t);} input.clear();}
+    else{
+      std::cout<<"Unrecognized option in deck: "<< line << std::endl;
+      std::cout<<"Ignoring for now."<< std::endl;
+    } // if on line
+  }
+
+  // Check to make sure we read all the mandatory options (9 right now)
+  if(cnt < 9){
+    std::cout<<"Input deck is incomplete. Exiting."<< std::endl;
+    exit(1);
+  }
 
   input.close();
 }
