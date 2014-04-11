@@ -87,7 +87,7 @@ arch_global void formater(int N_s, int N_E, scalar* U, scalar* output, bool inve
 	U[(e*N_F+0)*N_s+i] = rho;
 	U[(e*N_F+1)*N_s+i] = rho*ux;
 	U[(e*N_F+2)*N_s+i] = rho*uy;
-	U[(e*N_F+3)*N_s+i] = p/(gamma-1) + 0.5*rho*ux*ux;
+	U[(e*N_F+3)*N_s+i] = p/(gamma-1) + 0.5*rho*(ux*ux+uy*uy);
 #ifdef GAMCONS
 	U[(e*N_F+4)*N_s+i] = rho/(gamma-1);
 #elif  GAMNCON

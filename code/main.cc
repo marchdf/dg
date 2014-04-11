@@ -196,6 +196,9 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="drpwall") drpwall = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
 
+  // Restart option step
+  int restart_step = inputs.getRestartStep();
+  if((myid==0)&&(restart_step!=0)){printf("Restarting at output step %i.\n",restart_step);}
 
   //==========================================================================
   //
@@ -818,7 +821,7 @@ int main (int argc, char **argv)
  
   // RK integration
   rk_start = std::clock();
-  rk4.RK_integration(DtOut, Tf, CFL,
+  rk4.RK_integration(DtOut, Tf, CFL, restart_step,
   		     N_E, N_s, N_G, M_T, M_s, N_ghosts,
   		     h_Minv, 
   		     h_U,

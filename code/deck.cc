@@ -30,6 +30,8 @@ void deck::readDeck(const char *fileName)
     getline(input,line);
   }
 
+ 
+  
   // Parse the deck
   int cnt = 0;
   while(getline(input, line)){
@@ -43,6 +45,7 @@ void deck::readDeck(const char *fileName)
     else if (line=="#limiter")                          {getline(input,_limiter); cnt++;}
     else if (line=="#initial condition")                {getline(input,_ic); cnt++;}
     else if (line=="#sensor thresholds")                {double t; while(input>> t){_thresholds.push_back(t);} input.clear();}
+    else if (line=="#restart step")                     {input>>_restart_step; getline(input,line);}
     else{
       std::cout<<"Unrecognized option in deck: "<< line << std::endl;
       std::cout<<"Ignoring for now."<< std::endl;

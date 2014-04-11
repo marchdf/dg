@@ -6,7 +6,7 @@
 */
 #include "rk.h"
 
-void RK::RK_integration(double DtOut, double Tf, scalar CFL,
+void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
 			int N_E, int N_s, int N_G, int M_T, int M_s, int N_ghosts,
 			scalar* h_Minv, 
 			scalar* h_U,
@@ -31,42 +31,6 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
     \param[in] printer printer object
     \param[in] sensor sensor object
   */
-
-  // Get cpu id
-  int myid = 0;
-#ifdef USE_MPI 
-  MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-#endif
-
-  int restart_step = 49;
-  
-  // Initialize some vars
-  double T = 0;             // current time
-  int count = restart_step; // counts the output steps
-  double Tstar = 0;
-  double Tout = 0;          // next output time
-  scalar Dt = 0;
-  scalar DtCFL = 0;
-  int n = 0;                // counts the time steps
-  bool output = false;
-  bool done = false;
-
-  // If count is not equal to zero, read output files for restart
-  if (count!=0){
-    printer.read(count,T,arch(U));
-  }
-  else{ // print the initial condition to the file
-    if(CFL>=0){
-      if(myid==0){printf("Initial condition written to output file.\n");}
-      printer.print(arch(U), count, T);
-      printer.print_sensor(sensor, count, T);
-    
-      // Output conservation of the fields
-      dgsolver.conservation(h_U,T);
-    }
-  }
-  Tout = T+DtOut;
-  count++;
 
   // Arrays
   scalar* _Us;
@@ -105,6 +69,40 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL,
   cudaMemcpy(d_U, h_U, N_s*N_E*N_F*sizeof(scalar), cudaMemcpyHostToDevice);
   cudaMemcpy(_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar), cudaMemcpyHostToDevice);
 #endif
+
+  // Get cpu id
+  int myid = 0;
+#ifdef USE_MPI 
+  MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+#endif
+
+  // Initialize some vars
+  double T = 0;             // current time
+  int count = restart_step; // counts the output steps
+  double Tstar = 0;
+  double Tout = 0;          // next output time
+  scalar Dt = 0;
+  scalar DtCFL = 0;
+  int n = 0;                // counts the time steps
+  bool output = false;
+  bool done = false;
+
+  // If count is not equal to zero, read output files for restart
+  if (count!=0){
+    printer.read(count,T,arch(U));
+  }
+  else{ // print the initial condition to the file
+    if(CFL>=0){
+      if(myid==0){printf("Initial condition written to output file.\n");}
+      printer.print(arch(U), count, T);
+      printer.print_sensor(sensor, count, T);
+    
+      // Output conservation of the fields
+      dgsolver.conservation(h_U,T);
+    }
+  }
+  Tout = T+DtOut;
+  count++;
   
   // Time integration
   while (!done){

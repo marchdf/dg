@@ -226,7 +226,7 @@ class DG_SOLVER
 
     // Initialize some stuff for conservation calculations
     consfile = "conservation.dat";
-    consf    = fopen(consfile.c_str(),"w");
+    consf    = fopen(consfile.c_str(),"a");
     _UgC     = new scalar[N_G*N_E*N_F];  makeZero(_UgC,N_G*N_E*N_F);
     _phiC    = new scalar[N_G*N_s];      memcpy(_phiC,phi,N_G*N_s*sizeof(scalar));
     _JC      = new scalar[N_E];          memcpy(_JC,J,N_E*sizeof(scalar));

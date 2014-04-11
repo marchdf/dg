@@ -25,8 +25,11 @@ class deck {
   std::string _limiter;
   std::string _ic;
   std::vector<double> _thresholds;
+  int _restart_step;
   
  public:
+  /*!\brief Constructor defaults*/ 
+  deck(){_restart_step = 0;};
   inline std::string getTimeMeth() {/*!Return time integration method*/ return _timeMeth;}
   inline double getOutputTimeStep() {/*!Return output time step*/return _Dt;}
   inline double getFinalTime() {/*!Return final time*/return _tf;}
@@ -37,6 +40,7 @@ class deck {
   inline std::string getLimiter() {/*!Return limiting method*/return _limiter;}
   inline std::string getInitialCondition() {/*!Return initial condition*/return _ic;}
   inline const std::vector<double> & getThresholds() const {/*!Return initial condition*/return _thresholds;}
+  inline int getRestartStep()  {/*!Return restart step*/ return _restart_step;}
   void readDeck(const char *fileName);
 };
 #endif

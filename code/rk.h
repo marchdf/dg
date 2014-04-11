@@ -54,7 +54,7 @@ class RK
     if(_gamma)       delete[] _gamma;
   };
 
-  void RK_integration(double DtOut, double Tf, scalar CFL,
+  void RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
 		      int N_E, int N_s, int N_G, int M_T, int M_s, int N_ghosts,
 		      scalar* h_Minv, 
 		      scalar* h_U,
