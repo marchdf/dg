@@ -18,7 +18,7 @@ arch_global void calc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bo
   /*!
     \brief Calculate the sensors kernel
     \param[in] N_E number of elements
-    \param[in] N_E number of neighbors
+    \param[in] N_N number of neighbors
     \param[in] sensor1 true if using first sensor
     \param[in] thresh1 threshold value for first sensor
     \param[in] sensor2 true if using second sensor
@@ -191,7 +191,7 @@ void Lcalc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bool sensor2,
   /*!
     \brief Host C function to launch calc_sensors kernel.
     \param[in] N_E number of elements
-    \param[in] N_E number of neighbors
+    \param[in] N_N number of neighbors
     \param[in] sensor1 true if using first sensor
     \param[in] thresh1 threshold value for first sensor
     \param[in] sensor2 true if using second sensor

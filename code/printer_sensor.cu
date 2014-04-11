@@ -68,7 +68,3 @@ void Lformat_sensor(int N_s, int N_E, int* sensor, scalar* output){
 
   format_sensor arch_args (N_s, N_E, sensor, output);
 };
-
-
-
-

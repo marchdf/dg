@@ -1444,8 +1444,8 @@ arch_device inline scalar integrate_monomial_derivative(int k, int n)
     \brief The integral of the kth derivative of nth order monomial (from -1 to 1)
     \param[in] k kth derivative of the polynomial
     \param[in] n monomial order
-    \return \frac{2}{(n-k+1)!} if n-k+1 is odd, 0 otherwise
-    Calculates $\int_{-1}^1 \frac{\partial^k}{\partialx^k} \frac{x^n}{n!} \mathrm{d} x$
+    \return $\frac{2}{(n-k+1)!}$ if n-k+1 is odd, 0 otherwise
+    Calculates $\int_{-1}^1 \frac{\partial^k}{\partial x^k} \frac{x^n}{n!} \mathrm{d} x$
   */
   int num = n-k+1;
   if (num%2) return 2.0/(scalar)lim_factorial(num);

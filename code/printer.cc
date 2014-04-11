@@ -109,7 +109,7 @@ void PRINTER::read(const int step, double &time, scalar* U){
 void PRINTER::print_sensor(SENSOR &sensor, const int step, const double time){
   /*!
     \brief Output sensor if needed
-    \param[in] U solution to output
+    \param[in] sensor sensor to output
     \param[in] step time step number
     \param[in] time time value
   */

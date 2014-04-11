@@ -16,6 +16,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
     \param[in] DtOut output time step
     \param[in] Tf final time
     \param[in] CFL CFL number
+    \param[in] restart_step output step for a restart
     \param[in] N_E number of elements
     \param[in] N_s number of nodes per element
     \param[in] N_G number of gaussian nodes per element

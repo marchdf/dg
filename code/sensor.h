@@ -76,8 +76,8 @@ class SENSOR {
     if(_ones)    del(_ones);
   }
 
-  int* getSensors()const {/*! Return sensor array*/return _sensors;};
-  bool isSensor()const {return _isSensor;};
+  int* getSensors()const {/*!\brief Return sensor array*/return _sensors;};
+  bool isSensor()const {/*!\brief Return true if using sensors*/return _isSensor;};
   void sensing(int* neighbors, scalar* U);
   void copy_detected_elements(scalar* Uold, scalar* U);
 };
