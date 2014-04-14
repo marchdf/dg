@@ -2316,7 +2316,7 @@ void init_dg_drpwall_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   
   // Water bubble properties
   scalar rhoB   = rho_water/rho_air;
-  scalar uB     = 0.1; // ND by air sound speed
+  scalar uB     = 0.9; // ND by air sound speed
   scalar vB     = 0.0;
   scalar gammaB = gamma_water;
   scalar pinfB  = pinf_water/(rho_air*cs_air*cs_air);
@@ -2324,7 +2324,7 @@ void init_dg_drpwall_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar EtB    = 1.0/(gammaB-1.0)*pB + gammaB*pinfB/(gammaB-1)  + 0.5*rhoB*(uB*uB+vB*vB);
   scalar GB     = 1.0/(gammaB-1.0);
   scalar radius = 1;
-  scalar xcenter = 0;
+  scalar xcenter = -2;
   scalar ycenter = 0;
   printf("rhoB=%f, uB=%f, pB=%f\n",rhoB,uB,pB);
 
