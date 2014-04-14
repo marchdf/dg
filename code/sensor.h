@@ -34,20 +34,20 @@ class SENSOR {
  public:
   
   /*!\brief Constructor */
- SENSOR(int N_s, int N_E, int N_N, bool sensor1=false, bool sensor2=false, const std::vector<double> &thresholds = std::vector<double>() ) : _N_s(N_s), _N_E(N_E), _N_N(N_N), _sensor1(sensor1), _sensor2(sensor2) {
+ SENSOR(int N_s, int N_E, int N_N, const std::vector<double> &thresholds = std::vector<double>() ) : _N_s(N_s), _N_E(N_E), _N_N(N_N) {
+
+    _sensor1=false;
+    _sensor2=false;
+
+    // Thresholds from the input deck
+    for(int k=0; k<thresholds.size(); k++){
+      if      (k==0){_sensor1 = true;_thresh1 = thresholds[k];}
+      else if (k==1){_sensor2 = true;_thresh2 = thresholds[k];}
+    }
 
     // Are there any sensors on?
     if (_sensor1 || _sensor2){ _isSensor = true;}
     else                     { _isSensor = false;}
-
-    // Thresholds defaults
-    _thresh1 = 0.05;
-    _thresh2 = 0.1;
-    // Thresholds from the input deck
-    for(int k=0; k<thresholds.size(); k++){
-      if      (k==0){_thresh1 = thresholds[k];}
-      else if (k==1){_thresh2 = thresholds[k];}
-    }
     
     one_div_N_s = 1.0/(scalar)_N_s;
 #ifdef USE_CPU
