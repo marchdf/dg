@@ -30,8 +30,6 @@ void deck::readDeck(const char *fileName)
     getline(input,line);
   }
 
- 
-  
   // Parse the deck
   int cnt = 0;
   while(getline(input, line)){
@@ -43,7 +41,7 @@ void deck::readDeck(const char *fileName)
     else if (line=="#order")                            {input>>_order; getline(input,line); cnt++;}
     else if (line=="#mesh file")                        {getline(input,_meshfile); cnt++; getline(input,_elemType); cnt++;}
     else if (line=="#limiter")                          {getline(input,_limiter); cnt++;}
-    else if (line=="#initial condition")                {getline(input,_ic); cnt++;}
+    else if (line=="#initial condition")                {input>>_ic; cnt++; double t; while(input>> t){_ic_inputs.push_back(t);} input.clear();}
     else if (line=="#sensor thresholds")                {double t; while(input>> t){_thresholds.push_back(t);} input.clear();}
     else if (line=="#restart step")                     {input>>_restart_step; getline(input,line);}
     else{

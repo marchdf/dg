@@ -750,12 +750,20 @@ void init_dg_blast1d_multifluid(const int N_s, const int N_E, const fullMatrix<s
 //   }
 }
 
-void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
 
+  // Read inputs
+  if (ic_inputs.size() != 2){
+    printf("Wrong initial condition inputs. Exiting\n");
+    exit(1);
+  }
+  scalar K  = ic_inputs[0];
+  scalar Ms = ic_inputs[1]; // shock mach number
+  printf("K=%f, Ms=%f\n",K,Ms);
+  
   // Initialize a rarefaction moving towards the left (or downwards)
   scalar A0 = 0.00183;
   scalar Lx = 0.089*2.0/3.0;
-  scalar K = 2;
   scalar yinterface =-(K)*Lx;//-0.07; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
   scalar u0 = 0;
@@ -763,9 +771,8 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar p0 = 1e5;
 
   // Parameters to choose
-  scalar L = K*Lx;       // length of rarefaction when it reaches the interface
-  scalar Ms = 2.85;      // shock mach number
-  scalar T = 0.;         // time difference btw shock and rarefaction arrival at the interface
+  scalar L  = K*Lx;       // length of rarefaction when it reaches the interface
+  scalar T  = 0.;         // time difference btw shock and rarefaction arrival at the interface
   
   // Top material (shock and rarefaction initialized here)
   scalar rho01   = 1.351;//5.494;//
@@ -775,11 +782,19 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar c01     = sqrt(gamma01*p0/rho01);
   
   // Bottom material (material 2)
-  scalar rho02   = 5.494;//1.351;//
-  scalar gamma02 = 1.276;//1.093;//
+  scalar rho02   = 1.351;//5.494;//1.351;//
+  scalar gamma02 = 1.093;//1.276;//1.093;//
   scalar alpha02 = 1/(gamma02-1);
-  scalar M02     = 146.05;//34.76;//  // molecular weight
+  scalar M02     = 34.76;//146.05;//34.76;//  // molecular weight
   scalar c02     = sqrt(gamma02*p0/rho02);
+
+  // Non-dimensional parameters
+  scalar L_ND   = Lx; // use wavelength to non-dimensionalize
+  scalar rho_ND = rho01;
+  scalar u_ND   = c01;
+  scalar p_ND   = rho01*c01*c01;
+  scalar t_ND   = Lx/c01;
+  printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f, t_ND\n",L_ND,rho_ND,u_ND,p_ND,t_ND);
 
   // Post-shock material
   scalar us     =-Ms*c01; // shock velocity
@@ -788,7 +803,6 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar p4     = p0*(1+2*gamma01/(gamma01+1)*(Ms*Ms-1));
   scalar rho4   = rho01*(gamma01+1)*Ms*Ms/(2+(gamma01-1)*Ms*Ms);
   scalar gamma4 = gamma01;
-  scalar Et4    = p4/(gamma4-1.0) + 0.5*rho4*(u4*u4+v4*v4);
   scalar c4     = sqrt(gamma4*p4/rho4);
   
   // contact velocity (velocity behind the rarefaction, positive)
@@ -807,7 +821,7 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar yS = yinterface - us*tiS;
 
   // Initialization time t0 = alpha*tiS
-  scalar t0 = 0.95*tiS;
+  scalar t0 = 0.5*tiS;
 
   // Position of the shock, head, and tail at t0
   scalar yS0 = us*t0 + yS;
@@ -818,6 +832,37 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // reflection coefficient
   //scalar R = (1- rho01*c01/(rho02*c02))/(1+rho01*c01/(rho02*c02));
   scalar vcoord = 0;//-(1-R)*vc; // coordinate shift upwards
+
+  // N-D the quantities
+  A0 = A0/L_ND;
+  Lx = Lx/L_ND;
+  yinterface = yinterface/L_ND;
+  delta = delta/L_ND;
+  u0 = u0/u_ND;
+  v0 = v0/u_ND;
+  p0 = p0/p_ND;
+  L  = L/L_ND;
+  T  = T/t_ND;
+  rho01 = rho01/rho_ND;
+  c01   = c01/u_ND;
+  rho02 = rho02/rho_ND;
+  c02   = c02/u_ND;
+  us    = us/u_ND;
+  u4    = u4/u_ND;
+  v4    = v4/u_ND;
+  p4    = p4/p_ND;
+  rho4  = rho4/rho_ND;
+  c4    = c4/u_ND;
+  vc    = vc/u_ND;
+  tiR   = tiR/t_ND;
+  yR    = yR/L_ND;
+  tiS   = tiS/t_ND;
+  yS    = yS/L_ND;
+  t0    = t0/t_ND;
+  yS0   = yS0/L_ND;
+  yH0   = yH0/L_ND;
+  yT0   = yT0/L_ND;
+  vcoord = vcoord/u_ND;
   
   scalar xc=0, yc=0, x=0, y=0, u, v, rho, p;
   for(int e = 0; e < N_E; e++){
@@ -866,7 +911,6 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	scalar vp = 2.0/(gamma+1)*(c4 + (yp-yR)/t0);
       	rho = rho4 * pow(1 - (gamma-1)/2.0 * fabs(vp/c4), 2.0/(gamma-1));
       	p   = p4   * pow(1 - (gamma-1)/2.0 * fabs(vp/c4), 2.0*gamma/(gamma-1));
-	//v = v + v4;
       }
       else if (yT0 <= yc){ // behind rarefaction
       	u = 0;
@@ -876,7 +920,7 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
       	p   = p4   * pow(1 - (gamma-1)/2.0 * fabs(vp/c4), 2.0*gamma/(gamma-1));
       }
       v = v + vcoord;
-      
+
 #ifdef ONED
       U(i,e*N_F+0) = rho;
       U(i,e*N_F+1) = rho*v;
@@ -1762,55 +1806,66 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<s
 
 
 
-void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
 
-  if ((N_F!=5)&&(N_F!=4)) printf("You are setting up the wrong problem. N_F =%i != 5 or 4.\n",N_F);
+  // Read inputs
+  if (ic_inputs.size() != 2){
+    printf("Wrong initial condition inputs. Exiting\n");
+    exit(1);
+  }
+  scalar K  = ic_inputs[0];
+  scalar pratio = ic_inputs[1]; // shock mach number
+  printf("K=%f, pratio=%f\n",K,pratio);
 
   // Initialize
-  scalar A0 = 0.00183;
   scalar Lx = 0.089*2.0/3.0;
+  scalar A0 = 0.00183;
   scalar vcoord = 0; //-115.26;//72; // coordinate shift upwards
-  scalar K = 6;
   scalar h = K*Lx;
   scalar yinterface =-h;//-0.07; // first interface location
   scalar delta=0.005;   // The diffusion layer thickness
-  scalar u = 0;
-  scalar v = 0+vcoord;
-  scalar p = 1e5;
+  scalar u0 = 0;
+  scalar v0 = 0+vcoord;
+  scalar patm = 1e5;
 
   // Top material: blast initialized here
   scalar rho01   = 1.351;//5.494;//
-  scalar u01     = u;
-  scalar v01     = v;  
+  scalar u01     = u0;
+  scalar v01     = v0;  
   scalar gamma01 = 1.093;//1.276;//;
   scalar alpha01 = 1/(gamma01-1);
   scalar M01     = 34.76;//146.05;//
-
+  scalar c01     = sqrt(gamma01*patm/rho01);
+  
   // Bottom material (material 2)
   scalar rho02   = 5.494;//1.351;//
-  scalar u02     = u;
-  scalar v02     = v;  
+  scalar u02     = u0;
+  scalar v02     = v0;  
   scalar gamma02 = 1.276;//1.093;//
   scalar alpha02 = 1/(gamma02-1);
   scalar M02     = 146.05;//34.76;//  // molecular weight
   
+  // Non-dimensional parameters
+  scalar L_ND = Lx; // use wavelength to non-dimensionalize
+  scalar rho_ND = rho01;
+  scalar u_ND   = c01;
+  scalar p_ND   = rho01*c01*c01;
+  printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f\n",L_ND,rho_ND,u_ND,p_ND);
+
   // Explosion energy parameters
   scalar blstpos = 0.0;
-  // scalar alpha = 2./3.; // = 2/3 for planar, 1/2 for cyl, 2/5 for sph.
-  // scalar Q = 0.8119080; // for gamma = 1.4 //0.66927; // for alpha = 2/3 and gamma = 5/3
-  // scalar Ms = 10;    // Mach number when blast front gets to interface
-  // scalar ps = p*((2.0*gamma01*Ms*Ms-(gamma01-1))/(gamma01+1));  // pressure at shock in Pa
-  // scalar xi = fabs(blstpos-yinterface); // distance btw blast initial position and interface
-  // scalar Ex  = pow(Q,2.0/alpha)*0.5*(gamma01+1)*ps/(alpha*alpha)*pow(xi,2.0/alpha-2.0);
-
-  scalar pratio = 500; // pressure ratio at blast = px/p0
-  scalar Px = pratio*p;
+  scalar Px = pratio*patm;
   scalar Ex = Px/(gamma01-1);
-  //scalar Dxx = 0.001; // energy initially deposited in Dxx
-  
   printf("h/lambda=%f, pratio=%f, px=%e and Ex=%e\n",K,pratio,Px, Ex);
+
+  // N-D lengths
+  A0 = A0/L_ND;
+  Lx = Lx/L_ND;
+  yinterface = yinterface/L_ND;
+  delta = delta/L_ND;
+  blstpos = blstpos/L_ND;
   
-  scalar xc=0, yc=0, x=0, y=0;
+  scalar xc=0, yc=0, x=0, y=0,rho,u,v,p,gamma,jx;
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
 
@@ -1826,33 +1881,18 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #endif
       
       if(yc >= blstpos){ // blast region
-
-#ifdef ONED
-	U(i,e*N_F+0) = rho01;
-	U(i,e*N_F+1) = rho01*v01;
-	U(i,e*N_F+2) = Ex;///Dxx;
-#ifdef GAMCONS
-	U(i,e*N_F+3) = rho01/(gamma01-1);
-#elif GAMNCON
-	U(i,e*N_F+3) = 1.0/(gamma01-1);
-#endif
-	// Mass fractions
-	U(i,e*N_F+4) = 1*rho01;//0;//1*rho01;
-#elif TWOD
-	U(i,e*N_F+0) = rho01;
-	U(i,e*N_F+1) = rho01*u01;
-	U(i,e*N_F+2) = rho01*v01;
-	U(i,e*N_F+3) = Ex;///Dxx;
-#ifdef GAMCONS
-	U(i,e*N_F+4) = rho01/(gamma01-1);
-#elif GAMNCON
-	U(i,e*N_F+4) = 1.0/(gamma01-1);
-#endif
-	// Mass fractions
-	U(i,e*N_F+5) = 1*rho01;//0;//1*rho01;
-#endif
+	rho   = rho01;
+	u     = u01;
+	v     = v01;
+	p     = Px;
+	gamma = gamma01;
+	jx    = 0;
       }
       else{
+	u = u02;
+	v = v02;
+	p = patm;
+
 	// vertical distance from interface
 	scalar d = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterface)/(2*delta);
 	
@@ -1862,14 +1902,21 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	else if (d<=0)         vol = 1;
 	else                   vol = 0;
 
-	scalar jx  = 1-vol;
-	scalar rho = jx*rho02+(1-jx)*rho01;
+	jx  = 1-vol;
+	rho = jx*rho02+(1-jx)*rho01;
 	scalar jy  = jx*rho02/(jx*rho02+(1-jx)*rho01);      // mass fraction
 	scalar jM  = 1/(jy/M02+(1-jy)/M01);                 // total molecular weight
 
 	scalar alpha = jy*alpha02*jM/M02+(1-jy)*alpha01*jM/M01;
-	scalar gamma = 1+1.0/alpha;
-  
+	gamma = 1+1.0/alpha;
+      }
+
+      // Non-dimensionalize
+      rho = rho/rho_ND;
+      u   = u/u_ND;
+      v   = v/u_ND;
+      p   = p/p_ND;
+
 #ifdef ONED
 	U(i,e*N_F+0) = rho;
 	U(i,e*N_F+1) = rho*v;
@@ -1880,7 +1927,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+3) = 1.0/(gamma-1);
 #endif
 	// Mass fractions
-	U(i,e*N_F+4) = (1-jx)*rho;//(1-jx)*rho; // jy is mass fraction of 2
+	U(i,e*N_F+4) = (1-jx)*rho; // jy is mass fraction of 2
 #elif TWOD
 	U(i,e*N_F+0) = rho;
 	U(i,e*N_F+1) = rho*u;
@@ -1892,9 +1939,8 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	U(i,e*N_F+4) = 1.0/(gamma-1);
 #endif
 	// Mass fractions
-	U(i,e*N_F+5) = (1-jx)*rho;//(1-jx)*rho;
+	U(i,e*N_F+5) = (1-jx)*rho;
 #endif
-      }
     }
   }
 }
@@ -2252,6 +2298,13 @@ void init_dg_shckdrp_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar radius = 1;
   printf("rhoB=%f, uB=%f, pB=%f\n",rhoB,uB,pB);
 
+  // Temperature and cv
+  scalar Tatm = 300;
+  scalar T = Tatm/Tatm;
+  scalar CvA = (pA+pinfA)/((gammaA-1)*rhoA*T); // Cv calc with N-D quantities
+  scalar CvB = (pB+pinfB)/((gammaB-1)*rhoB*T); // Cv calc with N-D quantities
+  printf("T = TA = TB = %f, CvA=%f, CvB=%f\n",T,CvA,CvB);
+  
   scalar xc=0,yc=0;
   for(int e = 0; e < N_E; e++){
     xc = XYZCen(e,0);
@@ -2316,7 +2369,7 @@ void init_dg_drpwall_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   
   // Water bubble properties
   scalar rhoB   = rho_water/rho_air;
-  scalar uB     = 0.9; // ND by air sound speed
+  scalar uB     = 1.5; // ND by air sound speed
   scalar vB     = 0.0;
   scalar gammaB = gamma_water;
   scalar pinfB  = pinf_water/(rho_air*cs_air*cs_air);
@@ -2324,7 +2377,7 @@ void init_dg_drpwall_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar EtB    = 1.0/(gammaB-1.0)*pB + gammaB*pinfB/(gammaB-1)  + 0.5*rhoB*(uB*uB+vB*vB);
   scalar GB     = 1.0/(gammaB-1.0);
   scalar radius = 1;
-  scalar xcenter = -2;
+  scalar xcenter = -18;
   scalar ycenter = 0;
   printf("rhoB=%f, uB=%f, pB=%f\n",rhoB,uB,pB);
 

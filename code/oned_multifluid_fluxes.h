@@ -297,9 +297,9 @@ arch_device void oned_multifluid_roe(scalar rhoL,
   // There are various ways to implement an entropy fix. This is just one
   // example.
   /* scalar Da = MAX(0.0, 4*((vxR-aR)-(vxL-aL))); */
-  /* if(ws[0] < 0.5*Da) ws[0] = ws[0]*ws[0]/Da + 0.25*Da; */
+  /* if(ws0 < 0.5*Da) ws0 = ws0*ws0/Da + 0.25*Da; */
   /* Da = MAX(0.0, 4*((vxR+aR)-(vxL+aL))); */
-  /* if(ws[2] < 0.5*Da) ws[2] = ws[2]*ws[2]/Da + 0.25*Da; */
+  /* if(ws2 < 0.5*Da) ws2 = ws2*ws2/Da + 0.25*Da; */
 
   // Roe Right eigenvectors
   scalar R00 = 1;

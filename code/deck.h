@@ -24,6 +24,7 @@ class deck {
   std::string _elemType;
   std::string _limiter;
   std::string _ic;
+  std::vector<double> _ic_inputs;  
   std::vector<double> _thresholds;
   int _restart_step;
   
@@ -39,7 +40,8 @@ class deck {
   inline std::string getElemType() {/*!Return type of element in the mesh*/return _elemType;}
   inline std::string getLimiter() {/*!Return limiting method*/return _limiter;}
   inline std::string getInitialCondition() {/*!Return initial condition*/return _ic;}
-  inline const std::vector<double> & getThresholds() const {/*!Return initial condition*/return _thresholds;}
+  inline const std::vector<double> & getInitialConditionInputs() const {/*!Return initial condition inputs*/return _ic_inputs;}
+  inline const std::vector<double> & getThresholds() const {/*!Return thresholds*/return _thresholds;}
   inline int getRestartStep()  {/*!Return restart step*/ return _restart_step;}
   void readDeck(const char *fileName);
 };

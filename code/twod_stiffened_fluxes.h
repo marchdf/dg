@@ -226,9 +226,9 @@ arch_device void twod_stiffened_roe(scalar rhoL,
   // only for the nonlinear fields.
   // http://www.cfdbooks.com/cfdcodes/twod_euler_fluxes_v2.f90
   /* scalar dws0 = 0.2; */
-  /* if(ws[0] < dws0) ws[0] = 0.5 * (ws[0]*ws[0]/dws0+dws0); */
+  /* if(ws0 < dws0) ws0 = 0.5 * (ws0*ws0/dws0+dws0); */
   /* scalar dws3 = 0.2; */
-  /* if(ws[3] < dws3) ws[3] = 0.5 * (ws[3]*ws[3]/dws3+dws3); */
+  /* if(ws3 < dws3) ws3 = 0.5 * (ws3*ws3/dws3+dws3); */
 
   // Roe Right eigenvectors
   scalar R00 = 1;

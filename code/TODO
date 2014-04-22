@@ -48,13 +48,11 @@
 \mytodo OTHER
   - Clean if conditions on dimensions: they are all over the place. Can they be reduced?
   - Does shifts works in 1D? It does not!
-  - change makeZero to memset functions
   - make things more object oriented to reduce the number of parameters passed around
   - maybe make a struct for the numbers (Ns,NE, etc)
   - factorial function is defined 3 times (at least)
   - macros to wrap functions: eg. GPU(communicateGhosts) or GAMMAMODEL(...)
   - memcpy is evil in c++, don't use it: it doesn't do a deep copy. replace memcpy with blascopy?
-  - put common used ints (N_E, M_T, etc) into a struct/class to pass around?
   - solve kernel: make the matrix-matrix product more efficient?
   - idea to speed up UPA computation: do it on the nodal average (computed in sensor) (instead of at each node)
 
