@@ -35,6 +35,7 @@
 #include <communicator.h>
 #include <printer.h>
 #include <sensor.h>
+#include <mem_counter.h>
 
 //
 // Function prototypes
@@ -79,6 +80,14 @@ int main (int argc, char **argv)
   std::clock_t main_start, rk_start;
   double main_time, rk_time;
   main_start = std::clock();
+  
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // Memory counter init
+  //
+  //////////////////////////////////////////////////////////////////////////
+  MEM_COUNTER mem_counter;
+  mem_counter.outputCounters();
   
   ////////////////////////////////////////////////////////////////////////////
   //
@@ -655,7 +664,7 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
 
-  scalar* h_Minv = new scalar[N_s*N_s*N_E];
+  scalar* h_Minv = new scalar[N_s*N_s*N_E]; mem_counter.addToCPUCounter(N_s*N_s*N_E*sizeof(scalar));
   dg_inverse_mass_matrix(order, elem_type, inputs.getElemType(), N_s, N_E, XYZNodes, h_Minv);
 
   //////////////////////////////////////////////////////////////////////////   
@@ -663,8 +672,8 @@ int main (int argc, char **argv)
   // Build the map
   //
   //////////////////////////////////////////////////////////////////////////
-  int* h_map = new int[M_s*M_T*N_F*2];
-  int* h_invmap = new int[M_s*N_N*N_E*N_F*2];
+  int* h_map = new int[M_s*M_T*N_F*2]; mem_counter.addToCPUCounter(M_s*M_T*N_F*2*sizeof(int));
+  int* h_invmap = new int[M_s*N_N*N_E*N_F*2]; mem_counter.addToCPUCounter(M_s*N_N*N_E*N_F*2*sizeof(int));
   dg_mappings(myid, M_s, M_T, N_s, N_E, N_N, interfaces, ElementMap, ghostElementMap, closures, h_map, h_invmap);
   
   //==========================================================================
@@ -691,21 +700,21 @@ int main (int argc, char **argv)
   //  We need to transform the data in fullMatrix to a pointer form to
   //  transfer to GPU note: it's got to be column major sorted
   //
-  scalar* h_phi     = new scalar[N_G*N_s];       makeZero(h_phi,N_G*N_s);
-  scalar* h_phi_w   = new scalar[N_G*N_s];       makeZero(h_phi_w,N_G*N_s);          
-  scalar* h_dphi    = new scalar[D*N_G*N_s];     makeZero(h_dphi,D*N_G*N_s);	 
-  scalar* h_dphi_w  = new scalar[D*N_G*N_s];     makeZero(h_dphi_w,D*N_G*N_s);
+  scalar* h_phi     = new scalar[N_G*N_s];       makeZero(h_phi,N_G*N_s);       mem_counter.addToCPUCounter(N_G*N_s*sizeof(scalar));
+  scalar* h_phi_w   = new scalar[N_G*N_s];       makeZero(h_phi_w,N_G*N_s);     mem_counter.addToCPUCounter(N_G*N_s*sizeof(scalar));    
+  scalar* h_dphi    = new scalar[D*N_G*N_s];     makeZero(h_dphi,D*N_G*N_s);	mem_counter.addToCPUCounter(D*N_G*N_s*sizeof(scalar)); 
+  scalar* h_dphi_w  = new scalar[D*N_G*N_s];     makeZero(h_dphi_w,D*N_G*N_s);  mem_counter.addToCPUCounter(D*N_G*N_s*sizeof(scalar));
 
-  scalar* h_psi     = new scalar[M_G*M_s];       makeZero(h_psi,M_G*M_s);	 
-  scalar* h_psi_w   = new scalar[M_G*M_s];       makeZero(h_psi_w,M_G*M_s);	 
-  scalar* h_J       = new scalar[N_E];           makeZero(h_J,N_E);               // not same as J!!
-  scalar* h_invJac  = new scalar[N_G*D*N_E*D];   makeZero(h_invJac,N_G*D*N_E*D);  // not same as invJac!!
-  scalar* h_JF      = new scalar[2*M_T];         makeZero(h_JF, D*M_T);
-  scalar* h_normals = new scalar[D*M_T];         makeZero(h_normals,D*M_T);
+  scalar* h_psi     = new scalar[M_G*M_s];       makeZero(h_psi,M_G*M_s);	mem_counter.addToCPUCounter(M_G*M_s*sizeof(scalar)); 
+  scalar* h_psi_w   = new scalar[M_G*M_s];       makeZero(h_psi_w,M_G*M_s);	mem_counter.addToCPUCounter(M_G*M_s*sizeof(scalar)); 
+  scalar* h_J       = new scalar[N_E];           makeZero(h_J,N_E);             mem_counter.addToCPUCounter(N_E*sizeof(scalar)); 
+  scalar* h_invJac  = new scalar[N_G*D*N_E*D];   makeZero(h_invJac,N_G*D*N_E*D);mem_counter.addToCPUCounter(N_G*D*N_E*D*sizeof(scalar)); 
+  scalar* h_JF      = new scalar[2*M_T];         makeZero(h_JF, D*M_T);         mem_counter.addToCPUCounter(2*M_T*sizeof(scalar)); 
+  scalar* h_normals = new scalar[D*M_T];         makeZero(h_normals,D*M_T);     mem_counter.addToCPUCounter(D*M_T*sizeof(scalar)); 
 
 #ifdef USE_CPU
   // Normal allocation of U
-  scalar* h_U       = new scalar[N_s*(N_E+N_ghosts)*N_F];   makeZero(h_U,N_s*(N_E+N_ghosts)*N_F);
+  scalar* h_U       = new scalar[N_s*(N_E+N_ghosts)*N_F];   makeZero(h_U,N_s*(N_E+N_ghosts)*N_F); mem_counter.addToCPUCounter(N_s*(N_E+N_ghosts)*N_F*sizeof(scalar));
 #elif USE_GPU
   // Pinned allocation of U. Faster host <-> device transfer
   // http://devblogs.nvidia.com/parallelforall/how-optimize-data-transfers-cuda-cc/
@@ -753,7 +762,7 @@ int main (int argc, char **argv)
   // Communication setup
   //
   //////////////////////////////////////////////////////////////////////////
-  COMMUNICATOR communicator(N_ghosts, N_s, m);
+  COMMUNICATOR communicator(N_ghosts, N_s, m, mem_counter);
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -813,7 +822,7 @@ int main (int argc, char **argv)
   scalar CFL   = inputs.getCFL()*m.getDx()/(2.0*order+1);
 
   if(myid==0){printf("==== Now RK 4 steps =====\n");}
-  scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++) h_weight[g] = (scalar)weight(g,0);  
+  scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++){h_weight[g] = (scalar)weight(g,0);} mem_counter.addToCPUCounter(N_G*sizeof(scalar));
   DG_SOLVER dgsolver = DG_SOLVER(N_E, N_s, N_G, N_N, M_T, M_s, M_G, M_B,
   				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, //h_xyz, h_xyzf,
 				 h_J, h_invJac, h_JF, h_weight, h_normals, m);
@@ -990,12 +999,12 @@ int main (int argc, char **argv)
 
   //////////////////////////////////////////////////////////////////////////   
   //
-  // End timer
+  // End timer and output counters
   //
   //////////////////////////////////////////////////////////////////////////
   main_time = ( std::clock() - main_start ) / (double) CLOCKS_PER_SEC;
   printf("Main time = %20.16e for proc %i\n", main_time, myid);
-
+  mem_counter.outputCounters();
   
   //////////////////////////////////////////////////////////////////////////   
   //

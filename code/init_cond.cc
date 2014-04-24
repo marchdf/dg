@@ -2377,7 +2377,7 @@ void init_dg_drpwall_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar EtB    = 1.0/(gammaB-1.0)*pB + gammaB*pinfB/(gammaB-1)  + 0.5*rhoB*(uB*uB+vB*vB);
   scalar GB     = 1.0/(gammaB-1.0);
   scalar radius = 1;
-  scalar xcenter = -18;
+  scalar xcenter = -5;
   scalar ycenter = 0;
   printf("rhoB=%f, uB=%f, pB=%f\n",rhoB,uB,pB);
 

@@ -12,6 +12,7 @@
 #ifndef COMMUNICATOR_H
 #define COMMUNICATOR_H
 
+#include "mem_counter.h"
 #include "simpleMesh.h"
 #ifdef USE_MPI
 #include <scalar_def.h>
@@ -54,24 +55,24 @@ class COMMUNICATOR
     \param N_s number of nodes in an element
     \param m mesh operated on
   */     
-  COMMUNICATOR(int N_ghosts, int N_s, simpleMesh &m): _N_ghosts(N_ghosts), _N_s(N_s){
+ COMMUNICATOR(int N_ghosts, int N_s, simpleMesh &m, MEM_COUNTER &mem_counter): _N_ghosts(N_ghosts), _N_s(N_s){
     // Initialize MPI things
     _status = new MPI_Status [2*N_ghosts];
     _request = new MPI_Request [2*N_ghosts];
 
     // Allocate/initialize CPU arrays
-    _ghostElementSend = new int[3*N_ghosts]; 
-    _ghostElementRecv = new int[3*N_ghosts];     
+    _ghostElementSend = new int[3*N_ghosts]; mem_counter.addToCPUCounter(3*N_ghosts*sizeof(int));
+    _ghostElementRecv = new int[3*N_ghosts]; mem_counter.addToCPUCounter(3*N_ghosts*sizeof(int));
     memcpy(_ghostElementSend, m.getGhostElementSend() , 3*N_ghosts*sizeof(int));
     memcpy(_ghostElementRecv, m.getGhostElementRecv() , 3*N_ghosts*sizeof(int));
 
 #ifdef USE_GPU
     // Allocate/initialize CPU/GPU arrays
-    checkCuda(cudaMallocHost((void**)&_h_bufferSend, _N_s*_N_ghosts*N_F*sizeof(scalar)));
-    checkCuda(cudaMallocHost((void**)&_h_bufferRecv, _N_s*_N_ghosts*N_F*sizeof(scalar)));
-    cudaMalloc((void**) &_d_ghostElementSend, _N_ghosts*sizeof(int));
-    cudaMalloc((void**) &_d_ghostElementRecv, _N_ghosts*sizeof(int));
-    cudaMalloc((void**) &_d_buffer, _N_s*_N_ghosts*N_F*sizeof(scalar));
+    checkCuda(cudaMallocHost((void**)&_h_bufferSend, _N_s*_N_ghosts*N_F*sizeof(scalar))); mem_counter.addToCPUCounter(_N_s*_N_ghosts*N_F*sizeof(scalar));
+    checkCuda(cudaMallocHost((void**)&_h_bufferRecv, _N_s*_N_ghosts*N_F*sizeof(scalar))); mem_counter.addToCPUCounter(_N_s*_N_ghosts*N_F*sizeof(scalar));
+    cudaMalloc((void**) &_d_ghostElementSend, _N_ghosts*sizeof(int));   mem_counter.addToGPUCounter(_N_ghosts*sizeof(int));
+    cudaMalloc((void**) &_d_ghostElementRecv, _N_ghosts*sizeof(int));   mem_counter.addToGPUCounter(_N_ghosts*sizeof(int));
+    cudaMalloc((void**) &_d_buffer, _N_s*_N_ghosts*N_F*sizeof(scalar)); mem_counter.addToGPUCounter(_N_s*_N_ghosts*N_F*sizeof(scalar));
 
     // Copy necessary data to GPU memory (using a tmp array)
     int* tmp = new int[_N_ghosts];
@@ -110,7 +111,7 @@ class COMMUNICATOR{
  public:
   /*! \brief Empty constructor
   */     
-  COMMUNICATOR(int a, int b, simpleMesh &m){};
+  COMMUNICATOR(int a, int b, simpleMesh &m, MEM_COUNTER &mem_counter){};
   void CommunicateGhosts(int Nfields, scalar* U){};
 };
 #endif
