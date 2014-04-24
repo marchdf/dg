@@ -16,6 +16,7 @@
 #include <string>
 #include <stdio.h>
 #include "printer_kernels.h"
+#include "mem_counter.h"
 #include <sensor.h>
 #ifdef USE_GPU
 #include "misc_cuda.h"
@@ -43,12 +44,12 @@ class PRINTER{
     \param[in] elem_type type of element to output
     \param[in] m mesh we are operating on
   */     
- PRINTER(int N_s, int N_E, int elem_type, simpleMesh &m): _N_s(N_s), _N_E(N_E), _elem_type(elem_type), _m(m){
+ PRINTER(int N_s, int N_E, int elem_type, simpleMesh &m, MEM_COUNTER &mem_counter): _N_s(N_s), _N_E(N_E), _elem_type(elem_type), _m(m){
 #ifdef USE_CPU
-    _output = new scalar[_N_s*_N_E*N_F];
+    _output = new scalar[_N_s*_N_E*N_F];                                         mem_counter.addToCPUCounter(_N_s*_N_E*N_F*sizeof(scalar));
 #elif USE_GPU
-    checkCuda(cudaMallocHost((void**)&_output, _N_s*_N_E*N_F*sizeof(scalar)));
-    cudaMalloc((void**) &_d_output, _N_s*_N_E*N_F*sizeof(scalar));
+    checkCuda(cudaMallocHost((void**)&_output, _N_s*_N_E*N_F*sizeof(scalar)));   mem_counter.addToCPUCounter(_N_s*_N_E*N_F*sizeof(scalar));
+    cudaMalloc((void**) &_d_output, _N_s*_N_E*N_F*sizeof(scalar));               mem_counter.addToGPUCounter(_N_s*_N_E*N_F*sizeof(scalar));
 #endif
   };
 

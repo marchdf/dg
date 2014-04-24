@@ -87,7 +87,6 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
   MEM_COUNTER mem_counter;
-  mem_counter.outputCounters();
   
   ////////////////////////////////////////////////////////////////////////////
   //
@@ -769,7 +768,7 @@ int main (int argc, char **argv)
   // Printer setup
   //
   //////////////////////////////////////////////////////////////////////////
-  PRINTER printer(N_s,N_E,elem_type,m);
+  PRINTER printer(N_s,N_E,elem_type,m,mem_counter);
   printer.set_names();
 
   //////////////////////////////////////////////////////////////////////////   
@@ -777,7 +776,7 @@ int main (int argc, char **argv)
   // Sensor setup
   //
   //////////////////////////////////////////////////////////////////////////
-  SENSOR sensor(N_s, N_E, N_N, inputs.getThresholds());
+  SENSOR sensor(N_s, N_E, N_N, mem_counter, inputs.getThresholds());
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -785,14 +784,14 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
 #ifdef ONED
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_N, m, Lag2Mono, Mono2Lag);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_N, m, Lag2Mono, Mono2Lag, mem_counter);
 #elif TWOD
 
   //
   // Structured mesh
   //
   //if(cartesian){
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, order, cartesian, N_N, N_ghosts, m, Lag2MonoX, MonoX2MonoY, MonoY2Lag);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, order, cartesian, N_N, N_ghosts, m, Lag2MonoX, MonoX2MonoY, MonoY2Lag, mem_counter);
 
   //}
   
@@ -825,7 +824,7 @@ int main (int argc, char **argv)
   scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++){h_weight[g] = (scalar)weight(g,0);} mem_counter.addToCPUCounter(N_G*sizeof(scalar));
   DG_SOLVER dgsolver = DG_SOLVER(N_E, N_s, N_G, N_N, M_T, M_s, M_G, M_B,
   				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, //h_xyz, h_xyzf,
-				 h_J, h_invJac, h_JF, h_weight, h_normals, m);
+				 h_J, h_invJac, h_JF, h_weight, h_normals, m, mem_counter);
   RK rk4 = RK(4);
  
   // RK integration
@@ -834,7 +833,7 @@ int main (int argc, char **argv)
   		     N_E, N_s, N_G, M_T, M_s, N_ghosts,
   		     h_Minv, 
   		     h_U,
-  		     Limiter, order0, dgsolver, communicator, printer, sensor);
+  		     Limiter, order0, dgsolver, communicator, printer, sensor, mem_counter);
   rk_time = ( std::clock() - rk_start ) / (double) CLOCKS_PER_SEC;
   printf("RK time = %20.16e for proc %i\n", rk_time, myid);
 

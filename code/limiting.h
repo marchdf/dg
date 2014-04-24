@@ -15,6 +15,7 @@
 #include <communicator.h>
 #include <sensor.h>
 #include "simpleMesh.h"
+#include "mem_counter.h"
 #ifdef USE_GPU
 #include <cublas.h>
 #endif
@@ -112,7 +113,7 @@ class Limiting
  Limiting(int method,bool cartesian) : _method(method), _cartesian(cartesian){}
 
   /*!\brief Constructor for 1D limiting*/
- Limiting(int method, int N_s, int N_E, int N_N, simpleMesh &m, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag)
+ Limiting(int method, int N_s, int N_E, int N_N, simpleMesh &m, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, MEM_COUNTER &mem_counter)
    : _method(method), _N_s(N_s), _N_E(N_E), _N_N(N_N){
     common_ctor();
 
@@ -122,9 +123,9 @@ class Limiting
     case 3:
     case 4:{
 #ifdef USE_CPU
-      _Lag2Mono = new scalar[_N_s*_N_s];     Lag2Mono.copyMatrixToPointer(_Lag2Mono);
-      _Mono2Lag = new scalar[_N_s*_N_s];     Mono2Lag.copyMatrixToPointer(_Mono2Lag);
-      _neighbors  = new int[_N_N*_N_E];
+      _Lag2Mono = new scalar[_N_s*_N_s];     Lag2Mono.copyMatrixToPointer(_Lag2Mono);  mem_counter.addToCPUCounter(_N_s*_N_s*sizeof(scalar));
+      _Mono2Lag = new scalar[_N_s*_N_s];     Mono2Lag.copyMatrixToPointer(_Mono2Lag);  mem_counter.addToCPUCounter(_N_s*_N_s*sizeof(scalar));
+      _neighbors  = new int[_N_N*_N_E];                                                mem_counter.addToCPUCounter(_N_N*_N_E*sizeof(int));   
       memcpy(_neighbors,   m.getNeighbors(),   _N_N*_N_E*sizeof(int));
 
 #elif USE_GPU
@@ -133,9 +134,9 @@ class Limiting
       scalar* tmpMono2Lag = new scalar[_N_s*_N_s];     Mono2Lag.copyMatrixToPointer(tmpMono2Lag);
 
       // Allocate on GPU
-      cudaMalloc((void**) &_Lag2Mono,_N_s*_N_s*sizeof(scalar));
-      cudaMalloc((void**) &_Mono2Lag,_N_s*_N_s*sizeof(scalar));
-      cudaMalloc((void**) &_neighbors  ,_N_N*_N_E*sizeof(int));
+      cudaMalloc((void**) &_Lag2Mono,_N_s*_N_s*sizeof(scalar));                        mem_counter.addToGPUCounter(_N_s*_N_s*sizeof(scalar));
+      cudaMalloc((void**) &_Mono2Lag,_N_s*_N_s*sizeof(scalar));			       mem_counter.addToGPUCounter(_N_s*_N_s*sizeof(scalar));
+      cudaMalloc((void**) &_neighbors  ,_N_N*_N_E*sizeof(int));			       mem_counter.addToGPUCounter(_N_N*_N_E*sizeof(int));
 
       // Copy data to GPU
       cudaMemcpy(_Lag2Mono, tmpLag2Mono, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
@@ -156,10 +157,12 @@ class Limiting
     case 1:{
 #ifdef USE_CPU
       _A        = new scalar[_N_s*_N_E*N_F]; 
-      _Alim     = new scalar[_N_s*_N_E*N_F]; 
+      _Alim     = new scalar[_N_s*_N_E*N_F];
+      mem_counter.addToCPUCounter(2*_N_s*_N_E*N_F*sizeof(scalar));
 #elif USE_GPU
       cudaMalloc((void**) &_A,_N_s*_N_E*N_F*sizeof(scalar));
       cudaMalloc((void**) &_Alim,_N_s*_N_E*N_F*sizeof(scalar));
+      mem_counter.addToGPUCounter(2*_N_s*_N_E*N_F*sizeof(scalar));
 #endif
     }
       break;
@@ -172,45 +175,48 @@ class Limiting
       _E        = new scalar[_N_s*N_E];  _EMono        = new scalar[_N_s*N_E];  _ELim        = new scalar[_N_s*N_E]; makeZero(_ELim, _N_s*N_E);
       _gamma    = new scalar[_N_s*_N_E]; _gammaMono    = new scalar[_N_s*_N_E]; _gammaLim    = new scalar[_N_s*_N_E];
       _rhoeLim  = new scalar[_N_s*N_E];
+      mem_counter.addToCPUCounter(18*_N_s*_N_E*sizeof(scalar));
 #ifdef STIFFENED
       _beta    = new scalar[_N_s*_N_E]; _betaMono    = new scalar[_N_s*_N_E]; _betaLim    = new scalar[_N_s*_N_E];
+      mem_counter.addToCPUCounter(3*_N_s*_N_E*sizeof(scalar));
 #endif
       // Mass fractions initializations
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) _Y(x) = new scalar[_N_s*_N_E]; _YMono(x) = new scalar[_N_s*_N_E]; _YLim(x) = new scalar[_N_s*_N_E];
+#define MACRO(x) _Y(x) = new scalar[_N_s*_N_E]; _YMono(x) = new scalar[_N_s*_N_E]; _YLim(x) = new scalar[_N_s*_N_E]; mem_counter.addToCPUCounter(3*_N_s*_N_E*sizeof(scalar));
 #include "loop.h"
       
 #elif USE_GPU
-      cudaMalloc((void**) &_rho,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_rhoMono,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_rhoLim,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_rhou,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_rhouMono,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_rhouLim,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_K,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_KLim,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_E,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_EMono,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_ELim,_N_s*_N_E*sizeof(scalar));       cudaMemset(_ELim, (scalar)0.0, _N_s*N_E*sizeof(scalar));
-      cudaMalloc((void**) &_gamma,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_gammaMono,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_gammaLim,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_rhoeLim,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rho,_N_s*_N_E*sizeof(scalar));                 mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhoMono,_N_s*_N_E*sizeof(scalar));             mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhoLim,_N_s*_N_E*sizeof(scalar));              mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhou,_N_s*_N_E*sizeof(scalar));                mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhouMono,_N_s*_N_E*sizeof(scalar));            mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhouLim,_N_s*_N_E*sizeof(scalar));             mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_pressure,_N_s*_N_E*sizeof(scalar));            mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_pressureMono,_N_s*_N_E*sizeof(scalar));        mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar));         mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_K,_N_s*_N_E*sizeof(scalar));                   mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_KLim,_N_s*_N_E*sizeof(scalar));                mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));  
+      cudaMalloc((void**) &_E,_N_s*_N_E*sizeof(scalar));                   mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_EMono,_N_s*_N_E*sizeof(scalar));               mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_ELim,_N_s*_N_E*sizeof(scalar));       cudaMemset(_ELim, (scalar)0.0, _N_s*N_E*sizeof(scalar)); mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_gamma,_N_s*_N_E*sizeof(scalar));               mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_gammaMono,_N_s*_N_E*sizeof(scalar));           mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_gammaLim,_N_s*_N_E*sizeof(scalar));            mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhoeLim,_N_s*_N_E*sizeof(scalar));             mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
 #ifdef STIFFENED
-      cudaMalloc((void**) &_beta,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_betaMono,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_betaLim,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_beta,_N_s*_N_E*sizeof(scalar));                mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_betaMono,_N_s*_N_E*sizeof(scalar));            mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_betaLim,_N_s*_N_E*sizeof(scalar));             mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
 #endif
       // Mass fractions initializations
 #include "loopstart.h"
 #define LOOP_END N_Y
 #define MACRO(x) cudaMalloc((void**) &_Y(x),_N_s*_N_E*sizeof(scalar)); \
       cudaMalloc((void**) &_YMono(x),_N_s*_N_E*sizeof(scalar));        \
-      cudaMalloc((void**) &_YLim(x),_N_s*_N_E*sizeof(scalar)); 
+      cudaMalloc((void**) &_YLim(x),_N_s*_N_E*sizeof(scalar));	       \
+      mem_counter.addToGPUCounter(3*_N_s*_N_E*sizeof(scalar));
 #include "loop.h"
 
 #endif
@@ -219,9 +225,9 @@ class Limiting
     case 3:
     case 4:{
 #ifdef USE_CPU
-      _Utmp     = new scalar[_N_s*_N_E*N_F]; 
+      _Utmp     = new scalar[_N_s*_N_E*N_F];                        mem_counter.addToCPUCounter(_N_s*_N_E*N_F*sizeof(scalar));
 #elif USE_GPU
-      cudaMalloc((void**) &_Utmp,_N_s*_N_E*N_F*sizeof(scalar));
+      cudaMalloc((void**) &_Utmp,_N_s*_N_E*N_F*sizeof(scalar));     mem_counter.addToGPUCounter(_N_s*_N_E*N_F*sizeof(scalar));
 #endif
     }
       break;
@@ -229,7 +235,7 @@ class Limiting
   } // end 1D constructor
 
   /*!\brief Constructor for 2D limiting for structured mesh*/
- Limiting(int method, int N_s, int N_E, int order, bool cartesian, int N_N, int N_ghosts, simpleMesh &m, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag) : _method(method), _N_s(N_s), _N_E(N_E), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(N_ghosts){
+ Limiting(int method, int N_s, int N_E, int order, bool cartesian, int N_N, int N_ghosts, simpleMesh &m, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, MEM_COUNTER &mem_counter) : _method(method), _N_s(N_s), _N_E(N_E), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(N_ghosts){
 
     _N_s1D = (order+1);
     common_ctor();
@@ -240,12 +246,12 @@ class Limiting
     case 3:
     case 4:{
 #ifdef USE_CPU
-      _Lag2MonoX   = new scalar[_N_s*_N_s];     Lag2MonoX.copyMatrixToPointer(_Lag2MonoX);
-      _Lag2MonoY   = new scalar[_N_s*_N_s];
-      _MonoX2MonoY = new scalar[_N_s*_N_s];     MonoX2MonoY.copyMatrixToPointer(_MonoX2MonoY);
-      _MonoX2Lag   = new scalar[_N_s*_N_s];
-      _MonoY2Lag   = new scalar[_N_s*_N_s];     MonoY2Lag.copyMatrixToPointer(_MonoY2Lag);
-      _neighbors  = new int[_N_N*_N_E];         memcpy(_neighbors,   m.getNeighbors(),   _N_N*_N_E*sizeof(int));
+      _Lag2MonoX   = new scalar[_N_s*_N_s];     Lag2MonoX.copyMatrixToPointer(_Lag2MonoX);                         mem_counter.addToCPUCounter(_N_s*_N_s*sizeof(scalar));
+      _Lag2MonoY   = new scalar[_N_s*_N_s];                                                                        mem_counter.addToCPUCounter(_N_s*_N_s*sizeof(scalar));
+      _MonoX2MonoY = new scalar[_N_s*_N_s];     MonoX2MonoY.copyMatrixToPointer(_MonoX2MonoY);                     mem_counter.addToCPUCounter(_N_s*_N_s*sizeof(scalar)); 
+      _MonoX2Lag   = new scalar[_N_s*_N_s];                                                                        mem_counter.addToCPUCounter(_N_s*_N_s*sizeof(scalar));
+      _MonoY2Lag   = new scalar[_N_s*_N_s];     MonoY2Lag.copyMatrixToPointer(_MonoY2Lag);                         mem_counter.addToCPUCounter(_N_s*_N_s*sizeof(scalar));
+      _neighbors  = new int[_N_N*_N_E];         memcpy(_neighbors,   m.getNeighbors(),   _N_N*_N_E*sizeof(int));   mem_counter.addToCPUCounter(_N_N*_N_E*sizeof(int));   
      
 #elif USE_GPU
       // tmp host pointers to copy data to gpu
@@ -254,12 +260,12 @@ class Limiting
       scalar* tmpMonoY2Lag   = new scalar[_N_s*_N_s];     MonoY2Lag.copyMatrixToPointer(tmpMonoY2Lag);
 
       // Allocate on GPU
-      cudaMalloc((void**) &_Lag2MonoX  ,_N_s*_N_s*sizeof(scalar));
-      cudaMalloc((void**) &_Lag2MonoY  ,_N_s*_N_s*sizeof(scalar));
-      cudaMalloc((void**) &_MonoX2MonoY,_N_s*_N_s*sizeof(scalar));
-      cudaMalloc((void**) &_MonoX2Lag  ,_N_s*_N_s*sizeof(scalar));
-      cudaMalloc((void**) &_MonoY2Lag  ,_N_s*_N_s*sizeof(scalar));
-      cudaMalloc((void**) &_neighbors  ,_N_N*_N_E*sizeof(int));
+      cudaMalloc((void**) &_Lag2MonoX  ,_N_s*_N_s*sizeof(scalar));                                                 mem_counter.addToGPUCounter(_N_s*_N_s*sizeof(scalar));
+      cudaMalloc((void**) &_Lag2MonoY  ,_N_s*_N_s*sizeof(scalar));						   mem_counter.addToGPUCounter(_N_s*_N_s*sizeof(scalar));
+      cudaMalloc((void**) &_MonoX2MonoY,_N_s*_N_s*sizeof(scalar));						   mem_counter.addToGPUCounter(_N_s*_N_s*sizeof(scalar));
+      cudaMalloc((void**) &_MonoX2Lag  ,_N_s*_N_s*sizeof(scalar));						   mem_counter.addToGPUCounter(_N_s*_N_s*sizeof(scalar));
+      cudaMalloc((void**) &_MonoY2Lag  ,_N_s*_N_s*sizeof(scalar));						   mem_counter.addToGPUCounter(_N_s*_N_s*sizeof(scalar));
+      cudaMalloc((void**) &_neighbors  ,_N_N*_N_E*sizeof(int));							   mem_counter.addToGPUCounter(_N_N*_N_E*sizeof(int));   
 	    
       // Copy data to GPU
       cudaMemcpy(_Lag2MonoX,   tmpLag2MonoX, N_s*N_s*sizeof(scalar), cudaMemcpyHostToDevice);
@@ -284,9 +290,11 @@ class Limiting
 #ifdef USE_CPU
       _A        = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_A,     _N_s*(_N_E+_N_ghosts)*N_F);
       _Alim     = new scalar[_N_s*(_N_E+_N_ghosts)*N_F];    makeZero(_Alim,  _N_s*(_N_E+_N_ghosts)*N_F);
+      mem_counter.addToCPUCounter(2*_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar));
 #elif USE_GPU
       cudaMalloc((void**) &_A          ,_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar));
       cudaMalloc((void**) &_Alim       ,_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar));
+      mem_counter.addToGPUCounter(2*_N_s*(_N_E+_N_ghosts)*N_F*sizeof(scalar));
 #endif
       }
       break;
@@ -305,48 +313,52 @@ class Limiting
       _E        = new scalar[_N_s*_N_E];  _EMono        = new scalar[_N_s*_N_E];  _ELim        = new scalar[_N_s*_N_E]; makeZero(_ELim, _N_s*_N_E);
       _gamma    = new scalar[_N_s*(_N_E+_N_ghosts)]; _gammaMono    = new scalar[_N_s*(_N_E+_N_ghosts)]; _gammaLim    = new scalar[_N_s*_N_E];
       _rhoeLim  = new scalar[_N_s*_N_E];
+      mem_counter.addToCPUCounter(10*_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
+      mem_counter.addToCPUCounter(12*_N_s*_N_E*sizeof(scalar));
 #ifdef STIFFENED
       _beta    = new scalar[_N_s*(_N_E+_N_ghosts)]; _betaMono    = new scalar[_N_s*(_N_E+_N_ghosts)]; _betaLim    = new scalar[_N_s*_N_E];
+      mem_counter.addToCPUCounter(2*_N_s*(_N_E+_N_ghosts)*sizeof(scalar)); mem_counter.addToCPUCounter(_N_s*_N_E*sizeof(scalar));
 #endif
       // Mass fractions initializations
 #include "loopstart.h"
 #define LOOP_END N_Y
-#define MACRO(x) _Y(x) = new scalar[_N_s*(_N_E+_N_ghosts)]; _YMono(x) = new scalar[_N_s*(_N_E+_N_ghosts)]; _YLim(x) = new scalar[_N_s*_N_E];
+#define MACRO(x) _Y(x) = new scalar[_N_s*(_N_E+_N_ghosts)]; _YMono(x) = new scalar[_N_s*(_N_E+_N_ghosts)]; _YLim(x) = new scalar[_N_s*_N_E];  mem_counter.addToCPUCounter(2*_N_s*(_N_E+_N_ghosts)*sizeof(scalar)); mem_counter.addToCPUCounter(_N_s*_N_E*sizeof(scalar));
 #include "loop.h"
 
 #elif USE_GPU
-      cudaMalloc((void**) &_rho,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
-      cudaMalloc((void**) &_rhoMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
-      cudaMalloc((void**) &_rhoLim,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_rhou,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
-      cudaMalloc((void**) &_rhouMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
-      cudaMalloc((void**) &_rhouLim,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_rhov,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
-      cudaMalloc((void**) &_rhovMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
-      cudaMalloc((void**) &_rhovLim,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_pressure,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
-      cudaMalloc((void**) &_pressureMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
-      cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_K,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_KLim,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_E,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_EMono,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_ELim,_N_s*_N_E*sizeof(scalar));       cudaMemset(_ELim, (scalar)0.0, _N_s*N_E*sizeof(scalar));
-      cudaMalloc((void**) &_gamma,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
-      cudaMalloc((void**) &_gammaMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
-      cudaMalloc((void**) &_gammaLim,_N_s*_N_E*sizeof(scalar));
-      cudaMalloc((void**) &_rhoeLim,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rho,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));                      mem_counter.addToGPUCounter(_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
+      cudaMalloc((void**) &_rhoMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));                  mem_counter.addToGPUCounter(_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
+      cudaMalloc((void**) &_rhoLim,_N_s*_N_E*sizeof(scalar));                               mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhou,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));                     mem_counter.addToGPUCounter(_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
+      cudaMalloc((void**) &_rhouMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));                 mem_counter.addToGPUCounter(_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
+      cudaMalloc((void**) &_rhouLim,_N_s*_N_E*sizeof(scalar));                              mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhov,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));                     mem_counter.addToGPUCounter(_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
+      cudaMalloc((void**) &_rhovMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));                 mem_counter.addToGPUCounter(_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
+      cudaMalloc((void**) &_rhovLim,_N_s*_N_E*sizeof(scalar));                              mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_pressure,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));                 mem_counter.addToGPUCounter(_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
+      cudaMalloc((void**) &_pressureMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));             mem_counter.addToGPUCounter(_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
+      cudaMalloc((void**) &_pressureLim,_N_s*_N_E*sizeof(scalar));                          mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_K,_N_s*_N_E*sizeof(scalar));                                    mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_KLim,_N_s*_N_E*sizeof(scalar));                                 mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_E,_N_s*_N_E*sizeof(scalar));                                    mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_EMono,_N_s*_N_E*sizeof(scalar));                                mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_ELim,_N_s*_N_E*sizeof(scalar));       cudaMemset(_ELim, (scalar)0.0, _N_s*N_E*sizeof(scalar)); mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_gamma,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));                    mem_counter.addToGPUCounter(_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
+      cudaMalloc((void**) &_gammaMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));                mem_counter.addToGPUCounter(_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
+      cudaMalloc((void**) &_gammaLim,_N_s*_N_E*sizeof(scalar));                             mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_rhoeLim,_N_s*_N_E*sizeof(scalar));                              mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
 #ifdef STIFFENED
-      cudaMalloc((void**) &_beta,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
-      cudaMalloc((void**) &_betaMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
-      cudaMalloc((void**) &_betaLim,_N_s*_N_E*sizeof(scalar));
+      cudaMalloc((void**) &_beta,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));                     mem_counter.addToGPUCounter(_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
+      cudaMalloc((void**) &_betaMono,_N_s*(_N_E+_N_ghosts)*sizeof(scalar));                 mem_counter.addToGPUCounter(_N_s*(_N_E+_N_ghosts)*sizeof(scalar));
+      cudaMalloc((void**) &_betaLim,_N_s*_N_E*sizeof(scalar));                              mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
 #endif
       // Mass fractions initializations
 #include "loopstart.h"
 #define LOOP_END N_Y
 #define MACRO(x) cudaMalloc((void**) &_Y(x),_N_s*(_N_E+_N_ghosts)*sizeof(scalar)); \
       cudaMalloc((void**) &_YMono(x),_N_s*(_N_E+_N_ghosts)*sizeof(scalar));        \
-      cudaMalloc((void**) &_YLim(x),_N_s*_N_E*sizeof(scalar)); 
+      cudaMalloc((void**) &_YLim(x),_N_s*_N_E*sizeof(scalar));		\
+      mem_counter.addToGPUCounter(2*_N_s*(_N_E+_N_ghosts)*sizeof(scalar)); mem_counter.addToGPUCounter(_N_s*_N_E*sizeof(scalar));
 #include "loop.h"
 
 #endif
@@ -358,9 +370,9 @@ class Limiting
       blasGemm('N','N', _N_s, _N_s, _N_s, 1, _MonoY2Lag, _N_s, _MonoX2MonoY, _N_s, 0.0, _MonoX2Lag, _N_s);
       blasGemm('N','N', _N_s, _N_s, _N_s, 1, _MonoX2MonoY, _N_s, _Lag2MonoX, _N_s, 0.0, _Lag2MonoY, _N_s);
 #ifdef USE_CPU
-      _Utmp     = new scalar[_N_s*_N_E*N_F]; 
+      _Utmp     = new scalar[_N_s*_N_E*N_F];                        mem_counter.addToCPUCounter(_N_s*_N_E*N_F*sizeof(scalar));
 #elif USE_GPU
-      cudaMalloc((void**) &_Utmp,_N_s*_N_E*N_F*sizeof(scalar));
+      cudaMalloc((void**) &_Utmp,_N_s*_N_E*N_F*sizeof(scalar));     mem_counter.addToGPUCounter(_N_s*_N_E*N_F*sizeof(scalar));
 #endif
     }
       break;

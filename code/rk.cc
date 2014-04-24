@@ -10,7 +10,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
 			int N_E, int N_s, int N_G, int M_T, int M_s, int N_ghosts,
 			scalar* h_Minv, 
 			scalar* h_U,
-			Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator, PRINTER &printer, SENSOR &sensor){
+			Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator, PRINTER &printer, SENSOR &sensor, MEM_COUNTER &mem_counter){
   /*!
     \brief Main RK integration function
     \param[in] DtOut output time step
@@ -42,22 +42,22 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
   scalar* _Minv;
   
 #ifdef USE_CPU
-  _Us    = new scalar[N_s*N_E*N_F];  makeZero(_Us   ,N_s*N_E*N_F);	 
-  _Ustar = new scalar[N_s*(N_E+N_ghosts)*N_F];  makeZero(_Ustar,N_s*(N_E+N_ghosts)*N_F);
-  _DU    = new scalar[N_s*N_E*N_F];  makeZero(_DU   ,N_s*N_E*N_F);
-  _UPA   = new scalar[N_s*N_E];      makeZero(_UPA  ,N_s*N_E);
-  _f     = new scalar[N_s*N_E*N_F];  makeZero(_f    ,N_s*N_E*N_F);
-  _Minv  = new scalar[N_s*N_s*N_E];  memcpy(_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar));
+  _Us    = new scalar[N_s*N_E*N_F];  makeZero(_Us   ,N_s*N_E*N_F);	                  mem_counter.addToCPUCounter(N_s*N_E*N_F*sizeof(scalar));
+  _Ustar = new scalar[N_s*(N_E+N_ghosts)*N_F];  makeZero(_Ustar,N_s*(N_E+N_ghosts)*N_F);  mem_counter.addToCPUCounter(N_s*(N_E+N_ghosts)*N_F*sizeof(scalar));
+  _DU    = new scalar[N_s*N_E*N_F];  makeZero(_DU   ,N_s*N_E*N_F);                        mem_counter.addToCPUCounter(N_s*N_E*N_F*sizeof(scalar));
+  _UPA   = new scalar[N_s*N_E];      makeZero(_UPA  ,N_s*N_E);                            mem_counter.addToCPUCounter(N_s*N_E*sizeof(scalar));
+  _f     = new scalar[N_s*N_E*N_F];  makeZero(_f    ,N_s*N_E*N_F);                        mem_counter.addToCPUCounter(N_s*N_E*N_F*sizeof(scalar));
+  _Minv  = new scalar[N_s*N_s*N_E];  memcpy(_Minv, h_Minv, N_s*N_s*N_E*sizeof(scalar));   mem_counter.addToCPUCounter(N_s*N_s*N_F*sizeof(scalar));
 #elif USE_GPU
   scalar* d_U;
   // Allocate on device
-  cudaMalloc((void**) &d_U   , N_s*N_E*N_F*sizeof(scalar));
-  cudaMalloc((void**) &_Us   , N_s*N_E*N_F*sizeof(scalar));
-  cudaMalloc((void**) &_Ustar, N_s*N_E*N_F*sizeof(scalar));  
-  cudaMalloc((void**) &_DU   , N_s*N_E*N_F*sizeof(scalar));
-  cudaMalloc((void**) &_UPA  , N_s*N_E*sizeof(scalar));     
-  cudaMalloc((void**) &_f    , N_s*N_E*N_F*sizeof(scalar));
-  cudaMalloc((void**) &_Minv , N_s*N_s*N_E*sizeof(scalar));
+  cudaMalloc((void**) &d_U   , N_s*N_E*N_F*sizeof(scalar));                               mem_counter.addToGPUCounter(N_s*N_E*N_F*sizeof(scalar));
+  cudaMalloc((void**) &_Us   , N_s*N_E*N_F*sizeof(scalar));                               mem_counter.addToGPUCounter(N_s*N_E*N_F*sizeof(scalar));	      
+  cudaMalloc((void**) &_Ustar, N_s*N_E*N_F*sizeof(scalar));  				  mem_counter.addToGPUCounter(N_s*N_E*N_F*sizeof(scalar)); 
+  cudaMalloc((void**) &_DU   , N_s*N_E*N_F*sizeof(scalar));				  mem_counter.addToGPUCounter(N_s*N_E*N_F*sizeof(scalar));	      
+  cudaMalloc((void**) &_UPA  , N_s*N_E*sizeof(scalar));     				  mem_counter.addToGPUCounter(N_s*N_E*sizeof(scalar));		      
+  cudaMalloc((void**) &_f    , N_s*N_E*N_F*sizeof(scalar));				  mem_counter.addToGPUCounter(N_s*N_E*N_F*sizeof(scalar));	      
+  cudaMalloc((void**) &_Minv , N_s*N_s*N_E*sizeof(scalar));				  mem_counter.addToGPUCounter(N_s*N_s*N_F*sizeof(scalar));
   
   // Set to zero
   cudaMemset(_Us   , (scalar)0.0, N_s*N_E*N_F*sizeof(scalar));

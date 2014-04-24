@@ -92,7 +92,7 @@ class DG_SOLVER
   */
  DG_SOLVER(int N_E, int N_s, int N_G,  int N_N, int M_T, int M_s, int M_G, int M_B, 
 	   int* map, int* invmap, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* psi, scalar* psi_w, //scalar* xyz, scalar* xyzf,
-	   scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals, simpleMesh &m) :
+	   scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals, simpleMesh &m, MEM_COUNTER &mem_counter) :
   _N_E(N_E), _N_s(N_s), _N_G(N_G), _N_N(N_N), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B) {
 
 
@@ -107,35 +107,35 @@ class DG_SOLVER
     
 #ifdef USE_CPU
 
-    _map     = new int[M_s*M_T*N_F*2];       
-    _invmap  = new int[M_s*N_N*N_E*N_F*2];
-    _boundaryMap  = new int[M_B];
-    _phi     = new scalar[N_G*N_s];          makeZero(_phi,N_G*N_s);
-    _phi_w   = new scalar[N_G*N_s];          makeZero(_phi_w,N_G*N_s);          
-    _dphi    = new scalar[D*N_G*N_s];	     makeZero(_dphi,D*N_G*N_s);	 
-    _dphi_w  = new scalar[D*N_G*N_s];	     makeZero(_dphi_w,D*N_G*N_s);
-    _psi     = new scalar[M_G*M_s];	     makeZero(_psi,M_G*M_s);
-    _psi_w   = new scalar[M_G*M_s];	     makeZero(_psi_w,M_G*M_s);
+    _map     = new int[M_s*M_T*N_F*2];                                             mem_counter.addToCPUCounter(M_s*M_T*N_F*2*sizeof(int));
+    _invmap  = new int[M_s*N_N*N_E*N_F*2];                                         mem_counter.addToCPUCounter(M_s*N_N*N_E*N_F*2*sizeof(int)); 
+    _boundaryMap  = new int[M_B];                                                  mem_counter.addToCPUCounter(M_B*sizeof(int)); 
+    _phi     = new scalar[N_G*N_s];          makeZero(_phi,N_G*N_s);               mem_counter.addToCPUCounter(N_G*N_s*sizeof(scalar)); 
+    _phi_w   = new scalar[N_G*N_s];          makeZero(_phi_w,N_G*N_s);             mem_counter.addToCPUCounter(N_G*N_s*sizeof(scalar)); 
+    _dphi    = new scalar[D*N_G*N_s];	     makeZero(_dphi,D*N_G*N_s);	           mem_counter.addToCPUCounter(D*N_G*N_s*sizeof(scalar));  
+    _dphi_w  = new scalar[D*N_G*N_s];	     makeZero(_dphi_w,D*N_G*N_s);          mem_counter.addToCPUCounter(D*N_G*N_s*sizeof(scalar)); 
+    _psi     = new scalar[M_G*M_s];	     makeZero(_psi,M_G*M_s);               mem_counter.addToCPUCounter(M_G*M_s*sizeof(scalar)); 
+    _psi_w   = new scalar[M_G*M_s];	     makeZero(_psi_w,M_G*M_s);             mem_counter.addToCPUCounter(M_G*M_s*sizeof(scalar)); 
     //_xyz     = new scalar[D*N_E*N_G];	     makeZero(_xyz,D*N_E*N_G);
     //_xyzf    = new scalar[D*M_T*M_G];	     makeZero(_xyzf,D*M_T*M_G);
-    _J       = new scalar[N_E];              makeZero(_J,N_E);                                 // not same as J!!
-    _invJac  = new scalar[N_G*D*N_E*D];      makeZero(_invJac,N_G*D*N_E*D);                    // not same as invJac!!
-    _JF = new scalar[2*M_T];     	     makeZero(_JF,2*M_T);	 
-    _normals = new scalar[D*M_T];	     makeZero(_normals,D*M_T);	 
-    _UF      = new scalar[2*N_F*M_s*M_T];    makeZero(_UF,2*N_F*M_s*M_T); 
-    _Uinteg  = new scalar[N_F*N_G*N_E];      makeZero(_Uinteg,N_F*N_G*N_E);	 
-    _dUinteg = new scalar[D*N_G*N_E*N_F];    makeZero(_dUinteg,D*N_G*N_E*N_F); 
-    _UintegF = new scalar[2*N_F*M_G*M_T];    makeZero(_UintegF,2*N_F*M_G*M_T); 
-    _s       = new scalar[N_G*N_E*N_F];      makeZero(_s,N_G*N_E*N_F);	 
-    _sJ      = new scalar[N_G*N_E*N_F];      makeZero(_sJ,N_G*N_E*N_F);	 
-    _S       = new scalar[N_s*N_E*N_F];      makeZero(_S,N_s*N_E*N_F);	 
-    _f       = new scalar[D*N_F*N_G*N_E];    makeZero(_f,D*N_F*N_G*N_E); 
-    _fJ      = new scalar[D*N_G*N_E*N_F];    makeZero(_fJ,D*N_G*N_E*N_F); 
-    _F       = new scalar[N_s*N_E*N_F];      makeZero(_F,N_s*N_E*N_F);	 
-    _q       = new scalar[M_G*M_T*N_F*2];    makeZero(_q,M_G*M_T*N_F*2);
-    _qJ      = new scalar[M_G*M_T*N_F*2];    makeZero(_qJ,M_G*M_T*N_F*2); 
-    _Qtcj    = new scalar[M_s*M_T*N_F*2];    makeZero(_Qtcj,M_s*M_T*N_F*2); 
-    _Q       = new scalar[N_s*N_E*N_F];      makeZero(_Q,N_s*N_E*N_F);   
+    _J       = new scalar[N_E];              makeZero(_J,N_E);                     mem_counter.addToCPUCounter(N_E*sizeof(scalar)); 
+    _invJac  = new scalar[N_G*D*N_E*D];      makeZero(_invJac,N_G*D*N_E*D);        mem_counter.addToCPUCounter(N_G*D*N_E*D*sizeof(scalar)); 
+    _JF = new scalar[2*M_T];     	     makeZero(_JF,2*M_T);	           mem_counter.addToCPUCounter(2*M_T*sizeof(scalar)); 
+    _normals = new scalar[D*M_T];	     makeZero(_normals,D*M_T);	           mem_counter.addToCPUCounter(D*M_T*sizeof(scalar)); 
+    _UF      = new scalar[2*N_F*M_s*M_T];    makeZero(_UF,2*N_F*M_s*M_T);          mem_counter.addToCPUCounter(2*N_F*M_s*M_T*sizeof(scalar)); 
+    _Uinteg  = new scalar[N_F*N_G*N_E];      makeZero(_Uinteg,N_F*N_G*N_E);	   mem_counter.addToCPUCounter(N_F*N_G*N_E*sizeof(scalar)); 
+    _dUinteg = new scalar[D*N_G*N_E*N_F];    makeZero(_dUinteg,D*N_G*N_E*N_F);     mem_counter.addToCPUCounter(D*N_G*N_E*N_F*sizeof(scalar)); 
+    _UintegF = new scalar[2*N_F*M_G*M_T];    makeZero(_UintegF,2*N_F*M_G*M_T);     mem_counter.addToCPUCounter(2*N_F*M_G*M_T*sizeof(scalar)); 
+    _s       = new scalar[N_G*N_E*N_F];      makeZero(_s,N_G*N_E*N_F);	           mem_counter.addToCPUCounter(N_G*N_E*N_F*sizeof(scalar)); 
+    _sJ      = new scalar[N_G*N_E*N_F];      makeZero(_sJ,N_G*N_E*N_F);	           mem_counter.addToCPUCounter(N_G*N_E*N_F*sizeof(scalar)); 
+    _S       = new scalar[N_s*N_E*N_F];      makeZero(_S,N_s*N_E*N_F);	           mem_counter.addToCPUCounter(N_s*N_E*N_F*sizeof(scalar)); 
+    _f       = new scalar[D*N_F*N_G*N_E];    makeZero(_f,D*N_F*N_G*N_E);           mem_counter.addToCPUCounter(D*N_F*N_G*N_E*sizeof(scalar)); 
+    _fJ      = new scalar[D*N_G*N_E*N_F];    makeZero(_fJ,D*N_G*N_E*N_F);          mem_counter.addToCPUCounter(D*N_G*N_E*N_F*sizeof(scalar)); 
+    _F       = new scalar[N_s*N_E*N_F];      makeZero(_F,N_s*N_E*N_F);	           mem_counter.addToCPUCounter(N_s*N_E*N_F*sizeof(scalar)); 
+    _q       = new scalar[M_G*M_T*N_F*2];    makeZero(_q,M_G*M_T*N_F*2);           mem_counter.addToCPUCounter(M_G*M_T*N_F*2*sizeof(scalar)); 
+    _qJ      = new scalar[M_G*M_T*N_F*2];    makeZero(_qJ,M_G*M_T*N_F*2);          mem_counter.addToCPUCounter(M_G*M_T*N_F*2*sizeof(scalar)); 
+    _Qtcj    = new scalar[M_s*M_T*N_F*2];    makeZero(_Qtcj,M_s*M_T*N_F*2);        mem_counter.addToCPUCounter(M_s*M_T*N_F*2*sizeof(scalar)); 
+    _Q       = new scalar[N_s*N_E*N_F];      makeZero(_Q,N_s*N_E*N_F);             mem_counter.addToCPUCounter(N_s*N_E*N_F*sizeof(scalar));       
 
     memcpy(_map        , map        , M_s*M_T*N_F*2*sizeof(int));
     memcpy(_invmap     , invmap     , M_s*N_N*N_E*N_F*2*sizeof(int));
@@ -155,39 +155,39 @@ class DG_SOLVER
 
 #elif USE_GPU
     // Allocate space on the GPU
-    cudaMalloc((void**) &_map        , M_s*M_T*N_F*2*sizeof(int));
-    cudaMalloc((void**) &_invmap     , M_s*N_N*N_E*N_F*2*sizeof(int));
-    cudaMalloc((void**) &_boundaryMap, M_B*sizeof(int));
-    cudaMalloc((void**) &_phi        , N_G*N_s*sizeof(scalar));
-    cudaMalloc((void**) &_phi_w      , N_G*N_s*sizeof(scalar));
-    cudaMalloc((void**) &_dphi       , D*N_G*N_s*sizeof(scalar));
-    cudaMalloc((void**) &_dphi_w     , D*N_G*N_s*sizeof(scalar));
-    cudaMalloc((void**) &_psi        , M_G*M_s*sizeof(scalar));
-    cudaMalloc((void**) &_psi_w      , M_G*M_s*sizeof(scalar));
-    //cudaMalloc((void**) &_xyz        , D*N_E*N_G*sizeof(scalar));
-    //cudaMalloc((void**) &_xyzf       , D*M_T*M_G*sizeof(scalar));
-    cudaMalloc((void**) &_J          , N_E*sizeof(scalar));
-    cudaMalloc((void**) &_invJac     , N_G*D*N_E*D*sizeof(scalar));
-    cudaMalloc((void**) &_JF         , 2*M_T*sizeof(scalar));
-    cudaMalloc((void**) &_normals    , D*M_T*sizeof(scalar));
-    
-    cudaMalloc((void**) &_UF     , M_s*M_T*N_F*2*sizeof(scalar));
-    cudaMalloc((void**) &_Uinteg , N_G*N_E*N_F*sizeof(scalar));
-    cudaMalloc((void**) &_dUinteg, D*N_G*N_E*N_F*sizeof(scalar));
-    cudaMalloc((void**) &_UintegF, M_G*M_T*N_F*2*sizeof(scalar));
-    
-    cudaMalloc((void**) &_s      , N_G*N_E*N_F*sizeof(scalar));
-    cudaMalloc((void**) &_sJ     , N_G*N_E*N_F*sizeof(scalar));
-    cudaMalloc((void**) &_S      , N_s*N_E*N_F*sizeof(scalar));
-    
-    cudaMalloc((void**) &_f      , D*N_G*N_E*N_F*sizeof(scalar));
-    cudaMalloc((void**) &_fJ     , D*N_G*N_E*N_F*sizeof(scalar));
-    cudaMalloc((void**) &_F      , N_s*N_E*N_F*sizeof(scalar));
-    
-    cudaMalloc((void**) &_q      , M_G*M_T*N_F*2*sizeof(scalar));
-    cudaMalloc((void**) &_qJ     , M_G*M_T*N_F*2*sizeof(scalar));
-    cudaMalloc((void**) &_Qtcj   , M_s*M_T*N_F*2*sizeof(scalar));
-    cudaMalloc((void**) &_Q      , N_s*N_E*N_F*sizeof(scalar));  
+    cudaMalloc((void**) &_map        , M_s*M_T*N_F*2*sizeof(int));            mem_counter.addToGPUCounter(M_s*M_T*N_F*2*sizeof(int));	  
+    cudaMalloc((void**) &_invmap     , M_s*N_N*N_E*N_F*2*sizeof(int));	      mem_counter.addToGPUCounter(M_s*N_N*N_E*N_F*2*sizeof(int)); 	  
+    cudaMalloc((void**) &_boundaryMap, M_B*sizeof(int));		      mem_counter.addToGPUCounter(M_B*sizeof(int)); 		  
+    cudaMalloc((void**) &_phi        , N_G*N_s*sizeof(scalar));		      mem_counter.addToGPUCounter(N_G*N_s*sizeof(scalar)); 	  
+    cudaMalloc((void**) &_phi_w      , N_G*N_s*sizeof(scalar));		      mem_counter.addToGPUCounter(N_G*N_s*sizeof(scalar)); 	  
+    cudaMalloc((void**) &_dphi       , D*N_G*N_s*sizeof(scalar));	      mem_counter.addToGPUCounter(D*N_G*N_s*sizeof(scalar));  	  
+    cudaMalloc((void**) &_dphi_w     , D*N_G*N_s*sizeof(scalar));	      mem_counter.addToGPUCounter(D*N_G*N_s*sizeof(scalar)); 	  
+    cudaMalloc((void**) &_psi        , M_G*M_s*sizeof(scalar));		      mem_counter.addToGPUCounter(M_G*M_s*sizeof(scalar)); 	  
+    cudaMalloc((void**) &_psi_w      , M_G*M_s*sizeof(scalar));		      mem_counter.addToGPUCounter(M_G*M_s*sizeof(scalar)); 	  
+    //cudaMalloc((void**) &_xyz        , D*N_E*N_G*sizeof(scalar));	                                                                     
+    //cudaMalloc((void**) &_xyzf       , D*M_T*M_G*sizeof(scalar));	                                                                     
+    cudaMalloc((void**) &_J          , N_E*sizeof(scalar));		      mem_counter.addToGPUCounter(N_E*sizeof(scalar)); 		  
+    cudaMalloc((void**) &_invJac     , N_G*D*N_E*D*sizeof(scalar));	      mem_counter.addToGPUCounter(N_G*D*N_E*D*sizeof(scalar)); 	  
+    cudaMalloc((void**) &_JF         , 2*M_T*sizeof(scalar));		      mem_counter.addToGPUCounter(2*M_T*sizeof(scalar)); 		  
+    cudaMalloc((void**) &_normals    , D*M_T*sizeof(scalar));		      mem_counter.addToGPUCounter(D*M_T*sizeof(scalar)); 		  
+    									      	  
+    cudaMalloc((void**) &_UF     , M_s*M_T*N_F*2*sizeof(scalar));	      mem_counter.addToGPUCounter(2*N_F*M_s*M_T*sizeof(scalar));      
+    cudaMalloc((void**) &_Uinteg , N_G*N_E*N_F*sizeof(scalar));		      mem_counter.addToGPUCounter(N_F*N_G*N_E*sizeof(scalar)); 	      	  
+    cudaMalloc((void**) &_dUinteg, D*N_G*N_E*N_F*sizeof(scalar));	      mem_counter.addToGPUCounter(D*N_G*N_E*N_F*sizeof(scalar));      	  
+    cudaMalloc((void**) &_UintegF, M_G*M_T*N_F*2*sizeof(scalar));	      mem_counter.addToGPUCounter(2*N_F*M_G*M_T*sizeof(scalar));      
+    									      
+    cudaMalloc((void**) &_s      , N_G*N_E*N_F*sizeof(scalar));		      mem_counter.addToGPUCounter(N_G*N_E*N_F*sizeof(scalar)); 	      
+    cudaMalloc((void**) &_sJ     , N_G*N_E*N_F*sizeof(scalar));		      mem_counter.addToGPUCounter(N_G*N_E*N_F*sizeof(scalar)); 	      	  
+    cudaMalloc((void**) &_S      , N_s*N_E*N_F*sizeof(scalar));		      mem_counter.addToGPUCounter(N_s*N_E*N_F*sizeof(scalar)); 	      	  
+    									      
+    cudaMalloc((void**) &_f      , D*N_G*N_E*N_F*sizeof(scalar));	      mem_counter.addToGPUCounter(D*N_F*N_G*N_E*sizeof(scalar));      	  
+    cudaMalloc((void**) &_fJ     , D*N_G*N_E*N_F*sizeof(scalar));	      mem_counter.addToGPUCounter(D*N_G*N_E*N_F*sizeof(scalar));      	  
+    cudaMalloc((void**) &_F      , N_s*N_E*N_F*sizeof(scalar));		      mem_counter.addToGPUCounter(N_s*N_E*N_F*sizeof(scalar)); 	      	  
+    									      
+    cudaMalloc((void**) &_q      , M_G*M_T*N_F*2*sizeof(scalar));	      mem_counter.addToGPUCounter(M_G*M_T*N_F*2*sizeof(scalar));      
+    cudaMalloc((void**) &_qJ     , M_G*M_T*N_F*2*sizeof(scalar));	      mem_counter.addToGPUCounter(M_G*M_T*N_F*2*sizeof(scalar));      
+    cudaMalloc((void**) &_Qtcj   , M_s*M_T*N_F*2*sizeof(scalar));	      mem_counter.addToGPUCounter(M_s*M_T*N_F*2*sizeof(scalar));      
+    cudaMalloc((void**) &_Q      , N_s*N_E*N_F*sizeof(scalar));  	      mem_counter.addToGPUCounter(N_s*N_E*N_F*sizeof(scalar));        
 
     // Set some stuff to zero
     cudaMemset(_UF     , (scalar)0.0, M_s*M_T*N_F*2*sizeof(scalar));
@@ -227,11 +227,11 @@ class DG_SOLVER
     // Initialize some stuff for conservation calculations
     consfile = "conservation.dat";
     consf    = fopen(consfile.c_str(),"a");
-    _UgC     = new scalar[N_G*N_E*N_F];  makeZero(_UgC,N_G*N_E*N_F);
-    _phiC    = new scalar[N_G*N_s];      memcpy(_phiC,phi,N_G*N_s*sizeof(scalar));
-    _JC      = new scalar[N_E];          memcpy(_JC,J,N_E*sizeof(scalar));
-    _I       = new scalar[N_F];          makeZero(_I,N_F);
-    _weight  = new scalar[N_G];          memcpy(_weight,weight,_N_G*sizeof(scalar));
+    _UgC     = new scalar[N_G*N_E*N_F];  makeZero(_UgC,N_G*N_E*N_F);                   	      mem_counter.addToCPUCounter(N_G*N_E*N_F*sizeof(scalar));
+    _phiC    = new scalar[N_G*N_s];      memcpy(_phiC,phi,N_G*N_s*sizeof(scalar));            mem_counter.addToCPUCounter(N_G*N_E*sizeof(scalar));
+    _JC      = new scalar[N_E];          memcpy(_JC,J,N_E*sizeof(scalar));                    mem_counter.addToCPUCounter(N_E*sizeof(scalar));
+    _I       = new scalar[N_F];          makeZero(_I,N_F);                                    mem_counter.addToCPUCounter(N_F*sizeof(scalar));
+    _weight  = new scalar[N_G];          memcpy(_weight,weight,_N_G*sizeof(scalar));          mem_counter.addToCPUCounter(N_G*sizeof(scalar));
   };
 
   /*! Destructor */

@@ -11,6 +11,7 @@
 #include <sstream>
 #include <iostream>
 #include <stdlib.h>
+#include <scalar_def.h>
 
 class MEM_COUNTER{
 

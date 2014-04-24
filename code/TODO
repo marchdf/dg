@@ -55,6 +55,7 @@
   - memcpy is evil in c++, don't use it: it doesn't do a deep copy. replace memcpy with blascopy?
   - solve kernel: make the matrix-matrix product more efficient?
   - idea to speed up UPA computation: do it on the nodal average (computed in sensor) (instead of at each node)
+  - Add malloc wrapper for C (to replace new and merge with cudamalloc) eg: MALLOC(...) which selects GPU or CPU version + increments a counter
 
 \mytodo DOXYGEN
   - it's not documenting both versions of CommunicateGhosts properly.

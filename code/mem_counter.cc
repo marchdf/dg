@@ -34,4 +34,3 @@ void MEM_COUNTER::outputCounters(){
     std::cout << "Estimated GPU allocations "<<std::string(tmp) << " (" << bytes << " bytes)"<<std::endl;
   }
 }
-

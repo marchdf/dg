@@ -12,6 +12,7 @@
 #include <misc.h>
 #include <scalar_def.h>
 #include <sensor_kernels.h>
+#include <mem_counter.h>
 #ifdef USE_GPU
 #include <cublas.h>
 #endif
@@ -34,7 +35,7 @@ class SENSOR {
  public:
   
   /*!\brief Constructor */
- SENSOR(int N_s, int N_E, int N_N, const std::vector<double> &thresholds = std::vector<double>() ) : _N_s(N_s), _N_E(N_E), _N_N(N_N) {
+ SENSOR(int N_s, int N_E, int N_N, MEM_COUNTER &mem_counter, const std::vector<double> &thresholds = std::vector<double>()) : _N_s(N_s), _N_E(N_E), _N_N(N_N) {
 
     _sensor1=false;
     _sensor2=false;
@@ -51,15 +52,15 @@ class SENSOR {
     
     one_div_N_s = 1.0/(scalar)_N_s;
 #ifdef USE_CPU
-    _sensors = new int[_N_E];
-    _Uavg    = new scalar[_N_E*N_F];
-    _ones    = new scalar[_N_s];
+    _sensors = new int[_N_E];                                 mem_counter.addToCPUCounter(_N_E*sizeof(int));
+    _Uavg    = new scalar[_N_E*N_F];                          mem_counter.addToCPUCounter(_N_E*N_F*sizeof(scalar));
+    _ones    = new scalar[_N_s];                              mem_counter.addToCPUCounter(_N_s*sizeof(scalar));
     for(int e=0; e<_N_E; e++){ _sensors[e] = 0;}
     for(int i=0; i<_N_s; i++){ _ones[i] = 1;}
 #elif USE_GPU
-    cudaMalloc((void**) &_sensors,_N_E*sizeof(int));
-    cudaMalloc((void**) &_Uavg,_N_E*N_F*sizeof(scalar));
-    cudaMalloc((void**) &_ones,_N_s*sizeof(scalar));
+    cudaMalloc((void**) &_sensors,_N_E*sizeof(int));         mem_counter.addToGPUCounter(_N_E*sizeof(int));	   
+    cudaMalloc((void**) &_Uavg,_N_E*N_F*sizeof(scalar));     mem_counter.addToGPUCounter(_N_E*N_F*sizeof(scalar));
+    cudaMalloc((void**) &_ones,_N_s*sizeof(scalar));	     mem_counter.addToGPUCounter(_N_s*sizeof(scalar));    
     cudaMemset(_sensors, 0, _N_E*sizeof(int));
 
     // Roundabout way of setting _ones to 1 (bc memset is a bitch)
