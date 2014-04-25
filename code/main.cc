@@ -615,9 +615,9 @@ int main (int argc, char **argv)
   else if(multint) init_dg_multint_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(blast1d) init_dg_blast1d_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(simblst) init_dg_simblst_multifluid(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
-  else if(rarecon) init_dg_rarecon_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
+  else if(rarecon) init_dg_rarecon_multifluid(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
   else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, XYZNodes, U);
-  else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
+  else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
   else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(rtaylor) init_dg_rtaylor_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(khinstb) init_dg_khinstb_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
