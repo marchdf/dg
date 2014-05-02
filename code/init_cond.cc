@@ -1029,9 +1029,9 @@ void init_dg_rminstb_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // Initialize
   scalar Lx = 1;
   scalar A0 = Aratio*Lx;    // initial amplitude
-  scalar yshck = 1*Lx;      // initial shock location (in wavelength units)
+  scalar yshck = 0.4213483146*Lx;      // initial shock location (in wavelength units)
   scalar yinterface = 0*Lx; // first interface location
-  scalar delta=0.08*Lx;     // The diffusion layer thickness (in wavelength units)
+  scalar delta=0.08426966292*Lx;//0.08*Lx;     // The diffusion layer thickness (in wavelength units)
     
   // Velocities/pressures in all materials
   scalar u0 = 0.0;
@@ -1042,17 +1042,17 @@ void init_dg_rminstb_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // mat1 (with shock) | mat 2 
   // pre-shock density (material 1)
   // The shock is initialized in here
-  scalar rho01   = 1;//5.494;//1.351;
-  scalar gamma01 = 1.4;//1.093;//1.276;
+  scalar rho01   = 1.351;//5.494;//1.351;
+  scalar gamma01 = 1.276;//1.4;//1.093;//1.276;//
   scalar alpha01 = 1/(gamma01-1);
   scalar c01     = sqrt(gamma01*p0/rho01); // sound speed
   scalar M01     = 34.76; // molecular weight
 
   // pre-shock density (material 2)
   scalar rho02   = rho01*Dratio;//5.494;//1.351;//
-  scalar gamma02 = gamma01;//1.093;//1.276;//
+  scalar gamma02 = 1.093;//gamma01;//1.093;//1.276;//
   scalar alpha02 = 1/(gamma02-1);
-  scalar M02     = M01;//146.05;//34.76;//
+  scalar M02     = 146.05;//M01;//146.05;//34.76;//
 
   // Non-dimensional parameters
   scalar L_ND = Lx; // use wavelength to non-dimensionalize
