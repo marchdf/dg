@@ -174,6 +174,7 @@ int main (int argc, char **argv)
   bool stfbubl = false;
   bool shckdrp = false;
   bool drpwall = false;
+  bool jetcrss = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
   else if (inputs.getInitialCondition()=="contact") contact = true;
@@ -202,6 +203,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="stfbubl") stfbubl = true;
   else if (inputs.getInitialCondition()=="shckdrp") shckdrp = true;
   else if (inputs.getInitialCondition()=="drpwall") drpwall = true;
+  else if (inputs.getInitialCondition()=="jetcrss") jetcrss = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // Restart option step
@@ -633,6 +635,7 @@ int main (int argc, char **argv)
   if (stfbubl) init_dg_stfbubl_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
   if (shckdrp) init_dg_shckdrp_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
   if (drpwall) init_dg_drpwall_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
+  if (jetcrss) init_dg_jetcrss_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
 #endif
 
   if (order0) average_cell_p0(N_s, N_E, U);

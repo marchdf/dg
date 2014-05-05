@@ -777,7 +777,7 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar T  = 0.;         // time difference btw shock and rarefaction arrival at the interface
   
   // Top material (shock and rarefaction initialized here)
-  scalar rho01   = 1;//1.351;//5.494;//
+  scalar rho01   = 1.351;//5.494;//
   scalar gamma01 = 1.4;//1.093;//1.276;//;
   scalar alpha01 = 1/(gamma01-1);
   scalar M01     = 34.76;//146.05;//
@@ -1043,16 +1043,16 @@ void init_dg_rminstb_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // pre-shock density (material 1)
   // The shock is initialized in here
   scalar rho01   = 1.351;//5.494;//1.351;
-  scalar gamma01 = 1.276;//1.4;//1.093;//1.276;//
+  scalar gamma01 = 1.4;//1.093;//1.276;//
   scalar alpha01 = 1/(gamma01-1);
   scalar c01     = sqrt(gamma01*p0/rho01); // sound speed
   scalar M01     = 34.76; // molecular weight
 
   // pre-shock density (material 2)
   scalar rho02   = rho01*Dratio;//5.494;//1.351;//
-  scalar gamma02 = 1.093;//gamma01;//1.093;//1.276;//
+  scalar gamma02 = gamma01;//1.093;//1.276;//
   scalar alpha02 = 1/(gamma02-1);
-  scalar M02     = 146.05;//M01;//146.05;//34.76;//
+  scalar M02     = M01;//146.05;//34.76;//
 
   // Non-dimensional parameters
   scalar L_ND = Lx; // use wavelength to non-dimensionalize
@@ -1728,7 +1728,7 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar p0 = 1e5;
 
   // Top material (rarefaction initialized here)
-  scalar rho01   = 1;//1.351;//5.494;//
+  scalar rho01   = 1.351;//5.494;//
   scalar gamma01 = 1.4;//;1.093;//1.276;//;
   scalar alpha01 = 1/(gamma01-1);
   scalar M01     = 34.76;//146.05;//
@@ -1902,7 +1902,7 @@ void init_dg_blastrm_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar patm = 1e5;
 
   // Top material: blast initialized here
-  scalar rho01   = 1;//1.351;//5.494;//
+  scalar rho01   = 1.351;//5.494;//
   scalar u01     = u0;
   scalar v01     = v0;  
   scalar gamma01 = 1.4;//1.093;//1.276;//;
@@ -2505,6 +2505,81 @@ void init_dg_drpwall_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   }
 }
 
+void init_dg_jetcrss_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+
+  // Jet in crossflow
+  // Pressure and pinf normalized by (rho_air*cs_air^2)
+
+  // Problem parameters
+  scalar MsC = 6; // Mach number in crossflow
+  scalar MsJ = 0.9; // Mach number of jet
+  
+  // Material properties
+  // air at 300K/27C from http://www.mhtl.uwaterloo.ca/old/onlinetools/airprop/airprop.html
+  scalar rho_air = 1.1765;
+  scalar gamma_air = 1.4;
+  scalar patm = 101325;
+  scalar cs_air = sqrt(gamma_air*patm/rho_air);
+
+  // water at 300K
+  scalar rho_water = 996; // use 970 if gelatine/water mixture as in Bourne1992
+  scalar gamma_water = 5.5;// Shahab uses different EoS model and so 2.35;
+  scalar pinf_water = 492115000;// Shahab uses: 1e9;
+  scalar cs_water = sqrt(gamma_water*(patm+pinf_water)/rho_water);
+  
+  // Crossflow of air
+  scalar rhoC   = rho_air/rho_air;
+  scalar uC     = MsC;
+  scalar vC     = 0.0;
+  scalar gammaC = gamma_air;
+  scalar pinfC  = 0;
+  scalar pC     = patm/(rho_air*cs_air*cs_air);
+  scalar EtC    = 1.0/(gammaC-1.0)*pC + gammaC*pinfC/(gammaC-1)  + 0.5*rhoC*(uC*uC+vC*vC);
+  scalar GC     = 1.0/(gammaC-1.0);
+  printf("rhoC=%f, uC=%f, vC=%f, pC=%f\n",rhoC,uC,vC,pC);
+  
+  // Water jet properties
+  scalar rhoJ   = rho_water/rho_air;
+  scalar uJ     = 0.0;
+  scalar vJ     = MsJ;
+  scalar gammaJ = gamma_water;
+  scalar pinfJ  = pinf_water/(rho_air*cs_air*cs_air);
+  scalar pJ     = patm/(rho_air*cs_air*cs_air);
+  scalar EtJ    = 1.0/(gammaJ-1.0)*pJ + gammaJ*pinfJ/(gammaJ-1)  + 0.5*rhoJ*(uJ*uJ+vJ*vJ);
+  scalar GJ     = 1.0/(gammaJ-1.0);
+  printf("rhoJ=%f, uJ=%f, vJ=%f, pJ=%f\n",rhoJ,uJ,vJ,pJ);
+
+  // Temperature and cv
+  scalar Tatm = 300;
+  scalar T = Tatm/Tatm;
+  scalar CvC = (pC+pinfC)/((gammaC-1)*rhoC*T); // Cv calc with N-D quantities
+  scalar CvJ = (pJ+pinfJ)/((gammaJ-1)*rhoJ*T); // Cv calc with N-D quantities
+  printf("T = TC = TJ = %f, CvC=%f, CvJ=%f\n",T,CvC,CvJ);
+  
+  scalar xc=0,yc=0;
+  for(int e = 0; e < N_E; e++){
+    xc = XYZCen(e,0);
+    yc = XYZCen(e,1);
+    for(int i = 0; i < N_s; i++){
+      if (yc<-2){ // jet
+	U(i,e*N_F+0) = rhoJ;
+	U(i,e*N_F+1) = rhoJ*uJ;
+	U(i,e*N_F+2) = rhoJ*vJ;
+	U(i,e*N_F+3) = EtJ;
+	U(i,e*N_F+4) = GJ;
+	U(i,e*N_F+5) = gammaJ*pinfJ/(gammaJ-1);
+      }
+      else { // crossflow
+	U(i,e*N_F+0) = rhoC;
+	U(i,e*N_F+1) = rhoC*uC;
+	U(i,e*N_F+2) = rhoC*vC;
+	U(i,e*N_F+3) = EtC;
+	U(i,e*N_F+4) = GC;
+	U(i,e*N_F+5) = gammaC*pinfC/(gammaC-1);
+      }
+    }
+  }
+}
 
 // void init_dg_euler1D_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
 

@@ -665,7 +665,7 @@ void simpleMesh::buildNeighbors(int N_N, int N_E)
   _neighbors = new int[N_N*N_E]; for(int k=0; k < N_N*N_E; k++){_neighbors[k]=0;}
 
   int N_I = _interfaces.size();       // number of interfaces                   (i index)
-  double eps = 1e-9; // used for comparisons of smallness
+  double eps = 1e-7; // used for comparisons of smallness
   
   // A neighbor counter for each element, set to zero
   int* nn = new int[N_E];  for(int k=0; k<N_E; k++){ nn[k]=0;} 
@@ -704,7 +704,7 @@ void simpleMesh::buildNeighbors(int N_N, int N_E)
 #elif TWOD
       double ny = _normals(1,i);
 #endif
-      // printf("e1=%i, e2=%i, nx=%e, ny=%e\n",el1->getId(),el2->getId(),nx,ny);
+      //printf("e1=%i, e2=%i, nx=%e, ny=%e\n",el1->getId(),el2->getId(),nx,ny);
       // normal pointing to the left: el2 is at left of el1
       if     ((fabs(ny)<eps)&&(nx<0)){
 	_neighbors[el1num*N_N+0] = el2num;
