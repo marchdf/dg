@@ -829,12 +829,14 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar yS0 = us*t0 + yS;
   scalar yH0 = -(c4-v4)*t0 + yR;    
   scalar yT0 = -(c4 - v4 + (gamma01+1)/2.0 * v4) * t0 + yR;
+  scalar strength = pow(1 - (gamma01-1)/2.0 * fabs(-v4/c4), 2.0*gamma01/(gamma01-1));
   printf("c4=%f, us=%f, yi=%f, yS=%f, yS0=%f, yH0=%f, yT0=%f, %f, L=%f\n", c4, us, yinterface, yS, yS0, yH0, yT0,yT0-yH0, L);
-  printf("rarefaction strength = %f\n", pow(1 - (gamma01-1)/2.0 * fabs(-v4/c4), 2.0*gamma01/(gamma01-1)));
+  printf("rarefaction strength = %f\n", strength);
   
   // reflection coefficient
-  //scalar R = (1- rho01*c01/(rho02*c02))/(1+rho01*c01/(rho02*c02));
-  scalar vcoord = 0;//-(1-R)*vc; // coordinate shift upwards
+  scalar R = (1- rho01*c01/(rho02*c02))/(1+rho01*c01/(rho02*c02));
+  scalar vRF = 2.0*c4/(gamma01-1) * (1 - pow(strength, (gamma01-1)/(2.0*gamma01))) + v4;
+  scalar vcoord = 0;//-(1-R)*vRF; // coordinate shift upwards
 
   // N-D the quantities
   A0 = A0/L_ND;
@@ -2472,6 +2474,8 @@ void init_dg_drpwall_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   printf("Velocity in jet = %g. Mach number in jet =%g\n",uJ,MJ);
   printf("Jet radius = %g bubble radii\n",J);
 
+  printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f, t_ND=%f\n",radius,rho_air,cs_air,rho_air*cs_air*cs_air,radius/cs_air);
+  
   scalar xc=0,yc=0;
   for(int e = 0; e < N_E; e++){
     xc = XYZCen(e,0);
@@ -2512,7 +2516,7 @@ void init_dg_jetcrss_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 
   // Problem parameters
   scalar MsC = 6; // Mach number in crossflow
-  scalar MsJ = 0.9; // Mach number of jet
+  scalar MsJ = 0.; // Mach number of jet
   
   // Material properties
   // air at 300K/27C from http://www.mhtl.uwaterloo.ca/old/onlinetools/airprop/airprop.html
@@ -2539,11 +2543,16 @@ void init_dg_jetcrss_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   printf("rhoC=%f, uC=%f, vC=%f, pC=%f\n",rhoC,uC,vC,pC);
   
   // Water jet properties
-  scalar rhoJ   = rho_water/rho_air;
+  // scalar rhoJ   = rho_water/rho_air;
+  // scalar uJ     = 0.0;
+  // scalar vJ     = MsJ;
+  // scalar gammaJ = gamma_water;
+  // scalar pinfJ  = pinf_water/(rho_air*cs_air*cs_air);
+  scalar rhoJ   = rho_air/rho_air;
   scalar uJ     = 0.0;
   scalar vJ     = MsJ;
-  scalar gammaJ = gamma_water;
-  scalar pinfJ  = pinf_water/(rho_air*cs_air*cs_air);
+  scalar gammaJ = gamma_air;
+  scalar pinfJ  = 0;
   scalar pJ     = patm/(rho_air*cs_air*cs_air);
   scalar EtJ    = 1.0/(gammaJ-1.0)*pJ + gammaJ*pinfJ/(gammaJ-1)  + 0.5*rhoJ*(uJ*uJ+vJ*vJ);
   scalar GJ     = 1.0/(gammaJ-1.0);
