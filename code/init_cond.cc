@@ -2444,7 +2444,7 @@ void init_dg_drpwall_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   
   // Water bubble properties
   scalar rhoB   = rho_water/rho_air;
-  scalar uB     = 1.5; // ND by air sound speed
+  scalar uB     = 2.5; // ND by air sound speed
   scalar vB     = 0.0;
   scalar gammaB = gamma_water;
   scalar pinfB  = pinf_water/(rho_air*cs_air*cs_air);
@@ -2509,14 +2509,18 @@ void init_dg_drpwall_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   }
 }
 
-void init_dg_jetcrss_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+void init_dg_jetcrss_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
 
   // Jet in crossflow
   // Pressure and pinf normalized by (rho_air*cs_air^2)
 
   // Problem parameters
-  scalar MsC = 6; // Mach number in crossflow
-  scalar MsJ = 0.; // Mach number of jet
+  if (ic_inputs.size() != 2){
+    printf("Wrong initial condition inputs. Exiting\n");
+    exit(1);
+  }
+  scalar MsC = ic_inputs[0]; // Mach number in crossflow
+  scalar MsJ = ic_inputs[1]; // Mach number of jet
   
   // Material properties
   // air at 300K/27C from http://www.mhtl.uwaterloo.ca/old/onlinetools/airprop/airprop.html
@@ -2543,16 +2547,16 @@ void init_dg_jetcrss_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   printf("rhoC=%f, uC=%f, vC=%f, pC=%f\n",rhoC,uC,vC,pC);
   
   // Water jet properties
-  // scalar rhoJ   = rho_water/rho_air;
-  // scalar uJ     = 0.0;
-  // scalar vJ     = MsJ;
-  // scalar gammaJ = gamma_water;
-  // scalar pinfJ  = pinf_water/(rho_air*cs_air*cs_air);
-  scalar rhoJ   = rho_air/rho_air;
+  scalar rhoJ   = rho_water/rho_air;
   scalar uJ     = 0.0;
   scalar vJ     = MsJ;
-  scalar gammaJ = gamma_air;
-  scalar pinfJ  = 0;
+  scalar gammaJ = gamma_water;
+  scalar pinfJ  = pinf_water/(rho_air*cs_air*cs_air);
+  // scalar rhoJ   = rho_air/rho_air;
+  // scalar uJ     = 0.0;
+  // scalar vJ     = MsJ;
+  // scalar gammaJ = gamma_air;
+  // scalar pinfJ  = 0;
   scalar pJ     = patm/(rho_air*cs_air*cs_air);
   scalar EtJ    = 1.0/(gammaJ-1.0)*pJ + gammaJ*pinfJ/(gammaJ-1)  + 0.5*rhoJ*(uJ*uJ+vJ*vJ);
   scalar GJ     = 1.0/(gammaJ-1.0);
