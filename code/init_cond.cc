@@ -2594,6 +2594,80 @@ void init_dg_jetcrss_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   }
 }
 
+void init_dg_injectr_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
+
+  // Injector problem
+  // Pressure and pinf normalized by (rho_air*cs_air^2)
+
+  // Problem parameters
+  if (ic_inputs.size() != 1){
+    printf("Wrong initial condition inputs. Exiting\n");
+    exit(1);
+  }
+  scalar KpJ = ic_inputs[0]; // pressure in jet (in atm)
+  printf("pJ=%f atm\n",KpJ);
+  
+  // Material properties
+  // air at 300K/27C from http://www.mhtl.uwaterloo.ca/old/onlinetools/airprop/airprop.html
+  scalar rho_air = 1.1765;
+  scalar gamma_air = 1.4;
+  scalar patm = 101325;
+  scalar cs_air = sqrt(gamma_air*patm/rho_air);
+
+  // water at the setup pressure
+  scalar gamma_water = 5.5;// Shahab uses different EoS model and so 2.35;
+  scalar pinf_water = 492115000;// Shahab uses: 1e9;
+  scalar rho_water = 996*pow((KpJ+3000)/3000,1.0/7.15); // based on Taight EOS
+  scalar cs_water = sqrt(gamma_water*(KpJ*patm+pinf_water)/rho_water);
+  printf("rho_water=%f, cs_water=%f\n",rho_water,cs_water);
+  
+  // Quiescent air
+  scalar rhoA   = rho_air/rho_air;
+  scalar uA     = 0.0;
+  scalar vA     = 0.0;
+  scalar gammaA = gamma_air;
+  scalar pinfA  = 0;
+  scalar pA     = patm/(rho_air*cs_air*cs_air);
+  scalar EtA    = 1.0/(gammaA-1.0)*pA + gammaA*pinfA/(gammaA-1)  + 0.5*rhoA*(uA*uA+vA*vA);
+  scalar GA     = 1.0/(gammaA-1.0);
+  printf("rhoA=%f, uA=%f, vA=%f, pA=%f\n",rhoA,uA,vA,pA);
+  
+  // Water jet properties
+  scalar rhoJ   = rho_water/rho_air;
+  scalar uJ     = 0.0;
+  scalar vJ     = 0.0;
+  scalar gammaJ = gamma_water;
+  scalar pinfJ  = pinf_water/(rho_air*cs_air*cs_air);
+  scalar pJ     = (KpJ*patm)/(rho_air*cs_air*cs_air);
+  scalar EtJ    = 1.0/(gammaJ-1.0)*pJ + gammaJ*pinfJ/(gammaJ-1)  + 0.5*rhoJ*(uJ*uJ+vJ*vJ);
+  scalar GJ     = 1.0/(gammaJ-1.0);
+  printf("rhoJ=%f, uJ=%f, vJ=%f, pJ=%f\n",rhoJ,uJ,vJ,pJ);
+
+  scalar xc=0,yc=0;
+  for(int e = 0; e < N_E; e++){
+    xc = XYZCen(e,0);
+    yc = XYZCen(e,1);
+    for(int i = 0; i < N_s; i++){
+      if (yc<-2){ // jet
+	U(i,e*N_F+0) = rhoJ;
+	U(i,e*N_F+1) = rhoJ*uJ;
+	U(i,e*N_F+2) = rhoJ*vJ;
+	U(i,e*N_F+3) = EtJ;
+	U(i,e*N_F+4) = GJ;
+	U(i,e*N_F+5) = gammaJ*pinfJ/(gammaJ-1);
+      }
+      else { // air
+	U(i,e*N_F+0) = rhoA;
+	U(i,e*N_F+1) = rhoA*uA;
+	U(i,e*N_F+2) = rhoA*vA;
+	U(i,e*N_F+3) = EtA;
+	U(i,e*N_F+4) = GA;
+	U(i,e*N_F+5) = gammaA*pinfA/(gammaA-1);
+      }
+    }
+  }
+}
+
 // void init_dg_euler1D_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
 
 //   if (N_F!=6) printf("You are setting up the wrong problem. N_F =%i != 8.\n",N_F);
