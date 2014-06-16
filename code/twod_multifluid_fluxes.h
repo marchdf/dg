@@ -307,9 +307,10 @@ arch_device void twod_multifluid_roe(scalar rhoL,
 #include "loopstart.h"
 #define LOOP_END N_Y
 #define MACRO(x) Y = (YL(x)/rhoL+RT*YR(x)/rhoR)/(1+RT);			\
-  dVY = YR(x) - YL(x) - (dV0+dV3)*Y;					\
+  dVY = YR(x) - YL(x) - (dV0+dV2+dV3)*Y;				\
   F[5+x] = 0.5*(flux_ab(YL(x),vnL) + flux_ab(YR(x),vnR))		\
     -0.5*(ws0*dV0*Y+							\
+    	  ws2*dV2*Y+							\
 	  ws1*dVY*1+							\
 	  ws3*dV3*Y);
 #include "loop.h"
