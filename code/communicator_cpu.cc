@@ -26,6 +26,8 @@ void COMMUNICATOR::CommunicateGhosts(int Nfields, scalar* U){
 
     See also \link communicator_gpu.cc CommunicateGhosts() \endlink the GPU implementation
   */
+
+  _timers.start_timer(22);
   
   // wait until every process gets here
   MPI_Barrier(MPI_COMM_WORLD);
@@ -50,6 +52,7 @@ void COMMUNICATOR::CommunicateGhosts(int Nfields, scalar* U){
   // Wait for communication to end
   MPI_Waitall(2*_N_ghosts, _request, _status);
 
+  _timers.stop_timer(22);
 }
 #endif
 #endif

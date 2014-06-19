@@ -10,7 +10,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
 			int N_E, int N_s, int N_G, int M_T, int M_s, int N_ghosts,
 			scalar* h_Minv, 
 			scalar* h_U,
-			Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator, PRINTER &printer, SENSOR &sensor, MEM_COUNTER &mem_counter){
+			Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator, PRINTER &printer, SENSOR &sensor, TIMERS &timers, MEM_COUNTER &mem_counter){
   /*!
     \brief Main RK integration function
     \param[in] DtOut output time step
@@ -104,11 +104,13 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
   }
   Tout = T+DtOut;
   count++;
-  
+
   // Time integration
+  timers.start_timer(1);
   while (!done){
 
     // Give the deck a negative CFL for fixed time step and no output
+    timers.start_timer(4);
     if(CFL<0){
       Dt = DtOut; output = false;
       if(Dt>(Tf  -T)){Dt = Tf  -T; done = true;}
@@ -130,7 +132,8 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
       /* else {output=false;} */
       /* if ((n+1)==1000) {done = true;} */
     }
-      
+    timers.stop_timer(4);
+    
     // Us = U
     blasCopy(N_F*N_s*N_E, arch(U), 1, _Us, 1);
     for(int k = 0; k < _order; k++){
@@ -155,8 +158,10 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
       dgsolver.dg_solver(_Ustar,_f);
 	
       // Solve: DU = Dt*Minv*f(Ustar)
+      timers.start_timer(3);
       Lsolver(N_s, N_E, Dt, _Minv, _f, _DU);
-	
+      timers.stop_timer(3);
+      
       // if 0-order average the solution in the cells
       if (order0){Laverage_cell_p0(N_s, N_E, _DU);}
 
@@ -176,7 +181,8 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
 
     // Output the solution
     if(output){
-
+      timers.start_timer(2);
+      
       if(myid==0){printf("Solution written to file at step %7i and time %e (current CFL time step:%e).\n",n,T,DtCFL);}
       printer.print(arch(U), count, T);
       printer.print_sensor(sensor, count, T);
@@ -185,9 +191,11 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
 
       // Output conservation of the fields
       dgsolver.conservation(h_U,T);
-	
+
+      timers.stop_timer(2);
     }// end output steps
   }// end loop on time
+  timers.stop_timer(1);
     
   // Free some stuff
   del(_Us);

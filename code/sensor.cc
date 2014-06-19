@@ -13,6 +13,8 @@ void SENSOR::sensing(int* neighbors, scalar* U){
     \param[in] U main solution
   */
 
+  _timers.start_timer(21);
+  
   // Set the sensors to 0
 #ifdef USE_CPU
   for(int e=0; e<_N_E; e++){ _sensors[e] = 0;}
@@ -26,6 +28,8 @@ void SENSOR::sensing(int* neighbors, scalar* U){
   
   // Call sensor calculation function
   Lcalc_sensors(_N_E,_N_N,_sensor1,_thresh1,_sensor2,_thresh2,neighbors,_Uavg,_sensors);
+
+  _timers.stop_timer(21);
 }
 
 

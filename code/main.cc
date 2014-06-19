@@ -16,7 +16,6 @@
 #ifdef USE_MPI
 #include "mpi.h"
 #endif
-#include <ctime>
 #include "fullMatrix.h"
 #include "polynomialBasis.h"
 #include "polynomialsJacobi.h"
@@ -36,6 +35,7 @@
 #include <printer.h>
 #include <sensor.h>
 #include <mem_counter.h>
+#include <timers.h>
 
 //
 // Function prototypes
@@ -68,19 +68,10 @@ void getTaylorDerIdx2D(const int order, int* TaylorDxIdx, int* TaylorDyIdx);
 
 void cartesian_permutations(const int order, const fullMatrix<scalar> XYZNodes, fullMatrix<scalar> &Px, fullMatrix<scalar> &Py);
 void LagMono2DTransformsCartesian(const int order, const int msh_lin, const fullMatrix<scalar> Px, const fullMatrix<scalar> Py, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag);
-  
+
 int main (int argc, char **argv)
 {
 
-  ////////////////////////////////////////////////////////////////////////////
-  //
-  // Timer stuff
-  //
-  ////////////////////////////////////////////////////////////////////////////
-  std::clock_t main_start, rk_start;
-  double main_time, rk_time;
-  main_start = std::clock();
-  
   //////////////////////////////////////////////////////////////////////////   
   //
   // Memory counter init
@@ -100,6 +91,14 @@ int main (int argc, char **argv)
   MPI_Comm_rank(MPI_COMM_WORLD,&myid);
   if(myid==0){printf("Total number of processors=%i and I am number %i\n",numprocs,myid);}
 #endif
+
+  ////////////////////////////////////////////////////////////////////////////
+  //
+  // Timer stuff
+  //
+  ////////////////////////////////////////////////////////////////////////////
+  TIMERS timers(myid);
+  timers.start_timer(0);
   
   ////////////////////////////////////////////////////////////////////////////
   //
@@ -767,7 +766,7 @@ int main (int argc, char **argv)
   // Communication setup
   //
   //////////////////////////////////////////////////////////////////////////
-  COMMUNICATOR communicator(N_ghosts, N_s, m, mem_counter);
+  COMMUNICATOR communicator(N_ghosts, N_s, m, timers, mem_counter);
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -782,7 +781,7 @@ int main (int argc, char **argv)
   // Sensor setup
   //
   //////////////////////////////////////////////////////////////////////////
-  SENSOR sensor(N_s, N_E, N_N, mem_counter, inputs.getThresholds());
+  SENSOR sensor(N_s, N_E, N_N, timers, mem_counter, inputs.getThresholds());
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -790,14 +789,14 @@ int main (int argc, char **argv)
   //
   //////////////////////////////////////////////////////////////////////////
 #ifdef ONED
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_N, m, Lag2Mono, Mono2Lag, mem_counter);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_N, m, Lag2Mono, Mono2Lag, timers, mem_counter);
 #elif TWOD
 
   //
   // Structured mesh
   //
   //if(cartesian){
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, order, cartesian, N_N, N_ghosts, m, Lag2MonoX, MonoX2MonoY, MonoY2Lag, mem_counter);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, order, cartesian, N_N, N_ghosts, m, Lag2MonoX, MonoX2MonoY, MonoY2Lag, timers, mem_counter);
 
   //}
   
@@ -830,18 +829,15 @@ int main (int argc, char **argv)
   scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++){h_weight[g] = (scalar)weight(g,0);} mem_counter.addToCPUCounter(N_G*sizeof(scalar));
   DG_SOLVER dgsolver = DG_SOLVER(N_E, N_s, N_G, N_N, M_T, M_s, M_G, M_B,
   				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, //h_xyz, h_xyzf,
-				 h_J, h_invJac, h_JF, h_weight, h_normals, m, mem_counter);
+				 h_J, h_invJac, h_JF, h_weight, h_normals, m, timers, mem_counter);
   RK rk4 = RK(4);
  
   // RK integration
-  rk_start = std::clock();
   rk4.RK_integration(DtOut, Tf, CFL, restart_step,
   		     N_E, N_s, N_G, M_T, M_s, N_ghosts,
   		     h_Minv, 
   		     h_U,
-  		     Limiter, order0, dgsolver, communicator, printer, sensor, mem_counter);
-  rk_time = ( std::clock() - rk_start ) / (double) CLOCKS_PER_SEC;
-  printf("RK time = %20.16e for proc %i\n", rk_time, myid);
+  		     Limiter, order0, dgsolver, communicator, printer, sensor, timers, mem_counter);
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -1007,8 +1003,8 @@ int main (int argc, char **argv)
   // End timer and output counters
   //
   //////////////////////////////////////////////////////////////////////////
-  main_time = ( std::clock() - main_start ) / (double) CLOCKS_PER_SEC;
-  printf("Main time = %20.16e for proc %i\n", main_time, myid);
+  timers.stop_timer(0);
+  timers.print_timers();
   mem_counter.outputCounters();
   
   //////////////////////////////////////////////////////////////////////////   

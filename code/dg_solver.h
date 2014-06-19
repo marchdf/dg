@@ -10,6 +10,7 @@
 #include <boundaries.h>
 #include <stdio.h>
 #include "simpleMesh.h"
+#include "timers.h"
 
 class DG_SOLVER
 {
@@ -54,7 +55,8 @@ class DG_SOLVER
   scalar* _qJ      ;
   scalar* _Qtcj    ;
   scalar* _Q       ; 
-  
+  TIMERS &_timers;
+
   // To calculate the conservation of certain fields
   std::string consfile;
   FILE *consf;
@@ -89,11 +91,13 @@ class DG_SOLVER
     \param[in] weight integration weights
     \param[in] normals normals to all the interfaces
     \param[in] m mesh we are operating on
+    \param[in] timers timers to use
+    \param[in] mem_counter memory counter to use
   */
  DG_SOLVER(int N_E, int N_s, int N_G,  int N_N, int M_T, int M_s, int M_G, int M_B, 
 	   int* map, int* invmap, scalar* phi, scalar* dphi, scalar* phi_w, scalar* dphi_w, scalar* psi, scalar* psi_w, //scalar* xyz, scalar* xyzf,
-	   scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals, simpleMesh &m, MEM_COUNTER &mem_counter) :
-  _N_E(N_E), _N_s(N_s), _N_G(N_G), _N_N(N_N), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B) {
+	   scalar* J, scalar* invJac, scalar* JF, scalar* weight, scalar* normals, simpleMesh &m, TIMERS &timers, MEM_COUNTER &mem_counter) :
+  _N_E(N_E), _N_s(N_s), _N_G(N_G), _N_N(N_N), _M_T(M_T), _M_s(M_s), _M_G(M_G), _M_B(M_B), _timers(timers) {
 
 
     // Indexes for boundary conditions
@@ -104,7 +108,7 @@ class DG_SOLVER
     //_farfieldIdx = boundaryIdx[1]-boundaryIdx[0]; // number of farfield interfaces
     //_farfieldstart = boundaryIdx[1];
     boundaryIdx = NULL;
-    
+
 #ifdef USE_CPU
 
     _map     = new int[M_s*M_T*N_F*2];                                             mem_counter.addToCPUCounter(M_s*M_T*N_F*2*sizeof(int));
@@ -280,42 +284,76 @@ class DG_SOLVER
   */    
   void dg_solver(scalar* U, scalar* f_rk){
 
+    _timers.start_timer(5);
+    
     // map U onto UF: requires Map, Ustar, UF and some integers for sizes, etc
+    _timers.start_timer(6);
     LmapToFace(_M_s, _M_T, _N_s, _map, U, _UF);
-
+    _timers.stop_timer(6);
+    
     // Apply special boundary conditions
+    _timers.start_timer(7);
     LrflctiveBoundary(_M_s, _rflctiveIdx,_boundaryMap,_normals,0,_UF);
+    _timers.stop_timer(7);
     
     // collocationU: requires phi, dphi, Ustar, Uinteg, dUinteg and some sizes
+    _timers.start_timer(8);
     blasGemm('N','N', _N_G   , _N_E*N_F, _N_s, 1, _phi,  _N_G   , U, _N_s, 0.0, _Uinteg, _N_G);
+    _timers.stop_timer(8);
+    
+    _timers.start_timer(9);
     blasGemm('N','N', _N_G*D, _N_E*N_F, _N_s, 1, _dphi, _N_G*D, U, _N_s, 0.0, _dUinteg, _N_G*D);
+    _timers.stop_timer(9);
     
     // collocationUF: requires psi, UF, UintegF and some sizes
+    _timers.start_timer(10);
     blasGemm('N','N', _M_G, _M_T*N_F*2, _M_s, 1, _psi, _M_G, _UF, _M_s, 0.0, _UintegF, _M_G);
-
+    _timers.stop_timer(10);
+    
     // Physics
+    _timers.start_timer(11);
     Levaluate_sf(_N_G, _N_E, _s, _f, _Uinteg, _dUinteg, _invJac);//, _xyz);
+    _timers.stop_timer(11);
+    
+    _timers.start_timer(12);
     Levaluate_q(_M_G, _M_T, _q, _UintegF, _normals);//, _xyzf);
+    _timers.stop_timer(12);
     
     // redistribute_sf: requires J, invJac, s, f, phi_w, dphi_w, sJ, fJ, S, F
+    _timers.start_timer(13);
     Lredistribute_sf(_N_G, _N_E, _sJ, _fJ, _s, _f, _J, _invJac);
+    _timers.stop_timer(13);
       
     // matrix-matrix multiply for sf
+    _timers.start_timer(14);
     blasGemm('T','N', _N_s, _N_E*N_F, _N_G   , 1, _phi_w , _N_G   , _sJ, _N_G  , 0.0, _S, _N_s);
+    _timers.stop_timer(14);
+    
+    _timers.start_timer(15);
     blasGemm('T','N', _N_s, _N_E*N_F, _N_G*D, 1, _dphi_w, _N_G*D, _fJ, _N_G*D, 0.0, _F, _N_s);
-
+    _timers.stop_timer(15);
+    
     // redistribute_q: requires JF, q, qJ, psi_w, Qtcj,
+    _timers.start_timer(16);
     Lredistribute_q(_M_G, _M_T, _qJ, _q, _JF);
+    _timers.stop_timer(16);
     
     // matrix-matrix multiply for q
+    _timers.start_timer(17);
     blasGemm('T','N', _M_s, _M_T*N_F*2, _M_G, 1, _psi_w , _M_G, _qJ, _M_G, 0.0, _Qtcj, _M_s);
-
+    _timers.stop_timer(17);
+    
     // map_q: requires map, Qtcj, Q (might want to do this in the previous step)
+    _timers.start_timer(18);
     LmapToElement(_N_s, _N_E, _M_s, _N_N, _invmap, _Q, _Qtcj);
-
+    _timers.stop_timer(18);
+    
     // Make f_rk = S+F+Q
+    _timers.start_timer(19);
     LaddSFQ(_N_s, _N_E, f_rk, _S, _F, _Q);
-
+    _timers.stop_timer(19);
+    
+    _timers.stop_timer(5);
   }; // end solver function
 
 

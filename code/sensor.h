@@ -12,6 +12,7 @@
 #include <misc.h>
 #include <scalar_def.h>
 #include <sensor_kernels.h>
+#include <timers.h>
 #include <mem_counter.h>
 #ifdef USE_GPU
 #include <cublas.h>
@@ -31,11 +32,12 @@ class SENSOR {
   int* _sensors;
   scalar* _Uavg;
   scalar* _ones;
+  TIMERS &_timers;
   
  public:
   
   /*!\brief Constructor */
- SENSOR(int N_s, int N_E, int N_N, MEM_COUNTER &mem_counter, const std::vector<double> &thresholds = std::vector<double>()) : _N_s(N_s), _N_E(N_E), _N_N(N_N) {
+ SENSOR(int N_s, int N_E, int N_N, TIMERS &timers, MEM_COUNTER &mem_counter, const std::vector<double> &thresholds = std::vector<double>()) : _N_s(N_s), _N_E(N_E), _N_N(N_N), _timers(timers) {
 
     _sensor1=false;
     _sensor2=false;

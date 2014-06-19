@@ -37,6 +37,8 @@ void COMMUNICATOR::CommunicateGhosts(int Nfields, scalar* U){
     See also \link communicator_cpu.cc CommunicateGhosts() \endlink the CPU implementation
   */
 
+  _timers.start_timer(22);
+  
   // wait until every process gets here
   MPI_Barrier(MPI_COMM_WORLD);
 
@@ -71,6 +73,8 @@ void COMMUNICATOR::CommunicateGhosts(int Nfields, scalar* U){
   
   // 6) kernel to copy data from device buffer to device U
   Lunpackager(_N_s, _N_ghosts, Nfields, _d_ghostElementRecv, _d_buffer, U);
+
+  _timers.stop_timer(22);
 }
 #endif
 #endif

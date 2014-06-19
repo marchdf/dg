@@ -44,6 +44,14 @@
 
 \mytodo PROFILER
   - Add some sort of timer to these functions?
+
+\mytodo DG SOLVER
+  - change addSFQ to 2 blas axpy calls?
+  - getting the gradients of ALL the variables is a bit of a drag... I really only need a couple I think (gamma, u?)
+
+\mytodo RK SOLVER
+  - change blas copy to pointer switches
+  - conservation calculation is done everytime... maybe put this as a compile option?
 	
 \mytodo OTHER
   - Clean if conditions on dimensions: they are all over the place. Can they be reduced?
@@ -56,6 +64,8 @@
   - solve kernel: make the matrix-matrix product more efficient?
   - idea to speed up UPA computation: do it on the nodal average (computed in sensor) (instead of at each node)
   - Add malloc wrapper for C (to replace new and merge with cudamalloc) eg: MALLOC(...) which selects GPU or CPU version + increments a counter
+  - make if conditions into switches (apparently it's faster)
+  - make sure there are NO (!!) if conditions in my gpu kernels
 
 \mytodo DOXYGEN
   - it's not documenting both versions of CommunicateGhosts properly.

@@ -12,6 +12,9 @@ void Limiting::HRlimiting(COMMUNICATOR &communicator, scalar* U){
     \param[in] communicator communicator object for MPI communications
     \param[out] U solution to be limited
   */
+
+  _timers.start_timer(20);
+  
 #ifdef ONED
 
   // Go from lagrange to monomial representation
@@ -88,6 +91,8 @@ void Limiting::HRlimiting(COMMUNICATOR &communicator, scalar* U){
     /* } */
   }
 #endif
+
+  _timers.stop_timer(20);
 }
 
 void Limiting::M2limiting(COMMUNICATOR &communicator, scalar* U){
@@ -96,6 +101,9 @@ void Limiting::M2limiting(COMMUNICATOR &communicator, scalar* U){
     \param[in] communicator communicator object for MPI communications
     \param[out] U solution to be limited
   */
+  
+  _timers.start_timer(20);
+  
 #ifdef ONED
 #ifdef MULTIFLUID  //===========================================================
 #ifdef GAMNCON
@@ -517,6 +525,7 @@ void Limiting::M2limiting(COMMUNICATOR &communicator, scalar* U){
 #endif // problem type
 #endif // dimensions
 
+  _timers.stop_timer(20);  
 } // end m2limiting
 
 void Limiting::HRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U){
@@ -526,6 +535,8 @@ void Limiting::HRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U
     \param[out] U solution to be limited
   */
 
+  _timers.start_timer(20);
+  
   // Calculate the sensor
   sensor.sensing(_neighbors,U);
 
@@ -550,7 +561,8 @@ void Limiting::HRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U
     sensor.copy_detected_elements(_Utmp, U);
   }
 #endif
-
+  
+  _timers.stop_timer(20);
 }
 
 void Limiting::M2Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U){
@@ -559,7 +571,9 @@ void Limiting::M2Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U
     \param[in] communicator communicator object for MPI communications
     \param[out] U solution to be limited
   */
-
+  
+  _timers.start_timer(20);
+  
   // Calculate the sensor
   sensor.sensing(_neighbors,U);
 
@@ -584,4 +598,6 @@ void Limiting::M2Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U
     sensor.copy_detected_elements(_Utmp, U);
   }
 #endif
+
+  _timers.stop_timer(20);
 }

@@ -12,6 +12,7 @@
 #ifndef COMMUNICATOR_H
 #define COMMUNICATOR_H
 
+#include "timers.h"
 #include "mem_counter.h"
 #include "simpleMesh.h"
 #ifdef USE_MPI
@@ -40,6 +41,8 @@ class COMMUNICATOR
   int* _ghostElementSend;
   int* _ghostElementRecv;
 
+  TIMERS &_timers;
+  
 #ifdef USE_GPU
   scalar* _h_bufferSend;
   scalar* _h_bufferRecv;
@@ -51,11 +54,13 @@ class COMMUNICATOR
  public:
   /*!
     \brief Constructor sets default number of ghosts and nodes in an element
-    \param N_ghosts number of ghosts
-    \param N_s number of nodes in an element
-    \param m mesh operated on
+    \param[in] N_ghosts number of ghosts
+    \param[in] N_s number of nodes in an element
+    \param[in] m mesh operated on
+    \param[in] timers timers to use
+    \param[in] mem_counter memory counter to use
   */     
- COMMUNICATOR(int N_ghosts, int N_s, simpleMesh &m, MEM_COUNTER &mem_counter): _N_ghosts(N_ghosts), _N_s(N_s){
+ COMMUNICATOR(int N_ghosts, int N_s, simpleMesh &m, TIMERS &timers, MEM_COUNTER &mem_counter): _N_ghosts(N_ghosts), _N_s(N_s), _timers(timers){
     // Initialize MPI things
     _status = new MPI_Status [2*N_ghosts];
     _request = new MPI_Request [2*N_ghosts];
@@ -111,7 +116,7 @@ class COMMUNICATOR{
  public:
   /*! \brief Empty constructor
   */     
-  COMMUNICATOR(int a, int b, simpleMesh &m, MEM_COUNTER &mem_counter){};
+  COMMUNICATOR(int a, int b, simpleMesh &m, TIMERS &timers, MEM_COUNTER &mem_counter){};
   void CommunicateGhosts(int Nfields, scalar* U){};
 };
 #endif

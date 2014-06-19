@@ -15,6 +15,7 @@
 #include <communicator.h>
 #include <printer.h>
 #include <sensor.h>
+#include <timers.h>
 #include <mem_counter.h>
 #ifdef USE_MPI
 #include "mpi.h"
@@ -59,7 +60,7 @@ class RK
 		      int N_E, int N_s, int N_G, int M_T, int M_s, int N_ghosts,
 		      scalar* h_Minv, 
 		      scalar* h_U,
-		      Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator, PRINTER &printer, SENSOR &sensor, MEM_COUNTER &mem_counter);
+		      Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator, PRINTER &printer, SENSOR &sensor, TIMERS &timers, MEM_COUNTER &mem_counter);
     
   scalar DtFromCFL(const int N_s, const int N_E, const scalar CFL, scalar* U, scalar* UPA);
   

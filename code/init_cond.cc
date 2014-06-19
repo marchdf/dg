@@ -1375,7 +1375,7 @@ void init_dg_rtaylor_multifluid(const int N_s, const int N_E, const fullMatrix<s
 #elif TWOD
   constants::GLOBAL_GY = gravity;
 #endif
-  
+
   scalar xc=0, yc=0, x=0, y=0;
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){

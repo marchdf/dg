@@ -15,6 +15,7 @@
 #include <communicator.h>
 #include <sensor.h>
 #include "simpleMesh.h"
+#include "timers.h"
 #include "mem_counter.h"
 #ifdef USE_GPU
 #include <cublas.h>
@@ -73,6 +74,8 @@ class Limiting
   int*    _TaylorDxIdx;
   int*    _TaylorDyIdx;
   scalar _refArea;
+
+  TIMERS &_timers;
   
   void common_ctor(){
     /*\brief Common contructor*/
@@ -109,12 +112,12 @@ class Limiting
   }
   
  public:
-  /*!\brief Constructor with method and bool for a cartesian mesh*/
- Limiting(int method,bool cartesian) : _method(method), _cartesian(cartesian){}
+  /*\brief Constructor with method and bool for a cartesian mesh NOT USING ANYMORE*/
+  //Limiting(int method,bool cartesian) : _method(method), _cartesian(cartesian){}
 
   /*!\brief Constructor for 1D limiting*/
- Limiting(int method, int N_s, int N_E, int N_N, simpleMesh &m, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, MEM_COUNTER &mem_counter)
-   : _method(method), _N_s(N_s), _N_E(N_E), _N_N(N_N){
+ Limiting(int method, int N_s, int N_E, int N_N, simpleMesh &m, fullMatrix<scalar> &Lag2Mono, fullMatrix<scalar> &Mono2Lag, TIMERS &timers, MEM_COUNTER &mem_counter)
+   : _method(method), _N_s(N_s), _N_E(N_E), _N_N(N_N), _timers(timers){
     common_ctor();
 
     switch (_method){
@@ -235,7 +238,7 @@ class Limiting
   } // end 1D constructor
 
   /*!\brief Constructor for 2D limiting for structured mesh*/
- Limiting(int method, int N_s, int N_E, int order, bool cartesian, int N_N, int N_ghosts, simpleMesh &m, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, MEM_COUNTER &mem_counter) : _method(method), _N_s(N_s), _N_E(N_E), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(N_ghosts){
+ Limiting(int method, int N_s, int N_E, int order, bool cartesian, int N_N, int N_ghosts, simpleMesh &m, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, TIMERS &timers, MEM_COUNTER &mem_counter) : _method(method), _N_s(N_s), _N_E(N_E), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(N_ghosts), _timers(timers){
 
     _N_s1D = (order+1);
     common_ctor();
