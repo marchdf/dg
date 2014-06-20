@@ -12,6 +12,9 @@
 #include <vector>
 #include <string>
 #include <stdio.h>
+#ifdef USE_GPU
+#include <cuda_runtime_api.h>
+#endif
 
 class TIMERS{
 

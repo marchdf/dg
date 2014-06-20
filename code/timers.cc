@@ -60,6 +60,15 @@ void TIMERS::stop_timer(int k){
     \brief Stop a timer
     \param[in] k the timer id to stop
   */
+
+  // If you use a GPU, you need to wait for the kernel to end to time
+  // it. This is because kernels are launched asynchronously by the
+  // CPU (though executed sequentially on the GPU if they are placed
+  // in the same stream).
+#ifdef USE_GPU
+  cudaDeviceSynchronize();
+#endif
+  
   _times[k] += ( std::clock() - _starters[k] )/ (double) CLOCKS_PER_SEC;  
 }
 

@@ -45,6 +45,7 @@
 \mytodo DG SOLVER
   - change addSFQ to 2 blas axpy calls?
   - getting the gradients of ALL the variables is a bit of a drag... I really only need a couple I think (gamma, u?)
+  - There might be some overlapping computation (e.g. gemm_q, gemm_sf, evaluate_q, evaluate_sf, redistribute_sf, redistribute_q,) that could be run in different streams on the GPU concurrently.
 
 \mytodo RK SOLVER
   - change blas copy to pointer switches

@@ -98,8 +98,12 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
       printer.print(arch(U), count, T);
       printer.print_sensor(sensor, count, T);
     
-      // Output conservation of the fields
+      // Output conservation of the fields (if wanted). Works only
+      // when data is on host (really this is just for small
+      // validation runs)
+#ifdef CONS
       dgsolver.conservation(h_U,T);
+#endif
     }
   }
   Tout = T+DtOut;
@@ -189,8 +193,12 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
       Tout = T + DtOut; // update the new output time
       count++;
 
-      // Output conservation of the fields
+      // Output conservation of the fields (if wanted). Works only
+      // when data is on host (really this is just for small
+      // validation runs)
+#ifdef CONS
       dgsolver.conservation(h_U,T);
+#endif
 
       timers.stop_timer(2);
     }// end output steps

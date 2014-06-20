@@ -11,6 +11,7 @@ NFLD=4
 MASS=0
 PROF=OFF
 ERRR=NOERROR
+CONS=NOCONS
 
 # configuration
 directories       := . quadratures
@@ -50,7 +51,7 @@ endif
 
 
 # defines
-DEFINES           := -DHAVE_BLAS -DHAVE_LAPACK -D$(ARCH) -D$(LIEU) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS) -D$(PARA) -DN_Y=$(MASS) -DN_F=$(NFLD) -D$(ERRR)
+DEFINES           := -DHAVE_BLAS -DHAVE_LAPACK -D$(ARCH) -D$(LIEU) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS) -D$(PARA) -DN_Y=$(MASS) -DN_F=$(NFLD) -D$(ERRR) -D$(CONS)
 ifeq ($(DIMS),ONED)
 DEFINES           := $(DEFINES) -DD=1 -DDF=1
 endif
