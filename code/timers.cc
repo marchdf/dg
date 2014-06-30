@@ -40,8 +40,14 @@ void TIMERS::set_timer_names(){
   _names.push_back("limiting time");           // timer 20
   _names.push_back("sensors time");            // timer 21
 
-  // Other routines
+  // Communication routines
   _names.push_back("communication time");      // timer 22
+
+  // Output routines
+  _names.push_back("format_output time");      // timer 23
+  _names.push_back("write_output time");       // timer 24
+  _names.push_back("format_sensor time");      // timer 25
+  _names.push_back("write_sensor time");       // timer 26
 }
 
 void TIMERS::start_timer(int k){

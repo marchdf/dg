@@ -72,15 +72,19 @@ void PRINTER::print(scalar* U, const int step, const double time){
   */
 
   // format output variables
+  _timers.start_timer(23);
 #ifdef USE_CPU
   Lformater(_N_s,_N_E,U,_output);
 #elif USE_GPU
   Lformater(_N_s,_N_E,U,_d_output);
   cudaMemcpy(_output, _d_output, _N_s*_N_E*N_F*sizeof(scalar), cudaMemcpyDeviceToHost);
 #endif
-  
+  _timers.stop_timer(23);
+    
   // print to the output file
+  _timers.start_timer(24);
   _m.writeSolution(_output, _N_s, _N_E, _elem_type, _fnames, _names, step, time);
+  _timers.stop_timer(24);
   
 } // end print
 
@@ -117,17 +121,20 @@ void PRINTER::print_sensor(SENSOR &sensor, const int step, const double time){
   // Check to make sure a sensor is on
   if(sensor.isSensor()){
   
-  // format output variables
+    // format output variables
+    _timers.start_timer(25);
 #ifdef USE_CPU
     Lformat_sensor(_N_s,_N_E,sensor.getSensors(),_output);
 #elif USE_GPU
     Lformat_sensor(_N_s,_N_E,sensor.getSensors(),_d_output);
     cudaMemcpy(_output, _d_output, _N_s*_N_E*sizeof(scalar), cudaMemcpyDeviceToHost);
 #endif
-
-  
+    _timers.stop_timer(25);
+    
     // print to the output file
+    _timers.start_timer(26);
     _m.writeSolution(_output, _N_s, _N_E, _elem_type, _sname, _sname, step, time);
+    _timers.stop_timer(26);
   }
 } 
 

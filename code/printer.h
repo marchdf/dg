@@ -16,6 +16,7 @@
 #include <string>
 #include <stdio.h>
 #include "printer_kernels.h"
+#include "timers.h"
 #include "mem_counter.h"
 #include <sensor.h>
 #ifdef USE_GPU
@@ -33,7 +34,8 @@ class PRINTER{
   std::vector<std::string> _names;
   std::vector<std::string> _fnames;
   std::vector<std::string> _sname; // for the sensor
-  simpleMesh &_m; 
+  simpleMesh &_m;
+  TIMERS &_timers;
     
  public:
 
@@ -44,7 +46,7 @@ class PRINTER{
     \param[in] elem_type type of element to output
     \param[in] m mesh we are operating on
   */     
- PRINTER(int N_s, int N_E, int elem_type, simpleMesh &m, MEM_COUNTER &mem_counter): _N_s(N_s), _N_E(N_E), _elem_type(elem_type), _m(m){
+ PRINTER(int N_s, int N_E, int elem_type, simpleMesh &m, TIMERS &timers, MEM_COUNTER &mem_counter): _N_s(N_s), _N_E(N_E), _elem_type(elem_type), _m(m), _timers(timers){
 #ifdef USE_CPU
     _output = new scalar[_N_s*_N_E*N_F];                                         mem_counter.addToCPUCounter(_N_s*_N_E*N_F*sizeof(scalar));
 #elif USE_GPU

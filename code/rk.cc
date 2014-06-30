@@ -94,6 +94,8 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
   }
   else{ // print the initial condition to the file
     if(CFL>=0){
+      timers.start_timer(2);
+      
       if(myid==0){printf("Initial condition written to output file.\n");}
       printer.print(arch(U), count, T);
       printer.print_sensor(sensor, count, T);
@@ -104,6 +106,8 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
 #ifdef CONS
       dgsolver.conservation(h_U,T);
 #endif
+      
+      timers.stop_timer(2);
     }
   }
   Tout = T+DtOut;
@@ -143,7 +147,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
     for(int k = 0; k < _order; k++){
       // Ustar = Us + beta*DU
       blasCopy(N_F*N_s*N_E, _Us, 1, _Ustar, 1);           // make Ustar = Us;
-      blasAxpy(N_s*N_F*N_E, _beta[k], _DU, 1, _Ustar, 1); // do Ustar.add(DU,beta[k]);
+      if(k>0){blasAxpy(N_s*N_F*N_E, _beta[k], _DU, 1, _Ustar, 1);} // do Ustar.add(DU,beta[k]) if k=0, beta is zero so this isn't necessary
 
       Tstar = T + _beta[k]*Dt;
 
