@@ -1463,9 +1463,9 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // Initial condition 
   scalar Lx = 1;            // wavelength
   scalar A0 = Aratio*Lx;    // initial amplitude
-  //scalar yinterface = 0*Lx; // initial interface position
+  scalar yinterface = 0*Lx; // initial interface position
   scalar gravity = 0;//-1;
-  scalar u=0,v=0,rho=0,p=0,Et=0,gamma=0,alpha=0;
+  scalar u=0,v=0,rho=0,p=0,Et=0,gamma=0,alpha=0,Y=0;
 
   // Velocities/pressures in all materials
   scalar u0 = 0.0;
@@ -1527,6 +1527,7 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	v=u0;
 	gamma = gamma01;
 	alpha = alpha01;
+	Y     = 1;
       }
       else{ // bottom fluid
       	rho = rho02;
@@ -1534,6 +1535,7 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	v=u0;
       	gamma = gamma02;
 	alpha = alpha02;
+	Y = 0;
       }
       p  = p0 + rho*gravity*y ;
 
@@ -1555,6 +1557,7 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
       U(i,e*N_F+1) = rho*v;
       U(i,e*N_F+2) = Et ;
       U(i,e*N_F+3) = alpha;
+      U(i,e*N_F+4) = rho*Y;
       
 #elif TWOD
       U(i,e*N_F+0) = rho;
@@ -1562,6 +1565,7 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
       U(i,e*N_F+2) = rho*v;
       U(i,e*N_F+3) = Et ;
       U(i,e*N_F+4) = alpha;
+      U(i,e*N_F+5) = rho*Y;
 #endif 
     }
   }
