@@ -1446,6 +1446,127 @@ void init_dg_rtaylor_multifluid(const int N_s, const int N_E, const fullMatrix<s
   }
 }
 
+void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
+
+  // Used for the collaboration with R.P. Drake
+
+  // Problem parameters
+  if (ic_inputs.size() != 3){
+    printf("Wrong initial condition inputs. Exiting\n");
+    exit(1);
+  }
+  scalar Aratio = ic_inputs[0]; // amplitude to wavelength ratio
+  scalar Dratio = ic_inputs[1]; // density ratio (units of top fluid density)
+  scalar ShearU = ic_inputs[2]; // shear velocity (ratio of the sound speed in top fluid)
+  printf("Aratio=%f, Dratio=%f, ShearU=%f\n",Aratio,Dratio,ShearU);
+  
+  // Initial condition 
+  scalar Lx = 1;            // wavelength
+  scalar A0 = Aratio*Lx;    // initial amplitude
+  //scalar yinterface = 0*Lx; // initial interface position
+  scalar gravity = 0;//-1;
+  scalar u=0,v=0,rho=0,p=0,Et=0,gamma=0,alpha=0;
+
+  // Velocities/pressures in all materials
+  scalar u0 = 0.0;
+  scalar v0 = 0.0;
+  scalar p0 = 1e5;
+  
+  // bottom fluid
+  scalar rho01 = 1;
+  scalar gamma01 = 5.0/3.0;
+  scalar alpha01 = 1/(gamma01-1);
+  scalar c01     = sqrt(gamma01*p0/rho01); // sound speed
+  scalar M01     = 34.76; // molecular weight
+  
+  // Top fluid
+  scalar rho02   = rho01*Dratio;
+  scalar gamma02 = gamma01;
+  scalar alpha02 = 1/(gamma02-1);
+  scalar c02     = sqrt(gamma02*p0/rho02); // sound speed
+  scalar M02     = M01;
+
+  // Non-dimensional parameters
+  scalar L_ND   = Lx; // use wavelength to non-dimensionalize
+  scalar rho_ND = rho01;
+  scalar u_ND   = c01;
+  scalar p_ND   = rho01*c01*c01;
+  printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f\n",L_ND,rho_ND,u_ND,p_ND);
+
+  // N-D lengths
+  A0 = A0/L_ND;
+  Lx = Lx/L_ND;
+  yinterface = yinterface/L_ND;
+  
+  // Gravity
+#ifdef ONED
+  constants::GLOBAL_GX = gravity;
+#elif TWOD
+  constants::GLOBAL_GY = gravity;
+#endif
+
+  scalar xc=0, yc=0, x=0, y=0;
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+#ifdef ONED
+      A0 = 0;
+      yc = XYZCen(e,0);
+      y  = XYZNodes(i,e*D+0);
+#elif TWOD
+      xc = XYZCen(e,0);
+      x  = XYZNodes(i,e*D+0);
+      yc = XYZCen(e,1);
+      y  = XYZNodes(i,e*D+1);
+#endif
+
+      // Sinuidol perturbation
+      if(yc > (A0*sin(2*M_PI*x/Lx-M_PI/2)+yinterface)){ // Top fluid
+      	rho = rho01;
+	u=ShearU*c01;
+	v=u0;
+	gamma = gamma01;
+	alpha = alpha01;
+      }
+      else{ // bottom fluid
+      	rho = rho02;
+	u=-ShearU*c01;
+	v=u0;
+      	gamma = gamma02;
+	alpha = alpha02;
+      }
+      p  = p0 + rho*gravity*y ;
+
+      // Non-dimensionalize and energy calculation
+      rho = rho/rho_ND;
+      u   = u/u_ND;
+      v   = v/u_ND;
+      p   = p/p_ND;
+      Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
+
+#ifdef GAMCONS
+      alpha = rho/(gamma-1);
+#elif GAMNCON
+      alpha = 1.0/(gamma-1);
+#endif
+      
+#ifdef ONED
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*v;
+      U(i,e*N_F+2) = Et ;
+      U(i,e*N_F+3) = alpha;
+      
+#elif TWOD
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*u;
+      U(i,e*N_F+2) = rho*v;
+      U(i,e*N_F+3) = Et ;
+      U(i,e*N_F+4) = alpha;
+#endif 
+    }
+  }
+}
+
 
 
 void init_dg_khinstb_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){

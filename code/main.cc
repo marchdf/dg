@@ -162,6 +162,7 @@ int main (int argc, char **argv)
   bool rminstb = false;
   bool rmmulti = false;
   bool rtaylor = false;
+  bool khdrake = false;
   bool khinstb = false;
   bool khblast = false;
   bool khpertu = false;
@@ -192,6 +193,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="rminstb") rminstb = true;
   else if (inputs.getInitialCondition()=="rmmulti") rmmulti = true;
   else if (inputs.getInitialCondition()=="rtaylor") rtaylor = true;
+  else if (inputs.getInitialCondition()=="khdrake") khdrake = true;
   else if (inputs.getInitialCondition()=="khinstb") khinstb = true;
   else if (inputs.getInitialCondition()=="khblast") khblast = true;
   else if (inputs.getInitialCondition()=="khpertu") khpertu = true;
@@ -623,6 +625,7 @@ int main (int argc, char **argv)
   else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
   else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(rtaylor) init_dg_rtaylor_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
+  else if(khdrake) init_dg_khdrake_multifluid(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
   else if(khinstb) init_dg_khinstb_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(khblast) init_dg_khblast_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(khpertu) init_dg_khpertu_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
@@ -863,6 +866,7 @@ int main (int argc, char **argv)
   else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(rmmulti) init_dg_rmmulti_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(rtaylor) init_dg_rtaylor_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
+  else if(khdrake) init_dg_khdrake_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit, inputs.getInitialConditionInputs());
   else if(khblast) init_dg_khblast_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(khpertu) init_dg_khpertu_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(blastrm) init_dg_blastrm_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
