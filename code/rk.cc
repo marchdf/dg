@@ -113,6 +113,12 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
   Tout = T+DtOut;
   count++;
 
+  // Limit the initial solution before integrating to avoid problems
+  if      (Limiter.getLimitingMethod()==1) Limiter.HRlimiting(communicator, _Ustar);
+  else if (Limiter.getLimitingMethod()==2) Limiter.M2limiting(communicator, _Ustar);
+  else if (Limiter.getLimitingMethod()==3) Limiter.HRIlimiting(communicator, sensor, _Ustar);
+  else if (Limiter.getLimitingMethod()==4) Limiter.M2Ilimiting(communicator, sensor, _Ustar);
+    
   // Time integration
   timers.start_timer(1);
   while (!done){
