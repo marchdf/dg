@@ -124,7 +124,9 @@ class Limiting
     case 1:
     case 2:
     case 3:
-    case 4:{
+    case 4:
+    case 5:
+    case 6:{
 #ifdef USE_CPU
       _Lag2Mono = new scalar[_N_s*_N_s];     Lag2Mono.copyMatrixToPointer(_Lag2Mono);  mem_counter.addToCPUCounter(_N_s*_N_s*sizeof(scalar));
       _Mono2Lag = new scalar[_N_s*_N_s];     Mono2Lag.copyMatrixToPointer(_Mono2Lag);  mem_counter.addToCPUCounter(_N_s*_N_s*sizeof(scalar));
@@ -157,7 +159,9 @@ class Limiting
 
     // For case specific stuff:
     switch (_method){
-    case 1:{
+    case 1:
+    case 5:{
+      printf("hello!\n");
 #ifdef USE_CPU
       _A        = new scalar[_N_s*_N_E*N_F]; 
       _Alim     = new scalar[_N_s*_N_E*N_F];
@@ -226,7 +230,8 @@ class Limiting
     }
       break;
     case 3:
-    case 4:{
+    case 4:
+    case 6:{
 #ifdef USE_CPU
       _Utmp     = new scalar[_N_s*_N_E*N_F];                        mem_counter.addToCPUCounter(_N_s*_N_E*N_F*sizeof(scalar));
 #elif USE_GPU
@@ -501,8 +506,10 @@ class Limiting
   
   int getLimitingMethod() const {/*!Return limiting method*/return _method;}
   void HRlimiting(COMMUNICATOR &communicator, scalar* U);
+  void PRlimiting(COMMUNICATOR &communicator, scalar* U);
   void M2limiting(COMMUNICATOR &communicator, scalar* U);
   void HRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U);
+  void PRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U);
   void M2Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U);
 };
 #endif

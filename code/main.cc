@@ -142,6 +142,8 @@ int main (int argc, char **argv)
   else if (inputs.getLimiter() == "m2l")   {limiterMethod = 2; if(myid==0){printf("Using m2 limiting (global)\n");}}
   else if (inputs.getLimiter() == "hri")   {limiterMethod = 3; if(myid==0){printf("Using HR limiting (per element)\n");}}
   else if (inputs.getLimiter() == "m2i")   {limiterMethod = 4; if(myid==0){printf("Using m2 limiting (per element)\n");}}
+  else if (inputs.getLimiter() == "prl")   {limiterMethod = 5; if(myid==0){printf("Using primitive reconstruction limiting (global)\n");}}
+  else if (inputs.getLimiter() == "pri")   {limiterMethod = 6; if(myid==0){printf("Using primitive reconstruction limiting (per element)\n");}}
   else{limiterMethod = 0; if(myid==0){printf("No limiting\n");}}
 
   // Setup the initial condition type

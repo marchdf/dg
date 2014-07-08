@@ -503,7 +503,7 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
       int fcnt=0;
       for(int i=0; i<N_s; i++){rhoC[i]   = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
       for(int i=0; i<N_s; i++){rhouC[i]  = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
-#ifdef TWOD
+#ifdef TWODi
       for(int i=0; i<N_s; i++){rhovC[i]  = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
 #endif
       for(int i=0; i<N_s; i++){EC[i]     = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
@@ -831,6 +831,114 @@ arch_global void ChangeBasis(int size1, int size2, int N_E, scalar* Transform, s
   }
 }
 
+
+//==========================================================================
+arch_global void Prim2Cons(int N_s, int N_E,  scalar* U){
+  /*!
+    \brief Transform primitive variables to conserved variables
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] U solution to transform
+  */
+#ifdef USE_CPU
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+#elif USE_GPU
+  int e = blockIdx.x*blkE+threadIdx.z;
+  if (e < N_E){
+    int i = threadIdx.x;{
+#endif
+
+      scalar rho=0, u=0, v=0, p=0, alpha=0, beta=0;
+      int fcnt=0;
+
+      // Separate the fields
+      rho  = U[(e*N_F+fcnt)*N_s+i]; fcnt++;
+      u    = U[(e*N_F+fcnt)*N_s+i]; fcnt++;
+#ifdef TWOD
+      v    = U[(e*N_F+fcnt)*N_s+i]; fcnt++;
+#endif
+      p    = U[(e*N_F+fcnt)*N_s+i]; fcnt++;
+      alpha= U[(e*N_F+fcnt)*N_s+i]; fcnt++;
+#ifdef STIFFENED
+      beta  = U[(e*N_F+fcnt)*N_s+i]; fcnt++;
+#endif 
+
+      // Conserved variables
+      fcnt = 0;
+      U[(e*N_F+fcnt)*N_s+i] = rho; fcnt++;
+      U[(e*N_F+fcnt)*N_s+i] = rho*u; fcnt++;
+#ifdef TWOD
+      U[(e*N_F+fcnt)*N_s+i] = rho*v; fcnt++;
+#endif
+      U[(e*N_F+fcnt)*N_s+i] = p*alpha + beta + 0.5*rho*(u*u+v*v); fcnt++;
+
+      // Leave other fields alone except for gamma in conservative form for multifluid
+#ifdef MULTIFLUID
+#ifdef GAMCONS
+      U[(e*N_F+fcnt)*N_s+i] = rho*alpha; fcnt++;
+#endif
+#endif      
+    } // loop on nodes
+  }  // loop on elements
+}
+
+//==========================================================================
+arch_global void Cons2Prim(int N_s, int N_E,  scalar* U){
+  /*!
+    \brief Transform conserved variables to primitive variables
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] U solution to transform
+  */
+#ifdef USE_CPU
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+#elif USE_GPU
+  int e = blockIdx.x*blkE+threadIdx.z;
+  if (e < N_E){
+    int i = threadIdx.x;{
+#endif
+
+      scalar rho=0, rhou=0, rhov=0, E=0, alpha=0, beta=0;
+      int fcnt=0;
+
+      // Separate the fields
+      rho  = U[(e*N_F+fcnt)*N_s+i]; fcnt++;
+      rhou = U[(e*N_F+fcnt)*N_s+i]; fcnt++;
+#ifdef TWOD
+      rhov = U[(e*N_F+fcnt)*N_s+i]; fcnt++;
+#endif
+      E    = U[(e*N_F+fcnt)*N_s+i]; fcnt++;
+      alpha= U[(e*N_F+fcnt)*N_s+i]; fcnt++;
+      
+#ifdef MULTIFLUID
+#ifdef GAMCONS
+      alpha= alpha/rho;
+#endif
+#elif STIFFENED
+      beta  = U[(e*N_F+fcnt)*N_s+i]; fcnt++;
+#endif 
+
+      // Primitive variables
+      fcnt = 0;
+      U[(e*N_F+fcnt)*N_s+i] = rho; fcnt++;
+      U[(e*N_F+fcnt)*N_s+i] = rhou/rho; fcnt++;
+#ifdef TWOD
+      U[(e*N_F+fcnt)*N_s+i] = rhov/rho; fcnt++;
+#endif
+      U[(e*N_F+fcnt)*N_s+i] = (E - beta - 0.5*(rhou*rhou+rhov*rhov)/rho)/alpha; fcnt++;
+
+      // Leave other fields alone except for gamma in conservative form for multifluid
+#ifdef MULTIFLUID
+#ifdef GAMCONS
+      U[(e*N_F+fcnt)*N_s+i] = alpha; fcnt++;
+#endif
+#endif      
+    } // loop on nodes
+  }  // loop on elements
+}
+
 //==========================================================================
 //
 //  Host C functions
@@ -1091,6 +1199,52 @@ void LChangeBasis(int size1, int size2, int N_E, scalar* Transform, scalar* U, s
   ChangeBasis arch_args (size1, size2, N_E, Transform, U, Unew);
 }
 
+extern "C"
+void LPrim2Cons(int N_s, int N_E,  scalar* U){
+  /*!
+    \brief Host C function to launch Prim2Cons kernel.
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] U solution to transform
+    \section Description
+    In GPU mode, launches N_E/blkE blocks of N_s x 1 x blkE
+    threads. blkE controls the number of elements to set on each block
+  */
+#ifdef USE_GPU
+  int div = N_E/blkE;
+  int mod = 0;
+  if (N_E%blkE != 0) mod = 1;
+  dim3 dimBlock(N_s,1,blkE);
+  dim3 dimGrid(div+mod,1);
+#endif
+  
+  Prim2Cons arch_args (N_s, N_E, U);
+}
+
+
+extern "C"
+void LCons2Prim(int N_s, int N_E,  scalar* U){
+  /*!
+    \brief Host C function to launch Cons2Prim kernel.
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] U solution to transform
+    \section Description
+    In GPU mode, launches N_E/blkE blocks of N_s x 1 x blkE
+    threads. blkE controls the number of elements to set on each block
+  */
+#ifdef USE_GPU
+  int div = N_E/blkE;
+  int mod = 0;
+  if (N_E%blkE != 0) mod = 1;
+  dim3 dimBlock(N_s,1,blkE);
+  dim3 dimGrid(div+mod,1);
+#endif
+  
+  Cons2Prim arch_args (N_s, N_E, U);
+}
+
+ 
 //==========================================================================
 //
 //  Internal functions
@@ -1692,3 +1846,4 @@ arch_device void reconstruct_total_energy(int N_s, int N_s1D, int slicenum, scal
 
   EMono = NULL; ELim = NULL;
 }
+

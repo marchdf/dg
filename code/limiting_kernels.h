@@ -31,4 +31,8 @@ extern "C" void Lm2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 extern "C" void Lhrl2D(int N_s, int N_E, int N_G, int N_N, int order, scalar* XYZCen, scalar* powersXYZG, int* neighbors, int* TaylorDxIdx, int* TaylorDyIdx, scalar* weight, scalar refArea, scalar* A, scalar* Alim);
 extern "C" void LChangeBasis(int size1, int size2, int N_E,  scalar* Transform, scalar* U, scalar* Unew);
 
+// Change of variables (conserved to primitive and vice-versa)
+extern "C" void LPrim2Cons(int N_s, int N_E,  scalar* U);
+extern "C" void LCons2Prim(int N_s, int N_E,  scalar* U);
+
 #endif

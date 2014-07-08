@@ -95,6 +95,27 @@ void Limiting::HRlimiting(COMMUNICATOR &communicator, scalar* U){
   _timers.stop_timer(20);
 }
 
+void Limiting::PRlimiting(COMMUNICATOR &communicator, scalar* U){
+  /*!
+    \brief PR limiting function (like HRlimiting but limit the primitive variables)
+    \param[in] communicator communicator object for MPI communications
+    \param[out] U solution to be limited
+  */
+
+  // Transform to primitive variables
+  _timers.start_timer(20);
+  LCons2Prim(_N_s, _N_E, U);
+  _timers.stop_timer(20);
+
+  // Limit primitive variables  
+  HRlimiting(communicator, U);
+
+  // Transform to conserved variables
+  _timers.start_timer(20);
+  LPrim2Cons(_N_s, _N_E, U);
+  _timers.stop_timer(20);
+}
+
 void Limiting::M2limiting(COMMUNICATOR &communicator, scalar* U){
   /*!
     \brief Modified limiting function (see jcp2014)
@@ -562,6 +583,27 @@ void Limiting::HRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U
   }
 #endif
   
+  _timers.stop_timer(20);
+}
+
+void Limiting::PRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U){
+  /*!
+    \brief PR limiting function for limiting each element individually (primitive variables)
+    \param[in] communicator communicator object for MPI communications
+    \param[out] U solution to be limited
+  */
+
+  // Transform to primitive variables
+  _timers.start_timer(20);
+  LCons2Prim(_N_s, _N_E, U);
+  _timers.stop_timer(20);
+  
+  // Limit primitive variables  
+  HRIlimiting(communicator, sensor, U);
+
+  // Transform to conserved variables
+  _timers.start_timer(20);
+  LPrim2Cons(_N_s, _N_E, U);
   _timers.stop_timer(20);
 }
 
