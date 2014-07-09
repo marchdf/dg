@@ -161,7 +161,6 @@ class Limiting
     switch (_method){
     case 1:
     case 5:{
-      printf("hello!\n");
 #ifdef USE_CPU
       _A        = new scalar[_N_s*_N_E*N_F]; 
       _Alim     = new scalar[_N_s*_N_E*N_F];

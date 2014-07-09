@@ -855,6 +855,7 @@ arch_global void Prim2Cons(int N_s, int N_E,  scalar* U){
       // Separate the fields
       rho  = U[(e*N_F+fcnt)*N_s+i]; fcnt++;
       u    = U[(e*N_F+fcnt)*N_s+i]; fcnt++;
+      //u    = U[(e*N_F+fcnt)*N_s+i]/rho; fcnt++;
 #ifdef TWOD
       v    = U[(e*N_F+fcnt)*N_s+i]; fcnt++;
 #endif
@@ -924,6 +925,7 @@ arch_global void Cons2Prim(int N_s, int N_E,  scalar* U){
       fcnt = 0;
       U[(e*N_F+fcnt)*N_s+i] = rho; fcnt++;
       U[(e*N_F+fcnt)*N_s+i] = rhou/rho; fcnt++;
+      //U[(e*N_F+fcnt)*N_s+i] = rhou; fcnt++;
 #ifdef TWOD
       U[(e*N_F+fcnt)*N_s+i] = rhov/rho; fcnt++;
 #endif

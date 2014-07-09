@@ -407,7 +407,7 @@ void init_dg_expogam_multifluid(const int N_s, const int N_E, const fullMatrix<s
   delete[] Q;
 }
 
-void init_dg_shckint_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U){
+void init_dg_shckint_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const double Tf){
 
   scalar ucoord = -2;
   scalar u0 = 0 + ucoord;
@@ -422,18 +422,35 @@ void init_dg_shckint_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar rho01   = 1;
   scalar gamma01 = 1.4;
   scalar c01     = sqrt(gamma01*p0/rho01);
-
+  scalar E01     = p0/(gamma01-1) + 0.5*rho01*u0*u0;
+  
   // Post-shock state (material 1) (see p 101 Toro)
   scalar pratio = 100.0;
-  scalar Ms = sqrt((gamma02+1)/(2.0*gamma02)*100.0 + (gamma02-1)/(2.0*gamma02));   // Shock Mach number (with ratio)
+  scalar Ms = sqrt((gamma02+1)/(2.0*gamma02)*pratio + (gamma02-1)/(2.0*gamma02));   // Shock Mach number (with ratio)
   printf("Ms=%f\n",Ms);
   scalar rho4 = rho02*(gamma02+1) * Ms*Ms/((gamma02-1) * Ms*Ms + 2);
   scalar u4   = (1.0/Ms)*c02*(2*(Ms*Ms-1))/(gamma02+1)+ucoord;
   scalar p4  = pratio*p0;
   scalar gamma4 = gamma02;
-
+  scalar E4 = p4/(gamma4-1) + 0.5*rho4*u4*u4;
+  
   scalar xshock = -0.8;
   scalar xint   = -0.2;
+
+  printf("Post-shock region: rho4=%20.16E, u4=%20.16E, p4=%20.16E, gamma4=%20.16E, E4=%20.16E\n",rho4,u4,p4,gamma4,E4);
+  printf("Pre-shock region (first gas): rho02=%20.16E, u02=%20.16E, p02=%20.16E, gamma02=%20.16E, E02=%20.16E\n",rho02,u0,p0,gamma02,p0/(gamma02-1) + 0.5*rho02*u0*u0);
+  printf("Pre-shock region (second gas): rho01=%20.16E, u01=%20.16E, p01=%20.16E, gamma01=%20.16E, E01=%20.16E\n",rho01,u0,p0,gamma01,E01);
+
+  printf("Fluxes:\n");
+  printf("Left  boundary: rho*u=%20.16E, rho*u*u+p=%20.16E, u*(E+p)=%20.16E\n",  rho4*u4,  rho4*u4*u4+p4,  u4*(E4+p4));
+  printf("Right boundary: rho*u=%20.16E, rho*u*u+p=%20.16E, u*(E+p)=%20.16E\n", rho01*u0, rho01*u0*u0+p0, u0*(E01+p0));
+
+  scalar DM = rho4*u4 - rho01*u0;
+  scalar DP = rho4*u4*u4+p4 - rho01*u0*u0+p0;
+  scalar DE = u4*(E4+p4) - u0*(E01+p0);
+  printf("Expected total mass change (for t_final=%f) = %20.16E\n",Tf,Tf*DM);
+  printf("Expected total momentum change (for t_final=%f) = %20.16E\n",Tf,Tf*DP);
+  printf("Expected total energy change (for t_final=%f) = %20.16E\n",Tf,Tf*DE);
   
   scalar xc=0, x=0;
   scalar rho=0,u=0,p=0,gamma=0,Et=0;
@@ -1451,20 +1468,20 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // Used for the collaboration with R.P. Drake
 
   // Problem parameters
-  if (ic_inputs.size() != 3){
+  if (ic_inputs.size() != 4){
     printf("Wrong initial condition inputs. Exiting\n");
     exit(1);
   }
   scalar Aratio = ic_inputs[0]; // amplitude to wavelength ratio
   scalar Dratio = ic_inputs[1]; // density ratio (units of top fluid density)
   scalar ShearU = ic_inputs[2]; // shear velocity (ratio of the sound speed in top fluid)
-  printf("Aratio=%f, Dratio=%f, ShearU=%f\n",Aratio,Dratio,ShearU);
+  scalar gravity= ic_inputs[3]; 
+  printf("Aratio=%f, Dratio=%f, ShearU=%f, gravity=%f m/s^2\n",Aratio,Dratio,ShearU,gravity);
   
   // Initial condition 
   scalar Lx = 1;            // wavelength
   scalar A0 = Aratio*Lx;    // initial amplitude
   scalar yinterface = 0*Lx; // initial interface position
-  scalar gravity = 0;//-1;
   scalar u=0,v=0,rho=0,p=0,Et=0,gamma=0,alpha=0,Y=0;
 
   // Velocities/pressures in all materials
@@ -1491,7 +1508,8 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar rho_ND = rho01;
   scalar u_ND   = c01;
   scalar p_ND   = rho01*c01*c01;
-  printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f\n",L_ND,rho_ND,u_ND,p_ND);
+  scalar g_ND   = c01*c01;
+  printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f, g_ND=%f\n",L_ND,rho_ND,u_ND,p_ND,g_ND);
 
   // N-D lengths
   A0 = A0/L_ND;
@@ -1500,9 +1518,9 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
   
   // Gravity
 #ifdef ONED
-  constants::GLOBAL_GX = gravity;
+  constants::GLOBAL_GX = gravity/g_ND;
 #elif TWOD
-  constants::GLOBAL_GY = gravity;
+  constants::GLOBAL_GY = gravity/g_ND;
 #endif
 
   scalar xc=0, yc=0, x=0, y=0;
