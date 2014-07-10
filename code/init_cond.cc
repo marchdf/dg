@@ -1468,15 +1468,17 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // Used for the collaboration with R.P. Drake
 
   // Problem parameters
-  if (ic_inputs.size() != 4){
+  if (ic_inputs.size() != 6){
     printf("Wrong initial condition inputs. Exiting\n");
     exit(1);
   }
   scalar Aratio = ic_inputs[0]; // amplitude to wavelength ratio
   scalar Dratio = ic_inputs[1]; // density ratio (units of top fluid density)
   scalar ShearU = ic_inputs[2]; // shear velocity (ratio of the sound speed in top fluid)
-  scalar gravity= ic_inputs[3]; 
-  printf("Aratio=%f, Dratio=%f, ShearU=%f, gravity=%f m/s^2\n",Aratio,Dratio,ShearU,gravity);
+  scalar gravity= ic_inputs[3];
+  int sharp     = (int)ic_inputs[4]; // = 1 if sharp interface / = 0 if diffuse interface
+  scalar delta  = ic_inputs[5]; // diffusion layer thickness 0.08;//0.08;
+  printf("Aratio=%f, Dratio=%f, ShearU=%f, gravity=%f m/s^2, sharp=%d, delta=%f\n",Aratio,Dratio,ShearU,gravity,sharp,delta);
   
   // Initial condition 
   scalar Lx = 1;            // wavelength
@@ -1515,6 +1517,7 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
   A0 = A0/L_ND;
   Lx = Lx/L_ND;
   yinterface = yinterface/L_ND;
+  delta = delta/L_ND;
   
   // Gravity
 #ifdef ONED
@@ -1538,25 +1541,55 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
       y  = XYZNodes(i,e*D+1);
 #endif
 
-      // Sinuidol perturbation
-      if(yc > (A0*sin(2*M_PI*x/Lx-M_PI/2)+yinterface)){ // Top fluid
-      	rho = rho01;
-	u=ShearU*c01;
-	v=u0;
-	gamma = gamma01;
-	alpha = alpha01;
-	Y     = 1;
+      //
+      // Sharp sinusoidal perturbation
+      //
+      if (sharp==1){
+	if(yc > (A0*sin(2*M_PI*x/Lx-M_PI/2)+yinterface)){ // Top fluid
+	  rho = rho01;
+	  u=ShearU*c01;
+	  v=u0;
+	  gamma = gamma01;
+	  alpha = alpha01;
+	  Y     = 1;
+	}
+	else{ // bottom fluid
+	  rho = rho02;
+	  u=-ShearU*c01;
+	  v=u0;
+	  gamma = gamma02;
+	  alpha = alpha02;
+	  Y = 0;
+	}
+	p  = p0 + rho*gravity*y ;
       }
-      else{ // bottom fluid
-      	rho = rho02;
-	u=-ShearU*c01;
-	v=u0;
-      	gamma = gamma02;
-	alpha = alpha02;
-	Y = 0;
-      }
-      p  = p0 + rho*gravity*y ;
+      
+      //
+      // Diffuse sinusoidal perturbation
+      //
+      else{
+	// vertical distance from interface
+	scalar d = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterface)/(2*delta);
+      
+	// Calculate volume fractions
+	scalar vol=0;
+	if      ((d<1)&&(d>0)) vol = exp(log(1e-16)*pow(fabs(d),8));
+	else if (d<=0)         vol = 1;
+	else                   vol = 0;
+      
+	scalar jx  = 1-vol;
+	rho = jx*rho02+(1-jx)*rho01;
+	scalar jy  = jx*rho02/(jx*rho02+(1-jx)*rho01);      // mass fraction
+	scalar jM  = 1/(jy/M02+(1-jy)/M01);                 // total molecular weight
+      
+	scalar alpha = jy*alpha02*jM/M02+(1-jy)*alpha01*jM/M01;
+	gamma = 1+1.0/alpha;
 
+	u =-jx*ShearU*c01 + (1-jx)*ShearU*c01;
+	v = u0;
+	p = p0 + rho*gravity*y ;
+      }
+      
       // Non-dimensionalize and energy calculation
       rho = rho/rho_ND;
       u   = u/u_ND;
