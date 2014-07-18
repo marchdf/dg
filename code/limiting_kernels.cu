@@ -503,7 +503,7 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
       int fcnt=0;
       for(int i=0; i<N_s; i++){rhoC[i]   = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
       for(int i=0; i<N_s; i++){rhouC[i]  = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
-#ifdef TWODi
+#ifdef TWOD
       for(int i=0; i<N_s; i++){rhovC[i]  = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
 #endif
       for(int i=0; i<N_s; i++){EC[i]     = U[(e*N_F+fcnt)*N_s+i];} fcnt++;
