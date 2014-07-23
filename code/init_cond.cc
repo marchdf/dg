@@ -1588,6 +1588,7 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	u =-jx*ShearU*c01 + (1-jx)*ShearU*c01;
 	v = u0;
 	p = p0 + rho*gravity*y ;
+	Y = 1-jx;
       }
       
       // Non-dimensionalize and energy calculation

@@ -593,17 +593,39 @@ void Limiting::PRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U
     \param[out] U solution to be limited
   */
 
-  // Transform to primitive variables
   _timers.start_timer(20);
-  LCons2Prim(_N_s, _N_E, U);
-  _timers.stop_timer(20);
   
-  // Limit primitive variables  
-  HRIlimiting(communicator, sensor, U);
+  // Calculate the sensor
+  sensor.sensing(_neighbors,U);
+
+  // Transform to primitive variables
+  LCons2Prim(_N_s, _N_E, U);
+  
+#ifdef ONED
+
+  // Call limiting function
+  Lhri1D(_N_s, _N_E, _N_N, _neighbors, _N_s, 1, 0, _Lag2Mono, _Mono2Lag, sensor.getSensors(), U, _Utmp);
+  sensor.copy_detected_elements(_Utmp, U);
+
+#elif TWOD
+  if(_cartesian){
+
+    // Call limiting function in x
+    Lhri1D(_N_s, _N_E, _N_N, _neighbors, _N_s1D, _N_s1D, 0, _Lag2MonoX, _MonoX2Lag, sensor.getSensors(), U, _Utmp);
+    sensor.copy_detected_elements(_Utmp, U);
+    
+    // Communicate the elements on different partitions if necessary
+    communicator.CommunicateGhosts(N_F, U);
+
+    // Call limiting function in y
+    Lhri1D(_N_s, _N_E, _N_N, _neighbors, _N_s1D, _N_s1D, 2, _Lag2MonoY, _MonoY2Lag, sensor.getSensors(), U, _Utmp);
+    sensor.copy_detected_elements(_Utmp, U);
+  }
+#endif
 
   // Transform to conserved variables
-  _timers.start_timer(20);
   LPrim2Cons(_N_s, _N_E, U);
+  
   _timers.stop_timer(20);
 }
 

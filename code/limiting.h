@@ -251,7 +251,9 @@ class Limiting
     case 1:
     case 2:
     case 3:
-    case 4:{
+    case 4:
+    case 5:
+    case 6:{
 #ifdef USE_CPU
       _Lag2MonoX   = new scalar[_N_s*_N_s];     Lag2MonoX.copyMatrixToPointer(_Lag2MonoX);                         mem_counter.addToCPUCounter(_N_s*_N_s*sizeof(scalar));
       _Lag2MonoY   = new scalar[_N_s*_N_s];                                                                        mem_counter.addToCPUCounter(_N_s*_N_s*sizeof(scalar));
@@ -372,7 +374,8 @@ class Limiting
     }
       break;
     case 3:
-    case 4:{
+    case 4:
+    case 6:{
       // Some extra modal-nodal transforms
       blasGemm('N','N', _N_s, _N_s, _N_s, 1, _MonoY2Lag, _N_s, _MonoX2MonoY, _N_s, 0.0, _MonoX2Lag, _N_s);
       blasGemm('N','N', _N_s, _N_s, _N_s, 1, _MonoX2MonoY, _N_s, _Lag2MonoX, _N_s, 0.0, _Lag2MonoY, _N_s);
