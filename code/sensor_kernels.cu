@@ -143,7 +143,7 @@ arch_global void calc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bo
 
 	  // Third sensor (contact sensor based on gamma)
 	  if((sensor3)&&(!done_detecting)){
-	    G   = fabs(alphaR-alphaL)/(alphaL+alphaR);
+	    G   = fabs(gammaR-gammaL)/(gammaL+gammaR);
 	    PHI = 2*G/((1+G)*(1+G));
 	    if(PHI>thresh3){
 	      sensors[e]     = 3;
