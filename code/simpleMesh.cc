@@ -26,7 +26,7 @@ bool pairPeriodic(const fullMatrix<double> &meshNodes, std::vector<int> nodes1, 
   */
      
   bool paired = false;
-  double eps = 1e-10;
+  double eps = 1e-9;
   
 #ifdef ONED
   // Get interface x position of interfaces
@@ -60,6 +60,9 @@ bool pairPeriodic(const fullMatrix<double> &meshNodes, std::vector<int> nodes1, 
     ye2 = MAX(ye2,meshNodes(1,nodes2[j]));
   }
 
+  // printf("(xs1,ys1)=(%f,%f) and (xe1,ye1)=(%f,%f)\n",xs1,ys1,xe1,ye1);
+  // printf("(xs2,ys2)=(%f,%f) and (xe2,ye2)=(%f,%f)\n",xs2,ys2,xe2,ye2);
+
   // Make sure not to find myself
   if ((fabs(xs1-xs2)<eps)&&(fabs(xe1-xe2)<eps)&&(fabs(ys1-ys2)<eps)&&(fabs(ye1-ye2)<eps)){ return paired;}
   // vertical interface
@@ -73,7 +76,7 @@ bool pairPeriodic(const fullMatrix<double> &meshNodes, std::vector<int> nodes1, 
     if ((fabs(xs1-xs2)<eps)&&(fabs(xe1-xe2)<eps)){ paired = true;}
   }	  
 #endif
-  
+
   return paired;  
 }
 
@@ -872,6 +875,7 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
   	  // Check if they are paired
   	  bool paired = pairPeriodic(meshNodes, nodes1, nodes2);
   	  if(paired){
+	    if (paired){printf("I paired them.\n");}
   	    interface1._elements[1] = interface2.getElement(0);
   	    interface1._closureId[1] = interface2.getClosureId(0)+nsides;
   	    interface2._elements[1] = interface1.getElement(0);
@@ -956,9 +960,11 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
   //
   for (std::map<std::vector<int>, simpleInterface>::iterator it = interfacesMap.begin(); it != interfacesMap.end(); ++it) {
     simpleInterface & interface = it -> second;
-    //printf("interface el1=%i and el2=%i\n",interface.getElement(0)->getId(),interface.getElement(1)->getId());
+    // printf("interface el1=%i\n",interface.getElement(0)->getId());
+    // printf("          el2=%i\n",interface.getElement(1)->getId());
     if((interface.getElement(0)==NULL)||(interface.getElement(1)==NULL)){
       printf("error in interfaces creation !!!\n");
+      printf("Failed on final check on element el=%i\n",interface.getElement(1)->getId());
       exit(1);
     }
   }

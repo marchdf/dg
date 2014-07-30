@@ -409,7 +409,7 @@ void init_dg_expogam_multifluid(const int N_s, const int N_E, const fullMatrix<s
 
 void init_dg_shckint_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const double Tf){
 
-  scalar ucoord = -2;
+  scalar ucoord = -10;
   scalar u0 = 0 + ucoord;
   scalar p0 = 1;
 

@@ -126,7 +126,7 @@ arch_global void calc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bo
 
 	  // Second sensor (shock sensor from Sreenivas)
 	  if((sensor2)&&(!done_detecting)){
-	    if(((vxL-aL > vx-a) && (vx-a > vxR-aR)) || ((vyL-aL > vy-a) && (vy-a > vyR-aR))){
+	    if(((vxL-aL > vx-a) && (vx-a > vxR-aR)) || ((vxL-aL < vx-a) && (vx-a < vxR-aR)) || ((vyL-aL > vy-a) && (vy-a > vyR-aR))){
 	      PSI = fabs(pR-pL)/(pL+pR);
 	      W   = 2*PSI/((1+PSI)*(1+PSI));
 	      if(W>thresh2){
