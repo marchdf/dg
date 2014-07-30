@@ -38,8 +38,8 @@ arch_global void calc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bo
     if(sensors[e] == 0){
 
       // Initialize
-      scalar rhoL,vxL,vyL=0,alphaL,gammaL,betaL=0,EtL,pL,iL,aL,HL;
-      scalar rhoR,vxR,vyR=0,alphaR,gammaR,betaR=0,EtR,pR,iR,aR,HR;
+      scalar rhoL,vxL,vyL=0,alphaL,gammaL,betaL=0,pinfL=0,EtL,pL,iL,aL,HL;
+      scalar rhoR,vxR,vyR=0,alphaR,gammaR,betaR=0,pinfR=0,EtR,pR,iR,aR,HR;
       scalar RT, vx, vy=0, alpha, gamma, a, i, H, drho, dp, dV2,G,PHI,PSI,W;
 
       // Get variables for this element (call it left)
@@ -62,9 +62,10 @@ arch_global void calc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bo
       alphaL = alphaL/rhoL;
 #endif
       gammaL = 1.0+1.0/alphaL;
+      pinfL = (1-1.0/gammaL)*betaL;
       pL = (gammaL-1)*(EtL - betaL - 0.5*rhoL*(vxL*vxL+vyL*vyL));
       iL = pL*alphaL;
-      aL = sqrt((gammaL*pL)/rhoL);
+      aL = sqrt((gammaL*(pL+pinfL))/rhoL);
       HL = (EtL + pL)/rhoL;
     
       // Loop on neighbors
@@ -93,9 +94,10 @@ arch_global void calc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bo
 	  alphaR = alphaR/rhoR;
 #endif
 	  gammaR = 1.0+1.0/alphaR;
+	  pinfR = (1-1.0/gammaR)*betaR;
 	  pR = (gammaR-1)*(EtR - betaR - 0.5*rhoR*(vxR*vxR+vyR*vyR));
 	  iR = pR*alphaR;
-	  aR = sqrt((gammaR*pR)/rhoR);
+	  aR = sqrt((gammaR*(pR+pinfR))/rhoR);
 	  HR = (EtR + pR)/rhoR;
 
 	  // Roe averages
