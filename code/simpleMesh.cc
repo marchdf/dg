@@ -875,7 +875,6 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
   	  // Check if they are paired
   	  bool paired = pairPeriodic(meshNodes, nodes1, nodes2);
   	  if(paired){
-	    if (paired){printf("I paired them.\n");}
   	    interface1._elements[1] = interface2.getElement(0);
   	    interface1._closureId[1] = interface2.getClosureId(0)+nsides;
   	    interface2._elements[1] = interface1.getElement(0);
