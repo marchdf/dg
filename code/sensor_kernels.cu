@@ -14,7 +14,7 @@
 //==========================================================================
 
 //==========================================================================
-arch_global void calc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bool sensor2, scalar thresh2, int* neighbors, scalar* Uavg, int* sensors){
+arch_global void calc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bool sensor2, scalar thresh2, bool sensor3, scalar thresh3, int* neighbors, scalar* Uavg, int* sensors){
   /*!
     \brief Calculate the sensors kernel
     \param[in] N_E number of elements
@@ -23,6 +23,8 @@ arch_global void calc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bo
     \param[in] thresh1 threshold value for first sensor
     \param[in] sensor2 true if using second sensor
     \param[in] thresh2 threshold value for second sensor
+    \param[in] sensor3 true if using third sensor
+    \param[in] thresh3 threshold value for third sensor
     \param[in] neighbors array of neighbor element indices
     \param[in] Uavg average of solution in element
     \param[out] sensors array to hold the sensor
@@ -138,6 +140,17 @@ arch_global void calc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bo
 	      }
 	    }
 	  } // sensor 2
+
+	  // Third sensor (contact sensor based on gamma)
+	  if((sensor3)&&(!done_detecting)){
+	    G   = fabs(alphaR-alphaL)/(alphaL+alphaR);
+	    PHI = 2*G/((1+G)*(1+G));
+	    if(PHI>thresh3){
+	      sensors[e]     = 3;
+	      sensors[right] = 3; 
+	      done_detecting = true;
+	    }
+	  } // sensor 3
 	}
 
 	// If right < 0 then we are at a interesting boundary (and we
@@ -189,7 +202,7 @@ arch_global void copy_detected(int N_s, int N_E, int* sensors, scalar* Uold, sca
 //
 //==========================================================================
 extern "C"
-void Lcalc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bool sensor2, scalar thresh2, int* neighbors, scalar* Uavg, int* sensors){
+void Lcalc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bool sensor2, scalar thresh2, bool sensor3, scalar thresh3, int* neighbors, scalar* Uavg, int* sensors){
   /*!
     \brief Host C function to launch calc_sensors kernel.
     \param[in] N_E number of elements
@@ -198,6 +211,8 @@ void Lcalc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bool sensor2,
     \param[in] thresh1 threshold value for first sensor
     \param[in] sensor2 true if using second sensor
     \param[in] thresh2 threshold value for second sensor
+    \param[in] sensor3 true if using third sensor
+    \param[in] thresh3 threshold value for third sensor
     \param[in] neighbors array of neighbor element indices
     \param[in] Uavg average of solution in element
     \param[out] sensors array to hold the sensor
@@ -214,7 +229,7 @@ void Lcalc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bool sensor2,
   dim3 dimGrid(div+mod,1);
 #endif
 
-  calc_sensors arch_args (N_E,N_N,sensor1,thresh1,sensor2,thresh2,neighbors,Uavg,sensors);
+  calc_sensors arch_args (N_E,N_N,sensor1,thresh1,sensor2,thresh2,sensor3,thresh3,neighbors,Uavg,sensors);
 };
 
 extern "C"

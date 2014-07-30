@@ -27,7 +27,7 @@ void SENSOR::sensing(int* neighbors, scalar* U){
   blasGemm('N','N', 1, _N_E*N_F, _N_s, one_div_N_s, _ones, 1, U, _N_s, 0.0, _Uavg, 1);
   
   // Call sensor calculation function
-  Lcalc_sensors(_N_E,_N_N,_sensor1,_thresh1,_sensor2,_thresh2,neighbors,_Uavg,_sensors);
+  Lcalc_sensors(_N_E,_N_N,_sensor1,_thresh1,_sensor2,_thresh2,_sensor3,_thresh3,neighbors,_Uavg,_sensors);
 
   _timers.stop_timer(21);
 }

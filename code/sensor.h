@@ -28,6 +28,7 @@ class SENSOR {
   scalar one_div_N_s;
   bool _sensor1; scalar _thresh1;
   bool _sensor2; scalar _thresh2;
+  bool _sensor3; scalar _thresh3;
   bool _isSensor; // true if a sensor is in place
   int* _sensors;
   scalar* _Uavg;
@@ -41,16 +42,18 @@ class SENSOR {
 
     _sensor1=false;
     _sensor2=false;
+    _sensor3=false;
 
     // Thresholds from the input deck
     for(int k=0; k<thresholds.size(); k++){
       if      (k==0){_sensor1 = true;_thresh1 = thresholds[k];}
       else if (k==1){_sensor2 = true;_thresh2 = thresholds[k];}
+      else if (k==2){_sensor3 = true;_thresh3 = thresholds[k];}
     }
 
     // Are there any sensors on?
-    if (_sensor1 || _sensor2){ _isSensor = true;}
-    else                     { _isSensor = false;}
+    if (_sensor1 || _sensor2 || _sensor3){ _isSensor = true;}
+    else                                 { _isSensor = false;}
     
     one_div_N_s = 1.0/(scalar)_N_s;
 #ifdef USE_CPU
