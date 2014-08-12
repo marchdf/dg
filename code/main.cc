@@ -944,7 +944,7 @@ int main (int argc, char **argv)
   scalar* h_ErrInf    = new scalar[N_F]; makeZero(h_ErrInf   , N_F);
   for(int e = 0; e < N_E; e++){
     for(int fc = 0; fc < N_F; fc++){
-      E = h_UinitAvg[e*N_F+fc]-h_UAvg[e*N_F+fc];
+      E = h_UinitAvg[e*N_F+fc]/dx-h_UAvg[e*N_F+fc]/dx;
       h_Err1[fc] += fabs(E);
       h_Err2[fc] += E*E;
       if (h_ErrInf[fc] < fabs(E))  h_ErrInf[fc] = fabs(E);
@@ -954,9 +954,9 @@ int main (int argc, char **argv)
   // Output some stuff in a file to read by post-proc
   std::string error = "error.dat"; 
   FILE *f = fopen(error.c_str(),"w");
-  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_Err1[fc]/N_E);          fprintf(f,"\n");
-  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", sqrt(h_Err2[fc]/N_E));    fprintf(f,"\n");
-  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_ErrInf[fc]);            fprintf(f,"\n");
+  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_Err1[fc]/(double)N_E);          fprintf(f,"\n");
+  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", sqrt(h_Err2[fc]/(double)N_E));    fprintf(f,"\n");
+  fprintf(f,"%12.7f\t", dx); for(int fc = 0; fc < N_F; fc++) fprintf(f,"%20.16E\t", h_ErrInf[fc]);                    fprintf(f,"\n");
   fclose(f);
   
   // Free some stuff
