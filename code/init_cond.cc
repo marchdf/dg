@@ -1545,13 +1545,20 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
       // Sharp sinusoidal perturbation
       //
       if (sharp==1){
-	if(yc > (A0*sin(2*M_PI*x/Lx-M_PI/2)+yinterface)){ // Top fluid
+	if(y > (A0*sin(2*M_PI*x/Lx-M_PI/2)+yinterface)){ // Top fluid
 	  rho = rho01;
 	  u=ShearU*c01;
 	  v=u0;
 	  gamma = gamma01;
 	  alpha = alpha01;
 	  Y     = 1;
+
+	  // Velocity pertubation
+	  scalar thickness = 0.1;
+	  scalar attenuation = exp(-y/thickness);
+	  scalar amplitude = A0*attenuation*2*M_PI/Lx*cos(2*M_PI/Lx*x-M_PI/2);
+	  u = sqrt((u*u)/(1+amplitude*amplitude));
+	  v = amplitude*u;
 	}
 	else{ // bottom fluid
 	  rho = rho02;
@@ -1560,8 +1567,14 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	  gamma = gamma02;
 	  alpha = alpha02;
 	  Y = 0;
+	  // Velocity pertubation
+	  scalar thickness = 0.1;
+	  scalar attenuation = exp(y/thickness);
+	  scalar amplitude = A0*attenuation*2*M_PI/Lx*cos(2*M_PI/Lx*x-M_PI/2);
+	  u = -sqrt((u*u)/(1+amplitude*amplitude));
+	  v = amplitude*u;
 	}
-	p  = p0 + rho*gravity*y ;
+	p  = p0 + rho*gravity*y ;	
       }
       
       //
