@@ -1546,7 +1546,7 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
       //
       if (sharp==1){
 	scalar thickness = 0.1;
-	scalar fatness = 0.5;
+	scalar fatness = 2*A0;
 	scalar attenuation = 2/M_PI*atan((y+0.5*fatness)/thickness)  - 2/M_PI*atan((y-0.5*fatness)/thickness);//exp(-y/thickness);
 	scalar amplitude = A0*attenuation*2*M_PI/Lx*cos(2*M_PI/Lx*x-M_PI/2);
 	if(y > (A0*sin(2*M_PI*x/Lx-M_PI/2)+yinterface)){ // Top fluid
