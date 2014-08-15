@@ -1573,6 +1573,72 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	}
 	p  = p0 + rho*gravity*y ;	
       }
+
+      // Sharp + initial velocity from potential flow
+      else if (sharp==2){
+	scalar omegaR = (rho01*ShearU+rho02*(-ShearU))/(rho01+rho02);
+	scalar omegaI = sqrt(rho01*rho02)/(rho01+rho02)*2*ShearU;
+	scalar k = 2*M_PI/Lx;
+	scalar Us = ShearU*c01;
+	if(y > (A0*sin(2*M_PI*x/Lx-M_PI/2)+yinterface)){ // Top fluid
+	  rho = rho01;
+	  u=ShearU*c01;
+	  v=u0;
+	  gamma = gamma01;
+	  alpha = alpha01;
+	  Y     = 1;
+	  // Velocity pertubation
+	  u = Us + A0*k*exp(-k*y)*( omegaI*sin(k*x)-(Us-omegaR)*cos(k*x));
+	  v = 0  - A0*k*exp(-k*y)*(-omegaI*cos(k*x)-(Us-omegaR)*sin(k*x));
+	}
+	else{ // bottom fluid
+	  rho = rho02;
+	  u=-ShearU*c01;
+	  v=u0;
+	  gamma = gamma02;
+	  alpha = alpha02;
+	  Y = 0;
+	  // Velocity pertubation
+	  u =-Us + A0*k*exp(k*y)*(-omegaI*sin(k*x)-(Us+omegaR)*cos(k*x));
+	  v = 0  + A0*k*exp(k*y)*( omegaI*cos(k*x)-(Us+omegaR)*sin(k*x));
+	}
+	p  = p0 + rho*gravity*y;
+      }
+
+      // Diffuse + initial velocity from potential flow
+      else if (sharp==3){
+	// vertical distance from interface
+	scalar d = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterface)/(2*delta);
+      
+	// Calculate volume fractions
+	scalar vol=0;
+	if      ((d<1)&&(d>0)) vol = exp(log(1e-16)*pow(fabs(d),8));
+	else if (d<=0)         vol = 1;
+	else                   vol = 0;
+      
+	scalar jx  = 1-vol;
+	rho = jx*rho02+(1-jx)*rho01;
+	scalar jy  = jx*rho02/(jx*rho02+(1-jx)*rho01);      // mass fraction
+	scalar jM  = 1/(jy/M02+(1-jy)/M01);                 // total molecular weight
+      
+	scalar alpha = jy*alpha02*jM/M02+(1-jy)*alpha01*jM/M01;
+	gamma = 1+1.0/alpha;
+
+	p = p0 + rho*gravity*y ;
+	Y = 1-jx;
+
+	// Velocity pertubations
+	scalar omegaR = (rho01*ShearU+rho02*(-ShearU))/(rho01+rho02);
+	scalar omegaI = sqrt(rho01*rho02)/(rho01+rho02)*2*ShearU;
+	scalar k = 2*M_PI/Lx;
+	scalar Us = ShearU*c01;
+	scalar up1 = Us + A0*k*exp(-k*y)*( omegaI*sin(k*x)-(Us-omegaR)*cos(k*x));
+	scalar vp1 = 0  - A0*k*exp(-k*y)*(-omegaI*cos(k*x)-(Us-omegaR)*sin(k*x));
+	scalar up2 =-Us + A0*k*exp(k*y)*(-omegaI*sin(k*x)-(Us+omegaR)*cos(k*x));
+	scalar vp2 = 0  + A0*k*exp(k*y)*( omegaI*cos(k*x)-(Us+omegaR)*sin(k*x));
+	u = jx*up2 + (1-jx)*up1;
+	v = jx*vp2 + (1-jx)*vp1;
+      }
       
       //
       // Diffuse sinusoidal perturbation
