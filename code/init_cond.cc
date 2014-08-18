@@ -27,6 +27,165 @@ void init_dg_shallow(const int N_s, const int N_E, const fullMatrix<scalar> &XYZ
   }
 }
 
+void init_dg_tranvtx_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
+
+  // For the High-Order Workshop problem C1.4 in 2014
+  // Vortex transport by uniform flow
+
+  // Problem parameters
+  if (ic_inputs.size() != 3){
+    printf("Wrong initial condition inputs. Exiting\n");
+    exit(1);
+  }
+  scalar M_inf = ic_inputs[0]; // Mach number
+  scalar beta  = ic_inputs[1]; // vortex strength
+  scalar R     = ic_inputs[2]; // characteristic radius
+  printf("M_inf=%f, beta=%f, R=%f\n",M_inf,beta,R);
+  
+  // Initial conditions
+  scalar gamma = constants::GLOBAL_GAMMA;
+  scalar Rgas  = 287.15; // J/kg K
+  scalar p_inf = 1e5;   // N/m^2
+  scalar T_inf  = 300.0; // K
+  scalar rho_inf = p_inf / (Rgas*T_inf);
+  scalar u_inf = M_inf*sqrt(gamma*Rgas*T_inf);
+  scalar Cp = gamma/(gamma-1)*Rgas;
+  printf("gamma=%f, Rgas=%f, p_inf=%f, T_inf=%f, rho_inf=%f, u_inf=%f, Cp=%f\n",gamma,Rgas,p_inf,T_inf,rho_inf,u_inf,Cp);
+
+  scalar XC = 0.05; // x-center of vortex [m]
+  scalar YC = 0.05; // y-center of vortex [m]
+
+  // Non-dimensional parameters
+  scalar L_ND   = 0.1; // use characteristic radius to ND
+  scalar rho_ND = rho_inf;
+  scalar u_ND   = u_inf;
+  scalar p_ND   = rho_inf*u_inf*u_inf;
+  printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f\n",L_ND,rho_ND,u_ND,p_ND);
+
+  // N-D lengths
+  XC = XC/L_ND;
+  YC = YC/L_ND;
+  R  = R/L_ND;
+  
+  scalar rho0=0,T0=0,dT=0,p0=0,u0=0,v0=0,du=0,dv=0,Et0=0,r=0;  
+  scalar xc=0, yc=0, x=0, y=0;
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+      xc = XYZCen(e,0);
+      x  = XYZNodes(i,e*D+0);
+      yc = XYZCen(e,1);
+      y  = XYZNodes(i,e*D+1);
+
+      // perturbation quantities
+      r = sqrt( (x-XC)*(x-XC) + (y-YC)*(y-YC) )/R;
+      du = -(u_inf*beta)*(y-YC)/R*exp(-0.5*r*r);
+      dv =  (u_inf*beta)*(x-XC)/R*exp(-0.5*r*r);
+      dT = 0.5*(u_inf*beta)*(u_inf*beta)*exp(-r*r)/Cp;
+	
+      // initial flow
+      T0 = T_inf-dT;
+      u0 = u_inf+du;
+      v0 =       dv;
+      rho0 = rho_inf*pow(T0/T_inf,1.0/(gamma-1));
+      p0   = rho0*Rgas*T0;
+
+      // Non-dimensionalize and energy calculation
+      rho0 = rho0/rho_ND;
+      u0   = u0/u_ND;
+      v0   = v0/u_ND;
+      p0   = p0/p_ND;
+      Et0  = p0/(gamma-1) + 0.5*rho0*(u0*u0+v0*v0);       
+      
+      // set the initial fields
+      U(i,e*N_F+0) = rho0;
+      U(i,e*N_F+1) = rho0*u0;
+      U(i,e*N_F+2) = rho0*v0;
+      U(i,e*N_F+3) = Et0;
+    }
+  }
+}
+
+void init_dg_tranvtx_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
+
+  // // For the High-Order Workshop problem C1.4 in 2014
+  // // Vortex transport by uniform flow (multifluid version)
+
+  // // Problem parameters
+  // if (ic_inputs.size() != 3){
+  //   printf("Wrong initial condition inputs. Exiting\n");
+  //   exit(1);
+  // }
+  // scalar M_inf = ic_inputs[0]; // Mach number
+  // scalar beta  = ic_inputs[1]; // vortex strength
+  // scalar R     = ic_inputs[2]; // characteristic radius
+  // printf("M_inf=%f, beta=%f, R=%f\n",M_inf,beta,R);
+  
+  // // Initial conditions
+  // scalar gamma = 1.4;
+  // scalar Rgas  = 287.15; // J/kg K
+  // scalar p_inf = 1e5;   // N/m^2
+  // scalar T_inf  = 300.0; // K
+  // scalar rho_inf = p_inf / (Rgas*T_inf);
+  // scalar u_inf = M_inf*sqrt(gamma*Rgas*T_inf);
+  // scalar Cp = gamma/(gamma-1)*Rgas;
+  // printf("gamma=%f, Rgas=%f, p_inf=%f, T_inf=%f, rho_inf=%f, u_inf=%f, Cp=%f\n",gamma,Rgas,p_inf,T_inf,rho_inf,u_inf,Cp);
+
+  // scalar XC = 0.05; // x-center of vortex [m]
+  // scalar YC = 0.05; // y-center of vortex [m]
+
+  // // Non-dimensional parameters
+  // scalar L_ND   = 0.1; // use characteristic radius to ND
+  // scalar rho_ND = rho_inf;
+  // scalar u_ND   = u_inf;
+  // scalar p_ND   = rho_inf*u_inf*u_inf;
+  // printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f\n",L_ND,rho_ND,u_ND,p_ND);
+
+  // // N-D lengths
+  // XC = XC/L_ND;
+  // YC = YC/L_ND;
+  // R  = R/L_ND;
+  
+  // scalar rho0=0,T0=0,dT=0,p0=0,u0=0,v0=0,du=0,dv=0,Et0=0,r=0;  
+  // scalar xc=0, yc=0, x=0, y=0;
+  // for(int e = 0; e < N_E; e++){
+  //   for(int i = 0; i < N_s; i++){
+
+  //     xc = XYZCen(e,0);
+  //     x  = XYZNodes(i,e*D+0);
+  //     yc = XYZCen(e,1);
+  //     y  = XYZNodes(i,e*D+1);
+
+  //     // perturbation quantities
+  //     r = sqrt( (x-XC)*(x-XC) + (y-YC)*(y-YC) )/R;
+  //     du = -(u_inf*beta)*(y-YC)/R*exp(-0.5*r*r);
+  //     dv =  (u_inf*beta)*(x-XC)/R*exp(-0.5*r*r);
+  //     dT = 0.5*(u_inf*beta)*(u_inf*beta)*exp(-r*r)/Cp;
+	
+  //     // initial flow
+  //     T0 = T_inf-dT;
+  //     u0 = u_inf+du;
+  //     v0 =       dv;
+  //     rho0 = rho_inf*pow(T0/T_inf,1.0/(gamma-1));
+  //     p0   = rho0*Rgas*T0;
+  //     Et0  = p0/(gamma-1) + 0.5*rho0*(u0*u0+v0*v0);       
+
+  //     // Non-dimensionalize and energy calculation
+  //     rho0 = rho0/rho_ND;
+  //     u0   = u0/u_ND;
+  //     v0   = v0/u_ND;
+  //     p0   = p0/p_ND;
+  //     Et0  = p0/(gamma-1) + 0.5*rho0*(u0*u0+v0*v0);       
+      
+  //     // set the initial fields
+  //     U(i,e*N_F+0) = rho0;
+  //     U(i,e*N_F+1) = rho0*u0;
+  //     U(i,e*N_F+2) = rho0*v0;
+  //     U(i,e*N_F+3) = Et0;
+  //     U(i,e*N_F+4) = 1/(gamma-1);
+  //   }
+  // }
+}
 
 void init_dg_simplew_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 

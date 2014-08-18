@@ -629,7 +629,7 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
 		       &buffer[Fidx],&buffer[ncidx]);
 #endif // flux if
 
-#ifdef SINGLEFLUID //=========================================================
+#elif SINGLEFLUID //=========================================================
 
 #ifdef RUS
       twod_singlefluid_rusanov(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL

@@ -147,6 +147,7 @@ int main (int argc, char **argv)
   else{limiterMethod = 0; if(myid==0){printf("No limiting\n");}}
 
   // Setup the initial condition type
+  bool tranvtx = false;
   bool simplew = false;
   bool sodtube = false;
   bool contact = false;
@@ -180,6 +181,7 @@ int main (int argc, char **argv)
   bool jetcrss = false;
   bool injectr = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
+  else if (inputs.getInitialCondition()=="tranvtx") tranvtx = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
   else if (inputs.getInitialCondition()=="contact") contact = true;
   else if (inputs.getInitialCondition()=="rhotact") rhotact = true;
@@ -611,9 +613,10 @@ int main (int argc, char **argv)
   fullMatrix<scalar> Us(N_s, N_E*N_F);
   fullMatrix<scalar> Ustar(N_s, N_E*N_F);
 #ifdef SINGLEFLUID
-  
+  if(tranvtx) init_dg_tranvtx_singlefluid(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
 #elif MULTIFLUID
   if     (simplew) init_dg_simplew_multifluid(N_s, N_E, XYZNodes, U);
+  else if(tranvtx) init_dg_tranvtx_multifluid(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
   else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, XYZNodes, U);
   else if(sodmono) init_dg_sodmono_multifluid(N_s, N_E, XYZNodes, U);
   else if(contact) init_dg_contact_multifluid(N_s, N_E, XYZNodes, U);
@@ -859,9 +862,10 @@ int main (int argc, char **argv)
   // Initial condition
   fullMatrix<scalar> Uinit(N_s, N_E*N_F);
 #ifdef SINGLEFLUID
-  
+  if(tranvtx) init_dg_tranvtx_singlefluid(N_s, N_E, XYZNodes, XYZCen, Uinit, inputs.getInitialConditionInputs());
 #elif MULTIFLUID
   if     (simplew) init_dg_simplew_multifluid(N_s, N_E, XYZNodes, Uinit);
+  else if(tranvtx) init_dg_tranvtx_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit, inputs.getInitialConditionInputs());
   else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, XYZNodes, Uinit);
   else if(contact) init_dg_contact_multifluid(N_s, N_E, XYZNodes, Uinit);
   else if(rhotact) init_dg_rhotact_multifluid(N_s, N_E, XYZNodes, Uinit);

@@ -10,6 +10,7 @@
 #include <scalar_def.h>
 #include <math.h>
 #include <macros.h>
+#include <constants.h>
 #include <basic_fluxes.h>
 #include <stdio.h>
 

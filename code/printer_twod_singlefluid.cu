@@ -7,6 +7,7 @@
 #ifdef TWOD
 #ifdef SINGLEFLUID
 #include <printer_kernels.h>
+#include <constants.h>
 
 //==========================================================================
 //
