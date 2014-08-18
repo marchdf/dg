@@ -119,6 +119,20 @@ arch_global void findUPA(const int N_s, const int N_E,  scalar* U, scalar* UPA){
 				  U[(e*N_F+3)*N_s+i],                    // E
 				  constants::GLOBAL_GAMMA);              // gamma
 #endif // dimensions
+
+#elif SINGLEFLUID
+#ifdef ONED
+  UPA[e*N_s+i] = oned_singlefluid_upa(U[(e*N_F+0)*N_s+i],                    // rho
+				      U[(e*N_F+1)*N_s+i]/U[(e*N_F+0)*N_s+i], // u
+				      U[(e*N_F+2)*N_s+i],                    // E
+				      constants::GLOBAL_GAMMA);              // gamma
+#elif TWOD
+  UPA[e*N_s+i] = twod_singlefluid_upa(U[(e*N_F+0)*N_s+i],                    // rho
+				      U[(e*N_F+1)*N_s+i]/U[(e*N_F+0)*N_s+i], // u
+				      U[(e*N_F+2)*N_s+i]/U[(e*N_F+0)*N_s+i], // v
+				      U[(e*N_F+3)*N_s+i],                    // E
+				      constants::GLOBAL_GAMMA);              // gamma
+#endif // dimensions
 #elif MULTIFLUID
 #ifdef ONED
   UPA[e*N_s+i] = oned_multifluid_upa(U[(e*N_F+0)*N_s+i],                    // rho

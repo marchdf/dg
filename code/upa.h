@@ -34,6 +34,26 @@ arch_device scalar twod_passive_upa(scalar rho,
 }
 				  
 #endif // dimensions
+#elif SINGLEFLUID
+#ifdef ONED
+arch_device scalar oned_singlefluid_upa(scalar rho,
+					scalar u,
+					scalar E,
+					scalar gamma){
+  scalar p = (gamma-1)*(E-0.5*rho*u*u);
+  return fabs(u)+sqrt(gamma*p/rho);
+}
+#elif TWOD
+arch_device scalar twod_singlefluid_upa(scalar rho,
+					scalar u,
+					scalar v,
+					scalar E,
+					scalar gamma){
+  scalar p = (gamma-1)*(E-0.5*rho*(u*u+v*v));
+  scalar a = sqrt(gamma*p/rho);
+  return MAX(fabs(u)+a,fabs(v)+a);
+}				  
+#endif // dimensions
 #elif MULTIFLUID
 #ifdef ONED
 arch_device scalar oned_multifluid_upa(scalar rho,

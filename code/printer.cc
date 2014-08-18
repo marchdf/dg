@@ -15,6 +15,10 @@ void PRINTER::set_names(){
   _names.push_back("P");     _fnames.push_back("p");
   _names.push_back("PhiC");  _fnames.push_back("phic");
   _names.push_back("PhiNC"); _fnames.push_back("phinc");
+#elif SINGLEFLUID
+  _names.push_back("Rho");   _fnames.push_back("rho");
+  _names.push_back("Ux");    _fnames.push_back("ux"); 
+  _names.push_back("P");     _fnames.push_back("p");
 #elif MULTIFLUID
   _names.push_back("Rho");   _fnames.push_back("rho");
   _names.push_back("Ux");    _fnames.push_back("ux"); 
@@ -35,6 +39,11 @@ void PRINTER::set_names(){
   _names.push_back("P");     _fnames.push_back("p");
   _names.push_back("PhiC");  _fnames.push_back("phic");
   _names.push_back("PhiNC"); _fnames.push_back("phinc");
+#elif SINGLEFLUID
+  _names.push_back("Rho");   _fnames.push_back("rho");
+  _names.push_back("Ux");    _fnames.push_back("ux");
+  _names.push_back("Uy");    _fnames.push_back("uy"); 
+  _names.push_back("P");     _fnames.push_back("p");
 #elif MULTIFLUID
   _names.push_back("Rho");   _fnames.push_back("rho");
   _names.push_back("Ux");    _fnames.push_back("ux"); 

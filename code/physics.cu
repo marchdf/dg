@@ -7,6 +7,8 @@
 #include <basic_fluxes.h>
 #include <oned_passive_fluxes.h>
 #include <twod_passive_fluxes.h>
+#include <oned_singlefluid_fluxes.h>
+#include <twod_singlefluid_fluxes.h>
 #include <oned_multifluid_fluxes.h>
 #include <twod_multifluid_fluxes.h>
 #include <oned_stiffened_fluxes.h>
@@ -72,6 +74,23 @@ arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug,
       f[((e*N_F+3)*N_G+g)*D+0] = flux_abc(rho,u,Ug[(e*N_F+3)*N_G+g]/rho); // rho*u*phic
       f[((e*N_F+4)*N_G+g)*D+0] = 0;
 
+#elif SINGLEFLUID //=========================================================
+      scalar rho   = Ug[(e*N_F+0)*N_G+g];   
+      scalar u     = Ug[(e*N_F+1)*N_G+g]/rho;  // (rho u / rho) = u
+      scalar Et    = Ug[(e*N_F+2)*N_G+g];
+      scalar gamma = constants::GLOBAL_GAMMA;
+      scalar p = (gamma-1)*(Et - 0.5*rho*u*u);
+     
+      // Source term
+      s[(e*N_F+0)*N_G+g] = 0;
+      s[(e*N_F+1)*N_G+g] = 0;
+      s[(e*N_F+2)*N_G+g] = 0;
+
+      // Flux derive par rapport a x
+      f[((e*N_F+0)*N_G+g)*D+0] = flux_ab(rho,u);       
+      f[((e*N_F+1)*N_G+g)*D+0] = flux_ab2pc(rho,u,p);
+      f[((e*N_F+2)*N_G+g)*D+0] = flux_ab(Et+p,u);
+      
 #elif MULTIFLUID //=========================================================
       scalar rho   = Ug[(e*N_F+0)*N_G+g];   
       scalar u     = Ug[(e*N_F+1)*N_G+g]/rho;  // (rho u / rho) = u
@@ -198,6 +217,32 @@ arch_global void evaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug,
       f[((e*N_F+4)*N_G+g)*D+1] = flux_abc(rho,v,phic);// rho*v*phic
       f[((e*N_F+5)*N_G+g)*D+1] = 0; 
 
+#elif SINGLEFLUID //========================================================
+      scalar rho   = Ug[(e*N_F+0)*N_G+g];   
+      scalar u     = Ug[(e*N_F+1)*N_G+g]/rho;  // (rho u / rho) = u
+      scalar v     = Ug[(e*N_F+2)*N_G+g]/rho;  // (rho v / rho) = v
+      scalar Et    = Ug[(e*N_F+3)*N_G+g];
+      scalar gamma = constants::GLOBAL_GAMMA;
+      scalar p = (gamma-1)*(Et - 0.5*rho*(u*u+v*v));
+
+      // Source term
+      s[(e*N_F+0)*N_G+g] = 0;
+      s[(e*N_F+1)*N_G+g] = 0;
+      s[(e*N_F+2)*N_G+g] = 0;
+      s[(e*N_F+3)*N_G+g] = 0;
+      
+      // Flux derive par rapport a x
+      f[((e*N_F+0)*N_G+g)*D+0] = flux_ab(rho,u);      // rho*u     
+      f[((e*N_F+1)*N_G+g)*D+0] = flux_ab2pc(rho,u,p); // rho*u*u + p
+      f[((e*N_F+2)*N_G+g)*D+0] = flux_abc(rho,u,v);   // rho*u*v
+      f[((e*N_F+3)*N_G+g)*D+0] = flux_ab(Et+p,u);  // u(E+p)
+      
+      // Flux derive par rapport a y
+      f[((e*N_F+0)*N_G+g)*D+1] = flux_ab(rho,v);      // rho*v     
+      f[((e*N_F+1)*N_G+g)*D+1] = flux_abc(rho,u,v);   // rho*u*v
+      f[((e*N_F+2)*N_G+g)*D+1] = flux_ab2pc(rho,v,p); // rho*v*v + p
+      f[((e*N_F+3)*N_G+g)*D+1] = flux_ab(Et+p,v);  // v(E+p)
+      
 #elif MULTIFLUID //========================================================
       scalar rho   = Ug[(e*N_F+0)*N_G+g];   
       scalar u     = Ug[(e*N_F+1)*N_G+g]/rho;  // (rho u / rho) = u
@@ -391,6 +436,36 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
 		       &buffer[Fidx],&buffer[ncidx]);
 #endif // flux if
 
+#elif SINGLEFLUID //=========================================================
+#ifdef RUS
+      oned_singlefluid_rusanov(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			       UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			       UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			       UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			       UgF[((t*N_F+2)*2+0)*M_G+g],                            // EtL
+			       UgF[((t*N_F+2)*2+1)*M_G+g],                            // EtR
+			       normals[t*D+0],                                        // nx
+			       &buffer[Fidx],&buffer[ncidx]);
+#elif HLL
+      oned_singlefluid_hll(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			   UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			   UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			   UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			   UgF[((t*N_F+2)*2+0)*M_G+g],                            // EtL
+			   UgF[((t*N_F+2)*2+1)*M_G+g],                            // EtR
+			   normals[t*D+0],                                        // nx
+			   &buffer[Fidx],&buffer[ncidx]);
+#elif ROE
+      oned_singlefluid_roe(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			   UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			   UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			   UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			   UgF[((t*N_F+2)*2+0)*M_G+g],                            // EtL
+			   UgF[((t*N_F+2)*2+1)*M_G+g],                            // EtR
+			   normals[t*D+0],                                        // nx
+			   &buffer[Fidx],&buffer[ncidx]);
+#endif // flux if
+
 #elif MULTIFLUID //=========================================================
 
 #ifdef RUS
@@ -552,6 +627,46 @@ arch_global void evaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* no
 		       normals[t*D+0],                                        // nx
 		       normals[t*D+1],                                        // ny
 		       &buffer[Fidx],&buffer[ncidx]);
+#endif // flux if
+
+#ifdef SINGLEFLUID //=========================================================
+
+#ifdef RUS
+      twod_singlefluid_rusanov(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			       UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			       UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			       UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			       UgF[((t*N_F+2)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vyL
+			       UgF[((t*N_F+2)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vyR
+			       UgF[((t*N_F+3)*2+0)*M_G+g],                            // EtL
+			       UgF[((t*N_F+3)*2+1)*M_G+g],                            // EtR
+			       normals[t*D+0],                                        // nx
+			       normals[t*D+1],                                        // ny
+			       &buffer[Fidx],&buffer[ncidx]);
+#elif HLL
+      twod_singlefluid_hll(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			   UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			   UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			   UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			   UgF[((t*N_F+2)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vyL
+			   UgF[((t*N_F+2)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vyR
+			   UgF[((t*N_F+3)*2+0)*M_G+g],                            // EtL
+			   UgF[((t*N_F+3)*2+1)*M_G+g],                            // EtR
+			   normals[t*D+0],                                        // nx
+			   normals[t*D+1],                                        // ny
+			   &buffer[Fidx],&buffer[ncidx]);
+#elif ROE
+      twod_singlefluid_roe(UgF[((t*N_F+0)*2+0)*M_G+g],                            // rhoL
+			   UgF[((t*N_F+0)*2+1)*M_G+g],                            // rhoR
+			   UgF[((t*N_F+1)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vxL
+			   UgF[((t*N_F+1)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vxR
+			   UgF[((t*N_F+2)*2+0)*M_G+g]/UgF[((t*N_F+0)*2+0)*M_G+g], // vyL
+			   UgF[((t*N_F+2)*2+1)*M_G+g]/UgF[((t*N_F+0)*2+1)*M_G+g], // vyR
+			   UgF[((t*N_F+3)*2+0)*M_G+g],                            // EtL
+			   UgF[((t*N_F+3)*2+1)*M_G+g],                            // EtR
+			   normals[t*D+0],                                        // nx
+			   normals[t*D+1],                                        // ny
+			   &buffer[Fidx],&buffer[ncidx]);
 #endif // flux if
 
 #elif MULTIFLUID //=========================================================
@@ -793,7 +908,9 @@ arch_global void pressure(int N_s, int N_E, scalar* U, scalar* p){
       scalar rho  = U[(e*N_F+0)*N_s+i];
       scalar rhou = U[(e*N_F+1)*N_s+i];
       scalar E    = U[(e*N_F+2)*N_s+i];
-#ifdef MULTIFLUID
+#ifdef SINGLEFLUID
+      scalar gamma = constants::GLOBAL_GAMMA;
+#elif MULTIFLUID
 #ifdef GAMCONS
       scalar gamma=1.0+rho/U[(e*N_F+3)*N_s+i];
 #elif GAMNCON
@@ -814,7 +931,9 @@ arch_global void pressure(int N_s, int N_E, scalar* U, scalar* p){
       scalar rhou = U[(e*N_F+1)*N_s+i];
       scalar rhov = U[(e*N_F+2)*N_s+i];
       scalar E    = U[(e*N_F+3)*N_s+i];
-#ifdef MULTIFLUID
+#ifdef SINGLEFLUID
+      scalar gamma = constants::GLOBAL_GAMMA;
+#elif MULTIFLUID
 #ifdef GAMCONS
       scalar gamma=1.0+rho/U[(e*N_F+4)*N_s+i];
 #elif GAMNCON

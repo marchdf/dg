@@ -610,7 +610,9 @@ int main (int argc, char **argv)
   fullMatrix<scalar> U(N_s, N_E*N_F);
   fullMatrix<scalar> Us(N_s, N_E*N_F);
   fullMatrix<scalar> Ustar(N_s, N_E*N_F);
-#ifdef MULTIFLUID
+#ifdef SINGLEFLUID
+  
+#elif MULTIFLUID
   if     (simplew) init_dg_simplew_multifluid(N_s, N_E, XYZNodes, U);
   else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, XYZNodes, U);
   else if(sodmono) init_dg_sodmono_multifluid(N_s, N_E, XYZNodes, U);
@@ -856,7 +858,9 @@ int main (int argc, char **argv)
 #ifdef ERROR
   // Initial condition
   fullMatrix<scalar> Uinit(N_s, N_E*N_F);
-#ifdef MULTIFLUID
+#ifdef SINGLEFLUID
+  
+#elif MULTIFLUID
   if     (simplew) init_dg_simplew_multifluid(N_s, N_E, XYZNodes, Uinit);
   else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, XYZNodes, Uinit);
   else if(contact) init_dg_contact_multifluid(N_s, N_E, XYZNodes, Uinit);
@@ -892,7 +896,11 @@ int main (int argc, char **argv)
       // velocity
       h_Uinit[(e*N_F+1)*N_s+i] = h_Uinit[(e*N_F+1)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i]; 
       h_U    [(e*N_F+1)*N_s+i] = h_U    [(e*N_F+1)*N_s+i]/h_U    [(e*N_F+0)*N_s+i];
-#ifdef MULTIFLUID
+#ifdef SINGLEFLUID
+      scalar gamma = constants::GLOBAL_GAMMA;
+      h_Uinit[(e*N_F+2)*N_s+i] = (gamma-1)*(h_Uinit[(e*N_F+2)*N_s+i] - 0.5*h_Uinit[(e*N_F+0)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]*h_Uinit[(e*N_F+1)*N_s+i]); 
+      h_U    [(e*N_F+2)*N_s+i] = (gamma-1)*(h_U    [(e*N_F+2)*N_s+i] - 0.5*h_U    [(e*N_F+0)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]*h_U    [(e*N_F+1)*N_s+i]);
+#elif MULTIFLUID
       // gamma: get everything in terms of 1/(gamma-1)
 #ifdef GAMCONS
       h_Uinit[(e*N_F+3)*N_s+i] = h_Uinit[(e*N_F+3)*N_s+i]/h_Uinit[(e*N_F+0)*N_s+i];
