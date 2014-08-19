@@ -128,7 +128,7 @@ CUDASDK_LIB       := $(CUDA_SDK_PATH)/lib
 # PUT IT ALL TOGETHER
 #
 #================================================================================
-LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) -L$(GSL_LINKER) -L$(GSL_LIB) -L$(CUDASDK_LIB)
+LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) -L$(GSL_LIB) -L$(CUDASDK_LIB)
 INCLUDES          := -I. -I$(BLAS_INC) -I$(LAPACK_INC) -I$(CUDA_INC) -I$(GSL_INC) -I$(CUDASDK_INC)
 LDFLAGS           := $(BLAS_LINKER) $(LAPACK_LINKER) $(CUDA_LINKER) $(CUBLAS_LINKER) $(MATH_LINKER) $(GSL_LINKER)
 CFLAGS 	          := -O3

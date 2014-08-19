@@ -9,3 +9,7 @@ BLAS_LINKER       := -openmp -Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_int
 
 #LAPACK_LINKER     := -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
 LAPACK_LINKER       := -openmp -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_intel_thread.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm #you can control the number of threads: export MKL_NUM_THREADS=#
+
+GSL_INC	          := $(GSL_ROOT)/include
+GSL_LIB           := $(GSL_ROOT)/lib
+
