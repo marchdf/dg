@@ -1,4 +1,4 @@
-# defaults
+# default options
 ARCH=USE_CPU
 PARA=NO_MPI
 PREC=USE_DOUBLE
@@ -17,36 +17,83 @@ CONS=NOCONS
 directories       := . quadratures
 BINNAME           := dg1d
 
-# paths to libs
-CUDA_INSTALL_PATH := /usr/local/cuda
-#CUDA_SDK_PATH     := /home/marchdf/NVIDIA_GPU_Computing_SDK/C
-ifeq ($(LIEU),NYX)
-CUDA_INSTALL_PATH := $(CUDA_ROOT)
-endif
-ifeq ($(LIEU),LONESTAR)
-CUDA_INSTALL_PATH := $(TACC_CUDA_DIR)
-endif
+#================================================================================
+#
+# DEFAULTS AND INITIALIZATION
+#
+#================================================================================
 
-# compilers
+# default compilers
 NVCC              := nvcc
 CXX               := g++
 DEPFLAGS          := -M
+
+# default paths to cuda libs
+CUDA_INSTALL_PATH := .
+CUDA_SDK_PATH     := .
+
+# default blas libs
+BLAS_INC          := .
+BLAS_LIB          := .
+BLAS_LINKER       := -lblas
+
+# default lapack libs
+LAPACK_INC        := . 
+LAPACK_LIB        := .
+LAPACK_LINKER     := -llapack
+
+# default GSL stuff
+GSL_INC	          := .
+GSL_LIB	          := .
+GSL_LINKER        := -lgsl -lgslcblas
+
+# default math lib
+MATH_LINKER       := -lm
+
+# default cuda flags
+ifeq ($(PREC),USE_FLOAT)
+CUFLAGS	          := -arch sm_13
+endif
+ifeq ($(PREC),USE_DOUBLE)
+CUFLAGS	          := -arch sm_20
+endif
+
+# default cublas linker
+CUBLAS_LINKER     :=-lcublas
+
+# Other variable initializations
+TRACE		  := 
+
+#================================================================================
+#
+# INCLUDE MACHINE SPECIFIC FILES
+#
+#================================================================================
+ifeq ($(LIEU),HOME)
+include home.mk
+endif
+
 ifeq ($(LIEU),NYX)
-CXX               := icc
+include nyx.mk
 endif
-ifeq ($(LIEU),LONESTAR)
-CXX               := icc
+
+ifeq ($(LIEU),TACC)
+include tacc.mk
 endif
+
+ifeq ($(LIEU),ANL)
+include anl.mk
+endif
+
+#================================================================================
+#
+# COMMON MODIFIERS TO PREVIOUSLY DEFINED VARIABLES
+#
+#================================================================================
+
+# if you are using MPI, modify the cxx compiler
 ifeq ($(PARA),USE_MPI)
 CXX               := mpicxx
-endif
-ifeq ($(LIEU),ANL)
-CXX               := mpicxx
-DEPFLAGS          := -M
-# If you want to use the xl compilers, uncomment these lines
-#CXX               := mpixlcxx_r	
-#CC                := mpixlc_r
-#DEPFLAGS          := -qmakedep=gcc
 endif
 
 # Profiling with gprof
@@ -67,114 +114,41 @@ ifeq ($(DIMS),THREED)
 DEFINES           := $(DEFINES) -DD=3 -DDF=2
 endif
 
-# blas libs
-BLAS_INC          := . # non-empty vars because XL doesn't like "-I -L "
-BLAS_LIB          := .
-BLAS_LINKER       := -lblas
-ifeq ($(LIEU),NYX)
-#BLAS_LINKER       := -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
-BLAS_LINKER       := -openmp -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_intel_thread.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm #you can control the number of threads: export MKL_NUM_THREADS=#
-endif
-ifeq ($(LIEU),ANL)
-# ALCF Netlib built with XLF - assuming no OpenMP
-XLF_LIBS             := -L$(IBM_MAIN_DIR)/xlf/bg/11.1/bglib -lxlf90_r -lxlfmath -lxl -L$(IBM_MAIN_DIR)/xlsmp/bg/1.7/bglib -lxlomp_ser -lpthread
-BLAS_LIB        := /soft/apps/current/BLAS
-BLAS_LINKER     := -lblas_bgp $(XLF_LIBS)
-# ESSL - assuming OpenMP but not using threaded BLAS (since it is slower for smaller operations)
-#XLF_LIBS          := -L$(IBM_MAIN_DIR)/xlf/bg/11.1/bglib -lxlf90_r -lxlfmath -lxl -L$(IBM_MAIN_DIR)/xlsmp/bg/1.7/bglib -lxlsmp -lpthread
-#BLAS_LIB          := /soft/apps/ESSL-4.4.1-1/lib
-#BLAS_LINKER       := -lesslbg $(XLF_LIBS)
-endif
-ifeq ($(LIEU),LONESTAR)
-BLAS_INC	  := -I$(TACC_MKL_INC)
-BLAS_LIB	  := -L$(TACC_MKL_LIB)
-BLAS_LINKER       := -Wl,-rpath,$(TACC_MKL_LIB) -L$(TACC_MKL_LIB) -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -Wl,--end-group -lpthread
-endif
-
-
-# lapack libs
-LAPACK_INC        := . # non-empty vars because XL doesn't like "-I -L "
-LAPACK_LIB        := .
-LAPACK_LINKER     := -llapack
-ifeq ($(LIEU),NYX)
-#LAPACK_LINKER     := -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
-LAPACK_LINKER       := -openmp -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_intel_thread.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm #you can control the number of threads: export MKL_NUM_THREADS=#
-endif
-ifeq ($(LIEU),ANL)
-LAPACK_LIB        := /soft/apps/current/LAPACK
-# ALCF Netlib built with XLF
-LAPACK_LINKER     := -llapack_bgp
-# ESSL - linker acts left-to-right so this will pick up ESSL LAPACK symbols first then grab Netlib ones if the app needs some that are missing in ESSL
-#LAPACK_LINKER     := -lesslbg -llapack_bgp
-# This is the wrong way to do things if one is calling the handful of functions in ESSL that have the same name (symbol) but different call syntax than LAPACK
-# _gesvd is a function that seems to require LAPACK be linked first
-endif
-ifeq ($(LIEU),LONESTAR)
-LAPACK_INC	  := -I$TACC_MKL_INC
-LAPACK_LIB	  := -L$TACC_MKL_LIB
-LAPACK_LINKER     := -Wl,-rpath,$TACC_MKL_LIB -L$TACC_MKL_LIB -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -Wl,--end-group -lpthread
-endif
-
 # cuda libs
 CUDA_INC          := $(CUDA_INSTALL_PATH)/include
 CUDA_LIB          := $(CUDA_INSTALL_PATH)/lib64
 CUDA_LINKER       :=-lcudart
 
 # cuda sdk libs
-#CUDASDK_INC       := $(CUDA_SDK_PATH)/common/inc
-#CUDASDK_LIB       := $(CUDA_SDK_PATH)/lib
+CUDASDK_INC       := $(CUDA_SDK_PATH)/common/inc
+CUDASDK_LIB       := $(CUDA_SDK_PATH)/lib
 
-# cutil
-#CUTIL_LINKER      :=-lcutil_x86_64
-
-# cublas
-CUBLAS_LINKER     :=-lcublas
-
-
-# For ALCF/ANL HPCTW profiling
-TRACE		  := 
-ifeq ($(LIEU),ANL)
-ifeq ($(PROF),ON)
-TRACE		  := -L/soft/apps/current/ibm-hpct/lib -lmpitrace -llicense -lgetarg -L/soft/apps/ibmcmp-jan2013/vac/bg/9.0/bglib -L/soft/apps/ibmcmp-jan2013/vacpp/bg/9.0/bglib -lxlopt -lxl -libmc++
-endif
-endif
-
-# GSL stuff
-GSL_LINKER        := -lgsl -lgslcblas
-GSL_LINK          := .
-GSL_LIB	          := .
-GSL_INC	          := .
-ifeq ($(LIEU),LONESTAR)
-GSL_LIB           := $(TACC_GSL_LIB)
-GSL_INC	          := $(TACC_GSL_INC)
-endif
-
-
-# All together
-LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) -L$(GSL_LINK) -L$(GSL_LIB) #-L$(CUDASDK_LIB)
-INCLUDES          += -I. -I$(BLAS_INC) -I$(LAPACK_INC) -I$(GSL_INC)
-
-MATH_LIB          := -lm
-LDFLAGS           := $(LAPACK_LINKER) $(BLAS_LINKER) $(MATH_LIB) $(GSL_LINKER)
+#================================================================================
+#
+# PUT IT ALL TOGETHER
+#
+#================================================================================
+LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) -L$(GSL_LINKER) -L$(GSL_LIB) -L$(CUDASDK_LIB)
+INCLUDES          := -I. -I$(BLAS_INC) -I$(LAPACK_INC) -I$(CUDA_INC) -I$(GSL_INC) -I$(CUDASDK_INC)
+LDFLAGS           := $(BLAS_LINKER) $(LAPACK_LINKER) $(CUDA_LINKER) $(CUBLAS_LINKER) $(MATH_LINKER) $(GSL_LINKER)
 CFLAGS 	          := -O3
 CXXFLAGS          := -I. -O3 $(DEFINES)
+CUFLAGS	          := $(CUFLAGS) $(DEFINES) --ptxas-options=-v
+
+
+# .cu compiler
 ifeq ($(ARCH),USE_GPU)
-INCLUDES          += -I. -I$(CUDA_INC) #-I$(CUDASDK_INC)
-LDFLAGS           := $(LDFLAGS) $(CUDA_LINKER) $(CUBLAS_LINKER)
-CUFLAGS	          := --ptxas-options=-v $(DEFINES)
+CUCOMPILER := $(NVCC) $(CUFLAGS) 
+endif
+ifeq ($(ARCH),USE_CPU)
+CUCOMPILER := $(CXX) $(CXXFLAGS) -x c++ 
 endif
 
-
-ifeq ($(PREC),USE_FLOAT)
-CUFLAGS	          := $(CUFLAGS) -arch sm_13
-endif
-ifeq ($(PREC),USE_DOUBLE)
-CUFLAGS	          := $(CUFLAGS) -arch sm_20
-endif
-
-ifeq ($(LIEU),LONESTAR)
-CUFLAGS          := --ptxas-options=-v $(DEFINES) -arch=compute_20 -code=sm_20
-endif
+#================================================================================
+#
+# ACTUAL MAKE COMMANDS. TRY NOT TO MODIFY BELOW THIS SECTION
+#
+#================================================================================
 
 .DELETE_ON_ERROR: *.o
 .IGNORE: *.h
@@ -186,15 +160,11 @@ DEPENDENCIES_DIR?=dependencies
 ODIR:=objects
 DDIR:=dependencies
 
-
 srcc:=$(subst ./,,$(basename $(foreach dir,$(directories),$(wildcard $(dir)/*.c) $(wildcard $(dir)/*.cc))))
-ifneq ($(LIEU),ANL)
 srcu:=$(subst ./,,$(basename $(foreach dir,$(directories),$(wildcard $(dir)/*.cu))))
-endif
 srch:=$(foreach dir,$(directories),$(wildcard $(dir)/*.h))
 deps:=$(foreach file,$(srcc) $(srcu),$(DDIR)/$(file).d)
 objs:=$(foreach file,$(srcc) $(srcu),$(ODIR)/$(file).o)
-
 
 $(DDIR)/%.d : %.cc
 	@echo "Dependencies of $*.cc"
@@ -206,20 +176,12 @@ $(DDIR)/%.d : %.c
 	@mkdir -p $(@D)
 	@$(CC)  $(INCLUDES) $(CXXFLAGS) $(CFLAGS) $(DEPFLAGS) $< |sed 's|$(<F:.c=\.o)|$(ODIR)/$*.o $@|'>$@	
 
-ifneq ($(LIEU),ANL)
 $(DDIR)/%.d : %.cu
 	@echo "Dependencies of $<"
 	@mkdir -p $(@D)
-ifeq ($(ARCH),USE_GPU)
-	@$(NVCC) $(INCLUDES) $(CUFLAGS) $(DEPFLAGS) $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o $@|'>$@
-endif
-ifeq ($(ARCH),USE_CPU)
-	@$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ $(DEPFLAGS) $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$@
-endif
-endif
+	@$(CUCOMPILER) $(INCLUDES) $(DEPFLAGS) $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o $@|'>$@
 
 all: $(BINNAME)
-
 
 sinclude $(deps)
 %.h :
@@ -237,23 +199,11 @@ $(ODIR)/%.o : %.cc
 	@echo "Compilation of $<"
 	$(CXX) $(INCLUDES) $(CXXFLAGS) -c $< -o $@
 
-ifneq ($(LIEU),ANL)
 $(ODIR)/%.o : %.cu
 	@mkdir -p $(@D)
-ifeq ($(ARCH),USE_GPU)
-	@$(NVCC) $(INCLUDES) $(CUFLAGS) $(DEPFLAGS) $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
-endif
-ifeq ($(ARCH),USE_CPU)
-	@$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ $(DEPFLAGS) $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
-endif
+	@$(CUCOMPILER) $(INCLUDES) $(DEPFLAGS) $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o |'>$(DDIR)/$(<:.cu=.d)
 	@echo "Compilation of $<"
-ifeq ($(ARCH),USE_GPU)
-	$(NVCC) $(INCLUDES) $(CUFLAGS) -c $< -o $@
-endif
-ifeq ($(ARCH),USE_CPU)
-	$(CXX) $(INCLUDES) $(CXXFLAGS) -x c++ -c $< -o $@
-endif
-endif
+	@$(CUCOMPILER) $(INCLUDES) -c $< -o $@
 
 $(BINNAME) : $(objs)
 	@echo "Link of $@"
