@@ -23,12 +23,18 @@ CUDA_INSTALL_PATH := /usr/local/cuda
 ifeq ($(LIEU),NYX)
 CUDA_INSTALL_PATH := $(CUDA_ROOT)
 endif
+ifeq ($(LIEU),LONESTAR)
+CUDA_INSTALL_PATH := $(TACC_CUDA_DIR)
+endif
 
 # compilers
 NVCC              := nvcc
 CXX               := g++
 DEPFLAGS          := -M
 ifeq ($(LIEU),NYX)
+CXX               := icc
+endif
+ifeq ($(LIEU),LONESTAR)
 CXX               := icc
 endif
 ifeq ($(PARA),USE_MPI)
@@ -48,7 +54,6 @@ ifeq ($(PROF),ON)
 CXX               := $(CXX) -pg
 CC                := $(CC) -pg
 endif
-
 
 # defines
 DEFINES           := -DHAVE_BLAS -DHAVE_LAPACK -D$(ARCH) -D$(LIEU) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS) -D$(PARA) -DN_Y=$(MASS) -DN_F=$(NFLD) -D$(ERRR) -D$(CONS)
@@ -80,6 +85,12 @@ BLAS_LINKER     := -lblas_bgp $(XLF_LIBS)
 #BLAS_LIB          := /soft/apps/ESSL-4.4.1-1/lib
 #BLAS_LINKER       := -lesslbg $(XLF_LIBS)
 endif
+ifeq ($(LIEU),LONESTAR)
+BLAS_INC	  := -I$(TACC_MKL_INC)
+BLAS_LIB	  := -L$(TACC_MKL_LIB)
+BLAS_LINKER       := -Wl,-rpath,$(TACC_MKL_LIB) -L$(TACC_MKL_LIB) -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -Wl,--end-group -lpthread
+endif
+
 
 # lapack libs
 LAPACK_INC        := . # non-empty vars because XL doesn't like "-I -L "
@@ -97,6 +108,11 @@ LAPACK_LINKER     := -llapack_bgp
 #LAPACK_LINKER     := -lesslbg -llapack_bgp
 # This is the wrong way to do things if one is calling the handful of functions in ESSL that have the same name (symbol) but different call syntax than LAPACK
 # _gesvd is a function that seems to require LAPACK be linked first
+endif
+ifeq ($(LIEU),LONESTAR)
+LAPACK_INC	  := -I$TACC_MKL_INC
+LAPACK_LIB	  := -L$TACC_MKL_LIB
+LAPACK_LINKER     := -Wl,-rpath,$TACC_MKL_LIB -L$TACC_MKL_LIB -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -Wl,--end-group -lpthread
 endif
 
 # cuda libs
@@ -125,13 +141,17 @@ endif
 
 # GSL stuff
 GSL_LINKER        := -lgsl -lgslcblas
-ifeq ($(LIEU),HOME)
 GSL_LINK          := .
+GSL_LIB	          := .
 GSL_INC	          := .
+ifeq ($(LIEU),LONESTAR)
+GSL_LIB           := $(TACC_GSL_LIB)
+GSL_INC	          := $(TACC_GSL_INC)
 endif
 
+
 # All together
-LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) -L$(GSL_LINK) #-L$(CUDASDK_LIB)
+LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) -L$(GSL_LINK) -L$(GSL_LIB) #-L$(CUDASDK_LIB)
 INCLUDES          += -I. -I$(BLAS_INC) -I$(LAPACK_INC) -I$(GSL_INC)
 
 MATH_LIB          := -lm
@@ -152,6 +172,9 @@ ifeq ($(PREC),USE_DOUBLE)
 CUFLAGS	          := $(CUFLAGS) -arch sm_20
 endif
 
+ifeq ($(LIEU),LONESTAR)
+CUFLAGS          := --ptxas-options=-v $(DEFINES) -arch=compute_20 -code=sm_20
+endif
 
 .DELETE_ON_ERROR: *.o
 .IGNORE: *.h
