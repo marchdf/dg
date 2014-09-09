@@ -1866,7 +1866,7 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // This is a two-interface problem
 
   // Problem parameters
-  if (ic_inputs.size() != 6){
+  if (ic_inputs.size() != 7){
     printf("Wrong initial condition inputs. Exiting\n");
     exit(1);
   }
@@ -1875,8 +1875,9 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar Dratiot= ic_inputs[2]; // density ratio of top (units of middle fluid density)
   scalar Dratiob= ic_inputs[3]; // density ratio of bottom fluid (units of middle fluid density)
   scalar ShearU = ic_inputs[4]; // shear velocity (ratio of the sound speed in top fluid)
-  scalar gravity= ic_inputs[5]; 
-  printf("Aratio=%f, Thick=%f, Dratiot=%f, Dratiob=%f, ShearU=%f, gravity=%f m/s^2\n",Aratio,Thick,Dratiot,Dratiob,ShearU,gravity);
+  scalar gravity= ic_inputs[5];
+  scalar delta  = ic_inputs[6]; // diffusion layer thickness
+  printf("Aratio=%f, Thick=%f, Dratiot=%f, Dratiob=%f, ShearU=%f, gravity=%f m/s^2, delta=%f\n",Aratio,Thick,Dratiot,Dratiob,ShearU,gravity,delta);
   
   // Initial condition 
   scalar Lx = 1;            // wavelength
@@ -1901,12 +1902,14 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar rho0t   = rho01*Dratiot;
   scalar gamma0t = gamma01;
   scalar alpha0t = 1/(gamma0t-1);
-
+  scalar M0t     = M01;
+  
   // Bottom fluid
   scalar rho0b   = rho01*Dratiob;
   scalar gamma0b = gamma01;
   scalar alpha0b = 1/(gamma0b-1);
-
+  scalar M0b     = M01;
+  
   // Non-dimensional parameters
   scalar L_ND   = Lx; // use wavelength to non-dimensionalize
   scalar rho_ND = rho01;
@@ -1943,35 +1946,33 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
       y  = XYZNodes(i,e*D+1);
 #endif
 
-      // Top fluid
-      if(yc > (A0*sin(2*M_PI*x/Lx-M_PI/2)+yinterfacet)){ 
-      	rho = rho0t;
-	u=ShearU*c01;
-	v=u0;
-	gamma = gamma0t;
-	alpha = alpha0t;
-	Y     = 0;
-      }
+      scalar d1 = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterfacet)/(2*delta);
+      scalar d2 = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterfaceb)/(2*delta);
+      scalar vol1=0;
+      scalar vol2=0;
 
-      // bottom fluid
-      else if (yc < (A0*sin(2*M_PI*x/Lx-M_PI/2)+yinterfaceb)){
-      	rho = rho0b;
-	u=-ShearU*c01;
-	v=u0;
-      	gamma = gamma0b;
-	alpha = alpha0b;
-	Y = 0;
-      }
-
-      // middle fluid (with velocity ramp)
+      if      (d1<=0)            { vol1 = 1; vol2 = 0;}
+      else if ((0<d1)&&(d1<1))   { vol1 = exp(log(1e-16)*pow(fabs(d1),8)); vol2 = 1-vol1;}
       else{
-	rho = rho01;
-	u= ShearU*c01/(yinterfacet)*y;
-	v=u0;
-      	gamma = gamma01;
-	alpha = alpha01;
-	Y = 1;
-      }      
+	if      (d2<=0)          { vol1 = 0; vol2 = 1;}
+	else if ((0<d2)&&(d2<1)) { vol1 = 0; vol2 = exp(log(1e-16)*pow(fabs(d2),8));}
+	else                     { vol1 = 0; vol2 = 0;}
+      }
+
+      scalar j0t = vol1;
+      scalar j01 = vol2;
+      scalar j0b = 1 - vol1 - vol2;
+      scalar rho = j0t*rho0t+j01*rho01+j0b*rho0b;
+      scalar Y0t  = j0t*rho0t/rho;       // mass fraction
+      scalar Y01  = j01*rho01/rho;
+      scalar Y0b  = j0b*rho0b/rho;
+      scalar M    = 1/(Y0t/M0t+Y01/M01+Y0b/M0b); // total molecular weight
+      scalar alpha = Y0t*alpha0t*M/M0t+Y01*alpha01*M/M01+Y0b*alpha0b*M/M0b;
+      scalar gamma = 1+1.0/alpha;
+
+      // Other quantities
+      u  = j0t*(ShearU*c01) + j01*(ShearU*c01/yinterfacet)*y + j0b*(-ShearU*c01);
+      v  = u0;
       p  = p0 + rho*gravity*y ;
 
       // Non-dimensionalize and energy calculation
@@ -1992,7 +1993,8 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
       U(i,e*N_F+1) = rho*v;
       U(i,e*N_F+2) = Et ;
       U(i,e*N_F+3) = alpha;
-      U(i,e*N_F+4) = rho*Y;
+      U(i,e*N_F+4) = rho*Y0t;
+      U(i,e*N_F+5) = rho*Y01;
       
 #elif TWOD
       U(i,e*N_F+0) = rho;
@@ -2000,7 +2002,8 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
       U(i,e*N_F+2) = rho*v;
       U(i,e*N_F+3) = Et ;
       U(i,e*N_F+4) = alpha;
-      U(i,e*N_F+5) = rho*Y;
+      U(i,e*N_F+5) = rho*Y0t;
+      U(i,e*N_F+6) = rho*Y01;
 #endif 
     }
   }
