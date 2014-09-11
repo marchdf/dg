@@ -10,7 +10,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
 			int N_E, int N_s, int N_G, int M_T, int M_s, int N_ghosts,
 			scalar* h_Minv, 
 			scalar* h_U,
-			Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator, PRINTER &printer, SENSOR &sensor, TIMERS &timers, MEM_COUNTER &mem_counter){
+			Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator, PRINTER &printer, SENSOR &sensor, TIMERS &timers, MEM_COUNTER &mem_counter, LAGRANGE_PARTICLES &particles){
   /*!
     \brief Main RK integration function
     \param[in] DtOut output time step
@@ -31,6 +31,9 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
     \param[in] communicator communicator object
     \param[in] printer printer object
     \param[in] sensor sensor object
+    \param[in] timers timers object
+    \param[in] mem_counter memory counter object
+    \param[in] particles lagrange particles object
   */
 
   // Arrays
@@ -149,6 +152,10 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
       /* if ((n+1)==1000) {done = true;} */
     }
     timers.stop_timer(4);
+
+    // Advect the particles over that delta t step using the velocity at
+    // the current time step
+    if(particles.haveParticles()){particles.advectParticles(Dt, arch(U));}
     
     // Us = U
     blasCopy(N_F*N_s*N_E, arch(U), 1, _Us, 1);

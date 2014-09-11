@@ -36,6 +36,7 @@
 #include <sensor.h>
 #include <mem_counter.h>
 #include <timers.h>
+#include <lagrange_particles.h>
 
 //
 // Function prototypes
@@ -798,6 +799,13 @@ int main (int argc, char **argv)
 
   //////////////////////////////////////////////////////////////////////////   
   //
+  // Lagrange particles setup
+  //
+  //////////////////////////////////////////////////////////////////////////
+  LAGRANGE_PARTICLES particles(timers, mem_counter, m, XYZNodes, N_T, N_N, N_E, inputs.getLagrangeParticles());
+
+  //////////////////////////////////////////////////////////////////////////   
+  //
   // Setup the limiter
   //
   //////////////////////////////////////////////////////////////////////////
@@ -850,7 +858,7 @@ int main (int argc, char **argv)
   		     N_E, N_s, N_G, M_T, M_s, N_ghosts,
   		     h_Minv, 
   		     h_U,
-  		     Limiter, order0, dgsolver, communicator, printer, sensor, timers, mem_counter);
+  		     Limiter, order0, dgsolver, communicator, printer, sensor, timers, mem_counter,particles);
 
   //////////////////////////////////////////////////////////////////////////   
   //

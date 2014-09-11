@@ -1802,7 +1802,7 @@ arch_device void internal_energy(int N_s1D, int slicenum, scalar* p, scalar* g, 
 
 
 arch_device void reconstruct_total_energy(int N_s, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* rhoeLim, scalar* KLim, scalar* tmp, scalar* E){
-    /*!
+  /*!
     \brief Reconstruct the energy lagrange polynomial for an individual element
     \param[in] N_s number of nodes per element
     \param[in] N_s1D number of nodes per slice

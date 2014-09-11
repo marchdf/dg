@@ -43,6 +43,7 @@ void deck::readDeck(const char *fileName)
     else if (line=="#limiter")                          {getline(input,_limiter); cnt++;}
     else if (line=="#initial condition")                {input>>_ic; cnt++; double t; while(input>> t){_ic_inputs.push_back(t);} input.clear();}
     else if (line=="#sensor thresholds")                {double t; while(input>> t){_thresholds.push_back(t);} input.clear();}
+    else if (line=="#lagrange particles")               {double t; while(input>> t){_lagrange_particles.push_back(t);} input.clear();}
     else if (line=="#restart step")                     {input>>_restart_step; getline(input,line);}
     else{
       std::cout<<"Unrecognized option in deck: "<< line << std::endl;

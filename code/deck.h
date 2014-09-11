@@ -26,6 +26,7 @@ class deck {
   std::string _ic;
   std::vector<double> _ic_inputs;  
   std::vector<double> _thresholds;
+  std::vector<double> _lagrange_particles;
   int _restart_step;
   
  public:
@@ -42,6 +43,7 @@ class deck {
   inline std::string getInitialCondition() {/*!Return initial condition*/return _ic;}
   inline const std::vector<double> & getInitialConditionInputs() const {/*!Return initial condition inputs*/return _ic_inputs;}
   inline const std::vector<double> & getThresholds() const {/*!Return thresholds*/return _thresholds;}
+  inline const std::vector<double> & getLagrangeParticles() const {/*!Return Lagrange particles*/return _lagrange_particles;}
   inline int getRestartStep()  {/*!Return restart step*/ return _restart_step;}
   void readDeck(const char *fileName);
 };

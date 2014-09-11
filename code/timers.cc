@@ -48,6 +48,10 @@ void TIMERS::set_timer_names(){
   _names.push_back("write_output time");       // timer 24
   _names.push_back("format_sensor time");      // timer 25
   _names.push_back("write_sensor time");       // timer 26
+  _names.push_back("write_particles time");    // timer 27
+  
+  // Lagrange particle routines
+  _names.push_back("advect_particles time");   // timer 28
 }
 
 void TIMERS::start_timer(int k){
