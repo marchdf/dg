@@ -1871,13 +1871,13 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
     exit(1);
   }
   scalar Aratio = ic_inputs[0]; // amplitude to wavelength ratio
-  scalar Thick  = ic_inputs[1]; // thickness of layer (in wavelength units)
-  scalar Dratiot= ic_inputs[2]; // density ratio of top (units of middle fluid density)
-  scalar Dratiob= ic_inputs[3]; // density ratio of bottom fluid (units of middle fluid density)
+  scalar Thick  = ic_inputs[1]; // half-thickness of layer (in wavelength units)
+  scalar rho0t  = ic_inputs[2]; // density top fluid (SI units)
+  scalar rho0b  = ic_inputs[3]; // density bottom fluid (SI units)
   scalar ShearU = ic_inputs[4]; // shear velocity (ratio of the sound speed in top fluid)
   scalar gravity= ic_inputs[5];
   scalar delta  = ic_inputs[6]; // diffusion layer thickness
-  printf("Aratio=%f, Thick=%f, Dratiot=%f, Dratiob=%f, ShearU=%f, gravity=%f m/s^2, delta=%f\n",Aratio,Thick,Dratiot,Dratiob,ShearU,gravity,delta);
+  printf("Aratio=%f, Thick=%f, rho0t=%f, rho0b=%f, ShearU=%f, gravity=%f m/s^2, delta=%f\n",Aratio,Thick,rho0t,rho0b,ShearU,gravity,delta);
   
   // Initial condition 
   scalar Lx = 1;            // wavelength
@@ -1892,20 +1892,18 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar p0 = 1e5;
   
   //middle fluid
-  scalar rho01 = 1;
+  scalar rho01   = 0.5*(rho0t+rho0b);
   scalar gamma01 = 5.0/3.0;
   scalar alpha01 = 1/(gamma01-1);
   scalar c01     = sqrt(gamma01*p0/rho01); // sound speed
   scalar M01     = 34.76; // molecular weight
   
   // Top fluid
-  scalar rho0t   = rho01*Dratiot;
   scalar gamma0t = gamma01;
   scalar alpha0t = 1/(gamma0t-1);
   scalar M0t     = M01;
   
   // Bottom fluid
-  scalar rho0b   = rho01*Dratiob;
   scalar gamma0b = gamma01;
   scalar alpha0b = 1/(gamma0b-1);
   scalar M0b     = M01;
@@ -1946,8 +1944,10 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
       y  = XYZNodes(i,e*D+1);
 #endif
 
-      scalar d1 = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterfacet)/(2*delta);
-      scalar d2 = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterfaceb)/(2*delta);
+      scalar zeta0t = A0*sin(2*M_PI*x/Lx-M_PI/2);
+      scalar zeta0b = A0*sin(2*M_PI*x/Lx-M_PI/2);
+      scalar d1 = (delta+zeta0t-y+yinterfacet)/(2*delta);
+      scalar d2 = (delta+zeta0b-y+yinterfaceb)/(2*delta);
       scalar vol1=0;
       scalar vol2=0;
 
@@ -1971,7 +1971,11 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
       scalar gamma = 1+1.0/alpha;
 
       // Other quantities
-      u  = j0t*(ShearU*c01) + j01*(ShearU*c01/yinterfacet)*y + j0b*(-ShearU*c01);
+      scalar Um = ShearU*c01;
+      scalar U0t = Um;
+      scalar U0b =-Um;
+      scalar U01 = 2*Um/(2*Thick+(zeta0b-zeta0t)) * (y-0.5*(zeta0b+zeta0t));
+      u  = j0t*U0t + j01*U01 + j0b*U0b;
       v  = u0;
       p  = p0 + rho*gravity*y ;
 
@@ -1994,7 +1998,7 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
       U(i,e*N_F+2) = Et ;
       U(i,e*N_F+3) = alpha;
       U(i,e*N_F+4) = rho*Y0t;
-      U(i,e*N_F+5) = rho*Y01;
+      U(i,e*N_F+5) = rho*Y0b;
       
 #elif TWOD
       U(i,e*N_F+0) = rho;
@@ -2003,7 +2007,7 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
       U(i,e*N_F+3) = Et ;
       U(i,e*N_F+4) = alpha;
       U(i,e*N_F+5) = rho*Y0t;
-      U(i,e*N_F+6) = rho*Y01;
+      U(i,e*N_F+6) = rho*Y0b;
 #endif 
     }
   }
