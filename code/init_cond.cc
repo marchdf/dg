@@ -1884,7 +1884,6 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar A0 = Aratio*Lx;    // initial amplitude
   scalar yinterfacet = Thick*Lx; // initial top interface position
   scalar yinterfaceb = -yinterfacet; // initial bottom interface position
-  scalar Um = ShearU*c01;
   scalar u=0,v=0,rho=0,p=0,Et=0,gamma=0,alpha=0,Y=0;
 
   // Velocities/pressures in all materials
@@ -1898,6 +1897,7 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar alpha01 = 1/(gamma01-1);
   scalar c01     = sqrt(gamma01*p0/rho01); // sound speed
   scalar M01     = 34.76; // molecular weight
+  scalar Um      = ShearU*c01;
   
   // Top fluid
   scalar gamma0t = gamma01;
