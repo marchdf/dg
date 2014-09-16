@@ -1884,6 +1884,7 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar A0 = Aratio*Lx;    // initial amplitude
   scalar yinterfacet = Thick*Lx; // initial top interface position
   scalar yinterfaceb = -yinterfacet; // initial bottom interface position
+  scalar Um = ShearU*c01;
   scalar u=0,v=0,rho=0,p=0,Et=0,gamma=0,alpha=0,Y=0;
 
   // Velocities/pressures in all materials
@@ -1902,11 +1903,13 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar gamma0t = gamma01;
   scalar alpha0t = 1/(gamma0t-1);
   scalar M0t     = M01;
+  scalar u0t     = Um;
   
   // Bottom fluid
   scalar gamma0b = gamma01;
   scalar alpha0b = 1/(gamma0b-1);
   scalar M0b     = M01;
+  scalar u0b     =-Um;
   
   // Non-dimensional parameters
   scalar L_ND   = Lx; // use wavelength to non-dimensionalize
@@ -1916,6 +1919,10 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar g_ND   = c01*c01/Lx;
   printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f, g_ND=%f\n",L_ND,rho_ND,u_ND,p_ND,g_ND);
 
+  scalar Atwood = (rho0t-rho0b)/(rho0t+rho0b);
+  scalar Jr = Atwood*gravity*(2*Thick*Lx)/(Um*Um);
+  printf("Atwood number=%f, Richardson number=%f, Froude number=%f, kL=%f\n",Atwood,Jr,sqrt(g_ND),2*M_PI/Lx*(2*Thick*Lx));
+    
   // N-D lengths
   A0 = A0/L_ND;
   Lx = Lx/L_ND;
@@ -1971,11 +1978,8 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
       scalar gamma = 1+1.0/alpha;
 
       // Other quantities
-      scalar Um = ShearU*c01;
-      scalar U0t = Um;
-      scalar U0b =-Um;
-      scalar U01 = 2*Um/(2*Thick+(zeta0b-zeta0t)) * (y-0.5*(zeta0b+zeta0t));
-      u  = j0t*U0t + j01*U01 + j0b*U0b;
+      scalar u01 = 2*Um/(2*Thick+(zeta0b-zeta0t)) * (y-0.5*(zeta0b+zeta0t));
+      u  = j0t*u0t + j01*u01 + j0b*u0b;
       v  = u0;
       p  = p0 + rho*gravity*y ;
 
