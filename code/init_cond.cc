@@ -1875,7 +1875,7 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar rho0t  = ic_inputs[2]; // density top fluid (SI units)
   scalar rho0b  = ic_inputs[3]; // density bottom fluid (SI units)
   scalar ShearU = ic_inputs[4]; // shear velocity (ratio of the sound speed in top fluid)
-  scalar gravity= ic_inputs[5];
+  scalar gravity= ic_inputs[5]; // physical gravity SI units
   scalar delta  = ic_inputs[6]; // diffusion layer thickness
   printf("Aratio=%f, Thick=%f, rho0t=%f, rho0b=%f, ShearU=%f, gravity=%f m/s^2, delta=%f\n",Aratio,Thick,rho0t,rho0b,ShearU,gravity,delta);
   
@@ -1913,7 +1913,7 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar rho_ND = rho01;
   scalar u_ND   = c01;
   scalar p_ND   = rho01*c01*c01;
-  scalar g_ND   = c01*c01;
+  scalar g_ND   = c01*c01/Lx;
   printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f, g_ND=%f\n",L_ND,rho_ND,u_ND,p_ND,g_ND);
 
   // N-D lengths
@@ -1984,7 +1984,7 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
       u   = u/u_ND;
       v   = v/u_ND;
       p   = p/p_ND;
-      Et = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
+      Et  = p/(gamma-1) + 0.5 * rho*(u*u+v*v);
 
 #ifdef GAMCONS
       alpha = rho/(gamma-1);
