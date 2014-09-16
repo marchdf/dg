@@ -13,5 +13,6 @@
 #include <macros.h>
 
 int Lget_element_belong(scalar* position, int prev_el, const int* neighbors, const fullMatrix<scalar> XYZNodes, const int nvert, const int N_N, const int N_E);
+void Lget_velocity_at_position(scalar* position, int el, int N_s, scalar* U, scalar* solution, scalar* avg_velocity);
 
 #endif

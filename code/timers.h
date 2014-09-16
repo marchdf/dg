@@ -60,7 +60,7 @@ class TIMERS{
     delete[] _times;
     delete[] _counters;
     delete[] _starters;
-    fclose(_ofile);    
+    fclose(_ofile);
   }
 
   void start_timer(int k);

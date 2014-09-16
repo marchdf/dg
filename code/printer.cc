@@ -72,10 +72,11 @@ void PRINTER::set_names(){
 } // end set names
 
 
-void PRINTER::print(scalar* U, const int step, const double time){
+void PRINTER::print(scalar* U, LAGRANGE_PARTICLES &particles, const int step, const double time){
   /*!
     \brief Output solution for the PRINTER class
     \param[in] U solution to output
+    \param[in] particles lagrange particles to output
     \param[in] step time step number
     \param[in] time time value
   */
@@ -94,6 +95,11 @@ void PRINTER::print(scalar* U, const int step, const double time){
   _timers.start_timer(24);
   _m.writeSolution(_output, _N_s, _N_E, _elem_type, _fnames, _names, step, time);
   _timers.stop_timer(24);
+
+  // Output the particles if you have any
+  _timers.start_timer(27);
+  if(particles.haveParticles()){particles.printParticles(time,_output);}
+  _timers.stop_timer(27);
   
 } // end print
 

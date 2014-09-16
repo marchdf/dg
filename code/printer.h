@@ -19,6 +19,7 @@
 #include "timers.h"
 #include "mem_counter.h"
 #include <sensor.h>
+#include <lagrange_particles.h>
 #ifdef USE_GPU
 #include "misc_cuda.h"
 #endif
@@ -67,8 +68,8 @@ class PRINTER{
 
   /*!\brief Set the filenames and field names for the PRINTER class*/
   void set_names();
-  
-  void print(scalar* U, const int step, const double time);
+
+  void print(scalar* U, LAGRANGE_PARTICLES &particles, const int step, const double time);
   void read(const int step, double &time, scalar* U);
   void print_sensor(SENSOR &sensor, const int step, const double time);
 };

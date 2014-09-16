@@ -32,7 +32,12 @@ int Lget_element_belong(scalar* position, int prev_el, const int* neighbors, con
     \brief Host C function to launch figure out which element the point is in
     \param[in] position coordinates of particle
     \param[in] prev_el element the point belonged to previously
-    \param[out] elnum index to the element the point belongs to
+    \param[in] neighbors index of neighboring elements
+    \param[in] XYZNodes matrix of the nodal coordinates
+    \param[in] nvert number of vertices per element
+    \param[in] N_N number of neighbors
+    \param[in] N_E number of elements
+    \return elnum index to the element the point belongs to
   */
 
   //
@@ -71,6 +76,54 @@ int Lget_element_belong(scalar* position, int prev_el, const int* neighbors, con
   return -1;
 };
 
+void Lget_velocity_at_position(scalar* position, int el, int N_s, scalar* U, scalar* solution, scalar* avg_velocity){
+  /*!
+    \brief Host C function to get the velocity at a given position
+    \param[in] position coordinates of particle
+    \param[in] el element index the particle belongs to
+    \param[in] N_s number of nodes
+    \param[in] U solution in all the elements
+    \param[in] solution the nodal solution in that element
+    \param[out] avg_velocity the velocity at the position (average in element)
+    \section Description
+    We will return the average velocity in the element to which the
+    particle belongs to. To be more accurate we should really be
+    interpolation and evaluating the basis functions at that point
+    precisely. Doing that is more expensive and harder to code, so we
+    won't be doing velocity interpolation. In theory we could do all
+    this directly on the GPU (to avoid some memory transfer).
+  */
+
+  // Skip if the particle does not belong to anything
+  if (el==-1){
+    for(int alpha=0; alpha<D; alpha++){ avg_velocity[alpha] = 0;}
+  }
+
+  else{
+    // Copy the velocity locally
+#ifdef USE_CPU
+    for(int k=0; k<(1+D)*N_s; k++){ solution[k] = U[el*N_F*N_s+k];}
+#elif USE_GPU
+    cudaMemcpy(solution, &U[el*N_F*N_s], (1+D)*N_s*sizeof(scalar), cudaMemcpyDeviceToHost);
+#endif
+
+    // Separate the fields
+    scalar rho, ux=0, uy=0;
+    for(int i=0; i<N_s; i++){
+#ifdef ONED
+      rho               = solution[0*N_s+i];
+      avg_velocity[0]  += solution[1*N_s+i]/rho;
+#elif TWOD
+      rho               = solution[0*N_s+i];
+      avg_velocity[0]  += solution[1*N_s+i]/rho;
+      avg_velocity[1]  += solution[2*N_s+i]/rho;
+#endif    
+    }
+
+    // average the velocities
+    for(int alpha=0; alpha<D; alpha++){ avg_velocity[alpha] =  avg_velocity[alpha]/N_s;}
+  }  
+}
 
 //==========================================================================
 //
@@ -101,9 +154,9 @@ int pnpoly(int nvert, scalar *verts, scalar* position){
     \param[in] nvert number of vertices in the polygon
     \param[in] verts array containing the coordinates of the polygon's vertices.
     \param[in] position coordinates of the test point.
-    \param[out] c 1 if the point is in the polygon, 1 if not
+    \return c 1 if the point is in the polygon, 0 if not
     \section Description
-    The 1D portion is pretty straightforward
+    The 1D portion is pretty straightforward.
     For the 2D part of this function: 
     It is stolen from http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
     Uses ray tracing combined with the Jordan curve theorem.
