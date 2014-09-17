@@ -108,16 +108,10 @@ void Lget_velocity_at_position(scalar* position, int el, int N_s, scalar* U, sca
 #endif
 
     // Separate the fields
-    scalar rho, ux=0, uy=0;
+    scalar rho;
     for(int i=0; i<N_s; i++){
-#ifdef ONED
       rho               = solution[0*N_s+i];
-      avg_velocity[0]  += solution[1*N_s+i]/rho;
-#elif TWOD
-      rho               = solution[0*N_s+i];
-      avg_velocity[0]  += solution[1*N_s+i]/rho;
-      avg_velocity[1]  += solution[2*N_s+i]/rho;
-#endif    
+      for(int alpha=0; alpha<D; alpha++){ avg_velocity[alpha]  += solution[(1+alpha)*N_s+i]/rho;}
     }
 
     // average the velocities
