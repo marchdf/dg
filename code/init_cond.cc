@@ -1,7 +1,8 @@
 /*!
   \file init_cond.cc
   \brief Initial condition function definitions
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
 */
 #include <init_cond.h>
 #include <stdlib.h>
@@ -1920,7 +1921,7 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
   printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f, g_ND=%f\n",L_ND,rho_ND,u_ND,p_ND,g_ND);
 
   scalar Atwood = (rho0t-rho0b)/(rho0t+rho0b);
-  scalar Jr = Atwood*gravity*(2*Thick*Lx)/(Um*Um);
+  scalar Jr = Atwood*fabs(gravity)*(2*Thick*Lx)/(Um*Um);
   printf("Atwood number=%f, Richardson number=%f, Froude number=%f, kL=%f\n",Atwood,Jr,sqrt(g_ND),2*M_PI/Lx*(2*Thick*Lx));
     
   // N-D lengths
@@ -2294,7 +2295,7 @@ void init_dg_rarecon_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // Initialize a rarefaction moving towards the left (or downwards)
   scalar Lx = 1;
   scalar A0 = Aratio*Lx;
-  scalar yinterface =-(K+1)*Lx; // first interface location
+  scalar yinterface =-2*Lx;//-(K+1)*Lx; // first interface location
   scalar delta=0.08*Lx;         // The diffusion layer thickness
   scalar u0 = 0;
   scalar v0 = 0;

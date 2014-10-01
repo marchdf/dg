@@ -1,7 +1,8 @@
 /*!
   \file rk_kernels.cu
   \brief Kernels used by the RK class
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \ingroup rk
 */
 #include <rk_kernels.h>

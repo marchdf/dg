@@ -1,7 +1,8 @@
 /*!
   \file dg_functions.cc
   \brief Functions definitions for the DG method
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
 */
 #include <dg_functions.h>
 void dg_jac_elements_fast(const int N_G, const int N_E, fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &dphi, fullMatrix<scalar> &J){

@@ -1,7 +1,8 @@
 /*!
   \file physics.cu
   \brief Kernels used for the physics
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
 */
 #include <physics.h>
 #include <basic_fluxes.h>

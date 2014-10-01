@@ -1,7 +1,8 @@
 /*!
   \file limiting_kernels.h
   \brief Functions to launch Limiting kernels
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \ingroup limiting
 */
 #ifndef LIMITING_KERNELS_H

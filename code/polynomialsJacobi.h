@@ -1,7 +1,8 @@
 /*!
   \file polynomialsJacobi.h
   \brief Header for Jacobi polynomials  
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
 */
 #ifndef POLYNOMIALS_JACOBI_H
 #define POLYNOMIALS_JACOBI_H

@@ -1,7 +1,8 @@
 /*!
   \file sensor_kernels.h
   \brief Functions to launch SENSOR kernels
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \ingroup sensor
 */
 #ifndef SENSOR_KERNELS_H

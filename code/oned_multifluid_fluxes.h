@@ -1,7 +1,8 @@
 /*!
   \file oned_multifluid_fluxes.h
   \brief Riemann solvers for 1D multifluid
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \defgroup fluxes Fluxes and Riemann solvers
   \ingroup fluxes
 */

@@ -1,11 +1,13 @@
 /*!
   \file loop.h
   \brief Preprocessor for loop... shady business
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \section Description
   This is straight from: http://www.codeproject.com/Tips/444338/Pre-processor-Iteration
   And the code is on github: https://github.com/debdattabasu/pp_Iteration
-
+  Licensed under The Code Project Open License (CPOL)
+  
   Right now things max out at 10 iterations but I could increase that easily
    
   You use it by doing, for example: 

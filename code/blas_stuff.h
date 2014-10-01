@@ -1,7 +1,8 @@
 /*!
   \file blas_stuff.h  
   \brief Functions to wrap BLAS calls
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \section Description
   Functions to wrap BLAS call to F77 routines
 */

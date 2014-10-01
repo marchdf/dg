@@ -1,7 +1,8 @@
 /*!
   \file basic_fluxes.h  
   \brief Functions to calculate simple flux products  
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \ingroup fluxes
   \section Description
   Simple flux products often used

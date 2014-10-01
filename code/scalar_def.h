@@ -1,7 +1,8 @@
 /*!
   \file scalar_def.h
   \brief Macros and typedef for scalar
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \section Description
   Allows the use of switching between floats and doubles at compile
   time.

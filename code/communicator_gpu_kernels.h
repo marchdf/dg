@@ -1,7 +1,8 @@
 /*!
   \file communicator_gpu_kernels.h
   \brief Functions to launch communicator kernels
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
 */
 #ifdef USE_MPI
 #ifdef USE_GPU

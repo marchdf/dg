@@ -1,7 +1,8 @@
 /*!
   \file twod_multifluid_fluxes.h
   \brief Riemann solvers for 2D multifluid
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \ingroup fluxes
 */
 #ifndef TWOD_MULTIFLUID_FLUXES_H

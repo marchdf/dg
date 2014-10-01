@@ -1,7 +1,8 @@
 /*!
   \file timers.h
   \brief Class which deals with the timers 
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \defgroup timers Timers
   \ingroup timers
 */

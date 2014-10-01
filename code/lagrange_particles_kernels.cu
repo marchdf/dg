@@ -1,7 +1,8 @@
 /*!
   \file lagrange_particles_kernels.cu
   \brief Kernels used by the LAGRANGE_PARTICLES class
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \ingroup lagrange_particles
 */
 #include <lagrange_particles_kernels.h>
@@ -156,34 +157,6 @@ int pnpoly(int nvert, scalar *verts, scalar* position){
     Uses ray tracing combined with the Jordan curve theorem.
     Works for 2D polygon (convex, concave, holes, etc)
     Copyright (c) 1970-2003, Wm. Randolph Franklin
-
-    Permission is hereby granted, free of charge, to any person
-    obtaining a copy of this software and associated documentation
-    files (the "Software"), to deal in the Software without
-    restriction, including without limitation the rights to use, copy,
-    modify, merge, publish, distribute, sublicense, and/or sell copies
-    of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    1) Redistributions of source code must retain the above copyright
-    notice, this list of conditions and the following disclaimers.
-
-    2) Redistributions in binary form must reproduce the above
-    copyright notice in the documentation and/or other materials
-    provided with the distribution.
-
-    3) The name of W. Randolph Franklin may not be used to endorse or
-    promote products derived from this Software without specific prior
-    written permission.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-    HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-    DEALINGS IN THE SOFTWARE.
 
     Works with:
     scalar* vertx = new scalar[N];

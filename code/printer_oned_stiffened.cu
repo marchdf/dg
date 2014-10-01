@@ -1,7 +1,8 @@
 /*!
   \file printer_oned_stiffened.cu
   \brief Kernel to output 1D stiffened solution used by the PRINTER class
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \ingroup printer
 */
 #ifdef ONED

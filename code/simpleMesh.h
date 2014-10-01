@@ -1,12 +1,12 @@
 /*!
   \file simpleMesh.h  
   \brief Class deals with the mesh.
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \section Description
   Classes that set up the mesh (read/write), build the interfaces,
   builds the neighbors, etc
 */
-
 #ifndef _SIMPLE_MESH_H_
 #define _SIMPLE_MESH_H_
 #include <vector>

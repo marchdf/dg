@@ -1,7 +1,8 @@
 /*!
   \file upa.h
   \brief Find |u+a|
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \section Description
   These functions find |u+a| for a given rho, u, E, gamma.  For 2D,
   they return the max(|u+a|,|v+a|);

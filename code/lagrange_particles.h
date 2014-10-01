@@ -1,7 +1,8 @@
 /*!
   \file lagrange_particles.h
   \brief Class deals with the lagrange particles
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \defgroup lagrange_particles Lagrange particles
   \ingroup lagrange_particles
 
@@ -99,7 +100,7 @@ class LAGRANGE_PARTICLES {
       // Output a comment line for each particle
       for(int k = 0; k < _NP; k++){
 	// open the file   
-	_ofile = fopen(_pnames[k].c_str(),"a");
+	_ofile = fopen(_pnames[k].c_str(),"w");
 	// write the comment line
 	fprintf(_ofile,"# time, position, and average solution for particle %i.\n",k);
 	// end the line and close the file

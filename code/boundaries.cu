@@ -1,7 +1,8 @@
 /*!
   \file boundaries.cu
   \brief Kernels to implement special boundary conditions
-  \author Marc T. Henry de Frahan <marchdf@gmail.com>
+  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \ingroup boundaries
 */
 #include <boundaries.h>
