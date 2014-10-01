@@ -33,7 +33,7 @@ bool pairPeriodic(const fullMatrix<double> &meshNodes, std::vector<int> nodes1, 
   */
      
   bool paired = false;
-  double eps = 1e-9;
+  double eps = 1e-8;
   
 #ifdef ONED
   // Get interface x position of interfaces
@@ -853,7 +853,7 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
   	  //	  printf("This has to be 4 times\n");
         }
   	else if (interfaceFound._elements[1] != &el) {
-          printf("error in interfaces creation !!!\n");
+          printf("error in interfaces creation when looking in my partition!!!\n");
           exit(1);
         }
       }
@@ -970,7 +970,7 @@ void simpleInterface::BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterf
     // printf("          el2=%i\n",interface.getElement(1)->getId());
     if((interface.getElement(0)==NULL)||(interface.getElement(1)==NULL)){
       printf("error in interfaces creation !!!\n");
-      printf("Failed on final check on element el=%i\n",interface.getElement(1)->getId());
+      printf("Failed on final check on element el=%i\n",interface.getElement(0)->getId());
       exit(1);
     }
   }
