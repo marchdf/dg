@@ -1672,7 +1672,7 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar rho_ND = rho01;
   scalar u_ND   = c01;
   scalar p_ND   = rho01*c01*c01;
-  scalar g_ND   = c01*c01;
+  scalar g_ND   = c01*c01/L_ND;
   printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f, g_ND=%f\n",L_ND,rho_ND,u_ND,p_ND,g_ND);
 
   // N-D lengths
@@ -1712,22 +1712,22 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	scalar attenuation = 2/M_PI*atan((y+0.5*fatness)/thickness)  - 2/M_PI*atan((y-0.5*fatness)/thickness);//exp(-y/thickness);
 	scalar amplitude = A0*attenuation*2*M_PI/Lx*cos(2*M_PI/Lx*x-M_PI/2);
 	if(y > (A0*sin(2*M_PI*x/Lx-M_PI/2)+yinterface)){ // Top fluid
-	  rho = rho01;
+	  rho = rho02;
 	  u=ShearU*c01;
 	  v=u0;
-	  gamma = gamma01;
-	  alpha = alpha01;
+	  gamma = gamma02;
+	  alpha = alpha02;
 	  Y     = 1;
 	  // Velocity pertubation
 	  u = sqrt((u*u)/(1+amplitude*amplitude));
 	  v = amplitude*u;
 	}
 	else{ // bottom fluid
-	  rho = rho02;
+	  rho = rho01;
 	  u=-ShearU*c01;
 	  v=u0;
-	  gamma = gamma02;
-	  alpha = alpha02;
+	  gamma = gamma01;
+	  alpha = alpha01;
 	  Y = 0;
 	  // Velocity pertubation
 	  u = -sqrt((u*u)/(1+amplitude*amplitude));
@@ -1743,22 +1743,22 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	scalar k = 2*M_PI/Lx;
 	scalar Us = ShearU*c01;
 	if(y > (A0*sin(2*M_PI*x/Lx-M_PI/2)+yinterface)){ // Top fluid
-	  rho = rho01;
+	  rho = rho02;
 	  u=ShearU*c01;
 	  v=u0;
-	  gamma = gamma01;
-	  alpha = alpha01;
+	  gamma = gamma02;
+	  alpha = alpha02;
 	  Y     = 1;
 	  // Velocity pertubation
 	  u = Us + A0*k*exp(-k*y)*( omegaI*sin(k*x)-(Us-omegaR)*cos(k*x));
 	  v = 0  - A0*k*exp(-k*y)*(-omegaI*cos(k*x)-(Us-omegaR)*sin(k*x));
 	}
 	else{ // bottom fluid
-	  rho = rho02;
+	  rho = rho01;
 	  u=-ShearU*c01;
 	  v=u0;
-	  gamma = gamma02;
-	  alpha = alpha02;
+	  gamma = gamma01;
+	  alpha = alpha01;
 	  Y = 0;
 	  // Velocity pertubation
 	  u =-Us + A0*k*exp(k*y)*(-omegaI*sin(k*x)-(Us+omegaR)*cos(k*x));
@@ -1779,11 +1779,11 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	else                   vol = 0;
       
 	scalar jx  = 1-vol;
-	rho = jx*rho02+(1-jx)*rho01;
-	scalar jy  = jx*rho02/(jx*rho02+(1-jx)*rho01);      // mass fraction
-	scalar jM  = 1/(jy/M02+(1-jy)/M01);                 // total molecular weight
+	rho = jx*rho01+(1-jx)*rho02;
+	scalar jy  = jx*rho01/(jx*rho01+(1-jx)*rho02);      // mass fraction
+	scalar jM  = 1/(jy/M01+(1-jy)/M02);                 // total molecular weight
       
-	scalar alpha = jy*alpha02*jM/M02+(1-jy)*alpha01*jM/M01;
+	scalar alpha = jy*alpha01*jM/M01+(1-jy)*alpha02*jM/M02;
 	gamma = 1+1.0/alpha;
 
 	p = p0 + rho*gravity*y ;
@@ -1816,11 +1816,11 @@ void init_dg_khdrake_multifluid(const int N_s, const int N_E, const fullMatrix<s
 	else                   vol = 0;
       
 	scalar jx  = 1-vol;
-	rho = jx*rho02+(1-jx)*rho01;
-	scalar jy  = jx*rho02/(jx*rho02+(1-jx)*rho01);      // mass fraction
-	scalar jM  = 1/(jy/M02+(1-jy)/M01);                 // total molecular weight
+	rho = jx*rho01+(1-jx)*rho02;
+	scalar jy  = jx*rho01/(jx*rho01+(1-jx)*rho02);      // mass fraction
+	scalar jM  = 1/(jy/M01+(1-jy)/M02);                 // total molecular weight
       
-	scalar alpha = jy*alpha02*jM/M02+(1-jy)*alpha01*jM/M01;
+	scalar alpha = jy*alpha01*jM/M01+(1-jy)*alpha02*jM/M02;
 	gamma = 1+1.0/alpha;
 
 	u =-jx*ShearU*c01 + (1-jx)*ShearU*c01;
@@ -1917,7 +1917,7 @@ void init_dg_khuramp_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar rho_ND = rho01;
   scalar u_ND   = c01;
   scalar p_ND   = rho01*c01*c01;
-  scalar g_ND   = c01*c01/Lx;
+  scalar g_ND   = c01*c01/L_ND;
   printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f, g_ND=%f\n",L_ND,rho_ND,u_ND,p_ND,g_ND);
 
   scalar Atwood = (rho0t-rho0b)/(rho0t+rho0b);

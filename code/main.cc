@@ -263,7 +263,7 @@ int main (int argc, char **argv)
   m.buildCommunicators(elem_type); // build the indexes to map the ghost elements to my partition
   const std::map<int,int> & ghostElementMap = m.getGhostElementMap();
 
- 
+
   ////////////////////////////////////////////////////////////////////////////   
   //
   // Generer les fonctions de formes, get integration points, weights
@@ -1047,7 +1047,7 @@ int main (int argc, char **argv)
   MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
   MPI_Finalize();
 #endif
-
+  
   
   return 0;
 }// end main
