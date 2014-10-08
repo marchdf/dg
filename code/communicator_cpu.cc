@@ -32,9 +32,9 @@ void COMMUNICATOR::CommunicateGhosts(int Nfields, scalar* U){
   
   // wait until every process gets here
   MPI_Barrier(MPI_COMM_WORLD);
-      
+
+  _timers.start_timer(31);
   int e, dest, source, tag;
-  
   for(int k=0; k<_N_ghosts; k++){
 
     // Send info 
@@ -49,7 +49,8 @@ void COMMUNICATOR::CommunicateGhosts(int Nfields, scalar* U){
     tag    = _ghostElementRecv[k*3+2]; // global idx of element
     MPI_Irecv(&U[e*Nfields*_N_s], Nfields*_N_s, MPI_SCALAR, source, tag, MPI_COMM_WORLD, &_request[2*k+1]);
   }
-
+  _timers.stop_timer(31);
+  
   // Wait for communication to end
   MPI_Waitall(2*_N_ghosts, _request, _status);
 

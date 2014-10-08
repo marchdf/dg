@@ -43,7 +43,7 @@ void TIMERS::set_timer_names(){
 
   // Communication routines
   _names.push_back("communication time");      // timer 22
-
+  
   // Output routines
   _names.push_back("format_output time");      // timer 23
   _names.push_back("write_output time");       // timer 24
@@ -53,6 +53,12 @@ void TIMERS::set_timer_names(){
   
   // Lagrange particle routines
   _names.push_back("advect_particles time");   // timer 28
+
+  // More timers
+  _names.push_back("comm_packaging time");     // timer 29
+  _names.push_back("comm_memcpy time");        // timer 30
+  _names.push_back("comm_sendrecv time");      // timer 31
+  _names.push_back("comm_unpackaging time");   // timer 32
 }
 
 void TIMERS::start_timer(int k){

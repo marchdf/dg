@@ -44,12 +44,17 @@ void COMMUNICATOR::CommunicateGhosts(int Nfields, scalar* U){
   MPI_Barrier(MPI_COMM_WORLD);
 
   // 1) copy data from device U to device buffer
+  _timers.start_timer(29);
   Lpackager(_N_s, _N_ghosts, Nfields, _d_ghostElementSend, _d_buffer, U);
-  
+  _timers.stop_timer(29);
+    
   // 2) copy device buffer to pinned host send buffer
+  _timers.start_timer(30);
   cudaMemcpy(_h_bufferSend, _d_buffer, _N_s*_N_ghosts*Nfields*sizeof(scalar), cudaMemcpyDeviceToHost);
-  
+  _timers.stop_timer(30);
+    
   // 3) loop on k for immediate send/receives
+  _timers.start_timer(31);
   int e, dest, source, tag;  
   for(int k=0; k<_N_ghosts; k++){
 
@@ -65,16 +70,21 @@ void COMMUNICATOR::CommunicateGhosts(int Nfields, scalar* U){
     tag    = _ghostElementRecv[k*3+2]; // global idx of element
     MPI_Irecv(&_h_bufferRecv[k*Nfields*_N_s], Nfields*_N_s, MPI_SCALAR, source, tag, MPI_COMM_WORLD, &_request[2*k+1]);
   }
-
+  _timers.stop_timer(31);
+  
   // 4) wait end of communications
   MPI_Waitall(2*_N_ghosts, _request, _status);
 
   // 5) copy pinned host recv buffer to device buffer
+  _timers.start_timer(30);
   cudaMemcpy(_d_buffer, _h_bufferRecv, _N_s*_N_ghosts*Nfields*sizeof(scalar), cudaMemcpyHostToDevice);
+  _timers.stop_timer(30);
   
   // 6) kernel to copy data from device buffer to device U
+  _timers.start_timer(32);
   Lunpackager(_N_s, _N_ghosts, Nfields, _d_ghostElementRecv, _d_buffer, U);
-
+  _timers.stop_timer(32);
+  
   _timers.stop_timer(22);
 }
 #endif
