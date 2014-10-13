@@ -142,8 +142,8 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
       MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
       MPI_Allreduce(MPI_IN_PLACE, &Dt, 1, MPI_SCALAR, MPI_MIN, MPI_COMM_WORLD);
 #endif
-      if(Dt<1e-14){ printf("Next time step is too small (%e<1e-14). Exiting.\n",Dt); exit(1);}
-      if(Dt!=Dt){ printf("Time step is NaN. Exiting.\n"); exit(1);}
+      if(Dt<1e-14){ printf("Next time step is too small (%e<1e-14). Exiting at step %7i and time %e.\n",Dt,n,T); exit(1);}
+      if(Dt!=Dt){ printf("Time step is NaN. Exiting at step %7i and time %e.\n",n,T); exit(1);}
       if     (Dt>(Tf  -T)){ DtCFL = Dt; Dt = Tf  -T; output = true; done = true;}
       else if(Dt>(Tout-T)){ DtCFL = Dt; Dt = Tout-T; output = true;}
       //printf("current time=%e, this Dt=%e, next output at %e\n",T+Dt,Dt,Tout);
