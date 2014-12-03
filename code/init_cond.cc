@@ -930,15 +930,16 @@ void init_dg_blast1d_multifluid(const int N_s, const int N_E, const fullMatrix<s
 void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
 
   // Read inputs
-  if (ic_inputs.size() != 4){
+  if (ic_inputs.size() != 5){
     printf("Wrong initial condition inputs. Exiting\n");
     exit(1);
   }
-  scalar K      = ic_inputs[0]; // length of rarefaction when it reaches the interface
-  scalar Ms     = ic_inputs[1]; // shock mach number
-  scalar Aratio = ic_inputs[2]; // amplitude to wavelength ratio
-  scalar Dratio = ic_inputs[3]; // density ratio
-  printf("K=%f, Ms=%f, Aratio=%f, Dratio=%f\n",K,Ms,Aratio,Dratio);
+  scalar K        = ic_inputs[0]; // length of rarefaction when it reaches the interface
+  scalar strength = ic_inputs[1]; // rarefaction strength
+  scalar Ms       = ic_inputs[2]; // shock mach number
+  scalar Aratio   = ic_inputs[3]; // amplitude to wavelength ratio
+  scalar Dratio   = ic_inputs[4]; // density ratio
+  printf("K=%f, strength=%f, Ms=%f, Aratio=%f, Dratio=%f\n",K,strength,Ms,Aratio,Dratio);
   
   // Initialize a rarefaction moving towards the left (or downwards)
   scalar Lx = 1;
@@ -976,6 +977,7 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f, t_ND=%f\n",L_ND,rho_ND,u_ND,p_ND,t_ND);
 
   // Post-shock material
+  if (Ms < 1){ Ms = 1;}   // if Mach is less than one, make it one so the shock relations hold but the shock has zero strength
   scalar us     =-Ms*c01; // shock velocity
   scalar u4     = 0;
   scalar v4     =-Ms*c01*(2*(Ms*Ms-1))/(gamma01+1)/(Ms*Ms); // shock is moving downwards
@@ -985,10 +987,13 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   scalar c4     = sqrt(gamma4*p4/rho4);
   
   // contact velocity (velocity behind the rarefaction, positive)
-  scalar vc = 0;//2.0*c4/(gamma01-1) * (1 - pow(strength, (gamma01-1)/(2.0*gamma01))) + v4;
-
+  //scalar vcp = -v4;     // in shock frame
+  scalar vcp = 2.0*c4/(gamma01-1) * (1 - pow(strength, (gamma01-1)/(2.0*gamma01)));
+  scalar vc = vcp + v4; // in lab frame
+  printf("vcp=%f, vc=%f\n",vcp,vc);
+  
   // time at which the rarefaction is of length L
-  scalar tiR = -2.0/(gamma01+1) * 1.0/v4 * L;
+  scalar tiR = 2.0/(gamma01+1) * L/(vc-v4);
 
   // solve for the origin of rarefaction
   scalar yR = yinterface + (c4-v4)*tiR;
@@ -1005,16 +1010,26 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // Position of the shock, head, and tail at t0
   scalar yS0 = us*t0 + yS;
   scalar yH0 = -(c4-v4)*t0 + yR;    
-  scalar yT0 = -(c4 - v4 + (gamma01+1)/2.0 * v4) * t0 + yR;
-  scalar strength = pow(1 - (gamma01-1)/2.0 * fabs(-v4/c4), 2.0*gamma01/(gamma01-1));
-  printf("c4=%f, us=%f, yi=%f, yS=%f, yS0=%f, yH0=%f, yT0=%f, %f, L=%f\n", c4, us, yinterface, yS, yS0, yH0, yT0,yT0-yH0, L);
-  printf("rarefaction strength = %f\n", strength);
+  scalar yT0 = -(c4-v4 - (gamma01+1)/2.0 * (vc-v4)) * t0 + yR;
   
   // reflection coefficient
   scalar R = (1- rho01*c01/(rho02*c02))/(1+rho01*c01/(rho02*c02));
   scalar vRF = 2.0*c4/(gamma01-1) * (1 - pow(strength, (gamma01-1)/(2.0*gamma01))) + v4;
   scalar vcoord = 0;//-(1-R)*vRF; // coordinate shift upwards
-
+  
+  // Make some modifications for special cases
+  if (strength == 1){
+    tiS = t_ND;             // shock arrival based on ND time
+    yS  = yinterface - us*tiS;
+    t0  = 0.5*tiS;
+    yS0 = us*t0 + yS;       // shock initial position
+    yH0 = 1e9; yT0 = 1e9;   // put the tail and head at +inf
+  }
+    
+  // Output some quantities
+  printf("tiS=%f, tiR=%f, T=%f, t0=%f\n",tiS,tiR,T,t0);
+  printf("c4=%f, us=%f, yi=%f, yS=%f, yS0=%f, yH0=%f, yT0=%f, yT0-yH0=%f, L=%f\n", c4, us, yinterface, yS, yS0, yH0, yT0,yT0-yH0, L);
+  
   // N-D the quantities
   A0 = A0/L_ND;
   Lx = Lx/L_ND;
@@ -1089,15 +1104,14 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
       else if ((yH0 < yc) && (yc < yT0)){ // inside rarefaction
       	u = 0;
       	v = 2.0/(gamma+1)*(c4 - v4 + (y-yR)/t0) + v4;
-	scalar yp = y - v4*t0;
-	scalar vp = 2.0/(gamma+1)*(c4 + (yp-yR)/t0);
+	scalar vp = v - v4;
       	rho = rho4 * pow(1 - (gamma-1)/2.0 * fabs(vp/c4), 2.0/(gamma-1));
       	p   = p4   * pow(1 - (gamma-1)/2.0 * fabs(vp/c4), 2.0*gamma/(gamma-1));
       }
       else if (yT0 <= yc){ // behind rarefaction
       	u = 0;
       	v = vc;
-	scalar vp = -v4;	  
+	scalar vp = v - v4;	  
       	rho = rho4 * pow(1 - (gamma-1)/2.0 * fabs(vp/c4), 2.0/(gamma-1));
       	p   = p4   * pow(1 - (gamma-1)/2.0 * fabs(vp/c4), 2.0*gamma/(gamma-1));
       }
