@@ -1146,6 +1146,168 @@ void init_dg_simblst_multifluid(const int N_s, const int N_E, const fullMatrix<s
   }
 }
 
+void init_dg_shckrar_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
+
+  // Initial condition for a shock interacting with a wave (acoustic
+  // or rarefaction) in a single material
+  // 
+  // Strictly 1D simulations for now
+ 
+  
+  // Read inputs
+  if (ic_inputs.size() != 3){
+    printf("Wrong initial condition inputs. Exiting\n");
+    exit(1);
+  }
+  scalar K        = ic_inputs[0]; // initial length of rarefaction
+  scalar strength = ic_inputs[1]; // rarefaction strength
+  scalar Ms       = ic_inputs[2]; // shock mach number
+  printf("K=%f, strength=%f, Ms=%f\n",K,strength,Ms);
+  
+  // Initialize a rarefaction moving towards the left (or downwards)
+  scalar Lx = 1;
+  scalar ymeet = 0;  // initial shock location
+  scalar u0 = 0;
+  scalar v0 = 0;
+  scalar p0 = 1e5;
+
+  // Parameters to choose
+  scalar L  = K*Lx;       // length of rarefaction when it reaches the interface
+  
+  // Material (shock and rarefaction initialized here)
+  scalar rho01   = 1.351;
+  scalar gamma01 = 1.4;
+  scalar alpha01 = 1/(gamma01-1);
+  scalar M01     = 34.76;  
+  scalar c01     = sqrt(gamma01*p0/rho01);
+  
+  // Non-dimensional parameters
+  scalar L_ND   = Lx; // use wavelength to non-dimensionalize
+  scalar rho_ND = rho01;
+  scalar u_ND   = c01;
+  scalar p_ND   = rho01*c01*c01;
+  scalar t_ND   = Lx/c01;
+  printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f, t_ND=%f\n",L_ND,rho_ND,u_ND,p_ND,t_ND);
+
+  // Post-shock material
+  if (Ms < 1){ Ms = 1;}   // if Mach is less than one, make it one so the shock relations hold but the shock has zero strength
+  scalar us     = Ms*c01; // shock velocity
+  scalar u4     = 0;
+  scalar v4     = Ms*c01*(2*(Ms*Ms-1))/(gamma01+1)/(Ms*Ms); // shock is moving towards the right
+  scalar p4     = p0*(1+2*gamma01/(gamma01+1)*(Ms*Ms-1));
+  scalar rho4   = rho01*(gamma01+1)*Ms*Ms/(2+(gamma01-1)*Ms*Ms);
+  scalar gamma4 = gamma01;
+  scalar c4     = sqrt(gamma4*p4/rho4);
+
+  // Rarefaction quantities
+  // behind the rarefaction
+  scalar vc = 2.0*c01/(gamma01-1) * (1 - pow(strength, (gamma01-1)/(2.0*gamma01)));
+  scalar pc = p0*strength;
+  scalar rhoc = rho01*pow(strength,1.0/gamma01);
+
+  // solve for rarefaction origin
+  scalar yR  = c01*2.0/(gamma01 + 1) * L/vc;
+  scalar tR  = 2.0/(gamma01 + 1) * L/vc;
+
+  // Initialization offset
+  scalar t0 = 0.9*tR;
+  scalar yH0 = -c01*t0 + yR;
+  scalar yT0 = -(c01 - (gamma01+1)/2.0 * vc) * t0 + yR;
+  scalar yS0 = ymeet - us*(tR-t0);
+
+  printf("Initializing problem at t0 = %f (tR = %f) [units of rarefaction time]\n",t0,tR);
+  printf("Shock and rarefaction will meet at ymeet=%f at tmeet=%f [units of simulation time].\n",ymeet,tR-t0);
+  printf("yR=%f, yH0=%f, yT0=%f, L(t0)=%f, yS0=%f\n",yR,yH0,yT0,yT0-yH0,yS0);
+  
+  // N-D the quantities
+  Lx = Lx/L_ND;
+  u0 = u0/u_ND;
+  v0 = v0/u_ND;
+  p0 = p0/p_ND;
+  L  = L/L_ND;
+  rho01 = rho01/rho_ND;
+  c01   = c01/u_ND;
+  us    = us/u_ND;
+  u4    = u4/u_ND;
+  v4    = v4/u_ND;
+  p4    = p4/p_ND;
+  rho4  = rho4/rho_ND;
+  c4    = c4/u_ND;
+  vc    = vc/u_ND;
+  pc    = pc/p_ND;
+  rhoc  = rhoc/rho_ND;
+  yR    = yR/L_ND;
+  tR    = tR/t_ND;
+  t0    = t0/t_ND;
+  yS0 = yS0/L_ND;
+  yH0 = yH0/L_ND;
+  yT0 = yT0/L_ND;
+  
+  scalar xc=0, yc=0, x=0, y=0, u, v, rho, p;
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+#ifdef ONED
+      yc = XYZCen(e,0);
+      y  = XYZNodes(i,e*D+0);
+#elif TWOD
+      printf("Doesn't work in 2D. Exiting\n");
+      exit(1);
+#endif
+
+      // single material
+      scalar gamma = gamma01;
+      //printf('gamma=%f\n',gamma);
+	
+      if (yc <= yS0){ // Shocked region
+      	u = u4;
+      	v = v4;
+      	rho = rho4;
+      	p   = p4;
+      }
+      else if ((yH0 < yc) && (yc < yT0)){ // inside rarefaction
+      	u = u0;
+      	v = 2.0/(gamma+1)*(c01 + (y-yR)/t0);
+      	rho = rho01 * pow(1 - (gamma-1)/2.0 * fabs(v/c01), 2.0/(gamma-1));
+      	p   = p0    * pow(1 - (gamma-1)/2.0 * fabs(v/c01), 2.0*gamma/(gamma-1));
+      }
+      else if (yT0 <= yc){ // behind rarefaction
+	u   = 0;
+	v   = vc;
+	rho = rhoc;
+	p   = pc;
+      }
+      else{ // anywhere else
+      	u   = u0;
+      	v   = v0;
+      	rho = rho01;
+      	p   = p0;
+      }
+      
+#ifdef ONED
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*v;
+      U(i,e*N_F+2) = p/(gamma-1)+ 0.5*rho*(u*u+v*v);
+#ifdef GAMCONS
+      U(i,e*N_F+3) = rho/(gamma-1);
+#elif GAMNCON
+      U(i,e*N_F+3) = 1.0/(gamma-1);
+#endif
+#elif TWOD
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*u;
+      U(i,e*N_F+2) = rho*v;
+      U(i,e*N_F+3) = p/(gamma-1)+ 0.5*rho*(u*u+v*v);
+#ifdef GAMCONS
+      U(i,e*N_F+4) = rho/(gamma-1);
+#elif GAMNCON
+      U(i,e*N_F+4) = 1.0/(gamma-1);
+#endif
+#endif
+    }
+  }
+}
+
 void init_dg_sodcirc_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
 #ifdef ONED
@@ -3175,6 +3337,62 @@ void init_dg_jetcrss_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 	U(i,e*N_F+3) = EtC;
 	U(i,e*N_F+4) = GC;
 	U(i,e*N_F+5) = gammaC*pinfC/(gammaC-1);
+      }
+    }
+  }
+}
+
+void init_dg_prsrflw_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
+
+  // Pressure Driven Flow
+  // Pressure and pinf normalized by (rho_air*cs_air^2)
+  // See Shounak for problem definition
+  
+  // Problem parameters
+  if (ic_inputs.size() != 2){
+    printf("Wrong initial condition inputs. Exiting\n");
+    exit(1);
+  }
+  scalar Pw = ic_inputs[0]; // initial water pressure
+  scalar Pa = ic_inputs[1]; // initial air pressure
+
+  // Material properties
+  // air at 300K/27C from http://www.mhtl.uwaterloo.ca/old/onlinetools/airprop/airprop.html
+  scalar rho_air = 1.1765;
+  scalar gamma_air = 1.4;
+  scalar patm = 101325;
+  scalar cs_air = sqrt(gamma_air*patm/rho_air);
+
+  // water at 300K
+  scalar rho_water = 996; // use 970 if gelatine/water mixture as in Bourne1992
+  scalar gamma_water = 5.5;// Shahab uses different EoS model and so 2.35;
+  scalar pinf_water = 492115000;// Shahab uses: 1e9;
+  scalar cs_water = sqrt(gamma_water*(patm+pinf_water)/rho_water);
+
+
+  scalar Pwj = Pw/(rho_air*cs_air*cs_air);
+  scalar Paj = Pa/(rho_air*cs_air*cs_air);
+
+  scalar xc=0,yc=0;
+  for(int e = 0; e < N_E; e++){
+    xc = XYZCen(e,0);
+    yc = XYZCen(e,1);
+    for(int i = 0; i < N_s; i++){
+      if (xc<0){ // water
+	U(i,e*N_F+0) = rho_water/rho_air;
+	U(i,e*N_F+1) = 0;//x momentum
+	U(i,e*N_F+2) = 0;//y momentum
+	U(i,e*N_F+3) = 1.0/(gamma_water - 1.0)*Pwj + gamma_water*pinf_water/((gamma_water -1.0)*(rho_air*cs_air*cs_air));
+	U(i,e*N_F+4) = 1.0/(gamma_water-1);
+	U(i,e*N_F+5) = gamma_water*pinf_water/((gamma_water-1)*(rho_air*cs_air*cs_air));
+      }
+      else { // air
+	U(i,e*N_F+0) = rho_air/rho_air;
+	U(i,e*N_F+1) = 0;
+	U(i,e*N_F+2) = 0;
+	U(i,e*N_F+3) = 1.0/(gamma_air -1.0)*Paj;
+	U(i,e*N_F+4) = 1.0/(gamma_air -1.0);
+	U(i,e*N_F+5) = gamma_air*0/(gamma_air-1);
       }
     }
   }

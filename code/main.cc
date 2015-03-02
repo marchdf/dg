@@ -162,6 +162,7 @@ int main (int argc, char **argv)
   bool multint = false;
   bool blast1d = false;
   bool simblst = false;
+  bool shckrar = false;
   bool rarecon = false;
   bool sodcirc = false;
   bool rminstb = false;
@@ -181,6 +182,7 @@ int main (int argc, char **argv)
   bool shckdrp = false;
   bool drpwall = false;
   bool jetcrss = false;
+  bool prsrflw = false;
   bool injectr = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="tranvtx") tranvtx = true;
@@ -195,6 +197,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="multint") multint = true;
   else if (inputs.getInitialCondition()=="blast1d") blast1d = true;
   else if (inputs.getInitialCondition()=="simblst") simblst = true;
+  else if (inputs.getInitialCondition()=="shckrar") shckrar = true;
   else if (inputs.getInitialCondition()=="rarecon") rarecon = true;
   else if (inputs.getInitialCondition()=="sodcirc") sodcirc = true;
   else if (inputs.getInitialCondition()=="rminstb") rminstb = true;
@@ -214,6 +217,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="shckdrp") shckdrp = true;
   else if (inputs.getInitialCondition()=="drpwall") drpwall = true;
   else if (inputs.getInitialCondition()=="jetcrss") jetcrss = true;
+  else if (inputs.getInitialCondition()=="prsrflw") prsrflw = true;
   else if (inputs.getInitialCondition()=="injectr") injectr = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
 
@@ -631,6 +635,7 @@ int main (int argc, char **argv)
   else if(multint) init_dg_multint_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(blast1d) init_dg_blast1d_multifluid(N_s, N_E, XYZNodes, XYZCen, U);
   else if(simblst) init_dg_simblst_multifluid(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
+  else if(shckrar) init_dg_shckrar_multifluid(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
   else if(rarecon) init_dg_rarecon_multifluid(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
   else if(sodcirc) init_dg_sodcirc_multifluid(N_s, N_E, XYZNodes, U);
   else if(rminstb) init_dg_rminstb_multifluid(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
@@ -652,6 +657,7 @@ int main (int argc, char **argv)
   if (shckdrp) init_dg_shckdrp_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
   if (drpwall) init_dg_drpwall_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
   if (jetcrss) init_dg_jetcrss_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
+  if (prsrflw) init_dg_prsrflw_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
   if (injectr) init_dg_injectr_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
 #endif
 
@@ -851,7 +857,7 @@ int main (int argc, char **argv)
   scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++){h_weight[g] = (scalar)weight(g,0);} mem_counter.addToCPUCounter(N_G*sizeof(scalar));
   DG_SOLVER dgsolver = DG_SOLVER(N_E, N_s, N_G, N_N, M_T, M_s, M_G, M_B,
   				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, //h_xyz, h_xyzf,
-				 h_J, h_invJac, h_JF, h_weight, h_normals, m, timers, mem_counter);
+  				 h_J, h_invJac, h_JF, h_weight, h_normals, m, timers, mem_counter);
   RK rk4 = RK(4);
  
   // RK integration
@@ -1029,14 +1035,14 @@ int main (int argc, char **argv)
   delete[] h_U;
 #endif 
 
-  //////////////////////////////////////////////////////////////////////////   
-  //
-  // End timer and output counters
-  //
-  //////////////////////////////////////////////////////////////////////////
-  timers.stop_timer(0);
-  timers.print_timers();
-  mem_counter.outputCounters();
+  // //////////////////////////////////////////////////////////////////////////   
+  // //
+  // // End timer and output counters
+  // //
+  // //////////////////////////////////////////////////////////////////////////
+  // timers.stop_timer(0);
+  // timers.print_timers();
+  // mem_counter.outputCounters();
   
   //////////////////////////////////////////////////////////////////////////   
   //

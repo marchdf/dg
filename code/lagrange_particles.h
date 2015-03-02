@@ -111,10 +111,12 @@ class LAGRANGE_PARTICLES {
   
   /*!\brief Destructor */
   ~LAGRANGE_PARTICLES(){
-    if(_positions) del(_positions);
-    if(_prev_el)   del(_prev_el);
-    if(_solution)  del(_solution);
-    if(_avg_velocity)  del(_avg_velocity);
+    if (_have_particles){
+      if(_positions) del(_positions);
+      if(_prev_el)   del(_prev_el);
+      if(_solution)  del(_solution);
+      if(_avg_velocity)  del(_avg_velocity);
+    }
   }
 
   bool haveParticles()const {/*!\brief Return true if you have Lagrange particles*/return _have_particles;};

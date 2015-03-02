@@ -128,17 +128,20 @@ CUDASDK_LIB       := $(CUDA_SDK_PATH)/lib
 # PUT IT ALL TOGETHER
 #
 #================================================================================
-LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(CUDA_LIB) -L$(GSL_LIB) -L$(CUDASDK_LIB)
-INCLUDES          := -I. -I$(BLAS_INC) -I$(LAPACK_INC) -I$(CUDA_INC) -I$(GSL_INC) -I$(CUDASDK_INC)
-LDFLAGS           := $(BLAS_LINKER) $(LAPACK_LINKER) $(CUDA_LINKER) $(CUBLAS_LINKER) $(MATH_LINKER) $(GSL_LINKER)
+LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(GSL_LIB)
+INCLUDES          := -I. -I$(BLAS_INC) -I$(LAPACK_INC) -I$(GSL_INC)
+LDFLAGS           := $(BLAS_LINKER) $(LAPACK_LINKER) $(MATH_LINKER) $(GSL_LINKER)
 CFLAGS 	          := -O3
 CXXFLAGS          := -I. -O3 $(DEFINES)
 CUFLAGS	          := $(CUFLAGS) $(DEFINES) --ptxas-options=-v
 
 
-# .cu compiler
+# .cu compiler and libraries
 ifeq ($(ARCH),USE_GPU)
-CUCOMPILER := $(NVCC) $(CUFLAGS) 
+LIBS              := $(LIBS) -L$(CUDA_LIB) -L$(CUDASDK_LIB)
+INCLUDES          := $(INCLUDES) -I$(CUDA_INC) -I$(CUDASDK_INC)
+LDFLAGS           := $(LDFLAGS) $(CUDA_LINKER) $(CUBLAS_LINKER) 
+CUCOMPILER        := $(NVCC) $(CUFLAGS) 
 endif
 ifeq ($(ARCH),USE_CPU)
 CUCOMPILER := $(CXX) $(CXXFLAGS) -x c++ 
