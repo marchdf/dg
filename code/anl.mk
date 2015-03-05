@@ -1,4 +1,9 @@
-# Makefile options for ANL specific paths
+##
+## \file anl.mk
+## \brief Makefile options for ANL specific paths
+## \copyright Copyright (C) 2012-2015, Regents of the University of Michigan
+## \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
+##
 
 CXX               := mpicxx
 # If you want to use the xl compilers, uncomment these lines
