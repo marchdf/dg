@@ -8,7 +8,7 @@
 */
 #ifdef ONED
 #ifdef MULTIFLUID
-#include <printer_kernels.h>
+#include "printer_kernels.h"
 
 //==========================================================================
 //

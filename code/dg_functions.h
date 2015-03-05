@@ -11,7 +11,7 @@
 #include "simpleMesh.h"
 #include "polynomialBasis.h"
 #include "quadratures/Gauss.h"
-#include <scalar_def.h>
+#include "scalar_def.h"
 #include <map>
 #include <vector>
 

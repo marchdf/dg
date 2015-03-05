@@ -11,7 +11,7 @@
 #include <complex>
 #include <string.h>
 #include "fullMatrix.h"
-#include <blas_stuff.h>
+#include "blas_stuff.h"
 // //#if defined(_MSC_VER)
 // //#define F77NAME(x) (x)
 // //#endif

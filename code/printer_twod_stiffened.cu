@@ -8,7 +8,7 @@
 */
 #ifdef TWOD
 #ifdef STIFFENED
-#include <printer_kernels.h>
+#include "printer_kernels.h"
 
 //==========================================================================
 //

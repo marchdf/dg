@@ -5,7 +5,7 @@
   \license This project is released under the GNU Public License. See LICENSE.
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
 */
-#include <misc.h>
+#include "misc.h"
 
 void blasScopy(int N, float* x, int INCX, float* y, int INCY){
   /*!\brief Call float BLAS copy*/

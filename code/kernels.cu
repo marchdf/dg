@@ -5,7 +5,7 @@
   \license This project is released under the GNU Public License. See LICENSE.
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
 */
-#include <kernels.h>
+#include "kernels.h"
 #include <cstdlib>
 #include <stdio.h>
   

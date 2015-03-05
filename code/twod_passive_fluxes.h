@@ -9,11 +9,11 @@
 #ifndef TWOD_PASSIVE_FLUXES_H
 #define TWOD_PASSIVE_FLUXES_H
 #ifdef TWOD
-#include <scalar_def.h>
+#include "scalar_def.h"
 #include <math.h>
-#include <macros.h>
-#include <constants.h>
-#include <basic_fluxes.h>
+#include "macros.h"
+#include "constants.h"
+#include "basic_fluxes.h"
 
 
 //*****************************************************************************

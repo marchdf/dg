@@ -6,7 +6,7 @@
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \ingroup lagrange_particles
 */
-#include <lagrange_particles_kernels.h>
+#include "lagrange_particles_kernels.h"
 #include <stdio.h>
 
 //==========================================================================

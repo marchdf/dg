@@ -29,14 +29,14 @@
 #ifndef LAGRANGE_PARTICLES_H
 #define LAGRANGE_PARTICLES_H
 #include <vector>
-#include <macros.h>
-#include <misc.h>
-#include <scalar_def.h>
-#include <timers.h>
-#include <mem_counter.h>
+#include "macros.h"
+#include "misc.h"
+#include "scalar_def.h"
+#include "timers.h"
+#include "mem_counter.h"
 #include "simpleMesh.h"
 #include "fullMatrix.h"
-#include <lagrange_particles_kernels.h>
+#include "lagrange_particles_kernels.h"
 
 class LAGRANGE_PARTICLES {
 

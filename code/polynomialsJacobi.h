@@ -8,7 +8,7 @@
 #ifndef POLYNOMIALS_JACOBI_H
 #define POLYNOMIALS_JACOBI_H
 #include "fullMatrix.h"
-#include <scalar_def.h>
+#include "scalar_def.h"
 #include <stdlib.h>
 #include <math.h>
 

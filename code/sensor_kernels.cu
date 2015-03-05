@@ -6,7 +6,7 @@
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \ingroup sensor
 */
-#include <sensor_kernels.h>
+#include "sensor_kernels.h"
 #include <stdio.h>
 
 //==========================================================================

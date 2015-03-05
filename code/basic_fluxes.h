@@ -10,7 +10,7 @@
 */
 #ifndef BASIC_FLUXES_H
 #define BASIC_FLUXES_H
-#include <scalar_def.h>
+#include "scalar_def.h"
 #include <math.h>
 
 

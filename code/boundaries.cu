@@ -6,7 +6,7 @@
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \ingroup boundaries
 */
-#include <boundaries.h>
+#include "boundaries.h"
 #include <cstdlib>
 #include <stdio.h>
 

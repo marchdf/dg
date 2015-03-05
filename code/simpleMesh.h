@@ -12,10 +12,10 @@
 #define _SIMPLE_MESH_H_
 #include <vector>
 #include "fullMatrix.h"
-#include <scalar_def.h>
+#include "scalar_def.h"
 #include <string>
 #include <map>
-#include <macros.h>
+#include "macros.h"
 #include <math.h>
 
 /*!

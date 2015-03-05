@@ -11,7 +11,7 @@
 
 #ifndef UPA_H
 #define UPA_H
-#include <scalar_def.h>
+#include "scalar_def.h"
 #include <math.h>
 #include <stdio.h>
 

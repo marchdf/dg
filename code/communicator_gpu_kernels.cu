@@ -8,7 +8,7 @@
 */
 #ifdef USE_MPI
 #ifdef USE_GPU
-#include <communicator_gpu_kernels.h>
+#include "communicator_gpu_kernels.h"
 
 //==========================================================================
 //

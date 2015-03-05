@@ -10,12 +10,12 @@
 #ifndef SENSOR_H
 #define SENSOR_H
 #include <vector>
-#include <macros.h>
-#include <misc.h>
-#include <scalar_def.h>
-#include <sensor_kernels.h>
-#include <timers.h>
-#include <mem_counter.h>
+#include "macros.h"
+#include "misc.h"
+#include "scalar_def.h"
+#include "sensor_kernels.h"
+#include "timers.h"
+#include "mem_counter.h"
 #ifdef USE_GPU
 #include <cublas.h>
 #endif

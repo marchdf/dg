@@ -18,7 +18,7 @@
 #include "mem_counter.h"
 #include "simpleMesh.h"
 #ifdef USE_MPI
-#include <scalar_def.h>
+#include "scalar_def.h"
 #include "mpi.h"
 #include "misc.h"
 #ifdef USE_GPU

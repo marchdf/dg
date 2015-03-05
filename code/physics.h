@@ -7,7 +7,7 @@
 */
 #ifndef PHYSICS_H
 #define PHYSICS_H
-#include <scalar_def.h>
+#include "scalar_def.h"
 #include <math.h>
 #include <macros.h>
 

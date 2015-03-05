@@ -8,9 +8,9 @@
 #ifndef INIT_COND_H
 #define INIT_COND_H
 #include "fullMatrix.h"
-#include <scalar_def.h>
-#include <constants.h>
-#include <misc.h>
+#include "scalar_def.h"
+#include "constants.h"
+#include "misc.h"
 #include <vector>
 
 // Define the different initial condition functions

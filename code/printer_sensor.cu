@@ -6,7 +6,7 @@
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \ingroup printer
 */
-#include <printer_kernels.h>
+#include "printer_kernels.h"
 
 
 //==========================================================================

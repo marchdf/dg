@@ -9,8 +9,8 @@
 
 #ifdef USE_MPI
 #ifdef USE_GPU
-#include <communicator.h>
-#include <communicator_gpu_kernels.h>
+#include "communicator.h"
+#include "communicator_gpu_kernels.h"
 
 void COMMUNICATOR::CommunicateGhosts(int Nfields, scalar* U){
   /*!

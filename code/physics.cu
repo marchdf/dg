@@ -5,16 +5,16 @@
   \license This project is released under the GNU Public License. See LICENSE.
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
 */
-#include <physics.h>
-#include <basic_fluxes.h>
-#include <oned_passive_fluxes.h>
-#include <twod_passive_fluxes.h>
-#include <oned_singlefluid_fluxes.h>
-#include <twod_singlefluid_fluxes.h>
-#include <oned_multifluid_fluxes.h>
-#include <twod_multifluid_fluxes.h>
-#include <oned_stiffened_fluxes.h>
-#include <twod_stiffened_fluxes.h>
+#include "physics.h"
+#include "basic_fluxes.h"
+#include "oned_passive_fluxes.h"
+#include "twod_passive_fluxes.h"
+#include "oned_singlefluid_fluxes.h"
+#include "twod_singlefluid_fluxes.h"
+#include "oned_multifluid_fluxes.h"
+#include "twod_multifluid_fluxes.h"
+#include "oned_stiffened_fluxes.h"
+#include "twod_stiffened_fluxes.h"
 #include <stdio.h>
 
 //==========================================================================

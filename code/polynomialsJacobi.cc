@@ -5,7 +5,7 @@
   \license This project is released under the GNU Public License. See LICENSE.
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
 */
-#include <polynomialsJacobi.h>
+#include "polynomialsJacobi.h"
 
 void JacobiP(const fullMatrix<scalar> x, const int alpha, const int beta, const int N, fullMatrix<scalar> &P){
  /*!

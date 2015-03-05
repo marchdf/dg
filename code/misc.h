@@ -8,15 +8,15 @@
 #ifndef MISC_H
 #define MISC_H
 
-#include <scalar_def.h>
-#include <blas_stuff.h>
+#include "scalar_def.h"
+#include "blas_stuff.h"
 #include <vector>
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include "fullMatrix.h"
 #include <algorithm>    // std::lower_bound, std::upper_bound, std::sort
-#include <macros.h>
+#include "macros.h"
 
 void blasScopy(int N, float* x, int INCX, float* y, int INCY);
 void blasSaxpy(int M, float alpha, float* x, int INCX, float* y, int INCY);

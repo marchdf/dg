@@ -9,10 +9,10 @@
 #ifndef ONED_STIFFENED_FLUXES_H
 #define ONED_STIFFENED_FLUXES_H
 #ifdef ONED
-#include <scalar_def.h>
+#include "scalar_def.h"
 #include <math.h>
-#include <macros.h>
-#include <basic_fluxes.h>
+#include "macros.h"
+#include "basic_fluxes.h"
 
 // Used to define dynamically mass fraction variables
 #define YL(x) YL ##x

@@ -24,21 +24,21 @@
 #include "quadratures/Gauss.h"
 #include "GmshDefines.h"
 #include "simpleMesh.h"
-#include <scalar_def.h>
-#include <dg_functions.h>
-#include <deck.h>
-#include <init_cond.h>
-#include <rk.h>
-#include <misc.h>
-#include <misc_cuda.h>
-#include <limiting.h>
-#include <dg_solver.h>
-#include <communicator.h>
-#include <printer.h>
-#include <sensor.h>
-#include <mem_counter.h>
-#include <timers.h>
-#include <lagrange_particles.h>
+#include "scalar_def.h"
+#include "dg_functions.h"
+#include "deck.h"
+#include "init_cond.h"
+#include "rk.h"
+#include "misc.h"
+#include "misc_cuda.h"
+#include "limiting.h"
+#include "dg_solver.h"
+#include "communicator.h"
+#include "printer.h"
+#include "sensor.h"
+#include "mem_counter.h"
+#include "timers.h"
+#include "lagrange_particles.h"
 
 //
 // Function prototypes

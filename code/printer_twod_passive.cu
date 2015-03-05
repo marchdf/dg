@@ -8,7 +8,7 @@
 */
 #ifdef TWOD
 #ifdef PASSIVE
-#include <printer_kernels.h>
+#include "printer_kernels.h"
 
 //==========================================================================
 //

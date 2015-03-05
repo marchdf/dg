@@ -7,8 +7,8 @@
 */
 #ifndef KERNELS_H
 #define KERNELS_H
-#include <scalar_def.h>
-#include <macros.h>
+#include "scalar_def.h"
+#include "macros.h"
 
 // Here I define the gpu kernels I will be using
 extern "C" void LmapToFace(int M_s, int M_T,  int N_s, int* map, scalar* U, scalar* UF);

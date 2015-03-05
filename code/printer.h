@@ -11,17 +11,17 @@
 #define PRINTER_H
 #include "fullMatrix.h"
 #include "simpleMesh.h"
-#include <scalar_def.h>
+#include "scalar_def.h"
 #include <stdlib.h>
-#include <constants.h>
+#include "constants.h"
 #include <vector>
 #include <string>
 #include <stdio.h>
 #include "printer_kernels.h"
 #include "timers.h"
 #include "mem_counter.h"
-#include <sensor.h>
-#include <lagrange_particles.h>
+#include "sensor.h"
+#include "lagrange_particles.h"
 #ifdef USE_GPU
 #include "misc_cuda.h"
 #endif

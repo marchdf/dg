@@ -5,7 +5,7 @@
   \license This project is released under the GNU Public License. See LICENSE.
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
 */
-#include <dg_functions.h>
+#include "dg_functions.h"
 void dg_jac_elements_fast(const int N_G, const int N_E, fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &dphi, fullMatrix<scalar> &J){
   /*!
     \brief Get the Jacobian of the elements (only, which is why it's "fast")

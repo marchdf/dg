@@ -9,7 +9,7 @@
 
 #ifdef USE_MPI
 #ifdef USE_CPU
-#include <communicator.h>
+#include "communicator.h"
 
 void COMMUNICATOR::CommunicateGhosts(int Nfields, scalar* U){
   /*!

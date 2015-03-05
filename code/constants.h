@@ -9,7 +9,7 @@
 */
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
-#include <scalar_def.h>
+#include "scalar_def.h"
 
 namespace constants
 {

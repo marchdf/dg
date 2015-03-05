@@ -8,7 +8,7 @@
 */
 #ifndef LIMITING_KERNELS_H
 #define LIMITING_KERNELS_H
-#include <scalar_def.h>
+#include "scalar_def.h"
 #include <math.h>
 #include <macros.h>
 

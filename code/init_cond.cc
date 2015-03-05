@@ -5,7 +5,7 @@
   \license This project is released under the GNU Public License. See LICENSE.
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
 */
-#include <init_cond.h>
+#include "init_cond.h"
 #include <stdlib.h>
 #include <gsl/gsl_integration.h>
 

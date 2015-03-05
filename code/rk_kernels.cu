@@ -6,11 +6,11 @@
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \ingroup rk
 */
-#include <rk_kernels.h>
+#include "rk_kernels.h"
 #include <cstdlib>
 #include <stdio.h>
-#include <upa.h>
-#include <constants.h>
+#include "upa.h"
+#include "constants.h"
 
 //==========================================================================
 //

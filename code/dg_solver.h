@@ -8,8 +8,8 @@
 #ifndef DG_SOLVER_H
 #define DG_SOLVER_H
 
-#include <physics.h>
-#include <boundaries.h>
+#include "physics.h"
+#include "boundaries.h"
 #include <stdio.h>
 #include "simpleMesh.h"
 #include "timers.h"
