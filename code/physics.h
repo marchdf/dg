@@ -1,7 +1,7 @@
 /*!
   \file physics.h
   \brief Functions to lauch kernels that deal with the physics
-  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \copyright Copyright (C) 2012-2015, Regents of the University of Michigan
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
 */
 #ifndef PHYSICS_H

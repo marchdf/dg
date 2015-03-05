@@ -1,7 +1,7 @@
 /*!
   \file lagrange_particles.h
   \brief Class deals with the lagrange particles
-  \copyright Copyright (C) 2014, Regents of the University of Michigan
+  \copyright Copyright (C) 2012-2015, Regents of the University of Michigan
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \defgroup lagrange_particles Lagrange particles
   \ingroup lagrange_particles
