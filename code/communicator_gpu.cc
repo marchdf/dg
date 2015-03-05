@@ -2,6 +2,7 @@
   \file communicator_gpu.cc
   \brief GPU implementation of CommunicateGhosts
   \copyright Copyright (C) 2012-2015, Regents of the University of Michigan
+  \license
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \ingroup gpugroup
 */

@@ -2,6 +2,7 @@
   \file oned_singlefluid_fluxes.h
   \brief Riemann solvers for 1D Euler equations (singe fluids)
   \copyright Copyright (C) 2012-2015, Regents of the University of Michigan
+  \license
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \defgroup fluxes Fluxes and Riemann solvers
   \ingroup fluxes

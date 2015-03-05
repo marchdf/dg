@@ -2,6 +2,7 @@
   \file upa.h
   \brief Find |u+a|
   \copyright Copyright (C) 2012-2015, Regents of the University of Michigan
+  \license
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \section Description
   These functions find |u+a| for a given rho, u, E, gamma.  For 2D,
