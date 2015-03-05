@@ -2,7 +2,7 @@
   \file boundaries.cu
   \brief Kernels to implement special boundary conditions
   \copyright Copyright (C) 2012-2015, Regents of the University of Michigan
-  \license
+  \license This project is released under the GNU Public License. See LICENSE.
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
   \ingroup boundaries
 */
