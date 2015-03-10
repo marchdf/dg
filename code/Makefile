@@ -23,7 +23,8 @@ CONS=NOCONS
 
 # configuration
 directories       := . quadratures
-BINNAME           := dg1d
+BINDIR            := bin
+TARGET            := dgexec
 
 #================================================================================
 #
@@ -164,12 +165,9 @@ endif
 .DELETE_ON_ERROR: *.o
 .IGNORE: *.h
 
-OBJECTS_DIR?=objects
-DEPENDENCIES_DIR?=dependencies
-
 # Path where objects and dependencies will be put
-ODIR:=objects
-DDIR:=dependencies
+ODIR?=objects
+DDIR?=dependencies
 
 srcc:=$(subst ./,,$(basename $(foreach dir,$(directories),$(wildcard $(dir)/*.c) $(wildcard $(dir)/*.cc))))
 srcu:=$(subst ./,,$(basename $(foreach dir,$(directories),$(wildcard $(dir)/*.cu))))
@@ -192,7 +190,7 @@ $(DDIR)/%.d : %.cu
 	@mkdir -p $(@D)
 	@$(CUCOMPILER) $(INCLUDES) $(DEPFLAGS) $< |sed 's|$(<F:.cu=\.o)|$(ODIR)/$*.o $@|'>$@
 
-all: $(BINNAME)
+all: $(BINDIR)/$(TARGET)
 
 sinclude $(deps)
 %.h :
@@ -216,19 +214,20 @@ $(ODIR)/%.o : %.cu
 	@echo "Compilation of $<"
 	@$(CUCOMPILER) $(INCLUDES) -c $< -o $@
 
-$(BINNAME) : $(objs)
+$(BINDIR)/$(TARGET) : $(objs)
 	@echo "Link of $@"
 	@mkdir -p $(@D)
 	$(CXX) -o$@ $(objs) $(INCLUDES) $(LIBS) $(LDFLAGS) $(TRACE)
+	@echo "SUCCESS"
 
 .PHONY : clean cleanall all install
 
 clean :
-	@echo "Clean of $(DDIR) and $(ODIR)"
-	@-rm -rf $(DDIR) $(ODIR)
+	@echo "Clean of $(DDIR), $(ODIR), and $(BINDIR)"
+	@-rm -rf $(DDIR) $(ODIR) $(BINDIR)
 
 cleanall :
-	@-rm -rv $(OBJECTS_DIR) $(DEPENDENCIES_DIR)
+	@-rm -rv $(ODIR) $(DDIR) $(BINDIR)
 
 cleandep :
 	@echo "Cleaning dependencies"
