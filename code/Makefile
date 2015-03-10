@@ -220,7 +220,11 @@ $(BINDIR)/$(TARGET) : $(objs)
 	$(CXX) -o$@ $(objs) $(INCLUDES) $(LIBS) $(LDFLAGS) $(TRACE)
 	@echo "SUCCESS"
 
-.PHONY : clean cleanall all install
+doc : $(objs)
+	@echo "Generating documentation with Doxygen."
+	doxygen Doxyfile
+
+.PHONY : clean cleanall all install doc
 
 clean :
 	@echo "Clean of $(DDIR), $(ODIR), and $(BINDIR)"
