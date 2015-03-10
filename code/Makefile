@@ -23,8 +23,10 @@ CONS=NOCONS
 
 # configuration
 directories       := . quadratures
+MKDIR             := custom_makefiles
 BINDIR            := bin
 TARGET            := dgexec
+
 
 #================================================================================
 #
@@ -79,19 +81,19 @@ TRACE		  :=
 #
 #================================================================================
 ifeq ($(LIEU),HOME)
-include home.mk
+include $(MKDIR)/home.mk
 endif
 
 ifeq ($(LIEU),NYX)
-include nyx.mk
+include $(MKDIR)/nyx.mk
 endif
 
 ifeq ($(LIEU),TACC)
-include tacc.mk
+include $(MKDIR)/tacc.mk
 endif
 
 ifeq ($(LIEU),ANL)
-include anl.mk
+include $(MKDIR)/anl.mk
 endif
 
 #================================================================================
