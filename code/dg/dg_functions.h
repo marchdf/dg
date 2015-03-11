@@ -10,7 +10,7 @@
 #include "fullMatrix.h"
 #include "simpleMesh.h"
 #include "polynomialBasis.h"
-#include "quadratures/Gauss.h"
+#include "Gauss.h"
 #include "scalar_def.h"
 #include <map>
 #include <vector>

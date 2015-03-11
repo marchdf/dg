@@ -21,7 +21,7 @@
 #include "fullMatrix.h"
 #include "polynomialBasis.h"
 #include "polynomialsJacobi.h"
-#include "quadratures/Gauss.h"
+#include "Gauss.h"
 #include "GmshDefines.h"
 #include "simpleMesh.h"
 #include "scalar_def.h"

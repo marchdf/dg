@@ -1,7 +1,8 @@
+This code, except where noted, was written by Marc T. Henry de
+Frahan. All questions should be directed to marchdf@umich.edu.
 
-
-
-
+The Gauss quadrature functions and polynomialBasis function where in
+large part inspired by the Gmsh source code (http://geuz.org/gmsh/).
 
 The 2D version of the function pnpoly in lagrange_particles_kernels.cu
 was written by W Randolph Franklin

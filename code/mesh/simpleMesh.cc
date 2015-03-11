@@ -14,7 +14,7 @@
 #include <set>
 #include <algorithm>
 #include "polynomialBasis.h"
-#include "quadratures/Gauss.h"
+#include "Gauss.h"
 #include <stdexcept>      // std::out_of_range
 #include <bitset>
 

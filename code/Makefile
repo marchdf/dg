@@ -22,7 +22,7 @@ ERRR=NOERROR
 CONS=NOCONS
 
 # configuration
-directories       := . quadratures
+SRCDIRS           := . quadratures printer limiting gmsh dg ic face_fluxes particles sensors communication deck bc matrix time_integration utils physics polynomials memory timers mesh
 MKDIR             := custom_makefiles
 BINDIR            := bin
 TARGET            := dgexec
@@ -140,7 +140,7 @@ CUDASDK_LIB       := $(CUDA_SDK_PATH)/lib
 #
 #================================================================================
 LIBS              := $(LIBS) -L$(BLAS_LIB) -L$(LAPACK_LIB) -L$(GSL_LIB)
-INCLUDES          := -I. -I$(BLAS_INC) -I$(LAPACK_INC) -I$(GSL_INC)
+INCLUDES          := -I. -I$(BLAS_INC) -I$(LAPACK_INC) -I$(GSL_INC) $(foreach dir,$(SRCDIRS),-I$(dir))
 LDFLAGS           := $(BLAS_LINKER) $(LAPACK_LINKER) $(MATH_LINKER) $(GSL_LINKER)
 CFLAGS 	          := -O3
 CXXFLAGS          := -I. -O3 $(DEFINES)
@@ -171,9 +171,9 @@ endif
 ODIR?=objects
 DDIR?=dependencies
 
-srcc:=$(subst ./,,$(basename $(foreach dir,$(directories),$(wildcard $(dir)/*.c) $(wildcard $(dir)/*.cc))))
-srcu:=$(subst ./,,$(basename $(foreach dir,$(directories),$(wildcard $(dir)/*.cu))))
-srch:=$(foreach dir,$(directories),$(wildcard $(dir)/*.h))
+srcc:=$(subst ./,,$(basename $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.c) $(wildcard $(dir)/*.cc))))
+srcu:=$(subst ./,,$(basename $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.cu))))
+srch:=$(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.h))
 deps:=$(foreach file,$(srcc) $(srcu),$(DDIR)/$(file).d)
 objs:=$(foreach file,$(srcc) $(srcu),$(ODIR)/$(file).o)
 
