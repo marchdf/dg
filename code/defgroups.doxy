@@ -1,0 +1,34 @@
+/*!
+ \defgroup boundaries Boundary Conditions 
+ Group of functions to define the boundary conditions
+
+ \defgroup cpugroup CPU Group
+ Group of functions for the CPU functions
+
+ \defgroup fluxes Fluxes and Riemann solvers
+ Group of functions for calculating the fluxes between cells
+
+ \defgroup gpugroup GPU Group
+ Group of functions for the GPU functions
+
+ \defgroup lagrange_particles Lagrange particles
+ Group of functions for passive particles that follow the flow
+
+ \defgroup limiting Limiting
+ Group of functions for solution limiting
+
+ \defgroup makefiles Makefiles
+ Groups of all the Makefiles
+
+ \defgroup printer Printer
+ Group of functions used to output the data
+
+ \defgroup rk Runge-Kutta
+ Group of functions for time integration using the Runge-Kutta method
+
+ \defgroup sensor Sensor
+ Group of functions for sensors to detect shocks and discontinuities
+
+ \defgroup timers Timers
+ Group of functions to set up the timers to profile the code
+*/

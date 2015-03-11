@@ -4,7 +4,6 @@
   \copyright Copyright (C) 2012-2015, Regents of the University of Michigan
   \license This project is released under the GNU Public License. See LICENSE.
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
-  \defgroup lagrange_particles Lagrange particles
   \ingroup lagrange_particles
 
   This is a pure CPU implementation of Lagrange particles. The reasons

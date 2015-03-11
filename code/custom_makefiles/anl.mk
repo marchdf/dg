@@ -4,7 +4,12 @@
 ## \copyright Copyright (C) 2012-2015, Regents of the University of Michigan
 ## \license This project is released under the GNU Public License. See LICENSE.
 ## \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
+## \ingroup makefiles
 ##
+## This makefile adjusts some paths for Argonne National Laboratory's
+## computing cluster.
+##
+## @cond
 
 CXX               := mpicxx
 # If you want to use the xl compilers, uncomment these lines
@@ -31,3 +36,5 @@ LAPACK_LINKER     := -llapack_bgp
 
 # For ALCF/ANL HPCTW profiling
 TRACE		  := -L/soft/apps/current/ibm-hpct/lib -lmpitrace -llicense -lgetarg -L/soft/apps/ibmcmp-jan2013/vac/bg/9.0/bglib -L/soft/apps/ibmcmp-jan2013/vacpp/bg/9.0/bglib -lxlopt -lxl -libmc++
+
+## @endcond

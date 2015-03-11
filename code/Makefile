@@ -1,10 +1,15 @@
 ##
 ## \file Makefile
-## \brief Makefile for the code
+## \brief Main makefile for the code
 ## \copyright Copyright (C) 2012-2015, Regents of the University of Michigan
+## \license This project is released under the GNU Public License. See LICENSE.
 ## \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
+## \ingroup makefiles
 ##
-
+## \param[in] ARCH processor to use (USE_CPU or USE_GPU)
+##
+##
+## @cond
 
 # default options
 ARCH=USE_CPU
@@ -22,7 +27,8 @@ ERRR=NOERROR
 CONS=NOCONS
 
 # configuration
-SRCDIRS           := . quadratures printer limiting gmsh dg ic face_fluxes particles sensors communication deck bc matrix time_integration utils physics polynomials memory timers mesh
+SRCDIR            := src
+SRCDIRS           := $(shell find $(SRCDIR) -type d -name '*')
 MKDIR             := custom_makefiles
 BINDIR            := bin
 TARGET            := dgexec
@@ -238,3 +244,5 @@ cleanall :
 cleandep :
 	@echo "Cleaning dependencies"
 	@rm -rf $(DDIR)
+
+## @endcond

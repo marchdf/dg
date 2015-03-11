@@ -4,7 +4,14 @@
 ## \copyright Copyright (C) 2012-2015, Regents of the University of Michigan
 ## \license This project is released under the GNU Public License. See LICENSE.
 ## \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
+## \ingroup makefiles
 ##
+## TACC is the Texas Advanced Computing Center at the U. of
+## Texas-Austin. Through XSEDE we received computing time on the
+## Stampede cluster. This makefile adjusts some paths for that
+## cluster.
+##
+## @cond
 
 CUDA_INSTALL_PATH := $(TACC_CUDA_DIR)
 CXX               := icc
@@ -21,3 +28,5 @@ GSL_LIB           := $(TACC_GSL_LIB)
 GSL_INC	          := $(TACC_GSL_INC)
 
 CUFLAGS           := -arch=compute_35 -code=sm_35
+
+## @endcond
