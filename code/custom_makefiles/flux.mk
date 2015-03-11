@@ -1,5 +1,5 @@
 ##
-## \file nyx.mk
+## \file flux.mk
 ## \brief Makefile options for FLUX ARC UMICH specific paths
 ## \copyright Copyright (C) 2012-2015, Regents of the University of Michigan
 ## \license This project is released under the GNU Public License. See LICENSE.

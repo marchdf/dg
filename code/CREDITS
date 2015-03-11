@@ -1,3 +1,9 @@
+/*! 
+\file CREDITS
+\brief Where all the credits are
+\page credits Credits
+
+
 This code, except where noted, was written by Marc T. Henry de
 Frahan. All questions should be directed to marchdf@umich.edu.
 
@@ -7,3 +13,5 @@ large part inspired by the Gmsh source code (http://geuz.org/gmsh/).
 The 2D version of the function pnpoly in lagrange_particles_kernels.cu
 was written by W Randolph Franklin
 (http://www.ecse.rpi.edu/~wrf/pmwiki/pmwiki.php).
+
+*/

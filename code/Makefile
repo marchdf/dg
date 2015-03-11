@@ -6,10 +6,34 @@
 ## \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
 ## \ingroup makefiles
 ##
-## \param[in] ARCH processor to use (USE_CPU or USE_GPU)
+## \param[in] ARCH processor to use
+## \param[in] PARA to use or not to use parallel computing
+## \param[in] PREC double or single precision (only double works right now but single could be made to work easily)
+## \param[in] PROB equation to use
+## \param[in] GAMM gamma model to use
+## \param[in] FLUX Riemann solver to use
+## \param[in] LIEU Compile location
+## \param[in] NFLD Total number of fields
+## \param[in] MASS Number of mass fraction fields
+## \param[in] PROF to use or not to use profiling
+## \param[in] ERROR to output or not to output final solution error (L1, L2, Linfinity)
+## \param[in] CONS to output or not to ouptut conservation errors
 ##
-##
-## @cond
+## Parameter      | Default values (or other valid values)
+## :------------- | :-------------
+## ARCH           | USE_CPU (or USE_GPU)
+## PARA           | NO_MPI (or USE_MPI)
+## PREC           | USE_DOUBLE (or USE_FLOAT)
+## PROB           | MULTIFLUID (or SINGLEFLUID or PASSIVE)
+## GAMM           | GAMNCON (or GAMCONS)
+## FLUX           | ROE (or HLL or LLF)
+## LIEU           | HOME (or TACC or ANL or FLUX)
+## NFLD           | -
+## MASS           | 0-10
+## PROF           | OFF (or ON)
+## ERROR          | NOERROR (or ERROR)
+## CONS           | NOCONS (or CONS)
+## @cond           
 
 # default options
 ARCH=USE_CPU
@@ -90,8 +114,8 @@ ifeq ($(LIEU),HOME)
 include $(MKDIR)/home.mk
 endif
 
-ifeq ($(LIEU),NYX)
-include $(MKDIR)/nyx.mk
+ifeq ($(LIEU),FLUX)
+include $(MKDIR)/flux.mk
 endif
 
 ifeq ($(LIEU),TACC)
