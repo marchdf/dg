@@ -256,7 +256,9 @@ doc : $(objs)
 	@echo "Generating documentation with Doxygen."
 	doxygen Doxyfile
 
-.PHONY : clean cleanall all install doc
+test : $(objs)
+	@echo "Running the test suite"
+	@./tests/runtests.py;
 
 clean :
 	@echo "Clean of $(DDIR), $(ODIR), and $(BINDIR)"
@@ -268,5 +270,7 @@ cleanall :
 cleandep :
 	@echo "Cleaning dependencies"
 	@rm -rf $(DDIR)
+
+.PHONY : clean cleanall all install doc test
 
 ## @endcond

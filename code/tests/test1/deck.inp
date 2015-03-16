@@ -1,0 +1,32 @@
+#Make options
+LIEU=HOME
+ARCH=USE_CPU
+PROF=OFF
+PARA=NO_MPI
+PREC=USE_DOUBLE
+DIMS=ONED
+PROB=MULTIFLUID
+NFLD=5
+GAMM=GAMNCON
+FLUX=ROE
+MASS=1
+#Code options
+#time integration
+rk4
+#output time step size
+0.1
+#final time
+0.1
+#Courant-Friedrichs-Lewy condition
+0.5
+#order
+1
+#mesh file
+mesh.msh
+lin
+#limiter
+hrl
+#initial condition
+simblst 2 0.3 1 0.03 0.33333333
+#lagrange particles
+3 -2 -2.03 -1.97
