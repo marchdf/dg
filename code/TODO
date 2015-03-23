@@ -71,4 +71,7 @@
   - constructors in limiting not all showing up
   - prettify the mainpage
   - add links to a license page and a readme page (kind of like the credits page)
+
+\mytodo TESTS
+  - add some physics based testing (shock positions, conservation, etc)
 */
