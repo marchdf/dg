@@ -1,6 +1,10 @@
 /*!
  \mainpage Documentation
  This is the beta version of the DG Manual generated with doxygen.
+ \section groundrules Ground rules for developers
+ - Comment the code extensively. Explain **why** you do something, not what you are doing.
+ - Use the Doxygen style to comment. 
+ - Write unit tests for each function.
  \section sec_todo ToDo List
  See \ref mytodo.
  \section sec_credits Credits
