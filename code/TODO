@@ -31,6 +31,9 @@
 \mytodo PARALLEL
   - Play with buffered send, isend, send, sendrecv_replace?
 
+\mytodo LAGRANGE PARTICLES
+  - make them work with MPI. Right now it doesn't work with multiple processors
+
 \mytodo 2D PHYSICS
   - passive/multifluid HLL
 
