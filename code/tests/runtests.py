@@ -77,8 +77,11 @@ def test_recompile(CODEDIR,recompile,makecmd):
     if recompile:
         return True
     else: 
-        with open(CODEDIR+'last_makecmd') as f:
-            last_makecmd = f.readline()
+        try:
+            with open(CODEDIR+'last_makecmd') as f:
+                last_makecmd = f.readline()
+        except: # if the last make command file does not exist, recompile
+            return True
         if makecmd == last_makecmd:
             return False
         else:

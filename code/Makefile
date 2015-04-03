@@ -258,7 +258,7 @@ doc : $(objs)
 
 test : $(objs)
 	@echo "Running the test suite"
-	@./tests/runtests.py;
+	@./tests/runtests.py -f;
 
 clean :
 	@echo "Clean of $(DDIR), $(ODIR), and $(BINDIR)"
