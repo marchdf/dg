@@ -87,11 +87,12 @@ def test_recompile(CODEDIR,recompile,makecmd):
         else:
             return True
 
-def compile_exec(recompile,CODEDIR,makecmd):
+def compile_exec(recompile,CODEDIR,CWD,makecmd):
     if recompile:
         os.chdir(CODEDIR)
         return_code = sp.call('make clean', shell=True)
         return_code = sp.call(makecmd, shell=True)
+        os.chdir(CWD)
         if return_code != 0: 
             print '\nFailure at compilation\n'
             sys.exit()
@@ -190,7 +191,7 @@ for cnt,subdir in enumerate(subdirs):
 
     # compile to appropriate executable
     print '\t- Start compile'
-    success = compile_exec(recompile,CODEDIR,makecmd)
+    success = compile_exec(recompile,CODEDIR,os.getcwd(),makecmd)
     if success: 
         print '\t- Compiled successfully!'
 
