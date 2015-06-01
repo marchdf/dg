@@ -147,6 +147,7 @@ int main (int argc, char **argv)
   else if (inputs.getLimiter() == "m2i")   {limiterMethod = 4; if(myid==0){printf("Using m2 limiting (per element)\n");}}
   else if (inputs.getLimiter() == "prl")   {limiterMethod = 5; if(myid==0){printf("Using primitive reconstruction limiting (global)\n");}}
   else if (inputs.getLimiter() == "pri")   {limiterMethod = 6; if(myid==0){printf("Using primitive reconstruction limiting (per element)\n");}}
+  else if (inputs.getLimiter() == "p0i")   {limiterMethod = 7; if(myid==0){printf("Using p=0 limiting with a sensor\n");}}
   else{limiterMethod = 0; if(myid==0){printf("No limiting\n");}}
 
   // Setup the initial condition type
@@ -824,16 +825,10 @@ int main (int argc, char **argv)
   Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_N, m, Lag2Mono, Mono2Lag, timers, mem_counter);
 #elif TWOD
 
-  //
-  // Structured mesh
-  //
-  //if(cartesian){
   Limiting Limiter = Limiting(limiterMethod, N_s, N_E, order, cartesian, N_N, N_ghosts, m, Lag2MonoX, MonoX2MonoY, MonoY2Lag, timers, mem_counter);
 
-  //}
-  
   // //
-  // // Unstructured mesh
+  // // Unstructured mesh (relic of the past)
   // //
   // if(!cartesian){
   //   int L = getTaylorDerIdx2DLength(order);

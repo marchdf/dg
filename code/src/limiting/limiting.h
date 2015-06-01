@@ -290,6 +290,18 @@ class Limiting
 
       }
       break;
+    case 7: // p=0 limiting constructor (arbitrary dimensions and mesh and problem type)
+
+      // need the neighbors for the sensor
+      _neighbors  = new int[_N_N*_N_E];         memcpy(_neighbors,   m.getNeighbors(),   _N_N*_N_E*sizeof(int));   mem_counter.addToCPUCounter(_N_N*_N_E*sizeof(int));   
+      
+      // Allocate temporary solution vector
+#ifdef USE_CPU
+      _Utmp     = new scalar[_N_s*_N_E*N_F];                        mem_counter.addToCPUCounter(_N_s*_N_E*N_F*sizeof(scalar));
+#elif USE_GPU
+      cudaMalloc((void**) &_Utmp,_N_s*_N_E*N_F*sizeof(scalar));     mem_counter.addToGPUCounter(_N_s*_N_E*N_F*sizeof(scalar));
+#endif
+      break;
     default:
       _method = 0;
     }
@@ -389,6 +401,7 @@ class Limiting
       break;
     }
   }// end 2D constructor for structured mesh
+  
   
 /*   /\*!\brief Constructor for 2D limiting for unstructured mesh*\/ */
 /*  Limiting(int method, int N_s, int N_E, int N_G, int N_N, int L, int order, int L2Msize1, int L2Msize2, simpleMesh &m, fullMatrix<scalar> Lag2Mono, fullMatrix<scalar> Mono2Lag, fullMatrix<scalar> XYZCen, scalar* powersXYZG, scalar* weight, scalar refArea, int* TaylorDxIdx, int* TaylorDyIdx) */
@@ -514,5 +527,6 @@ class Limiting
   void HRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U);
   void PRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U);
   void M2Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U);
+  void P0Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U);
 };
 #endif
