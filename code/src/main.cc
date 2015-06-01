@@ -185,6 +185,7 @@ int main (int argc, char **argv)
   bool jetcrss = false;
   bool prsrflw = false;
   bool injectr = false;
+  bool bblwedg = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="tranvtx") tranvtx = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
@@ -220,7 +221,8 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="jetcrss") jetcrss = true;
   else if (inputs.getInitialCondition()=="prsrflw") prsrflw = true;
   else if (inputs.getInitialCondition()=="injectr") injectr = true;
-  else{printf("Invalid initial condition setup. Correct the deck.\n");}
+  else if (inputs.getInitialCondition()=="bblwedg") bblwedg = true;
+  else{printf("Invalid initial condition setup. Correct the deck.\n",inputs.getInitialCondition());}
 
   // Restart option step
   int restart_step = inputs.getRestartStep();
@@ -660,6 +662,7 @@ int main (int argc, char **argv)
   if (jetcrss) init_dg_jetcrss_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
   if (prsrflw) init_dg_prsrflw_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
   if (injectr) init_dg_injectr_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
+  if (bblwedg) init_dg_bblwedg_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
 #endif
 
   if (order0) average_cell_p0(N_s, N_E, U);
