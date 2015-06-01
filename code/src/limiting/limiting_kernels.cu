@@ -648,7 +648,47 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 #endif
   
 }
-  
+
+
+//==========================================================================
+arch_global void p0i(int N_s, int N_E, int N_N, int* sensors, scalar* U, scalar* Unew){
+  /*!
+    \brief p=0 limiting function for individual elements (assumes 1D decomposition)
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] N_N number of neighbors per element
+    \param[in] sensors array of sensors
+    \param[in] U solution to limit (Lagrange form)
+    \param[out] Unew limited solution (only some may be limited bc of sensor)
+    Unew was necessary because you need to wait until all the elements
+    have been limited before updating the solution.
+  */
+#ifdef USE_CPU
+  for(int e = 0; e < N_E; e++){
+    for(int fc = 0; fc < N_F; fc++){
+#elif USE_GPU
+  int blk = threadIdx.z; 
+  int e = blockIdx.x*blkE+blk;
+  if (e < N_E){
+    int fc= threadIdx.y;{
+#endif  
+
+      // Get the sensor
+      int sen = sensors[e];
+      if (sen != 0){
+
+	// calculate the cell average
+      
+	// Set all the values of U to the cell average
+	//for(int i=0;i<N_s;i++){Unew[(e*N_F+fc)*N_s+i] = cell_avg;}
+	for(int i=0;i<N_s;i++){Unew[(e*N_F+fc)*N_s+i] = U[(e*N_F+fc)*N_s+i] ;}
+
+      } // end sensor if
+      
+    }
+  }
+}
+
 //==========================================================================
 arch_global void hrl2D(int N_s, int N_E, int N_G, int N_N, int order, scalar* XYZCen, scalar* powersXYZG, int* neighbors, int* TaylorDxIdx, int* TaylorDyIdx, scalar* weight, scalar refArea, scalar* A, scalar* Alim){
   /*!
@@ -1143,6 +1183,33 @@ void Lm2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, 
     4*N_s; // for tmp
 
   m2i1D arch_args_array(size_share*sizeof(scalar)) (N_s, N_E, N_N, neighbors, N_s1D, slicenum, offxy, Lag2Mono, Mono2Lag, sensors, U, Unew);
+}
+
+
+extern "C" 
+void Lp0i(int N_s, int N_E, int N_N, int* sensors, scalar* U, scalar* Unew){
+  /*!
+    \brief Modified limiting function for individual elements (assumes 1D decomposition)
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] N_N number of neighbors per element
+    \param[in] sensors array of sensors
+    \param[in] U solution to limit (Lagrange form)
+    \param[out] Unew limited solution (only some may be limited bc of sensor)
+    \section Description
+    In GPU mode, launches numblocks/blkE blocks of blocklen x 1 x blkE
+    threads. blkE controls the number of elements to set on each block
+  */
+
+#ifdef USE_GPU
+  int div = N_E/blkE;
+  int mod = 0;
+  if (N_E%blkE != 0) mod = 1;
+  dim3 dimBlock(1,N_F,blkE);
+  dim3 dimGrid(div+mod,1);
+#endif
+
+  p0i arch_args (N_s, N_E, N_N, sensors, U, Unew);
 }
 
 extern "C"

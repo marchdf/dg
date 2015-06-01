@@ -93,6 +93,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
   bool output = false;
   bool done = false;
 
+
   // If count is not equal to zero, read output files for restart
   if (count!=0){
     printer.read(count,T,arch(U));
@@ -103,7 +104,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
       
       if(myid==0){printf("Initial condition written to output file.\n");}
       printer.print(arch(U), particles, count, T);
-      
+
       // Limit the initial solution before integrating to avoid problems
       if      (Limiter.getLimitingMethod()==1){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.HRlimiting(communicator, arch(U));}
       else if (Limiter.getLimitingMethod()==2){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.M2limiting(communicator, arch(U));}
@@ -111,8 +112,9 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
       else if (Limiter.getLimitingMethod()==4){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.M2Ilimiting(communicator, sensor, arch(U));}
       else if (Limiter.getLimitingMethod()==5){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.PRlimiting(communicator, arch(U));}
       else if (Limiter.getLimitingMethod()==6){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.PRIlimiting(communicator, sensor, arch(U));}
+      else if (Limiter.getLimitingMethod()==7){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.P0Ilimiting(communicator, sensor, arch(U));}
       printer.print_sensor(sensor, count, T);
-    
+  
       // Output conservation of the fields (if wanted). Works only
       // when data is on host (really this is just for small
       // validation runs)
@@ -125,6 +127,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
   }
   Tout = T+DtOut;
   count++;
+
 
   // Time integration
   timers.start_timer(1);
@@ -179,6 +182,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
 	else if (Limiter.getLimitingMethod()==4) Limiter.M2Ilimiting(communicator, sensor, _Ustar);
 	else if (Limiter.getLimitingMethod()==5) Limiter.PRlimiting(communicator, _Ustar);
 	else if (Limiter.getLimitingMethod()==6) Limiter.PRIlimiting(communicator, sensor, _Ustar);
+	else if (Limiter.getLimitingMethod()==7) Limiter.P0Ilimiting(communicator, sensor, _Ustar);
       }
 
       // Now you have to calculate f(Ustar)
@@ -204,6 +208,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
     else if (Limiter.getLimitingMethod()==4){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.M2Ilimiting(communicator, sensor, arch(U));}
     else if (Limiter.getLimitingMethod()==5){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.PRlimiting(communicator, arch(U));}
     else if (Limiter.getLimitingMethod()==6){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.PRIlimiting(communicator, sensor, arch(U));}
+    else if (Limiter.getLimitingMethod()==7){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.P0Ilimiting(communicator, sensor, arch(U));}
         
     T = T + Dt; // update current time
     n++;        // update the time step counter

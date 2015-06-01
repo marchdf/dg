@@ -30,6 +30,7 @@ extern "C" void Linternal_energy_stiffened(int N_s, int N_E, int slicenum, scala
 extern "C" void Lhrl1D(int N_s, int N_E, int Nfields, int N_N, int slicenum, int* neighbors, int offxy, scalar* A, scalar* Alim);
 extern "C" void Lhri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, int* sensors, scalar* U, scalar* Unew);
 extern "C" void Lm2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, int offxy, scalar* Lag2Mono, scalar* Mono2Lag, int* sensors, scalar* U, scalar* Unew);
+extern "C" void Lp0i(int N_s, int N_E, int N_N, int* sensors, scalar* U, scalar* Unew);
 extern "C" void Lhrl2D(int N_s, int N_E, int N_G, int N_N, int order, scalar* XYZCen, scalar* powersXYZG, int* neighbors, int* TaylorDxIdx, int* TaylorDyIdx, scalar* weight, scalar refArea, scalar* A, scalar* Alim);
 extern "C" void LChangeBasis(int size1, int size2, int N_E,  scalar* Transform, scalar* U, scalar* Unew);
 
