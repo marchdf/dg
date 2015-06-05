@@ -12,6 +12,7 @@
 #include "misc.h"
 #include "constants.h"
 #include "physics.h"
+#include "dg_solver.h"
 #include "limiting_kernels.h"
 #include "communicator.h"
 #include "sensor.h"
@@ -39,7 +40,7 @@ class Limiting
   scalar* _MonoY2Lag;
   scalar* _XYZCen;
   scalar* _powersXYZG;
-
+    
   scalar* _A;      // monomial solution
   scalar* _Alim;   // limited monomial solution
   scalar* _Utmp;   // for hri/m2i, need a tmp to store limited solution
@@ -57,13 +58,14 @@ class Limiting
 #define LOOP_END N_Y
 #define MACRO(x) scalar* _Y(x), * _YMono(x), * _YLim(x);
 #include "loop.h"
-  
+
   int     _method; // no limiting= 0; HR=1; M2L=2
   bool    _cartesian;
   int     _D;
   int     _N_s;
   int     _N_E;
   int     _N_N;
+  int     _N_G;
   int     _N_ghosts;
   int     _L;  // size of TaylorDxIdx
   int     _order;
@@ -110,6 +112,7 @@ class Limiting
     _neighbors=NULL;
     _TaylorDxIdx=NULL;
     _TaylorDyIdx=NULL;
+
   }
   
  public:
@@ -242,8 +245,8 @@ class Limiting
     }
   } // end 1D constructor
 
-  /*!\brief Constructor for 2D limiting for structured mesh*/
- Limiting(int method, int N_s, int N_E, int order, bool cartesian, int N_N, int N_ghosts, simpleMesh &m, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, TIMERS &timers, MEM_COUNTER &mem_counter) : _method(method), _N_s(N_s), _N_E(N_E), _order(order), _cartesian(cartesian), _N_N(N_N), _N_ghosts(N_ghosts), _timers(timers){
+  /*!\brief Constructor for 2D limiting for structured mesh (method 7 is for an arbitrary mesh)*/
+ Limiting(int method, int N_s, int N_E, int order, bool cartesian, int N_N, int N_G, int N_ghosts, simpleMesh &m, scalar refArea, fullMatrix<scalar> &Lag2MonoX, fullMatrix<scalar> &MonoX2MonoY, fullMatrix<scalar> &MonoY2Lag, TIMERS &timers, MEM_COUNTER &mem_counter) : _method(method), _N_s(N_s), _N_E(N_E), _order(order), _cartesian(cartesian), _N_N(N_N), _N_G(N_G), _N_ghosts(N_ghosts), _refArea(refArea), _timers(timers){
 
     _N_s1D = (order+1);
     common_ctor();
@@ -291,15 +294,17 @@ class Limiting
       }
       break;
     case 7: // p=0 limiting constructor (arbitrary dimensions and mesh and problem type)
-
-      // need the neighbors for the sensor
-      _neighbors  = new int[_N_N*_N_E];         memcpy(_neighbors,   m.getNeighbors(),   _N_N*_N_E*sizeof(int));   mem_counter.addToCPUCounter(_N_N*_N_E*sizeof(int));   
       
-      // Allocate temporary solution vector
 #ifdef USE_CPU
-      _Utmp     = new scalar[_N_s*_N_E*N_F];                        mem_counter.addToCPUCounter(_N_s*_N_E*N_F*sizeof(scalar));
+      _Utmp     = new scalar[_N_s*_N_E*N_F];    mem_counter.addToCPUCounter(_N_s*_N_E*N_F*sizeof(scalar));
+      _neighbors  = new int[_N_N*_N_E];         memcpy(_neighbors,   m.getNeighbors(),   _N_N*_N_E*sizeof(int));   mem_counter.addToCPUCounter(_N_N*_N_E*sizeof(int));
 #elif USE_GPU
+      // Allocate on GPU
       cudaMalloc((void**) &_Utmp,_N_s*_N_E*N_F*sizeof(scalar));     mem_counter.addToGPUCounter(_N_s*_N_E*N_F*sizeof(scalar));
+      cudaMalloc((void**) &_neighbors  ,_N_N*_N_E*sizeof(int));	    mem_counter.addToGPUCounter(_N_N*_N_E*sizeof(int));
+
+      // Copy data to GPU
+      cudaMemcpy(_neighbors,  m.getNeighbors(),_N_N*_N_E*sizeof(int), cudaMemcpyHostToDevice);
 #endif
       break;
     default:
@@ -527,6 +532,6 @@ class Limiting
   void HRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U);
   void PRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U);
   void M2Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U);
-  void P0Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U);
+  void P0Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, DG_SOLVER &dgsolver, scalar* U);
 };
 #endif

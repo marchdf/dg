@@ -3487,6 +3487,15 @@ void init_dg_bblwedg_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   }
   scalar Ms = ic_inputs[0]; // Mach number of flow
   printf("Ms=%f\n",Ms);
+
+  // mixture properties
+  scalar rm = 1.75e-3;    // mass ratio
+  scalar rv = 0.8;        // volume ratio
+  scalar V  = 180*0.3048; // velocity of flow (m/s)
+
+  // volume fractions
+  scalar alpha_n2    = rv/(1+rv);
+  scalar alpha_water = 1-alpha_n2;
   
   // Material properties
   // air at 300K/27C from http://www.mhtl.uwaterloo.ca/old/onlinetools/airprop/airprop.html
@@ -3509,20 +3518,29 @@ void init_dg_bblwedg_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar cs_water = sqrt(gamma_water*(patm+pinf_water)/rho_water);
 
   // nitrogen (N2) at 300K
-  
+  scalar rho_n2   = 1.165;
+  scalar gamma_n2 = 1.4;
+  scalar pinf_n2  = 0;
+  scalar cs_n2    = sqrt(gamma_n2*(patm+pinf_n2)/rho_n2);
   
   // bubbly air-water mixture
-  // use mixture rules for the material properties
-  scalar rho   = rho_water/rho_ND;
-  scalar u     = 0.1*cs_water/u_ND;
-  scalar v     = 0.0/u_ND;
+  // use mixture rules based on volume fractions for the material properties
+  scalar rho   = rho_water*(1+rm)/(1+rv);
+  scalar u     = V;
+  scalar v     = 0.0;
   scalar gamma = gamma_water;
-  scalar pinf  = pinf_water/p_ND;
-  scalar p     = patm/p_ND;
-  scalar Et    = 1.0/(gamma-1.0)*p + gamma*pinf/(gamma-1)  + 0.5*rho*(u*u+v*v);
-  scalar G     = 1.0/(gamma-1.0);
-  printf("Non-dimensionalized initial mixture properties: rho=%f, u=%f, v=%f, p=%f, pinf=%f, 1/(gamma-1)=%f\n",rho,u,v,p,pinf,G);
-
+  scalar p     = V*V/((1+rv)*(1+rv)*Ms*Ms)*rho_water*rv*(1+rm);
+  scalar G     = alpha_water/(gamma_water-1.0) + alpha_n2/(gamma_n2-1.0);
+  scalar Gpinf = alpha_water*gamma_water*pinf_water/(gamma_water-1.0) + alpha_n2*gamma_n2*pinf_n2/(gamma_n2-1.0);
+  printf("Dimensional initial mixture properties: rho=%f, u=%f, v=%f, p=%f, gamma*pinf/(gamma-1)=%f, 1/(gamma-1)=%f\n",rho,u,v,p,Gpinf,G);
+  rho = rho/rho_ND;
+  u = u/u_ND;
+  v = v/u_ND;
+  Gpinf = Gpinf/p_ND;
+  p = p/p_ND;
+  printf("Non-dimensionalized initial mixture properties: rho=%f, u=%f, v=%f, p=%f, gamma*pinf/(gamma-1)=%f, 1/(gamma-1)=%f\n",rho,u,v,p,Gpinf,G);
+  scalar Et    = G*p + Gpinf  + 0.5*rho*(u*u+v*v);
+  
   scalar xc=0,yc=0;
   for(int e = 0; e < N_E; e++){
     for(int i = 0; i < N_s; i++){
@@ -3531,7 +3549,7 @@ void init_dg_bblwedg_stiffened(const int N_s, const int N_E, const fullMatrix<sc
       U(i,e*N_F+2) = rho*v;
       U(i,e*N_F+3) = Et;
       U(i,e*N_F+4) = G;
-      U(i,e*N_F+5) = gamma*pinf/(gamma-1);
+      U(i,e*N_F+5) = Gpinf;
     }
   }
 }

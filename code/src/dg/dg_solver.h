@@ -13,6 +13,11 @@
 #include <stdio.h>
 #include "simpleMesh.h"
 #include "timers.h"
+#include "mem_counter.h"
+#include "kernels.h"
+#ifdef USE_GPU
+#include <cublas.h>
+#endif
 
 class DG_SOLVER
 {
@@ -362,7 +367,7 @@ class DG_SOLVER
   void conservation(scalar* U, double time){
     /*!
       \brief Function to calculate and output conservation of certain quantities
-      \param[in] U solution to evaluate (Lagrange nodal)
+      \param[in] U solution to evaluate (Lagrange nodal), on the host (CPU)
       \param[in] time time step
     */
     
@@ -382,6 +387,8 @@ class DG_SOLVER
     fprintf(consf,"%20.16E\t", time); for(int fc = 0; fc < N_F; fc++) fprintf(consf,"%20.16E\t", _I[fc]); fprintf(consf,"\n");
 
   };//end conservation function
+
+  scalar* getPhiW()const {/*! Return phi*/return _phi_w;}
 
 };
 
