@@ -112,7 +112,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
       else if (Limiter.getLimitingMethod()==4){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.M2Ilimiting(communicator, sensor, arch(U));}
       else if (Limiter.getLimitingMethod()==5){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.PRlimiting(communicator, arch(U));}
       else if (Limiter.getLimitingMethod()==6){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.PRIlimiting(communicator, sensor, arch(U));}
-      else if (Limiter.getLimitingMethod()==7){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.P0Ilimiting(communicator, sensor, arch(U));}
+      else if (Limiter.getLimitingMethod()==7){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.P0Ilimiting(communicator, sensor, dgsolver, arch(U));}
       printer.print_sensor(sensor, count, T);
   
       // Output conservation of the fields (if wanted). Works only
@@ -182,7 +182,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
 	else if (Limiter.getLimitingMethod()==4) Limiter.M2Ilimiting(communicator, sensor, _Ustar);
 	else if (Limiter.getLimitingMethod()==5) Limiter.PRlimiting(communicator, _Ustar);
 	else if (Limiter.getLimitingMethod()==6) Limiter.PRIlimiting(communicator, sensor, _Ustar);
-	else if (Limiter.getLimitingMethod()==7) Limiter.P0Ilimiting(communicator, sensor, _Ustar);
+	else if (Limiter.getLimitingMethod()==7) Limiter.P0Ilimiting(communicator, sensor, dgsolver, _Ustar);
       }
 
       // Now you have to calculate f(Ustar)
@@ -208,7 +208,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
     else if (Limiter.getLimitingMethod()==4){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.M2Ilimiting(communicator, sensor, arch(U));}
     else if (Limiter.getLimitingMethod()==5){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.PRlimiting(communicator, arch(U));}
     else if (Limiter.getLimitingMethod()==6){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.PRIlimiting(communicator, sensor, arch(U));}
-    else if (Limiter.getLimitingMethod()==7){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.P0Ilimiting(communicator, sensor, arch(U));}
+    else if (Limiter.getLimitingMethod()==7){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.P0Ilimiting(communicator, sensor, dgsolver, arch(U));}
         
     T = T + Dt; // update current time
     n++;        // update the time step counter

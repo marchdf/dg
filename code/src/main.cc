@@ -346,7 +346,7 @@ int main (int argc, char **argv)
   for(int g = 0; g < N_G; g++){
     for(int i = 0; i < N_s; i++){
       phi(g,i) = (scalar)phiD(g,i);
-    }	  
+    }
   }    
   double grads[N_s][3];  
   for(int g = 0; g < N_G; g++){
@@ -818,6 +818,16 @@ int main (int argc, char **argv)
 
   //////////////////////////////////////////////////////////////////////////   
   //
+  // Setup the dg solver
+  //
+  //////////////////////////////////////////////////////////////////////////   
+  scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++){h_weight[g] = (scalar)weight(g,0);} mem_counter.addToCPUCounter(N_G*sizeof(scalar));
+  DG_SOLVER dgsolver = DG_SOLVER(N_E, N_s, N_G, N_N, M_T, M_s, M_G, M_B,
+  				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, //h_xyz, h_xyzf,
+  				 h_J, h_invJac, h_JF, h_weight, h_normals, m, timers, mem_counter);
+
+  //////////////////////////////////////////////////////////////////////////   
+  //
   // Setup the limiter
   //
   //////////////////////////////////////////////////////////////////////////
@@ -825,7 +835,7 @@ int main (int argc, char **argv)
   Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_N, m, Lag2Mono, Mono2Lag, timers, mem_counter);
 #elif TWOD
 
-  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, order, cartesian, N_N, N_ghosts, m, Lag2MonoX, MonoX2MonoY, MonoY2Lag, timers, mem_counter);
+  Limiting Limiter = Limiting(limiterMethod, N_s, N_E, order, cartesian, N_N, N_G, N_ghosts, m, refArea, Lag2MonoX, MonoX2MonoY, MonoY2Lag, timers, mem_counter);
 
   // //
   // // Unstructured mesh (relic of the past)
@@ -842,24 +852,20 @@ int main (int argc, char **argv)
  
 #endif
 
+
   //////////////////////////////////////////////////////////////////////////   
   //
-  // Solve the problem on the CPU/GPU.
+  // Solve the problem on the CPU/GPU. Time integration
   //
   //////////////////////////////////////////////////////////////////////////   
   double DtOut = inputs.getOutputTimeStep(); 
   double Tf    = inputs.getFinalTime();
   m.setDx(N_N,N_E,XYZCen,XYZNodes);
   scalar CFL   = inputs.getCFL()*m.getDx()/(2.0*order+1);
-
-  if(myid==0){printf("==== Now RK 4 steps =====\n");}
-  scalar* h_weight  = new scalar[N_G]; makeZero(h_weight,N_G); for(int g=0; g<N_G; g++){h_weight[g] = (scalar)weight(g,0);} mem_counter.addToCPUCounter(N_G*sizeof(scalar));
-  DG_SOLVER dgsolver = DG_SOLVER(N_E, N_s, N_G, N_N, M_T, M_s, M_G, M_B,
-  				 h_map, h_invmap, h_phi, h_dphi, h_phi_w, h_dphi_w, h_psi, h_psi_w, //h_xyz, h_xyzf,
-  				 h_J, h_invJac, h_JF, h_weight, h_normals, m, timers, mem_counter);
   RK rk4 = RK(4);
  
   // RK integration
+  if(myid==0){printf("==== Now RK 4 steps =====\n");}
   rk4.RK_integration(DtOut, Tf, CFL, restart_step,
   		     N_E, N_s, N_G, M_T, M_s, N_ghosts,
   		     h_Minv, 

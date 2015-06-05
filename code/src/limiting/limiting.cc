@@ -555,6 +555,7 @@ void Limiting::HRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U
   /*!
     \brief HR limiting function for limiting each element individually
     \param[in] communicator communicator object for MPI communications
+    \param[in] sensor sensor object
     \param[out] U solution to be limited
   */
 
@@ -592,6 +593,7 @@ void Limiting::PRIlimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U
   /*!
     \brief PR limiting function for limiting each element individually (primitive variables)
     \param[in] communicator communicator object for MPI communications
+    \param[in] sensor sensor object
     \param[out] U solution to be limited
   */
 
@@ -635,6 +637,7 @@ void Limiting::M2Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U
   /*!
     \brief modified limiting function (see jcp2014) for limiting each element individually
     \param[in] communicator communicator object for MPI communications
+    \param[in] sensor sensor object
     \param[out] U solution to be limited
   */
   
@@ -669,10 +672,12 @@ void Limiting::M2Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U
 }
 
 
-void Limiting::P0Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U){
+void Limiting::P0Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, DG_SOLVER &dgsolver, scalar* U){
   /*!
     \brief based on a sensor, reduce the element to his cell average (p=0 solution). This works for any kind of mesh (triangles, etc).
     \param[in] communicator communicator object for MPI communications
+    \param[in] sensor sensor object
+    \param[in] dgsolver dgsolver object
     \param[out] U solution to be limited
   */
   
@@ -682,7 +687,7 @@ void Limiting::P0Ilimiting(COMMUNICATOR &communicator, SENSOR &sensor, scalar* U
   sensor.sensing(_neighbors,U);
   
   // Call limiting function (doesn't care about dimensions or type of element)
-  Lp0i(_N_s, _N_E, _N_N, sensor.getSensors(), U, _Utmp);
+  Lp0i(_N_s, _N_E, _N_G, _refArea, sensor.getSensors(), dgsolver.getPhiW(), U, _Utmp);
   sensor.copy_detected_elements(_Utmp, U);
 
   _timers.stop_timer(20);

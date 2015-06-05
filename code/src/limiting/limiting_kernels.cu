@@ -651,13 +651,15 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 
 
 //==========================================================================
-arch_global void p0i(int N_s, int N_E, int N_N, int* sensors, scalar* U, scalar* Unew){
+arch_global void p0i(int N_s, int N_E, int N_G, scalar refArea, int* sensors, scalar* phi_w, scalar* U, scalar* Unew){
   /*!
     \brief p=0 limiting function for individual elements (assumes 1D decomposition)
     \param[in] N_s number of nodes per element
     \param[in] N_E number of elements
-    \param[in] N_N number of neighbors per element
+    \param[in] N_G number of integration points
+    \param[in] refArea area of reference element
     \param[in] sensors array of sensors
+    \param[in] phi_w matrix of basis function for collocation (premultiplied by integration weights)
     \param[in] U solution to limit (Lagrange form)
     \param[out] Unew limited solution (only some may be limited bc of sensor)
     Unew was necessary because you need to wait until all the elements
@@ -678,13 +680,21 @@ arch_global void p0i(int N_s, int N_E, int N_N, int* sensors, scalar* U, scalar*
       if (sen != 0){
 
 	// calculate the cell average
-      
-	// Set all the values of U to the cell average
-	//for(int i=0;i<N_s;i++){Unew[(e*N_F+fc)*N_s+i] = cell_avg;}
-	for(int i=0;i<N_s;i++){Unew[(e*N_F+fc)*N_s+i] = U[(e*N_F+fc)*N_s+i] ;}
+	// avg = \frac{1}{|\Omega|} \int_\Omega U(x,y) \ud \Omega
+	//     = \frac{1}{|\Omega|} \sum_k w_k U(x_k,y_k) J
+	//     = \frac{1}{J |\omega|} \sum_k w_k U(x_k,y_k) J
+	//     = \frac{1}{|\omega|} \sum_k w_k U(x_k,y_k)
+	// e.g. omega = 1/2 for a triangle
+	scalar Uavg = 0;
+	for(int g=0; g<N_G; g++){
+	  for(int i=0; i<N_s; i++){ Uavg += phi_w[i*N_G+g]*U[(e*N_F+fc)*N_s+i];}
+	}
+        Uavg = Uavg/refArea;
 
-      } // end sensor if
-      
+	// Set all the values of U to the cell average
+	for(int i=0;i<N_s;i++){Unew[(e*N_F+fc)*N_s+i] = Uavg;}
+
+      } // end sensor if      
     }
   }
 }
@@ -1187,13 +1197,15 @@ void Lm2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int slicenum, 
 
 
 extern "C" 
-void Lp0i(int N_s, int N_E, int N_N, int* sensors, scalar* U, scalar* Unew){
+void Lp0i(int N_s, int N_E, int N_G, scalar refArea, int* sensors, scalar* phi_w, scalar* U, scalar* Unew){
   /*!
     \brief Modified limiting function for individual elements (assumes 1D decomposition)
     \param[in] N_s number of nodes per element
     \param[in] N_E number of elements
-    \param[in] N_N number of neighbors per element
+    \param[in] N_G number of integration points
+    \param[in] refArea area of reference triangle
     \param[in] sensors array of sensors
+    \param[in] phi_w matrix of basis function for collocation (premultiplied by integration weights)
     \param[in] U solution to limit (Lagrange form)
     \param[out] Unew limited solution (only some may be limited bc of sensor)
     \section Description
@@ -1209,7 +1221,8 @@ void Lp0i(int N_s, int N_E, int N_N, int* sensors, scalar* U, scalar* Unew){
   dim3 dimGrid(div+mod,1);
 #endif
 
-  p0i arch_args (N_s, N_E, N_N, sensors, U, Unew);
+  p0i arch_args (N_s, N_E, N_G, refArea, sensors, phi_w, U, Unew);
+
 }
 
 extern "C"
@@ -1709,7 +1722,7 @@ arch_device void average_monomial(int N, scalar* A, scalar* Alim){
 
 arch_device void set2average(int N_s, int N, int N_s1D, int slicenum, scalar* L2M, scalar* M2L, scalar* tmp, scalar* U, scalar* UMonoLim){
   /*!
-    \brief Set a nodal solution U to its cell average
+    \brief Set a nodal solution U to its cell average (1D slices)
     \param[in] N_s number of nodes per element
     \param[in] N 1D monomial order
     \param[in] N_s1D number of nodes in 1D elemement
