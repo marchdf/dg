@@ -3528,18 +3528,18 @@ void init_dg_bblwedg_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar rho   = rho_water*(1+rm)/(1+rv);
   scalar u     = V;
   scalar v     = 0.0;
-  scalar gamma = gamma_water;
   scalar p     = V*V/((1+rv)*(1+rv)*Ms*Ms)*rho_water*rv*(1+rm);
   scalar G     = alpha_water/(gamma_water-1.0) + alpha_n2/(gamma_n2-1.0);
-  scalar Gpinf = alpha_water*gamma_water*pinf_water/(gamma_water-1.0) + alpha_n2*gamma_n2*pinf_n2/(gamma_n2-1.0);
-  printf("Dimensional initial mixture properties: rho=%f, u=%f, v=%f, p=%f, gamma*pinf/(gamma-1)=%f, 1/(gamma-1)=%f\n",rho,u,v,p,Gpinf,G);
+  scalar gamma = 1 + 1.0/G;
+  scalar pinf = (1.0/(alpha_water/(gamma_water*(patm+pinf_water)) + alpha_n2/(gamma_n2*patm)) - gamma*patm)/gamma;
+  printf("Dimensional initial mixture properties: rho=%f, u=%f, v=%f, p=%f, pinf=%f, 1/(gamma-1)=%f,cs=%f\n",rho,u,v,p,pinf,G,sqrt(gamma*(patm+pinf)/rho));
   rho = rho/rho_ND;
   u = u/u_ND;
   v = v/u_ND;
-  Gpinf = Gpinf/p_ND;
+  pinf = pinf/p_ND;
   p = p/p_ND;
-  printf("Non-dimensionalized initial mixture properties: rho=%f, u=%f, v=%f, p=%f, gamma*pinf/(gamma-1)=%f, 1/(gamma-1)=%f\n",rho,u,v,p,Gpinf,G);
-  scalar Et    = G*p + Gpinf  + 0.5*rho*(u*u+v*v);
+  printf("Non-dimensionalized initial mixture properties: rho=%f, u=%f, v=%f, p=%f, pinf=%f, 1/(gamma-1)=%f\n",rho,u,v,p,pinf,G);
+  scalar Et    = G*p + gamma*pinf/(gamma-1)  + 0.5*rho*(u*u+v*v);
   
   scalar xc=0,yc=0;
   for(int e = 0; e < N_E; e++){
@@ -3549,7 +3549,7 @@ void init_dg_bblwedg_stiffened(const int N_s, const int N_E, const fullMatrix<sc
       U(i,e*N_F+2) = rho*v;
       U(i,e*N_F+3) = Et;
       U(i,e*N_F+4) = G;
-      U(i,e*N_F+5) = Gpinf;
+      U(i,e*N_F+5) = gamma*pinf/(gamma-1);
     }
   }
 }
