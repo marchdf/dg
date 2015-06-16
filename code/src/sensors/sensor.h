@@ -41,9 +41,9 @@ class SENSOR {
   /*!\brief Constructor */
  SENSOR(int N_s, int N_E, int N_N, TIMERS &timers, MEM_COUNTER &mem_counter, const std::vector<double> &thresholds = std::vector<double>()) : _N_s(N_s), _N_E(N_E), _N_N(N_N), _timers(timers) {
 
-    _sensor1=false;
-    _sensor2=false;
-    _sensor3=false;
+    _sensor1=false; // contact sensor (based on density)
+    _sensor2=false; // shock sensor
+    _sensor3=false; // contact sensor (based on gamma)
 
     // Thresholds from the input deck
     for(int k=0; k<thresholds.size(); k++){
