@@ -3531,7 +3531,9 @@ void init_dg_bblwedg_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar p     = V*V/((1+rv)*(1+rv)*Ms*Ms)*rho_water*rv*(1+rm);
   scalar G     = alpha_water/(gamma_water-1.0) + alpha_n2/(gamma_n2-1.0);
   scalar gamma = 1 + 1.0/G;
-  scalar pinf = (1.0/(alpha_water/(gamma_water*(patm+pinf_water)) + alpha_n2/(gamma_n2*patm)) - gamma*patm)/gamma;
+  scalar pinf1 = (1.0/(alpha_water/(gamma_water*(p   +pinf_water)) + alpha_n2/(gamma_n2*p))    - gamma*p)   /gamma;
+  scalar pinf2 = (1.0/(alpha_water/(gamma_water*(patm+pinf_water)) + alpha_n2/(gamma_n2*patm)) - gamma*patm)/gamma;
+  scalar pinf  = 0.5*(pinf1+pinf2); // = pinf1 // = pinf2
   printf("Dimensional initial mixture properties: rho=%f, u=%f, v=%f, p=%f, pinf=%f, 1/(gamma-1)=%f,cs=%f\n",rho,u,v,p,pinf,G,sqrt(gamma*(patm+pinf)/rho));
   rho = rho/rho_ND;
   u = u/u_ND;
