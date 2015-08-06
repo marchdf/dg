@@ -13,12 +13,12 @@ from gaussxw import *
 def read1dpos(fname,T):
 
     dat = loadtxt(fname)
-    nt  = dat[:,0]        # extract the time step list
-    dt  = dat[:,1]        # extract time step list
-    el  = dat[:,3]        # extract the element list
-    N_t = nt.max(0)+1     # number of time steps + 1 to account for initial
-    N_E = el.max(0)+1     # number of elements
-    N_x = dat.shape[1]/8  # number of x in an element 8 columns per element
+    nt  = dat[:,0]             # extract the time step list
+    dt  = dat[:,1]             # extract time step list
+    el  = dat[:,3]             # extract the element list
+    N_t = nt.max(0)+1          # number of time steps + 1 to account for initial
+    N_E = int(el.max(0)+1)     # number of elements
+    N_x = int(dat.shape[1]/8)  # number of x in an element 8 columns per element
     order = N_x-1
  
     ind = argmin(abs(dt-T))  # get the indexes at the time we want to plot
