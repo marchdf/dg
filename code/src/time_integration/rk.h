@@ -19,6 +19,7 @@
 #include "timers.h"
 #include "mem_counter.h"
 #include "lagrange_particles.h"
+#include "hack_pinf.h"
 #ifdef USE_MPI
 #include "mpi.h"
 #endif

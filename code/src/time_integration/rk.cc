@@ -185,6 +185,10 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
 	else if (Limiter.getLimitingMethod()==7) Limiter.P0Ilimiting(communicator, sensor, dgsolver, _Ustar);
       }
 
+      // Fix pinf (for stiffened EOS)
+      printf("WARNING. You are using a hack to fix pinf. Only 2D\n");
+      Lhack_pinf(N_s, N_E, _Ustar);
+     
       // Now you have to calculate f(Ustar)
       dgsolver.dg_solver(_Ustar,_f);
 	
@@ -209,7 +213,12 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
     else if (Limiter.getLimitingMethod()==5){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.PRlimiting(communicator, arch(U));}
     else if (Limiter.getLimitingMethod()==6){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.PRIlimiting(communicator, sensor, arch(U));}
     else if (Limiter.getLimitingMethod()==7){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.P0Ilimiting(communicator, sensor, dgsolver, arch(U));}
-        
+
+    // Fix pinf (for stiffened EOS)
+    printf("WARNING. You are using a hack to fix pinf. Only 2D\n");
+    Lhack_pinf(N_s, N_E, arch(U));
+
+    
     T = T + Dt; // update current time
     n++;        // update the time step counter
 
