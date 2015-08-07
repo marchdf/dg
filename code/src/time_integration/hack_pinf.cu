@@ -71,20 +71,21 @@ arch_global void hack_pinf(int N_s, int N_E, scalar* U){
 
       // evaluate function and derivative
       scalar get_f_p = Et - 0.5*rho*(u*u+v*v) - p/(gamma - 1) - 1/(gamma - 1)*(1.0/(alpha_l/(gamma_l*(p + pinf_l)) + alpha_g/(gamma_g*p)) - gamma*p);
-      scalar get_fp_p = 1.0/(gamma-1) + 1.0/(gamma-1) * ( ( -(alpha_g)/(p*p * gamma_g) - (alpha_l)/(gamma_l*(p+pinf_l)*(p+pinf_l)) )/( (alpha_g/(p*gamma_g) - alpha_l/(gamma_l*(p+pinf_l))) * (alpha_g/(p*gamma_g) - alpha_l/(gamma_l*(p+pinf_l))))  - gamma);
+      scalar get_fp_p = 1.0/(gamma-1) + 1.0/(gamma-1) * ( ( -alpha_g/(p*p * gamma_g) - alpha_l/(gamma_l*(p+pinf_l)*(p+pinf_l)) )/( (alpha_g/(p*gamma_g) - alpha_l/(gamma_l*(p+pinf_l))) * (alpha_g/(p*gamma_g) - alpha_l/(gamma_l*(p+pinf_l))))  - gamma);
       
       // get the next guess
       scalar pnew = p - get_f_p/get_fp_p;
-      
-      // Test for convergence
-      scalar get_f_pnew = Et - 0.5*rho*(u*u+v*v) - pnew/(gamma - 1) - 1/(gamma - 1)*(1.0/(alpha_l/(gamma_l*(pnew + pinf_l)) + alpha_g/(gamma_g*pnew)) - gamma*pnew);
-      if (fabs(get_f_p-get_f_pnew) < eps){break;}
 
-      // save and go for the next iteration
+      // save data first
       p = pnew;
       pinf = (1.0/(alpha_l/(gamma_l*(p+pinf_l)) + alpha_g/(gamma_g*p)) - gamma*p)/gamma;
       E = p/(gamma-1) + gamma*pinf/(gamma-1) + 0.5*rho*(u*u+v*v) ;
       // print k, p, pinf, E, Ef, '{0:.5e}'.format(fabs(E-Ef))  
+      
+      // Test for convergence and exit if converged
+      scalar get_f_pnew = Et - 0.5*rho*(u*u+v*v) - pnew/(gamma - 1) - 1/(gamma - 1)*(1.0/(alpha_l/(gamma_l*(pnew + pinf_l)) + alpha_g/(gamma_g*pnew)) - gamma*pnew);
+      if (fabs(get_f_p-get_f_pnew) < eps){break;}
+
     }
 
     // Update the energy and pinf field
