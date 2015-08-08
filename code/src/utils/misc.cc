@@ -102,3 +102,37 @@ scalar interpolate(scalar x, std::vector<std::pair<scalar, scalar> > table, scal
   --it2;
   return it2->second + (it->second - it2->second)*(x - it2->first)/(it->first - it2->first);
 }
+
+
+void get_node_rgb_map(const char *fileName,std::map<int,std::vector<int> > &node_rgb_map){
+  /*!
+    \brief Read the data from the jpeg_mesh.py script linking the node id to an rgb value of the image
+    \param[in] filename name of file containing the data
+    \param[out] node_rgb_map map between the node ID and the RGB value at that node
+  */
+
+  // Open the file
+  std::ifstream ifile;
+  ifile.open(fileName,std::ifstream::in);
+  if(ifile.is_open()==0){ printf("No file named %s. Exiting.\n",fileName); exit(1);}
+
+  // First line contains the number of rows
+  int nrows;
+  ifile >> nrows;
+
+  // loop on all the lines
+  int node_id;
+  int r,g,b=0;
+  bool found = false;
+  for (int k = 0; k < nrows; k++){
+
+    // read the data
+    ifile >> node_id >> r >> g >> b;
+    std::vector<int> rgb(3);
+    rgb[0] = r;
+    rgb[1] = g;
+    rgb[2] = b;
+    node_rgb_map[node_id] = rgb;
+  }
+
+}
