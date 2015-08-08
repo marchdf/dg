@@ -17,6 +17,7 @@
 #include "fullMatrix.h"
 #include <algorithm>    // std::lower_bound, std::upper_bound, std::sort
 #include "macros.h"
+#include <map>
 
 void blasScopy(int N, float* x, int INCX, float* y, int INCY);
 void blasSaxpy(int M, float alpha, float* x, int INCX, float* y, int INCY);
@@ -36,5 +37,6 @@ int factorial(int n);//{ return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;}
 
 void readTable(const char *fileName, fullMatrix<scalar> &XWUP, scalar &gamma, scalar &alpha, scalar &Q);
 scalar interpolate(scalar x, std::vector<std::pair<scalar, scalar> > table, scalar BCL, scalar BCR);
+void get_node_rgb_map(const char *fileName,std::map<int,std::vector<int> > &node_rgb_map);
 
 #endif

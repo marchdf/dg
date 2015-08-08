@@ -11,6 +11,7 @@
 #include "scalar_def.h"
 #include "constants.h"
 #include "misc.h"
+#include "simpleMesh.h"
 #include <vector>
 
 // Define the different initial condition functions
@@ -55,6 +56,7 @@ void init_dg_jetcrss_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 void init_dg_prsrflw_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs = std::vector<double>());
 void init_dg_injectr_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs = std::vector<double>());
 void init_dg_bblwedg_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs = std::vector<double>());
+void init_dg_cfplrun_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const simpleMesh &m, int typeElement, const std::vector<double> &ic_inputs = std::vector<double>());
 /* void init_dg_euler1D_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U); */
 /* void init_dg_euler2D_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U); */
 /* void init_dg_sodtube_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U); */

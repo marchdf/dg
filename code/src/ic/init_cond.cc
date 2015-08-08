@@ -3556,6 +3556,95 @@ void init_dg_bblwedg_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   }
 }
 
+
+
+             
+void init_dg_cfplrun_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const simpleMesh &m, int typeElement, const std::vector<double> &ic_inputs){
+
+  // Parse a jpeg and run a problem based on the colors
+
+  // Material properties
+  // air at 300K/27C from http://www.mhtl.uwaterloo.ca/old/onlinetools/airprop/airprop.html
+  scalar rho_air = 1.1765;
+  scalar gamma_air = 1.4;
+  scalar patm = 101325;
+  scalar cs_air = sqrt(gamma_air*patm/rho_air);
+
+  // Non-dimensional properties
+  scalar L_ND   = 1; 
+  scalar rho_ND = rho_air;
+  scalar u_ND   = cs_air;
+  scalar p_ND   = rho_air*cs_air*cs_air;
+  printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f\n",L_ND,rho_ND,u_ND,p_ND);
+
+  // water at 300K
+  scalar rho_water = 996; 
+  scalar gamma_water = 5.5;
+  scalar pinf_water = 492115000;
+  scalar cs_water = sqrt(gamma_water*(patm+pinf_water)/rho_water);
+
+  // Get map between the node ID and the RGB values
+  std::string ifile = "jpeg_data.dat";
+  std::map<int,std::vector<int> > node_rgb_map;
+  get_node_rgb_map(ifile.c_str(),node_rgb_map);
+
+  
+  // loop over the elements
+  const std::vector<simpleElement> &elements = m.getElements(typeElement);
+  std::vector<int> rgb(3);
+  scalar rho,u,v,G,gamma,pinf,p,Et;
+  for(int e = 0; e < N_E; e++){
+
+    // Get the element corresponding to this index
+    const simpleElement &el = elements[e];
+
+    // loop on its nodes
+    for(int i = 0; i < N_s; i++){
+
+      // Get RGB value of node
+      rgb = node_rgb_map.at(el.getNode(i));
+
+      // fill with water if red
+      if (rgb[1]<200){
+	rho   = rho_water;
+	u     = 0.0;
+	v     = 0.0;
+	p     = patm;
+	G     = 1.0/(gamma_water-1.0);
+	gamma = 1 + 1.0/G;
+	pinf = pinf_water;
+      }
+      else{ // fill with air
+	rho   = rho_air;
+	u     = 0.0;
+	v     = 0.0;
+	p     = patm;
+	G     = 1.0/(gamma_air-1.0);
+	gamma = 1 + 1.0/G;
+	pinf = 0;
+      }
+
+      // Non-dimensionalize
+      rho = rho/rho_ND;
+      u = u/u_ND;
+      v = v/u_ND;
+      pinf = pinf/p_ND;
+      p = p/p_ND;
+      Et    = G*p + gamma*pinf/(gamma-1)  + 0.5*rho*(u*u+v*v);
+
+      // Fill solution
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*u;
+      U(i,e*N_F+2) = rho*v;
+      U(i,e*N_F+3) = Et;
+      U(i,e*N_F+4) = G;
+      U(i,e*N_F+5) = gamma*pinf/(gamma-1);
+    } // loop on nodes
+  } // loop on elements
+  
+}
+
+
 // void init_dg_euler1D_mhd(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const scalar gamma, fullMatrix<scalar> &U){
 
 //   if (N_F!=6) printf("You are setting up the wrong problem. N_F =%i != 8.\n",N_F);
