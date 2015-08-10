@@ -3556,9 +3556,7 @@ void init_dg_bblwedg_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   }
 }
 
-
-
-             
+           
 void init_dg_cfplrun_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const simpleMesh &m, int typeElement, const std::vector<double> &ic_inputs){
 
   // Parse a jpeg and run a problem based on the colors
