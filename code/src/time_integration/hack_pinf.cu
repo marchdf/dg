@@ -154,7 +154,7 @@ arch_global void hack_pinf_20150807(int N_s, int N_E, scalar* U){
     for(int k=0; k<1000; k++){
 
       // // redefine the volume fractions to account for the pressure change
-      scalar pm = 0.052275; //3.630208; // initial_mixture pressure. changes depending on mach number
+      scalar pm = 0.106684; //0.106684; //1.306875; //0.052275; //3.630208; // initial_mixture pressure. changes depending on mach number
       scalar gamma_i = 1; // maybe use gamma_g?
       
       // evaluate function and derivative
