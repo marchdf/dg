@@ -3569,7 +3569,34 @@ void init_dg_cfplrun_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar gamma_air = 1.4;
   scalar patm = 101325;
   scalar cs_air = sqrt(gamma_air*patm/rho_air);
+  scalar M_air  = 34.76; // molecular weight
 
+  // SF6
+  scalar rho_sf6 = 5.494;
+  scalar gamma_sf6 = 1.093;
+  scalar M_sf6 = 146.05;
+
+  // Helium
+  scalar rho_he  = 0.1785;//10;//5.494;//10;//
+  scalar gamma03 = 5.0/3.0;
+  scalar M_he    = 4;
+    
+  // water at 300K
+  scalar rho_water = 996; 
+  scalar gamma_water = 5.5;
+  scalar pinf_water = 492115000;
+  scalar cs_water = sqrt(gamma_water*(patm+pinf_water)/rho_water);
+
+  // Post-shock state of air
+  scalar Ms = 1.21;   // Shock Mach number
+  scalar uS   = Ms*cs_air*(2*(Ms*Ms-1))/(gamma_air+1)/(Ms*Ms);
+  scalar vS   = 0;
+  scalar pS   = patm*(1+2*gamma_air/(gamma_air+1)*(Ms*Ms-1));
+  scalar rhoS = rho_air*(gamma_air+1)*Ms*Ms/(2+(gamma_air-1)*Ms*Ms);
+  scalar gammaS = gamma_air;
+  scalar EtS    = pS/(gammaS-1.0) + 0.5*rhoS*(uS*uS+vS*vS);
+
+  
   // Non-dimensional properties
   scalar L_ND   = 1; 
   scalar rho_ND = rho_air;
@@ -3577,21 +3604,15 @@ void init_dg_cfplrun_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar p_ND   = rho_air*cs_air*cs_air;
   printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f\n",L_ND,rho_ND,u_ND,p_ND);
 
-  // water at 300K
-  scalar rho_water = 996; 
-  scalar gamma_water = 5.5;
-  scalar pinf_water = 492115000;
-  scalar cs_water = sqrt(gamma_water*(patm+pinf_water)/rho_water);
-
   // Get map between the node ID and the RGB values
   std::string ifile = "jpeg_data.dat";
   std::map<int,std::vector<int> > node_rgb_map;
   get_node_rgb_map(ifile.c_str(),node_rgb_map);
-
   
   // loop over the elements
   const std::vector<simpleElement> &elements = m.getElements(typeElement);
   std::vector<int> rgb(3);
+  scalar r, g, b = 0;
   scalar rho,u,v,G,gamma,pinf,p,Et;
   for(int e = 0; e < N_E; e++){
 
@@ -3603,17 +3624,29 @@ void init_dg_cfplrun_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 
       // Get RGB value of node
       rgb = node_rgb_map.at(el.getNode(i));
-
-      // fill with water if red
-      if (rgb[1]<200){
-	rho   = rho_water;
+      r = rgb[0]; g = rgb[1]; b = rgb[2];
+      
+      // fill with SF6 if red
+      if ((r>200) && (g<200) && (b<200)){
+	rho   = rho_sf6;
 	u     = 0.0;
 	v     = 0.0;
 	p     = patm;
-	G     = 1.0/(gamma_water-1.0);
+	G     = 1.0/(gamma_sf6-1.0);
 	gamma = 1 + 1.0/G;
-	pinf = pinf_water;
+	pinf  = 0;
       }
+
+      // fill with shocked air if blue
+      else if ((r<200) && (g<200) && (b>200)){
+	rho   = rhoS;
+	u     = uS;
+	v     = vS;
+	p     = pS;
+	G     = 1.0/(gammaS-1.0);
+	gamma = 1 + 1.0/G;
+	pinf  = 0;
+      }      
       else{ // fill with air
 	rho   = rho_air;
 	u     = 0.0;
@@ -3621,7 +3654,7 @@ void init_dg_cfplrun_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 	p     = patm;
 	G     = 1.0/(gamma_air-1.0);
 	gamma = 1 + 1.0/G;
-	pinf = 0;
+	pinf  = 0;
       }
 
       // Non-dimensionalize
