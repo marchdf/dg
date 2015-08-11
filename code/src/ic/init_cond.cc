@@ -3563,6 +3563,14 @@ void init_dg_cfplrun_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 
   // Parse a jpeg and run a problem based on the colors
 
+  // Problem parameters
+  if (ic_inputs.size() != 1){
+    printf("Wrong initial condition inputs. Exiting\n");
+    exit(1);
+  }
+  scalar Ms = ic_inputs[0]; // Mach number of flow
+  printf("Ms=%f\n",Ms);
+  
   // Material properties
   // air at 300K/27C from http://www.mhtl.uwaterloo.ca/old/onlinetools/airprop/airprop.html
   scalar rho_air = 1.1765;
@@ -3588,7 +3596,6 @@ void init_dg_cfplrun_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar cs_water = sqrt(gamma_water*(patm+pinf_water)/rho_water);
 
   // Post-shock state of air
-  scalar Ms = 1.21;   // Shock Mach number
   scalar uS   = Ms*cs_air*(2*(Ms*Ms-1))/(gamma_air+1)/(Ms*Ms);
   scalar vS   = 0;
   scalar pS   = patm*(1+2*gamma_air/(gamma_air+1)*(Ms*Ms-1));
