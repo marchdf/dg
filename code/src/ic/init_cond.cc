@@ -11,6 +11,7 @@
 
 scalar constants::GLOBAL_GX;
 scalar constants::GLOBAL_GY;
+scalar constants::GLOBAL_P0_BBLWEDG;
 
 void init_dg_shallow(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
@@ -3541,6 +3542,7 @@ void init_dg_bblwedg_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   pinf = pinf/p_ND;
   p = p/p_ND;
   printf("Non-dimensionalized initial mixture properties: rho=%f, u=%f, v=%f, p=%f, pinf=%f, 1/(gamma-1)=%f\n",rho,u,v,p,pinf,G);
+  constants::GLOBAL_P0_BBLWEDG = p;
   scalar Et    = G*p + gamma*pinf/(gamma-1)  + 0.5*rho*(u*u+v*v);
   
   scalar xc=0,yc=0;

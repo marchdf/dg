@@ -11,6 +11,7 @@
 #include "scalar_def.h"
 #include "macros.h"
 #include <math.h>
+#include "constants.h"
 
 extern "C" void Lhack_pinf(int N_s, int N_E, scalar* U);
 

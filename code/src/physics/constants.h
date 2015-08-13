@@ -19,6 +19,10 @@ namespace constants
   // now. It seems that it will initialize to zero by default.
   extern scalar GLOBAL_GX; // gravity x-dir
   extern scalar GLOBAL_GY; // gravity y-dir
+
+  // initial pressure in the bubbly flow for the flow over a wedge
+  extern scalar GLOBAL_P0_BBLWEDG;
+
   
 } // namespace constants
 

@@ -102,11 +102,12 @@ arch_global void hack_pinf_20150727(int N_s, int N_E, scalar* U){
 
 
 //==========================================================================
-arch_global void hack_pinf_20150807(int N_s, int N_E, scalar* U){
+arch_global void hack_pinf_20150807(int N_s, int N_E, scalar pm, scalar* U){
   /*!
     \brief Solve for pinf using dubious methods. See notes 2015/08/07
     \param[in] N_s number of nodes per element
     \param[in] N_E number of elements
+    \param[in] pm  initial mixture pressure (global variable from initial condition)
     \param[out] U the solution (we will modify the pinf field)
   */
 
@@ -147,8 +148,17 @@ arch_global void hack_pinf_20150807(int N_s, int N_E, scalar* U){
     scalar pinf_l = 492115000/p_ND;
     scalar gamma_g = 1.4;
 
-    // // redefine the volume fractions to account for the pressure change
-    scalar pm = 0.106684; //0.106684; //1.306875; //0.052275; //3.630208; // initial_mixture pressure. changes depending on mach number
+    // redefine the volume fractions to account for the pressure change
+    // initial pressure in flow
+    //scalar pm = 1.306875;    // Ms = 2
+    //scalar pm = 0.580833;    // Ms = 3
+    //scalar pm = 0.326719;    // Ms = 4
+    //scalar pm = 0.209100;    // Ms = 5
+    //scalar pm = 0.145208;    // Ms = 6
+    //scalar pm = 0.106684;    // Ms = 7
+    //scalar pm = 0.081680;    // Ms = 8
+    //scalar pm = 0.064537;    // Ms = 9
+    //scalar pm = 0.052275;    // Ms = 10
     scalar gamma_i = 1; // maybe use gamma_g?
     
     // Newton solver
@@ -231,5 +241,5 @@ void Lhack_pinf(int N_s, int N_E, scalar* U){
 #endif
 
   //hack_pinf_20150727 arch_args (N_s, N_E, U);
-  hack_pinf_20150807 arch_args (N_s, N_E, U);
+  hack_pinf_20150807 arch_args (N_s, N_E, constants::GLOBAL_P0_BBLWEDG, U);
 };
