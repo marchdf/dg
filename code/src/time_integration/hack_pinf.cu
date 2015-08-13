@@ -99,8 +99,6 @@ arch_global void hack_pinf_20150727(int N_s, int N_E, scalar* U){
   
 }
 
-
-
 //==========================================================================
 arch_global void hack_pinf_20150807(int N_s, int N_E, scalar pm, scalar* U){
   /*!
@@ -159,37 +157,33 @@ arch_global void hack_pinf_20150807(int N_s, int N_E, scalar pm, scalar* U){
     //scalar pm = 0.081680;    // Ms = 8
     //scalar pm = 0.064537;    // Ms = 9
     //scalar pm = 0.052275;    // Ms = 10
-    scalar gamma_i = 1.0; // maybe use gamma_g?
+    scalar gamma_i = 1; // maybe use gamma_g?
     
     // Newton solver
     scalar p = (gamma-1)*(Et - 0.5*rho*(u*u+v*v)) - gamma*pinf;
     scalar E = Et;
-    scalar reltol = 1e-12;
-    scalar tol    = 1e-12;
-    scalar get_f_p, get_f_pnew, get_fp_p, pnew,K = 0;
+    scalar reltol = 1e-13;
+    scalar tol    = 1e-13;
+    scalar get_f_p, get_f_pnew, get_fp_p, pnew,K,delta = 0;
     for(int k=0; k<1000; k++){
      
       // // evaluate function and derivative
       // get_f_p = Et - 0.5*rho*(u*u+v*v) + (gamma_g*p*((-1 + gamma - gamma_l)*p - gamma_l*pinf_l) + (-1 + gamma - gamma_g)*gamma_l*p*(p + pinf_l)*pow(p/pm,gamma_i)*rv)/((-1 + gamma)*(gamma_g*p + gamma_l*(p + pinf_l)*pow(p/pm,gamma_i)*rv));
       // get_fp_p = (gamma*gamma*(-1 + gamma - gamma_l)*p*p - gamma_g*gamma_l*((2 - 2*gamma + gamma_g + gamma_g*gamma_i + gamma_l - gamma_i*gamma_l)*p*p + (2 - 2*gamma + gamma_g*gamma_i + 2*gamma_l - 2*gamma_i*gamma_l)*p*pinf_l - (-1 + gamma_i)*gamma_l*pinf*pinf_l)*pow(p/pm,gamma_i)*rv + (-1 + gamma - gamma_g)*gamma_l*gamma_l*(p+pinf_l)*(p+pinf_l)* pow(p/pm,2*gamma_i)*rv*rv)/((-1 + gamma)*(gamma_g*p + gamma_l*(p + pinf_l)*pow(p/pm,gamma_i)*rv)*(gamma_g*p + gamma_l*(p + pinf_l)*pow(p/pm,gamma_i)*rv));
 
-      // // if gamma_i == 1, use this simplified formula (get rid of the useless pow)
-      get_f_p = Et - 0.5*rho*(u*u+v*v) + (gamma_g*p*((-1 + gamma - gamma_l)*p - gamma_l*pinf_l) + (-1 + gamma - gamma_g)*gamma_l*p*(p + pinf_l)*p/pm*rv)/((-1 + gamma)*(gamma_g*p + gamma_l*(p + pinf_l)*p/pm*rv));
-      get_fp_p = (gamma*gamma*(-1 + gamma - gamma_l)*p*p - gamma_g*gamma_l*((2 - 2*gamma + gamma_g + gamma_g*gamma_i + gamma_l - gamma_i*gamma_l)*p*p + (2 - 2*gamma + gamma_g*gamma_i + 2*gamma_l - 2*gamma_i*gamma_l)*p*pinf_l - (-1 + gamma_i)*gamma_l*pinf*pinf_l)*p/pm*rv + (-1 + gamma - gamma_g)*gamma_l*gamma_l*(p+pinf_l)*(p+pinf_l)* p/pm*p/pm*rv*rv)/((-1 + gamma)*(gamma_g*p + gamma_l*(p + pinf_l)*p/pm*rv)*(gamma_g*p + gamma_l*(p + pinf_l)*p/pm*rv));
-
-      // get_f_p = gamma_g*p*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - p + gamma*(-(0.5*rho*(u*u+v*v)) + p) - gamma_l*(p + pinf_l)) - gamma_l*(Et - Et*gamma + (-1 + gamma)*(0.5*rho*(u*u+v*v)) + (1 - gamma + gamma_g)*p)*(p + pinf_l)*pow(p/pm,gamma_i)*rv;
-      // get_fp_p = (gamma_g*p*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - gamma*(0.5*rho*(u*u+v*v)) + 2*(-1 + gamma - gamma_l)*p - gamma_l*pinf_l) + gamma_l*(Et*(-1 + gamma)*(p + gamma_i*p + gamma_i*pinf_l) - (-1 + gamma)*(0.5*rho*(u*u+v*v))*(p + gamma_i*p + gamma_i*pinf_l) + (-1 + gamma - gamma_g)*p*((2 + gamma_i)*p + pinf_l + gamma_i*pinf_l))*pow(p/pm,gamma_i)*rv)/p;
+      // simplified formula for function and derivative
+      get_f_p = gamma_g*p*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - p + gamma*(-(0.5*rho*(u*u+v*v)) + p) - gamma_l*(p + pinf_l)) - gamma_l*(Et - Et*gamma + (-1 + gamma)*(0.5*rho*(u*u+v*v)) + (1 - gamma + gamma_g)*p)*(p + pinf_l)*pow(p/pm,gamma_i)*rv;
+      get_fp_p = (gamma_g*p*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - gamma*(0.5*rho*(u*u+v*v)) + 2*(-1 + gamma - gamma_l)*p - gamma_l*pinf_l) + gamma_l*(Et*(-1 + gamma)*(p + gamma_i*p + gamma_i*pinf_l) - (-1 + gamma)*(0.5*rho*(u*u+v*v))*(p + gamma_i*p + gamma_i*pinf_l) + (-1 + gamma - gamma_g)*p*((2 + gamma_i)*p + pinf_l + gamma_i*pinf_l))*pow(p/pm,gamma_i)*rv)/p;
 	
       // get the next guess
-      pnew = p - get_f_p/get_fp_p;
+      delta = get_f_p/get_fp_p;
+      pnew = p - delta;
      
       // save data first
       p = pnew;
 
       // get pinf and energy
-      //K = rv*pow(p/pm,gamma_i); 
-      K = rv*p/pm; // if gamma_i ==1
-      
+      K = rv*pow(p/pm,gamma_i); 
       alpha_g = K/(1.0+K);
       alpha_l = 1-alpha_g;
       pinf = (1.0/(alpha_l/(gamma_l*(p+pinf_l)) + alpha_g/(gamma_g*p)) - gamma*p)/gamma;
@@ -197,13 +191,12 @@ arch_global void hack_pinf_20150807(int N_s, int N_E, scalar pm, scalar* U){
       // print k, p, pinf, E, Ef, '{0:.5e}'.format(fabs(E-Ef))  
       
       // Test for convergence and exit if converged
-      get_f_pnew = Et - 0.5*rho*(u*u+v*v) + (gamma_g*pnew*((-1 + gamma - gamma_l)*pnew - gamma_l*pinf_l) + (-1 + gamma - gamma_g)*gamma_l*pnew*(pnew + pinf_l)*pow(pnew/pm,gamma_i)*rv)/((-1 + gamma)*(gamma_g*pnew + gamma_l*(pnew + pinf_l)*pow(pnew/pm,gamma_i)*rv));
-      //get_f_pnew = gamma_g*pnew*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - pnew + gamma*(-(0.5*rho*(u*u+v*v)) + pnew) - gamma_l*(pnew + pinf_l)) - gamma_l*(Et - Et*gamma + (-1 + gamma)*(0.5*rho*(u*u+v*v)) + (1 - gamma + gamma_g)*pnew)*(pnew + pinf_l)*pow(pnew/pm,gamma_i)*rv;
+      get_f_pnew = gamma_g*pnew*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - pnew + gamma*(-(0.5*rho*(u*u+v*v)) + pnew) - gamma_l*(pnew + pinf_l)) - gamma_l*(Et - Et*gamma + (-1 + gamma)*(0.5*rho*(u*u+v*v)) + (1 - gamma + gamma_g)*pnew)*(pnew + pinf_l)*pow(pnew/pm,gamma_i)*rv;
 
-      if ((fabs(get_f_p-get_f_pnew) < reltol) || (fabs(get_f_pnew)<tol)){break;}
+      if ((fabs(delta) < reltol) || (fabs(get_f_pnew)<tol)){break;}
 
       if (k>990){
-	printf("not converging: delta = %20.16f (f=%20.16f and f'=%20.16f)\n",fabs(get_f_p-get_f_pnew),get_f_p,get_fp_p);
+	printf("not converging: delta = %20.16f (f=%20.16f and f'=%20.16f)\n",fabs(delta),get_f_p,get_fp_p);
       }
       
     }
