@@ -3497,6 +3497,7 @@ void init_dg_bblwedg_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   // volume fractions
   scalar alpha_n2    = rv/(1+rv);
   scalar alpha_water = 1-alpha_n2;
+  printf("Mixture compositon: rv=%f, alpha_n2=%f, alpha_water=1-alpha_n2=%f\n",rv,alpha_n2,alpha_water);
   
   // Material properties
   // air at 300K/27C from http://www.mhtl.uwaterloo.ca/old/onlinetools/airprop/airprop.html
@@ -3531,7 +3532,7 @@ void init_dg_bblwedg_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar v     = 0.0;
   scalar p     = V*V/((1+rv)*(1+rv)*Ms*Ms)*rho_water*rv*(1+rm);
   scalar G     = alpha_water/(gamma_water-1.0) + alpha_n2/(gamma_n2-1.0);
-  scalar gamma = 1 + 1.0/G;
+  scalar gamma = 1 + 1.0/G; // = alpha_water*gamma_water + alpha_n2*gamma_n2;   scalar G     = 1.0/(gamma-1.0);
   scalar pinf1 = (1.0/(alpha_water/(gamma_water*(p   +pinf_water)) + alpha_n2/(gamma_n2*p))    - gamma*p)   /gamma;
   scalar pinf2 = (1.0/(alpha_water/(gamma_water*(patm+pinf_water)) + alpha_n2/(gamma_n2*patm)) - gamma*patm)/gamma;
   scalar pinf  = pinf1; //0.5*(pinf1+pinf2); // = pinf1 // = pinf2
