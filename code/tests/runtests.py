@@ -139,7 +139,8 @@ def clean_data(dir, patterns):
 # Basic information/setup
 #
 #================================================================================
-BASEDIR = os.getcwd(); BASEDIR = BASEDIR.split("code",1)[0]
+BASEDIR = os.getcwd(); BASEDIR = BASEDIR.split("/code/")[0]+'/'
+#print BASEDIR
 CODEDIR = BASEDIR+'code/'
 BINDIR  = CODEDIR+'bin/'
 BINNAME = 'dgexec'
