@@ -225,7 +225,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="injectr") injectr = true;
   else if (inputs.getInitialCondition()=="bblwedg") bblwedg = true;
   else if (inputs.getInitialCondition()=="cfplrun") cfplrun = true;
-  else{printf("Invalid initial condition setup. Correct the deck.\n",inputs.getInitialCondition());}
+  else{printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // Restart option step
   int restart_step = inputs.getRestartStep();
