@@ -224,7 +224,7 @@ bool fullMatrix<float>::eig(fullVector<float> &DR, fullVector<float> &DI,
   delete [] work;
 
   if(info > 0)
-    printf("QR Algorithm failed to compute all the eigenvalues", info, info);
+    printf("QR Algorithm failed to compute all the eigenvalues");
   else if(info < 0)
     printf("Wrong %d-th argument in eig", -info);
   else if(sortRealPart) 
@@ -403,7 +403,7 @@ bool fullMatrix<double>::eig(fullVector<double> &DR, fullVector<double> &DI,
   delete [] work;
 
   if(info > 0)
-    printf("QR Algorithm failed to compute all the eigenvalues", info, info);
+    printf("QR Algorithm failed to compute all the eigenvalues");
   else if(info < 0)
     printf("Wrong %d-th argument in eig", -info);
   else if(sortRealPart) 
