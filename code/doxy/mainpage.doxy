@@ -5,6 +5,17 @@
  - Comment the code extensively. Explain **why** you do something, not what you are doing.
  - Use the Doxygen style to comment. 
  - Write unit tests for each function.
+ \section sec_prereq Prerequisites
+ These are things that need to be installed to compile/run the code:
+ - Gmsh (http://www.geuz.org/gmsh/): a mesh generating program
+ - GNU Scientific Library (https://www.gnu.org/software/gsl/)<br>
+   &emsp;make sure you install the dev files (e.g. for Ubuntu: <tt>sudo apt-get install libgsl0-dev</tt>)
+ - BLAS and LAPACK (http://www.netlib.org/blas/ and http://www.netlib.org/lapack/)<br>
+   &emsp;make sure you install the dev files (e.g. for Ubuntu: <tt>sudo apt-get install libblas-dev liblapack-dev</tt>)
+ - add the following paths to your .bashrc so you can use some nice scripts<br>
+   &emsp;<tt>PATH=$PATH:$HOME/PATHTO/dg/code/scripts</tt><br>
+   &emsp;<tt>export PYTHONPATH=$PYTHONPATH:$HOME/PATHTO/dg/code/scripts</tt>
+   
  \section sec_todo ToDo List
  See \ref mytodo.
  \section sec_credits Credits
