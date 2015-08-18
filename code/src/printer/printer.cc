@@ -63,7 +63,7 @@ void PRINTER::set_names(){
 #endif // dimensions
 
   // Mass fraction names
-  char buffer1 [5]; char buffer2 [2];
+  char buffer1 [10]; char buffer2 [10];
   std::string fname;
   std::string name;
 #include "loopstart.h"
