@@ -157,50 +157,129 @@ arch_global void hack_pinf_20150807(int N_s, int N_E, scalar pm, scalar* U){
     //scalar pm = 0.081680;    // Ms = 8
     //scalar pm = 0.064537;    // Ms = 9
     //scalar pm = 0.052275;    // Ms = 10
-    scalar gamma_i = 1; // maybe use gamma_g?
+    scalar gamma_i = 1.4; // maybe use gamma_g?
     
-    // Newton solver
+    // // Newton solver
+    // scalar p = (gamma-1)*(Et - 0.5*rho*(u*u+v*v)) - gamma*pinf;
+    // scalar E = Et;
+    // scalar reltol = 1e-13;
+    // scalar tol    = 1e-13;
+    // scalar get_f_p, get_f_pnew, get_fp_p, pnew,K,delta = 0;
+    // for(int k=0; k<1000; k++){
+     
+    //   // // evaluate function and derivative
+    //   // get_f_p = Et - 0.5*rho*(u*u+v*v) + (gamma_g*p*((-1 + gamma - gamma_l)*p - gamma_l*pinf_l) + (-1 + gamma - gamma_g)*gamma_l*p*(p + pinf_l)*pow(p/pm,gamma_i)*rv)/((-1 + gamma)*(gamma_g*p + gamma_l*(p + pinf_l)*pow(p/pm,gamma_i)*rv));
+    //   // get_fp_p = (gamma*gamma*(-1 + gamma - gamma_l)*p*p - gamma_g*gamma_l*((2 - 2*gamma + gamma_g + gamma_g*gamma_i + gamma_l - gamma_i*gamma_l)*p*p + (2 - 2*gamma + gamma_g*gamma_i + 2*gamma_l - 2*gamma_i*gamma_l)*p*pinf_l - (-1 + gamma_i)*gamma_l*pinf*pinf_l)*pow(p/pm,gamma_i)*rv + (-1 + gamma - gamma_g)*gamma_l*gamma_l*(p+pinf_l)*(p+pinf_l)* pow(p/pm,2*gamma_i)*rv*rv)/((-1 + gamma)*(gamma_g*p + gamma_l*(p + pinf_l)*pow(p/pm,gamma_i)*rv)*(gamma_g*p + gamma_l*(p + pinf_l)*pow(p/pm,gamma_i)*rv));
+
+    //   // simplified formula for function and derivative
+    //   get_f_p = gamma_g*p*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - p + gamma*(-(0.5*rho*(u*u+v*v)) + p) - gamma_l*(p + pinf_l)) - gamma_l*(Et - Et*gamma + (-1 + gamma)*(0.5*rho*(u*u+v*v)) + (1 - gamma + gamma_g)*p)*(p + pinf_l)*pow(p/pm,gamma_i)*rv;
+    //   get_fp_p = (gamma_g*p*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - gamma*(0.5*rho*(u*u+v*v)) + 2*(-1 + gamma - gamma_l)*p - gamma_l*pinf_l) + gamma_l*(Et*(-1 + gamma)*(p + gamma_i*p + gamma_i*pinf_l) - (-1 + gamma)*(0.5*rho*(u*u+v*v))*(p + gamma_i*p + gamma_i*pinf_l) + (-1 + gamma - gamma_g)*p*((2 + gamma_i)*p + pinf_l + gamma_i*pinf_l))*pow(p/pm,gamma_i)*rv)/p;
+	
+    //   // get the next guess
+    //   delta = get_f_p/get_fp_p;
+    //   pnew = p - delta;
+     
+    //   // save data first
+    //   p = pnew;
+
+    //   // get pinf and energy
+    //   K = rv*pow(p/pm,gamma_i); 
+    //   alpha_g = K/(1.0+K);
+    //   alpha_l = 1-alpha_g;
+    //   pinf = (1.0/(alpha_l/(gamma_l*(p+pinf_l)) + alpha_g/(gamma_g*p)) - gamma*p)/gamma;
+    //   E = p/(gamma-1) + gamma*pinf/(gamma-1) + 0.5*rho*(u*u+v*v) ;
+    //   // print k, p, pinf, E, Ef, '{0:.5e}'.format(fabs(E-Ef))  
+      
+    //   // Test for convergence and exit if converged
+    //   get_f_pnew = gamma_g*pnew*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - pnew + gamma*(-(0.5*rho*(u*u+v*v)) + pnew) - gamma_l*(pnew + pinf_l)) - gamma_l*(Et - Et*gamma + (-1 + gamma)*(0.5*rho*(u*u+v*v)) + (1 - gamma + gamma_g)*pnew)*(pnew + pinf_l)*pow(pnew/pm,gamma_i)*rv;
+
+      
+    // }
+
+    // Brent Solver: see pseudocode at https://en.wikipedia.org/wiki/Brent%27s_method
     scalar p = (gamma-1)*(Et - 0.5*rho*(u*u+v*v)) - gamma*pinf;
     scalar E = Et;
     scalar reltol = 1e-13;
     scalar tol    = 1e-13;
-    scalar get_f_p, get_f_pnew, get_fp_p, pnew,K,delta = 0;
-    for(int k=0; k<1000; k++){
-     
-      // // evaluate function and derivative
-      // get_f_p = Et - 0.5*rho*(u*u+v*v) + (gamma_g*p*((-1 + gamma - gamma_l)*p - gamma_l*pinf_l) + (-1 + gamma - gamma_g)*gamma_l*p*(p + pinf_l)*pow(p/pm,gamma_i)*rv)/((-1 + gamma)*(gamma_g*p + gamma_l*(p + pinf_l)*pow(p/pm,gamma_i)*rv));
-      // get_fp_p = (gamma*gamma*(-1 + gamma - gamma_l)*p*p - gamma_g*gamma_l*((2 - 2*gamma + gamma_g + gamma_g*gamma_i + gamma_l - gamma_i*gamma_l)*p*p + (2 - 2*gamma + gamma_g*gamma_i + 2*gamma_l - 2*gamma_i*gamma_l)*p*pinf_l - (-1 + gamma_i)*gamma_l*pinf*pinf_l)*pow(p/pm,gamma_i)*rv + (-1 + gamma - gamma_g)*gamma_l*gamma_l*(p+pinf_l)*(p+pinf_l)* pow(p/pm,2*gamma_i)*rv*rv)/((-1 + gamma)*(gamma_g*p + gamma_l*(p + pinf_l)*pow(p/pm,gamma_i)*rv)*(gamma_g*p + gamma_l*(p + pinf_l)*pow(p/pm,gamma_i)*rv));
+    scalar delta = tol;
+    
+    scalar a = p*0.00000001;
+    scalar b = p*1000;
+    scalar fa = gamma_g*a*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - a + gamma*(-(0.5*rho*(u*u+v*v)) + a) - gamma_l*(a + pinf_l)) - gamma_l*(Et - Et*gamma + (-1 + gamma)*(0.5*rho*(u*u+v*v)) + (1 - gamma + gamma_g)*a)*(a + pinf_l)*pow(a/pm,gamma_i)*rv;
+    scalar fb = gamma_g*b*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - b + gamma*(-(0.5*rho*(u*u+v*v)) + b) - gamma_l*(b + pinf_l)) - gamma_l*(Et - Et*gamma + (-1 + gamma)*(0.5*rho*(u*u+v*v)) + (1 - gamma + gamma_g)*b)*(b + pinf_l)*pow(b/pm,gamma_i)*rv;
 
-      // simplified formula for function and derivative
-      get_f_p = gamma_g*p*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - p + gamma*(-(0.5*rho*(u*u+v*v)) + p) - gamma_l*(p + pinf_l)) - gamma_l*(Et - Et*gamma + (-1 + gamma)*(0.5*rho*(u*u+v*v)) + (1 - gamma + gamma_g)*p)*(p + pinf_l)*pow(p/pm,gamma_i)*rv;
-      get_fp_p = (gamma_g*p*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - gamma*(0.5*rho*(u*u+v*v)) + 2*(-1 + gamma - gamma_l)*p - gamma_l*pinf_l) + gamma_l*(Et*(-1 + gamma)*(p + gamma_i*p + gamma_i*pinf_l) - (-1 + gamma)*(0.5*rho*(u*u+v*v))*(p + gamma_i*p + gamma_i*pinf_l) + (-1 + gamma - gamma_g)*p*((2 + gamma_i)*p + pinf_l + gamma_i*pinf_l))*pow(p/pm,gamma_i)*rv)/p;
-	
-      // get the next guess
-      delta = get_f_p/get_fp_p;
-      pnew = p - delta;
-     
-      // save data first
-      p = pnew;
+    // Exit if root is not bracketed
+    if (fa*fb>0){printf("Root is not bracketed (f(a)=%f,f(b)=%f) exit.\n",fa,fb); exit(1);}
 
-      // get pinf and energy
-      K = rv*pow(p/pm,gamma_i); 
-      alpha_g = K/(1.0+K);
-      alpha_l = 1-alpha_g;
-      pinf = (1.0/(alpha_l/(gamma_l*(p+pinf_l)) + alpha_g/(gamma_g*p)) - gamma*p)/gamma;
-      E = p/(gamma-1) + gamma*pinf/(gamma-1) + 0.5*rho*(u*u+v*v) ;
-      // print k, p, pinf, E, Ef, '{0:.5e}'.format(fabs(E-Ef))  
-      
-      // Test for convergence and exit if converged
-      get_f_pnew = gamma_g*pnew*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - pnew + gamma*(-(0.5*rho*(u*u+v*v)) + pnew) - gamma_l*(pnew + pinf_l)) - gamma_l*(Et - Et*gamma + (-1 + gamma)*(0.5*rho*(u*u+v*v)) + (1 - gamma + gamma_g)*pnew)*(pnew + pinf_l)*pow(pnew/pm,gamma_i)*rv;
-
-      if ((fabs(delta) < reltol) || (fabs(get_f_pnew)<tol)){break;}
-
-      if (k>990){
-	printf("not converging: delta = %20.16f (f=%20.16f and f'=%20.16f)\n",fabs(delta),get_f_p,get_fp_p);
-      }
-      
+    // swap a and b if a is closer to the root than the other
+    if (fabs(fa) < fabs(fb)){
+      scalar tmp = b;
+      scalar ftmp = fb;
+      b = a; fb = fa;
+      a = tmp; fa = ftmp;
     }
 
+    scalar c = a;
+    scalar fc = gamma_g*c*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - c + gamma*(-(0.5*rho*(u*u+v*v)) + c) - gamma_l*(c + pinf_l)) - gamma_l*(Et - Et*gamma + (-1 + gamma)*(0.5*rho*(u*u+v*v)) + (1 - gamma + gamma_g)*c)*(c + pinf_l)*pow(c/pm,gamma_i)*rv;
+    bool mflag = true;
+    scalar s = 0, fs = 0, d=0, K=0;
+
+    for(int k=0; k<1000; k++){
+
+      // Get a guess
+      if ((fabs(fa-fc) > tol) && (fabs(fb-fc) > tol)){
+	// inverse quadratic interpolation
+	s = a*fb*fc/((fa-fb)*(fa-fc)) + b*fa*fc/((fb-fa)*(fb-fc)) + c*fa*fb/((fc-fa)*(fc-fb));
+      }
+      else{
+	// secant method
+	s = b - fb*(b-a)/(fb-fa);
+      }
+
+      if (((0.25*(3*a+b) > s) || (s > b)) ||
+	  ((mflag) && (fabs(s-b) >= 0.5*fabs(b-c))) ||
+	  ((!mflag) && (fabs(s-b) >= 0.5*fabs(c-d))) ||
+	  ((mflag) && (fabs(b-c) < fabs(delta))) ||
+	  ((!mflag) && (fabs(c-d) < fabs(delta)))){
+
+	// bisection method
+	s = 0.5*(a+b);
+	mflag = true;
+      }
+      else{
+	mflag  = false;
+      }
+
+      fs = gamma_g*s*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - s + gamma*(-(0.5*rho*(u*u+v*v)) + s) - gamma_l*(s + pinf_l)) - gamma_l*(Et - Et*gamma + (-1 + gamma)*(0.5*rho*(u*u+v*v)) + (1 - gamma + gamma_g)*s)*(s + pinf_l)*pow(s/pm,gamma_i)*rv;
+      d = c;
+      c = b;
+
+      if (fa*fs < 0){b=s;}
+      else          {a=s;}
+
+      // swap a and b
+      if (fabs(fa) < fabs(fb)){
+	scalar tmp = b;
+	scalar ftmp = fb;
+	b = a; fb = fa;
+	a = tmp; fa = tmp;
+      }
+	
+
+      if ((fabs(b-a) < reltol) || (fabs(fb)<tol)){break;}
+
+      if (k>990){
+    	printf("not converging: delta = %20.16f (f=%20.16f)\n",fabs(fabs(b-a)),fb);
+      }
+    }
+
+    p = b;
+    K = rv*pow(p/pm,gamma_i); 
+    alpha_g = K/(1.0+K);
+    alpha_l = 1-alpha_g;
+    pinf = (1.0/(alpha_l/(gamma_l*(p+pinf_l)) + alpha_g/(gamma_g*p)) - gamma*p)/gamma;
+    E = p/(gamma-1) + gamma*pinf/(gamma-1) + 0.5*rho*(u*u+v*v) ;
+    
     // Update the energy and pinf field
     U[(e*N_F+3)*N_s+i] = E;
     U[(e*N_F+5)*N_s+i] = gamma*pinf/(gamma-1);
@@ -350,6 +429,6 @@ void Lhack_pinf(int N_s, int N_E, scalar* U){
 #endif
 
   //hack_pinf_20150727 arch_args (N_s, N_E, U);
-  //hack_pinf_20150807 arch_args (N_s, N_E, constants::GLOBAL_P0_BBLWEDG, U);
-  hack_pinf_20150813 arch_args (N_s, N_E, constants::GLOBAL_P0_BBLWEDG, U);
+  hack_pinf_20150807 arch_args (N_s, N_E, constants::GLOBAL_P0_BBLWEDG, U);
+  //hack_pinf_20150813 arch_args (N_s, N_E, constants::GLOBAL_P0_BBLWEDG, U);
 };
