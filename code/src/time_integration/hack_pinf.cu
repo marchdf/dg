@@ -157,7 +157,7 @@ arch_global void hack_pinf_20150807(int N_s, int N_E, scalar pm, scalar* U){
     //scalar pm = 0.081680;    // Ms = 8
     //scalar pm = 0.064537;    // Ms = 9
     //scalar pm = 0.052275;    // Ms = 10
-    scalar gamma_i = 1.4; // maybe use gamma_g?
+    scalar gamma_i = 1; // maybe use gamma_g?
     
     // // Newton solver
     // scalar p = (gamma-1)*(Et - 0.5*rho*(u*u+v*v)) - gamma*pinf;
@@ -203,13 +203,13 @@ arch_global void hack_pinf_20150807(int N_s, int N_E, scalar pm, scalar* U){
     scalar tol    = 1e-13;
     scalar delta = tol;
     
-    scalar a = p*0.00000001;
-    scalar b = p*1000;
+    scalar a = -p*1.5;
+    scalar b = p*1.50;
     scalar fa = gamma_g*a*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - a + gamma*(-(0.5*rho*(u*u+v*v)) + a) - gamma_l*(a + pinf_l)) - gamma_l*(Et - Et*gamma + (-1 + gamma)*(0.5*rho*(u*u+v*v)) + (1 - gamma + gamma_g)*a)*(a + pinf_l)*pow(a/pm,gamma_i)*rv;
     scalar fb = gamma_g*b*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - b + gamma*(-(0.5*rho*(u*u+v*v)) + b) - gamma_l*(b + pinf_l)) - gamma_l*(Et - Et*gamma + (-1 + gamma)*(0.5*rho*(u*u+v*v)) + (1 - gamma + gamma_g)*b)*(b + pinf_l)*pow(b/pm,gamma_i)*rv;
 
     // Exit if root is not bracketed
-    if (fa*fb>0){printf("Root is not bracketed (f(a)=%f,f(b)=%f) exit.\n",fa,fb); exit(1);}
+    if (fa*fb>0){printf("Root is not bracketed (f(a)=%f,f(b)=%f) exit. %f\n",fa,fb); exit(1);}
 
     // swap a and b if a is closer to the root than the other
     if (fabs(fa) < fabs(fb)){
@@ -403,6 +403,152 @@ arch_global void hack_pinf_20150813(int N_s, int N_E, scalar pm, scalar* U){
 }
 
 
+  //==========================================================================
+arch_global void hack_pinf_20150819(int N_s, int N_E, scalar pm, scalar* U){
+  /*!
+    \brief Solve for pinf using dubious methods. See notes 2015/08/07
+    \param[in] N_s number of nodes per element
+    \param[in] N_E number of elements
+    \param[in] pm  initial mixture pressure (global variable from initial condition)
+    \param[out] U the solution (we will modify the pinf field)
+  */
+
+
+#ifdef USE_CPU
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+#elif USE_GPU
+  int e = blockIdx.x*blkE+threadIdx.z;
+  if (e < N_E){
+    int i = threadIdx.x;
+#endif
+
+    // field properties
+    scalar rho   = U[(e*N_F+0)*N_s+i];
+    scalar u     = U[(e*N_F+1)*N_s+i]/rho;  // (rho u / rho) = u
+    scalar v     = U[(e*N_F+2)*N_s+i]/rho;  // (rho v / rho) = v
+    scalar Et    = U[(e*N_F+3)*N_s+i];
+    scalar G     = U[(e*N_F+4)*N_s+i];
+    scalar gamma = 1+1.0/G;
+    scalar beta  = U[(e*N_F+5)*N_s+i];
+    scalar pinf  = beta*(gamma-1)/gamma;
+
+    // ND quantities
+    // scalar rho_air = 1.1765;
+    // scalar gamma_air = 1.4;
+    // scalar patm = 101325;
+    // scalar cs_air = sqrt(gamma_air*patm/rho_air);
+    scalar p_ND   = 141855.000000; // rho_air*cs_air*cs_air;
+    
+    // mixture
+    scalar rv = 0.8;
+    scalar alpha_g = rv/(1+rv);
+    scalar alpha_l = 1-alpha_g;
+
+    // material properties (non-dimensionalized)
+    scalar gamma_l = 5.5;
+    scalar pinf_l = 492115000/p_ND;
+    scalar gamma_g = 1.4;
+    scalar pinf_m = (1.0/(alpha_l/(gamma_l*(pm+pinf_l)) + alpha_g/(gamma_g*pm))- gamma*pm)/gamma;
+
+    // redefine the volume fractions to account for the pressure change
+    scalar gamma_i = 1.4; // maybe use gamma_g?
+    
+    // Brent Solver: see pseudocode at https://en.wikipedia.org/wiki/Brent%27s_method
+    scalar E = Et;
+    scalar EmK = E - 0.5*rho*(u*u+v*v); // internal energy
+    scalar p = (gamma-1)*EmK - gamma*pinf;
+    scalar reltol = 1e-13;
+    scalar tol    = 1e-13;
+    scalar delta = tol;
+    
+    scalar a = p*0.9;
+    scalar b = p*1.1;
+    scalar fa = -(((a + EmK)*(-1 + gamma))/(gamma*(pinf_m + pm))) + pow((a*gamma_g*(EmK - EmK*gamma + a*(1 - gamma + gamma_l) + gamma_l*pinf_l))/(((a + EmK)*(-1 + gamma) - a*gamma_g)*gamma_l*(a + pinf_l)*rv),1/gamma_i);
+    scalar fb = -(((b + EmK)*(-1 + gamma))/(gamma*(pinf_m + pm))) + pow((b*gamma_g*(EmK - EmK*gamma + b*(1 - gamma + gamma_l) + gamma_l*pinf_l))/(((b + EmK)*(-1 + gamma) - b*gamma_g)*gamma_l*(b + pinf_l)*rv),1/gamma_i);
+
+    // Exit if root is not bracketed
+    if (fa*fb>0){printf("Root is not bracketed (f(a)=%f,f(b)=%f) exit. %f\n",fa,fb); exit(1);}
+
+    // swap a and b if a is closer to the root than the other
+    if (fabs(fa) < fabs(fb)){
+      scalar tmp = b;
+      scalar ftmp = fb;
+      b = a; fb = fa;
+      a = tmp; fa = ftmp;
+    }
+
+    scalar c = a;
+    scalar fc = -(((c + EmK)*(-1 + gamma))/(gamma*(pinf_m + pm))) + pow((c*gamma_g*(EmK - EmK*gamma + c*(1 - gamma + gamma_l) + gamma_l*pinf_l))/(((c + EmK)*(-1 + gamma) - c*gamma_g)*gamma_l*(c + pinf_l)*rv),1/gamma_i);
+    bool mflag = true;
+    scalar s = 0, fs = 0, d=0, K=0;
+
+    for(int k=0; k<1000; k++){
+
+      // Get a guess
+      if ((fabs(fa-fc) > tol) && (fabs(fb-fc) > tol)){
+	// inverse quadratic interpolation
+	s = a*fb*fc/((fa-fb)*(fa-fc)) + b*fa*fc/((fb-fa)*(fb-fc)) + c*fa*fb/((fc-fa)*(fc-fb));
+      }
+      else{
+	// secant method
+	s = b - fb*(b-a)/(fb-fa);
+      }
+
+      if (((0.25*(3*a+b) > s) || (s > b)) ||
+	  ((mflag) && (fabs(s-b) >= 0.5*fabs(b-c))) ||
+	  ((!mflag) && (fabs(s-b) >= 0.5*fabs(c-d))) ||
+	  ((mflag) && (fabs(b-c) < fabs(delta))) ||
+	  ((!mflag) && (fabs(c-d) < fabs(delta)))){
+
+	// bisection method
+	s = 0.5*(a+b);
+	mflag = true;
+      }
+      else{
+	mflag  = false;
+      }
+
+      fs = -(((s + EmK)*(-1 + gamma))/(gamma*(pinf_m + pm))) + pow((s*gamma_g*(EmK - EmK*gamma + s*(1 - gamma + gamma_l) + gamma_l*pinf_l))/(((s + EmK)*(-1 + gamma) - s*gamma_g)*gamma_l*(s + pinf_l)*rv),1/gamma_i);
+      d = c;
+      c = b;
+
+      if (fa*fs < 0){b=s;}
+      else          {a=s;}
+
+      // swap a and b
+      if (fabs(fa) < fabs(fb)){
+	scalar tmp = b;
+	scalar ftmp = fb;
+	b = a; fb = fa;
+	a = tmp; fa = tmp;
+      }
+	
+
+      if ((fabs(b-a) < reltol) || (fabs(fb)<tol)){break;}
+
+      if (k>990){
+    	printf("not converging: delta = %20.16f (f=%20.16f)\n",fabs(fabs(b-a)),fb);
+      }
+    }
+
+    p = b;
+    alpha_g = (gamma_g*p*(EmK*(-1 + gamma) - p + gamma*p - gamma_l*(p + pinf_l)))/((-1 + gamma)*(EmK + p)*(gamma_g*p - gamma_l*(p + pinf_l)));
+    alpha_l = 1-alpha_g;
+    pinf = -((EmK - EmK*gamma + p)/gamma);
+    E = p/(gamma-1) + gamma*pinf/(gamma-1) + 0.5*rho*(u*u+v*v) ;
+    
+    // Update the energy and pinf field
+    U[(e*N_F+3)*N_s+i] = E;
+    U[(e*N_F+5)*N_s+i] = gamma*pinf/(gamma-1);
+    
+#ifdef USE_CPU
+    }
+#endif
+  }
+}
+
+
 //==========================================================================
 //
 //  Host C functions
@@ -429,6 +575,7 @@ void Lhack_pinf(int N_s, int N_E, scalar* U){
 #endif
 
   //hack_pinf_20150727 arch_args (N_s, N_E, U);
-  hack_pinf_20150807 arch_args (N_s, N_E, constants::GLOBAL_P0_BBLWEDG, U);
+  //hack_pinf_20150807 arch_args (N_s, N_E, constants::GLOBAL_P0_BBLWEDG, U);
   //hack_pinf_20150813 arch_args (N_s, N_E, constants::GLOBAL_P0_BBLWEDG, U);
+  hack_pinf_20150819 arch_args (N_s, N_E, constants::GLOBAL_P0_BBLWEDG, U);
 };
