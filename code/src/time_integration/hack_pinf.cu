@@ -209,7 +209,11 @@ arch_global void hack_pinf_20150807(int N_s, int N_E, scalar pm, scalar* U){
     scalar fb = gamma_g*b*(Et*(-1 + gamma) + (0.5*rho*(u*u+v*v)) - b + gamma*(-(0.5*rho*(u*u+v*v)) + b) - gamma_l*(b + pinf_l)) - gamma_l*(Et - Et*gamma + (-1 + gamma)*(0.5*rho*(u*u+v*v)) + (1 - gamma + gamma_g)*b)*(b + pinf_l)*pow(b/pm,gamma_i)*rv;
 
     // Exit if root is not bracketed
-    if (fa*fb>0){printf("Root is not bracketed (f(a)=%f,f(b)=%f) exit. %f\n",fa,fb); exit(1);}
+    if (fa*fb>0){
+      //printf("Root is not bracketed (f(a)=%f,f(b)=%f) exit. %f\n",fa,fb); exit(1);
+      a = -a;
+      b = b;
+    }
 
     // swap a and b if a is closer to the root than the other
     if (fabs(fa) < fabs(fb)){
@@ -468,7 +472,11 @@ arch_global void hack_pinf_20150819(int N_s, int N_E, scalar pm, scalar* U){
     scalar fb = -(((b + EmK)*(-1 + gamma))/(gamma*(pinf_m + pm))) + pow((b*gamma_g*(EmK - EmK*gamma + b*(1 - gamma + gamma_l) + gamma_l*pinf_l))/(((b + EmK)*(-1 + gamma) - b*gamma_g)*gamma_l*(b + pinf_l)*rv),1/gamma_i);
 
     // Exit if root is not bracketed
-    if (fa*fb>0){printf("Root is not bracketed (f(a)=%f,f(b)=%f) exit. %f\n",fa,fb); exit(1);}
+    if (fa*fb>0){
+      //printf("Root is not bracketed (f(a)=%f,f(b)=%f) exit. %f\n",fa,fb); exit(1);
+      a = -a;
+      b = b;
+    }
 
     // swap a and b if a is closer to the root than the other
     if (fabs(fa) < fabs(fb)){
