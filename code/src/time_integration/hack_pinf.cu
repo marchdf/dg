@@ -452,7 +452,7 @@ arch_global void hack_pinf_20150819(int N_s, int N_E, scalar pm, scalar* U){
     scalar pinf_m = (1.0/(alpha_l/(gamma_l*(pm+pinf_l)) + alpha_g/(gamma_g*pm))- gamma*pm)/gamma;
 
     // redefine the volume fractions to account for the pressure change
-    scalar gamma_i = 1.4; // maybe use gamma_g?
+    scalar gamma_i = gamma;//1.4; // maybe use gamma_g?
     
     // Brent Solver: see pseudocode at https://en.wikipedia.org/wiki/Brent%27s_method
     scalar E = Et;
