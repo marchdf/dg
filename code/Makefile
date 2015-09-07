@@ -126,6 +126,11 @@ ifeq ($(LIEU),ANL)
 include $(MKDIR)/anl.mk
 endif
 
+ifeq ($(LIEU),LAG)
+include $(MKDIR)/lagrange.mk
+endif
+
+
 #================================================================================
 #
 # COMMON MODIFIERS TO PREVIOUSLY DEFINED VARIABLES

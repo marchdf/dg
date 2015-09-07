@@ -27,6 +27,6 @@ lin
 #limiter
 hrl
 #initial condition
-simblst 2 0.3 1 0.03 0.33333333
+simblst 2 0.3 1 0.03 0.33333333 #This is where things are important
 #lagrange particles
 3 -2 -2.03 -1.97
