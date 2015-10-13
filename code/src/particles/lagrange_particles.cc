@@ -47,37 +47,53 @@ void LAGRANGE_PARTICLES::printParticles(const double time, scalar* output){
     (instead of averaging) but that's complicated (see Lget_velocity_at_position
     function).
   */
+
+  // First, get output solution from other processors (if necessary) on to processor 0.
+  // If no MPI, just copy the solution locally
   for(int k = 0; k < _NP; k++){
+#ifdef USE_MPI
+    MPI_Sendrecv(&output[_prev_el[k]*N_F*_N_s], N_F*_N_s, MPI_SCALAR, 0, _sendtag, &_local_output[k*N_F*_N_s], N_F*_N_s, MPI_SCALAR, _prev_part[k], _recvtag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+#else
+    _local_output[(k*N_F+fc)*_N_s+i] = output[(_prev_el[k]*N_F+fc)*_N_s+i];
+#endif
+  }
+  
+  // Now, output the solution (only for proc 0)
+  if (_myid == 0){
+    for(int k = 0; k < _NP; k++){
 
-    // open the file   
-    _ofile = fopen(_pnames[k].c_str(),"a");
+      // open the file   
+      _ofile = fopen(_pnames[k].c_str(),"a");
 
-    // write the time
-    fprintf(_ofile,"%20.16E",time);
+      // write the time
+      fprintf(_ofile,"%20.16E",time);
 
-    // write the particle position
-    for(int alpha=0; alpha<D; alpha++){fprintf(_ofile,",%20.16E",_positions[k*D+alpha]);}
+      // write the particle position
+      for(int alpha=0; alpha<D; alpha++){fprintf(_ofile,",%20.16E",_positions[k*D+alpha]);}
 
-    // Average the solution in the element by getting the formatted
-    // solution in the printing step
-    scalar avg = 0;
-    if(_prev_el[k]!=-1){
+      // Average the solution in the element by getting the formatted
+      // solution in the printing step
+      scalar avg = 0;
+      if(_prev_el[k]!=-1){
 
-      // Loop on the fields
-      for(int fc=0; fc<N_F; fc++){
-	// calculate the average
-	for(int i=0; i<_N_s; i++){avg += output[(_prev_el[k]*N_F+fc)*_N_s+i];}
+	// Loop on the fields
+	for(int fc=0; fc<N_F; fc++){
+	  // calculate the average
+	  for(int i=0; i<_N_s; i++){
+	    avg += _local_output[(k*N_F+fc)*_N_s+i];
+	  }	
 
-	// output it and set it back to zero
-	fprintf(_ofile,",%20.16E",avg/_N_s); avg = 0;
+	  // output it and set it back to zero
+	  fprintf(_ofile,",%20.16E",avg/_N_s); avg = 0;
+	}
       }
-    }
-    else{
-      for(int fc=0; fc<N_F; fc++){ fprintf(_ofile,",%20.16E",0.0);}
-    }
+      else{
+	for(int fc=0; fc<N_F; fc++){ fprintf(_ofile,",%20.16E",0.0);}
+      }
 
-    // end the line and close the file
-    fprintf(_ofile,"\n");
-    fclose(_ofile);
-  } 
+      // end the line and close the file
+      fprintf(_ofile,"\n");
+      fclose(_ofile);
+    }
+  }
 }
