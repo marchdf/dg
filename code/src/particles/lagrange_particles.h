@@ -50,6 +50,7 @@ class LAGRANGE_PARTICLES {
   int _N_E;
   int _N_s;
   int _myid;
+  int _numprocs;
   scalar* _positions;
   int* _prev_el;
   int* _prev_part;
@@ -57,27 +58,36 @@ class LAGRANGE_PARTICLES {
   scalar* _solution;
   scalar* _avg_velocity;
   scalar* _local_output;
-  int _sendtag;
-  int _recvtag;
+  int* _finding_proc_array;
   TIMERS &_timers;
   simpleMesh &_m;
   const fullMatrix<scalar> &_XYZNodes;
   std::vector<std::string> _pnames;
   FILE* _ofile;
-    
+
+#ifdef USE_MPI
+  int _sendtag;
+  int _recvtag;
+  MPI_Status *_status;
+  MPI_Request *_request;
+#endif
+
+  
  public:
   /*!\brief Constructor defaults*/
- LAGRANGE_PARTICLES(TIMERS &timers, MEM_COUNTER &mem_counter, simpleMesh &m, const fullMatrix<scalar> &XYZNodes, int nvert, int N_N, int N_E, int N_s, int myid, const std::vector<double> &input_particles = std::vector<double>()) : _timers(timers), _m(m), _XYZNodes(XYZNodes), _nvert(nvert), _N_N(N_N), _N_E(N_E), _N_s(N_s), _myid(myid){
+ LAGRANGE_PARTICLES(TIMERS &timers, MEM_COUNTER &mem_counter, simpleMesh &m, const fullMatrix<scalar> &XYZNodes, int nvert, int N_N, int N_E, int N_s, int myid, int numprocs, const std::vector<double> &input_particles = std::vector<double>()) : _timers(timers), _m(m), _XYZNodes(XYZNodes), _nvert(nvert), _N_N(N_N), _N_E(N_E), _N_s(N_s), _myid(myid), _numprocs(numprocs){
 
-    // Initialize to no particles by default
-    _have_particles = false;
+    // Initialization
+    _have_particles = false; // no particles by default
+    _sendtag = 0;
+    _recvtag = 0;
+
     
     if (input_particles.size() != 0){
       _have_particles = true;
       
       // Get the number of particles we are tracking
       _NP = input_particles[0];
-      printf("There are %i Lagrange particles to track. They are located at:\n",_NP);
       
       // Get the initial positions of these particles
       _positions = new scalar[_NP*D]; mem_counter.addToCPUCounter(_NP*D*sizeof(scalar));
@@ -86,24 +96,39 @@ class LAGRANGE_PARTICLES {
       for(int k=0; k<_NP; k++){
 	_prev_el[k] = 0;
 	_prev_part[k] = 0;
-	printf("\tparticle %i:",k);
 	for(int alpha = 0; alpha < D; alpha ++){
 	  _positions[k*D+alpha] = input_particles[1+k*D+alpha]; // 1+ because the first element is the number of particles
-	  printf(" %8.6f, ",_positions[k*D+alpha]);
 	}
-	printf("\n");
       }
-      
+
       // Initialize a vector to store the solution in an element and the velocities
       _solution     = new scalar[(1+D)*_N_s]; // rho, ux, uy
       _avg_velocity = new scalar[D];  for(int alpha=0; alpha<D; alpha++){_avg_velocity[alpha] = 0.0;}
 
-
+      // init some other pointers to null (to avoid weirdness)
+      _local_output = NULL;
+      _finding_proc_array  = NULL;
+#ifdef USE_MPI
+      _status = new MPI_Status [_NP];
+      _request = new MPI_Request [_NP];
+#endif
+     
       // Only the zeroth processor prints stuff
       if (_myid == 0){
 
+	// Output particle location (just to see them)
+	printf("There are %i Lagrange particles to track. They are located at:\n",_NP);
+	for(int k=0; k<_NP; k++){ 
+	  printf("\tparticle %i:",k);
+	  for(int alpha = 0; alpha < D; alpha ++){
+	    printf(" %8.6f, ",_positions[k*D+alpha]);
+	  }
+	  printf("\n");
+	}
+	
 	// initialize a local output vector to store things from other processors
-	_local_output = new scalar[_NP*N_F*_N_s]; mem_counter.addToCPUCounter(_NP*N_F*_N_s*sizeof(scalar));
+	_local_output = new scalar[_NP*N_F*_N_s];  mem_counter.addToCPUCounter(_NP*N_F*_N_s*sizeof(scalar));
+	_finding_proc_array  = new int[_numprocs]; mem_counter.addToCPUCounter(_numprocs*sizeof(int)); 
 	
 	// Initialize the particle files names
 	char buffer [256];
@@ -130,12 +155,13 @@ class LAGRANGE_PARTICLES {
   /*!\brief Destructor */
   ~LAGRANGE_PARTICLES(){
     if (_have_particles){
-      if(_positions)     del(_positions);
-      if(_prev_el)       del(_prev_el);
-      if(_prev_part)     del(_prev_part);
-      if(_solution)      del(_solution);
-      if(_avg_velocity)  del(_avg_velocity);
-      if(_local_output)  del(_local_output);
+      if(_positions)             del(_positions);
+      if(_prev_el)               del(_prev_el);
+      if(_prev_part)             del(_prev_part);
+      if(_solution)              del(_solution);
+      if(_avg_velocity)          del(_avg_velocity);
+      if(_local_output)          del(_local_output);
+      if(_finding_proc_array)    del(_finding_proc_array);
     }
   }
 

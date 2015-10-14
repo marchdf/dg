@@ -820,7 +820,7 @@ int main (int argc, char **argv)
   // Lagrange particles setup
   //
   //////////////////////////////////////////////////////////////////////////
-  LAGRANGE_PARTICLES particles(timers, mem_counter, m, XYZNodes, N_T, N_N, N_E, N_s, myid, inputs.getLagrangeParticles());
+  LAGRANGE_PARTICLES particles(timers, mem_counter, m, XYZNodes, N_T, N_N, N_E, N_s, myid, numprocs, inputs.getLagrangeParticles());
 
   //////////////////////////////////////////////////////////////////////////   
   //

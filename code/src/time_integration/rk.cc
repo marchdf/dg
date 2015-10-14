@@ -103,6 +103,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
       timers.start_timer(2);
       
       if(myid==0){printf("Initial condition written to output file.\n");}
+      if(particles.haveParticles()){particles.advectParticles(0.0, arch(U));} // get the particle locations by advecting them by dt = 0
       printer.print(arch(U), particles, count, T);
 
       // Limit the initial solution before integrating to avoid problems
