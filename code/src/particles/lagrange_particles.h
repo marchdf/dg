@@ -79,9 +79,6 @@ class LAGRANGE_PARTICLES {
 
     // Initialization
     _have_particles = false; // no particles by default
-    _sendtag = 0;
-    _recvtag = 0;
-
     
     if (input_particles.size() != 0){
       _have_particles = true;
@@ -109,6 +106,8 @@ class LAGRANGE_PARTICLES {
       _local_output = NULL;
       _finding_proc_array  = NULL;
 #ifdef USE_MPI
+      _sendtag = 0;
+      _recvtag = 0;
       _status = new MPI_Status [_NP];
       _request = new MPI_Request [_NP];
 #endif
