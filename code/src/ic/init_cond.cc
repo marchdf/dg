@@ -4303,15 +4303,19 @@ void init_dg_cfplrun_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
 
   // Read inputs
-  if (ic_inputs.size() != 4){
+  if (ic_inputs.size() != 7){
     printf("Wrong initial condition inputs. Exiting\n");
     exit(1);
   }
-  scalar pa     = ic_inputs[0]; // Acoustic wave amplitude
-  scalar Aratio = ic_inputs[1]; // interface amplitude to wavelength ratio
-  scalar Wratio = ic_inputs[2]; // Wavewidth to interface wavelength ratio
-  scalar vcoord = ic_inputs[3]; //140;//111;//51.5;//134;//72.9; // coordinate shift upwards
-  printf("pa=%f, Aratio=%f, Wratio=%f, vcoord=%f\n",pa,Aratio,Wratio,vcoord);
+  scalar Wtype  = ic_inputs[0]; // Acoustic wave type (Currently unused)
+  scalar pa     = ic_inputs[1]; // Acoustic wave amplitude
+  scalar Aratio = ic_inputs[2]; // interface amplitude to wavelength ratio
+  scalar Wratio = ic_inputs[3]; // Wavewidth to interface wavelength ratio
+  scalar vcoord = ic_inputs[4]; //140;//111;//51.5;//134;//72.9; // coordinate shift upwards
+  scalar racoef = ic_inputs[5]; // Rho_air multiplier
+  scalar gwcoef = ic_inputs[6]; // Gamma_water_multiplier
+
+  printf("Wtype=%f, pa=%f, Aratio=%f, Wratio=%f, vcoord=%f, racoef=%f, gwcoef=%f\n",Wtype,pa,Aratio,Wratio,vcoord,racoef,gwcoef);
 
   // Initialize
   scalar Lx = 1; //Interface wavelength
@@ -4348,14 +4352,14 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   // pre-wave density (material 1)
   // The wave is initialized in here
   scalar rho01   = rho_water;
-  scalar gamma01 = gamma_water;
+  scalar gamma01 = gamma_water*gwcoef;
   scalar alpha01 = 1/(gamma01-1);
   scalar pinf01  = pinf_water;
   scalar c01     = cs_water;
   scalar M01     = 18.01528; // molecular weight
 
   // pre-wave density (material 2) //Currently set for air
-  scalar rho02   = rho_air;
+  scalar rho02   = rho_air*racoef;
   scalar gamma02 = rho_air;
   scalar alpha02 = 1/(gamma_air-1);
   scalar pinf02 = pinf_air;
@@ -4399,6 +4403,10 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
       y  = XYZNodes(i,e*D+1);
 #endif
 
+      
+      //      switch (Wtype)
+      //      case 0
+      
       if (yc > (ywave+Wwave)){ // post-wave region
 	rho   = rho01 + rhoW;
 	u     = u0 + uW;
@@ -4422,6 +4430,7 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 	u = u0;
 	v = v0;
 	p = p0;
+      
 
 	// vertical distance from interface
 	scalar d = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterface)/(2*delta);
