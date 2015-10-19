@@ -4322,7 +4322,7 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar A0 = Aratio*Lx;    // initial amplitude
   scalar yinterface = 0*Lx; // interface location 
   scalar Wwave = Wratio*Lx; // wavewidth
-  scalar ywave = yinterface+Wwave+5*Aratio; // initial wave location (in wavelength units)
+  scalar ywave = yinterface+10*Aratio; // initial wave location (in wavelength units)
 
   // The diffusion layer thickness (in wavelength units)
   scalar delta=0.08*Lx;
@@ -4404,33 +4404,59 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 #endif
 
       
-      //      switch (Wtype)
-      //      case 0
-      
-      if (yc > (ywave+Wwave)){ // post-wave region
-	rho   = rho01 + rhoW;
-	u     = u0 + uW;
-	v     = v0 + vW;
-	p     = p0 + pW;
+
+      printf("Wtype=%f\n",Wtype);
+      if (yc > (ywave+Wwave)) { // post-wave region
+	if (Wtype == 0) {
+	  rho   = rho01 + rhoW;
+	  u     = u0 + uW;
+	  v     = v0 + vW;
+	  p     = p0 + pW;
+	}
+	else {
+	  rho   = rho01;
+	  u     = u0;
+	  v     = v0;
+	  p     = p0;
+	}
 	gamma = gamma01;
 	alphainf = gamma01*pinf01/(gamma01-1);
 	jx    = 0;
       }
       else if ((yc >= (ywave-1e-6))&&(yc < ywave+Wwave)){ // in-wave region
-	wx    = (y-ywave)/Wwave;
-	rho   = rho01 + rhoW*wx;
-	u     = u0 + uW*wx;
-	v     = v0 + vW*wx;
-	p     = p0 + pW*wx;
+	if (Wtype == 0) {
+	  wx    = (y-ywave)/Wwave;
+	  rho   = rho01 + rhoW*wx;
+	  u     = u0 + uW*wx;
+	  v     = v0 + vW*wx;
+	  p     = p0 + pW*wx;
+  	}
+	else if (Wtype == 1) {
+	  scalar fwhm_ratio, ky_ratio, envelope;
+	  fwhm_ratio = 15; //(half) Full-width half maximum per wavelength
+	  ky_ratio = 1.25663706; //peaks per intf-wavelength (fc =1.5 MHz)
+	  envelope = exp(-(y - (ywave+Wwave/2.0))*(y - (ywave+Wwave/2.0))/(2*(fwhm_ratio/(2*sqrt(log(2))))*(fwhm_ratio/(2*sqrt(log(2)))))); //Gaussian envelope for waveform
+	  wx = sin(ky_ratio*(y-(ywave+Wwave/2.0)))*envelope;
+	  rho = rho01 + rhoW*wx;
+	  u = u0 + uW*wx;
+	  v = v0 + vW*wx;
+	  p = p0 + pW*wx;
+	}
+	else {
+	  rho = rho01;
+	  u = u0;
+	  v = v0;
+	  p = p0;
+	}
 	gamma = gamma01;
 	alphainf = gamma01*pinf01/(gamma01-1);
 	jx    = 0;  
-      }
+      }    
       else{
 	u = u0;
 	v = v0;
 	p = p0;
-      
+  
 
 	// vertical distance from interface
 	scalar d = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterface)/(2*delta);
@@ -4472,6 +4498,7 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 
       // Mass fractions
       U(i,e*N_F+fcnt) = (1-jx)*rho; fcnt++;
+
     }
   }
 }
