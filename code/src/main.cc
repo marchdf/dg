@@ -77,6 +77,28 @@ int main (int argc, char **argv)
 
   //////////////////////////////////////////////////////////////////////////   
   //
+  // Let's get started!
+  //
+  //////////////////////////////////////////////////////////////////////////
+  printf("\n\n\n");
+  printf("Deploy the algorithm...\n");
+  printf("\n\n");
+  printf("+--------------------------------------------------------------------------------+\n");
+  printf("|+------------------------------------------------------------------------------+|\n");
+  printf("||                                                                              ||\n");
+  printf("||                                                                              ||\n");
+  printf("||                                                                              ||\n");
+  printf("||                              ALGORITHM DEPLOYED.                             ||\n"); 
+  printf("||                                                                              ||\n");
+  printf("||                                                                              ||\n");
+  printf("||                                                                              ||\n");
+  printf("|+------------------------------------------------------------------------------+|\n");
+  printf("+--------------------------------------------------------------------------------+\n");
+  printf("\n\n\n");
+  
+
+  //////////////////////////////////////////////////////////////////////////   
+  //
   // Memory counter init
   //
   //////////////////////////////////////////////////////////////////////////
@@ -188,6 +210,7 @@ int main (int argc, char **argv)
   bool injectr = false;
   bool bblwedg = false;
   bool cfplrun = false;
+  bool rmawave = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="tranvtx") tranvtx = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
@@ -225,6 +248,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="injectr") injectr = true;
   else if (inputs.getInitialCondition()=="bblwedg") bblwedg = true;
   else if (inputs.getInitialCondition()=="cfplrun") cfplrun = true;
+  else if (inputs.getInitialCondition()=="rmawave") rmawave = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // Restart option step
@@ -655,18 +679,19 @@ int main (int argc, char **argv)
   else if(blastrm) init_dg_blastrm_multifluid(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
 #elif PASSIVE
   if (sinephi) init_dg_sinephi_passive(N_s, N_E, XYZNodes, U);
-  if (sodmono) init_dg_sodmono_passive(N_s, N_E, XYZNodes, U);
+  else if (sodmono) init_dg_sodmono_passive(N_s, N_E, XYZNodes, U);
 #elif STIFFENED
   if (stffrnt) init_dg_stffrnt_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
-  if (stfshck) init_dg_stfshck_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
-  if (stfbubl) init_dg_stfbubl_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
-  if (shckdrp) init_dg_shckdrp_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
-  if (drpwall) init_dg_drpwall_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
-  if (jetcrss) init_dg_jetcrss_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
-  if (prsrflw) init_dg_prsrflw_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
-  if (injectr) init_dg_injectr_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
-  if (bblwedg) init_dg_bblwedg_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
-  if (cfplrun) init_dg_cfplrun_stiffened(N_s, N_E, XYZNodes, XYZCen, U, m, elem_type, inputs.getInitialConditionInputs());
+  else if (stfshck) init_dg_stfshck_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
+  else if (stfbubl) init_dg_stfbubl_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
+  else if (shckdrp) init_dg_shckdrp_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
+  else if (drpwall) init_dg_drpwall_stiffened(N_s, N_E, XYZNodes, XYZCen, U);
+  else if (jetcrss) init_dg_jetcrss_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
+  else if (prsrflw) init_dg_prsrflw_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
+  else if (injectr) init_dg_injectr_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
+  else if (bblwedg) init_dg_bblwedg_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
+  else if (cfplrun) init_dg_cfplrun_stiffened(N_s, N_E, XYZNodes, XYZCen, U, m, elem_type, inputs.getInitialConditionInputs());
+  else if (rmawave) init_dg_rmawave_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
 #endif
 
   if (order0) average_cell_p0(N_s, N_E, U);
@@ -817,7 +842,7 @@ int main (int argc, char **argv)
   // Lagrange particles setup
   //
   //////////////////////////////////////////////////////////////////////////
-  LAGRANGE_PARTICLES particles(timers, mem_counter, m, XYZNodes, N_T, N_N, N_E, N_s, inputs.getLagrangeParticles());
+  LAGRANGE_PARTICLES particles(timers, mem_counter, m, XYZNodes, N_T, N_N, N_E, N_s, myid, numprocs, inputs.getLagrangeParticles());
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -907,6 +932,7 @@ int main (int argc, char **argv)
   else if(khblast) init_dg_khblast_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(khpertu) init_dg_khpertu_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
   else if(blastrm) init_dg_blastrm_multifluid(N_s, N_E, XYZNodes, XYZCen, Uinit);
+
 #elif PASSIVE
   if (sinephi) init_dg_sinephi_passive(N_s, N_E, XYZNodes, Uinit);
   if (sodmono) init_dg_sodmono_passive(N_s, N_E, XYZNodes, Uinit);
@@ -1061,7 +1087,26 @@ int main (int argc, char **argv)
   MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
   MPI_Finalize();
 #endif
-  
+
+
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // And we are done.
+  //
+  //////////////////////////////////////////////////////////////////////////
+  printf("\n\n\n");
+  printf("+--------------------------------------------------------------------------------+\n");
+  printf("|+------------------------------------------------------------------------------+|\n");
+  printf("||                                                                              ||\n");
+  printf("||                                                                              ||\n");
+  printf("||                                                                              ||\n");
+  printf("||                            CALCULATIONS CORRECT.                             ||\n"); 
+  printf("||                                                                              ||\n");
+  printf("||                                                                              ||\n");
+  printf("||                                                                              ||\n");
+  printf("|+------------------------------------------------------------------------------+|\n");
+  printf("+--------------------------------------------------------------------------------+\n");
+  printf("\n\n\n");
   
   return 0;
 }// end main
