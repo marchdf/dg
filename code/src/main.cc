@@ -890,11 +890,11 @@ int main (int argc, char **argv)
   double Tf    = inputs.getFinalTime();
   m.setDx(N_N,N_E,XYZCen,XYZNodes);
   scalar CFL   = inputs.getCFL()*m.getDx()/(2.0*order+1);
-  RK rk4 = RK(4);
+  RK rk4 = RK(4,DtOut,Tf, inputs.getOutputTimeArray());
  
   // RK integration
   if(myid==0){printf("==== Now RK 4 steps =====\n");}
-  rk4.RK_integration(DtOut, Tf, CFL, restart_step,
+  rk4.RK_integration(CFL, restart_step,
   		     N_E, N_s, N_G, M_T, M_s, N_ghosts,
   		     h_Minv, 
   		     h_U,

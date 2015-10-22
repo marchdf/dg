@@ -106,10 +106,10 @@ class LAGRANGE_PARTICLES {
       _local_output = NULL;
       _finding_proc_array  = NULL;
 #ifdef USE_MPI
-      _sendtag = 0;
-      _recvtag = 0;
       _status = new MPI_Status [_NP];
       _request = new MPI_Request [_NP];
+      _sendtag = 0;
+      _recvtag = 0;
 #endif
      
       // Only the zeroth processor prints stuff
