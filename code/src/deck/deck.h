@@ -11,6 +11,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <iterator>
 #include <stdlib.h>
 #include <vector>
 
@@ -29,6 +30,7 @@ class deck {
   std::vector<double> _ic_inputs;  
   std::vector<double> _thresholds;
   std::vector<double> _lagrange_particles;
+  std::vector<double> _output_time_array;
   int _restart_step;
   
  public:
@@ -46,6 +48,7 @@ class deck {
   inline const std::vector<double> & getInitialConditionInputs() const {/*!Return initial condition inputs*/return _ic_inputs;}
   inline const std::vector<double> & getThresholds() const {/*!Return thresholds*/return _thresholds;}
   inline const std::vector<double> & getLagrangeParticles() const {/*!Return Lagrange particles*/return _lagrange_particles;}
+  inline const std::vector<double> & getOutputTimeArray() const {/*!Return the output time array*/return _output_time_array;}
   inline int getRestartStep()  {/*!Return restart step*/ return _restart_step;}
   void readDeck(const char *fileName);
 };
