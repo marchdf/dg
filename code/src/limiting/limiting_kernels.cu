@@ -280,10 +280,27 @@ arch_global void hrl1D(int N_s, int N_E, int Nfields, int N_N, int slicenum, int
 	// gravity field: leave data unchanged. Not good for shocks
 	if (physical==4){} 
 	
-	// Zero-gradient and reflective BC: average in cell, slopes to 0
-	else if ((physical==2)||(physical==3)){
+	// Zero-gradient: average in cell, slopes to 0
+	else if (physical==2){
 	  int idx = (e*Nfields+fc)*N_s*slicenum+slice*N_s;
 	  average_monomial(N, &A[idx], &Alim[idx]);
+	}
+
+	// reflective BC, see notes 03/11/15
+	else if (physical==3){
+	  int idx = (e*Nfields+fc)*N_s*slicenum+slice*N_s;
+
+	  // Limiting in x-direction, ux is the wall normal velocity
+	  int  un_idx = 0;
+	  if      (offxy == 0){ un_idx = 1;}
+	  // Limiting in y-direction, uy is the wall normal velocity
+	  else if (offxy == 2){ un_idx = 2;}
+
+	  // set slopes to zero for all variables but the normal velocity
+	  if (fc != un_idx){average_monomial(N, &A[idx], &Alim[idx]);}
+
+	  // do not limit the normal velocity
+	  else {for(int n=0; n<=N; n++){Alim[idx+n] = A[idx+n];}}
 	}
 	
 	//Otherwise do the full limiting
@@ -291,7 +308,7 @@ arch_global void hrl1D(int N_s, int N_E, int Nfields, int N_N, int slicenum, int
 	  int idxL = (left *Nfields+fc)*N_s*slicenum+slice*N_s;
 	  int idxC = (e    *Nfields+fc)*N_s*slicenum+slice*N_s;
 	  int idxR = (right*Nfields+fc)*N_s*slicenum+slice*N_s;
-	  limit_monomial(N,&A[idxL],&A[idxC],&A[idxR],&Alim[idxC]);      
+	  limit_monomial(N,&A[idxL],&A[idxC],&A[idxR],&Alim[idxC]); 
 	} // end if on physicals
 
 #ifdef USE_CPU
@@ -366,13 +383,27 @@ arch_global void hri1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
 
 	// Copy some data to shared memory
 	for(int i=0;i<N_s;i++){UC[i]=U[(e*N_F+fc)*N_s+i];}
-    
+
 	// gravity field: leave data unchanged. Not good for shocks
 	if (physical==4){} 
     
-	// Zero-gradient and reflective BC: average in cell, slopes to 0
-	else if ((physical==2)||(physical==3)){
+	// Zero-gradient: average in cell, slopes to 0
+	else if (physical==2){
 	  set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,UC,NULL);
+	}
+
+	// reflective BC, see notes 03/11/15
+	else if (physical==3){
+
+	  // Limiting in x-direction, ux is the wall normal velocity
+	  int  un_idx = 0;
+	  if      (offxy == 0){ un_idx = 1;}
+	  // Limiting in y-direction, uy is the wall normal velocity
+	  else if (offxy == 2){ un_idx = 2;}
+
+	  // set slopes to zero for all variables but the normal velocity
+	  // do not limit the normal velocity
+	  if (fc != un_idx){set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,UC,NULL);}
 	}
   
 	//Otherwise do the full limiting
@@ -524,13 +555,51 @@ arch_global void m2i1D(int N_s, int N_E, int N_N, int* neighbors, int N_s1D, int
       // gravity field: leave data unchanged. Not good for shocks
       if (physical==4){} 
   
-      // Zero-gradient and reflective BC: average in cell, slopes to 0
-      else if ((physical==2)||(physical==3)){
+      // Zero-gradient: average in cell, slopes to 0
+      else if (physical==2){
 	set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhoC,NULL);
 	set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhouC,NULL);
 #ifdef TWOD
 	set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhovC,NULL);
 #endif
+	set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,gammaC,gammaLim);
+#ifdef STIFFENED
+	set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,betaC,betaLim);
+#endif
+	set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,pressureC,pressureLim);
+#include "loopstart.h"
+#define LOOP_END N_Y
+#define MACRO(x) set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,YC(x),NULL);
+#include "loop.h"    
+
+	// Reconstruct the energies
+	// Kinetic (with limited Lagrange rho,rhou,rhov)
+	kinetic_energy(N_s, L2M, rhoC, rhouC, rhovC, tmp, KLim);
+
+	// Internal (with limited monomial p, gamma, beta)
+	internal_energy(N_s1D, slicenum, pressureLim, gammaLim, betaLim, rhoeLim);
+
+	// Total
+	reconstruct_total_energy(N_s, N_s1D, slicenum, L2M, M2L, rhoeLim, KLim, tmp, EC);
+      }
+
+      // reflective BC, see notes 03/11/15
+      else if (physical==3){
+	set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhoC,NULL);
+	
+	// Limiting in x-direction, ux is the wall normal velocity
+	// do not limit the normal velocity
+	if      (offxy == 0){
+#ifdef TWOD
+	  set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhovC,NULL);
+#endif
+	}
+	// Limiting in y-direction, uy is the wall normal velocity
+	// do not limit the normal velocity
+	else if (offxy == 2){
+	  set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,rhouC,NULL);
+	}
+	
 	set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,gammaC,gammaLim);
 #ifdef STIFFENED
 	set2average(N_s,N,N_s1D,slicenum,L2M,M2L,tmp,betaC,betaLim);
@@ -1462,7 +1531,7 @@ arch_device scalar minmod2(scalar* c, int n){
 }
 
 //==========================================================================
-arch_device void limit_monomial(int N, scalar* AL, scalar* AC, scalar* AR, scalar* Alim){
+ arch_device void limit_monomial(int N, scalar* AL, scalar* AC, scalar* AR, scalar* Alim){
   /*!
     \brief Limit a 1D monomial using HR
     \param[in] N monomial order
