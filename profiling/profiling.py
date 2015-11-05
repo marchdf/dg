@@ -193,7 +193,7 @@ else:
 # Directory setup
 #
 #================================================================================
-BASEDIR='/home/marchdf/dg/'
+BASEDIR=os.environ['HOME']+'/dg/'
 CODEDIR=BASEDIR+'code/'
 BINDIR =BASEDIR+'code/bin/'
 MESHDIR=BASEDIR+'profiling/mesh/'
