@@ -70,6 +70,8 @@ class LAGRANGE_PARTICLES {
   int _recvtag;
   MPI_Status *_status;
   MPI_Request *_request;
+  MPI_Status *_print_status;
+  MPI_Request *_print_request;
 #endif
 
   
@@ -106,8 +108,10 @@ class LAGRANGE_PARTICLES {
       _local_output = NULL;
       _finding_proc_array  = NULL;
 #ifdef USE_MPI
-      _status = new MPI_Status [_NP];
-      _request = new MPI_Request [_NP];
+      _status = new MPI_Status [2];
+      _request = new MPI_Request [2];
+      _print_status = new MPI_Status [_NP];
+      _print_request = new MPI_Request [_NP];
       _sendtag = 0;
       _recvtag = 0;
 #endif

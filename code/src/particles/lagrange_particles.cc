@@ -90,7 +90,7 @@ void LAGRANGE_PARTICLES::advectParticles(scalar Dt, scalar* U){
       	  MPI_Irecv(_avg_velocity, D, MPI_SCALAR, finding_proc, 1, MPI_COMM_WORLD, &_request[1]);
       	}
       	// Wait for communication to end
-      	MPI_Waitall(2, _request, _status);
+	if ((_myid == 0) || (_myid == finding_proc)){ MPI_Waitall(2, _request, _status);}
       }
       
       //
@@ -166,16 +166,16 @@ void LAGRANGE_PARTICLES::printParticles(const double time, scalar* output){
       // Otherwise, you have to get the data to proc 0
       else{
 	if (_myid == _prev_part[k]){
-	  MPI_Isend(&output[_prev_el[k]*N_F*_N_s], N_F*_N_s, MPI_SCALAR, 0, k, MPI_COMM_WORLD, &_request[cnt]); cnt++;
+	  MPI_Isend(&output[_prev_el[k]*N_F*_N_s], N_F*_N_s, MPI_SCALAR, 0, k, MPI_COMM_WORLD, &_print_request[cnt]); cnt++;
 	}
 	else if (_myid == 0){
-	  MPI_Irecv(&_local_output[k*N_F*_N_s], N_F*_N_s, MPI_SCALAR, _prev_part[k], k, MPI_COMM_WORLD, &_request[cnt]); cnt++;
+	  MPI_Irecv(&_local_output[k*N_F*_N_s], N_F*_N_s, MPI_SCALAR, _prev_part[k], k, MPI_COMM_WORLD, &_print_request[cnt]); cnt++;
 	}
       }
     }
   }
   // Wait for communication to end
-  MPI_Waitall(cnt, _request, _status);
+  MPI_Waitall(cnt, _print_request, _print_status);
 
     
 #else
