@@ -103,7 +103,7 @@ void RK::RK_integration(scalar CFL, int restart_step,
       if(myid==0){printf("Initial condition written to output file.\n");}
       if(particles.haveParticles()){particles.advectParticles(0.0, arch(U));} // get the particle locations by advecting them by dt = 0
       printer.print(arch(U), particles, count, T);
-
+      
       // Limit the initial solution before integrating to avoid problems
       if      (Limiter.getLimitingMethod()==1){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.HRlimiting(communicator, arch(U));}
       else if (Limiter.getLimitingMethod()==2){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.M2limiting(communicator, arch(U));}
