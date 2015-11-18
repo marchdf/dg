@@ -4403,17 +4403,16 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
       y  = XYZNodes(i,e*D+1);
 #endif
 
-      
-
-      printf("Wtype=%f\n",Wtype);
+      //Determine wave region
       if (yc > (ywave+Wwave)) { // post-wave region
-	if (Wtype == 0) {
+	//Determine eave type
+	if (Wtype == 0) { //Ramp wave
 	  rho   = rho01 + rhoW;
 	  u     = u0 + uW;
 	  v     = v0 + vW;
 	  p     = p0 + pW;
 	}
-	else {
+	else { //Any wave that ends at the same value it started at.
 	  rho   = rho01;
 	  u     = u0;
 	  v     = v0;
@@ -4424,14 +4423,14 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 	jx    = 0;
       }
       else if ((yc >= (ywave-1e-6))&&(yc < ywave+Wwave)){ // in-wave region
-	if (Wtype == 0) {
+	if (Wtype == 0) { //Ramp wave
 	  wx    = (y-ywave)/Wwave;
 	  rho   = rho01 + rhoW*wx;
 	  u     = u0 + uW*wx;
 	  v     = v0 + vW*wx;
 	  p     = p0 + pW*wx;
   	}
-	else if (Wtype == 1) {
+	else if (Wtype == 1) { //US-like pulse
 	  scalar fwhm_ratio, ky_ratio, envelope;
 	  fwhm_ratio = 15; //(half) Full-width half maximum per wavelength
 	  ky_ratio = 1.25663706; //peaks per intf-wavelength (fc =1.5 MHz)
