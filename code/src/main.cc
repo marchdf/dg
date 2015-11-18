@@ -77,6 +77,28 @@ int main (int argc, char **argv)
 
   //////////////////////////////////////////////////////////////////////////   
   //
+  // Let's get started!
+  //
+  //////////////////////////////////////////////////////////////////////////
+  printf("\n\n\n");
+  printf("Deploy the algorithm...\n");
+  printf("\n\n");
+  printf("+--------------------------------------------------------------------------------+\n");
+  printf("|+------------------------------------------------------------------------------+|\n");
+  printf("||                                                                              ||\n");
+  printf("||                                                                              ||\n");
+  printf("||                                                                              ||\n");
+  printf("||                              ALGORITHM DEPLOYED.                             ||\n"); 
+  printf("||                                                                              ||\n");
+  printf("||                                                                              ||\n");
+  printf("||                                                                              ||\n");
+  printf("|+------------------------------------------------------------------------------+|\n");
+  printf("+--------------------------------------------------------------------------------+\n");
+  printf("\n\n\n");
+  
+
+  //////////////////////////////////////////////////////////////////////////   
+  //
   // Memory counter init
   //
   //////////////////////////////////////////////////////////////////////////
@@ -820,7 +842,7 @@ int main (int argc, char **argv)
   // Lagrange particles setup
   //
   //////////////////////////////////////////////////////////////////////////
-  LAGRANGE_PARTICLES particles(timers, mem_counter, m, XYZNodes, N_T, N_N, N_E, N_s, inputs.getLagrangeParticles());
+  LAGRANGE_PARTICLES particles(timers, mem_counter, m, XYZNodes, N_T, N_N, N_E, N_s, myid, numprocs, inputs.getLagrangeParticles());
 
   //////////////////////////////////////////////////////////////////////////   
   //
@@ -868,11 +890,11 @@ int main (int argc, char **argv)
   double Tf    = inputs.getFinalTime();
   m.setDx(N_N,N_E,XYZCen,XYZNodes);
   scalar CFL   = inputs.getCFL()*m.getDx()/(2.0*order+1);
-  RK rk4 = RK(4);
+  RK rk4 = RK(4,DtOut,Tf, inputs.getOutputTimeArray());
  
   // RK integration
   if(myid==0){printf("==== Now RK 4 steps =====\n");}
-  rk4.RK_integration(DtOut, Tf, CFL, restart_step,
+  rk4.RK_integration(CFL, restart_step,
   		     N_E, N_s, N_G, M_T, M_s, N_ghosts,
   		     h_Minv, 
   		     h_U,
@@ -1065,7 +1087,26 @@ int main (int argc, char **argv)
   MPI_Barrier(MPI_COMM_WORLD); // wait until every process gets here
   MPI_Finalize();
 #endif
-  
+
+
+  //////////////////////////////////////////////////////////////////////////   
+  //
+  // And we are done.
+  //
+  //////////////////////////////////////////////////////////////////////////
+  printf("\n\n\n");
+  printf("+--------------------------------------------------------------------------------+\n");
+  printf("|+------------------------------------------------------------------------------+|\n");
+  printf("||                                                                              ||\n");
+  printf("||                                                                              ||\n");
+  printf("||                                                                              ||\n");
+  printf("||                            CALCULATIONS CORRECT.                             ||\n"); 
+  printf("||                                                                              ||\n");
+  printf("||                                                                              ||\n");
+  printf("||                                                                              ||\n");
+  printf("|+------------------------------------------------------------------------------+|\n");
+  printf("+--------------------------------------------------------------------------------+\n");
+  printf("\n\n\n");
   
   return 0;
 }// end main
