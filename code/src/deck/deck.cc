@@ -38,6 +38,7 @@ void deck::readDeck(const char *fileName)
     //std::cout<< "Parsing line: "<<line<<std::endl;
     if      (line=="#time integration")                 {getline(input,_timeMeth); cnt++;}
     else if (line=="#output time step size")            {input>>_Dt; getline(input,line); cnt++;}
+    else if (line=="#output time array")                {std::string tmp; char c; getline(input,tmp); std::istringstream iss(tmp); std::copy( std::istream_iterator<double>(iss), std::istream_iterator<double>(), std::back_inserter(_output_time_array) ); cnt++;}
     else if (line=="#final time")                       {input>>_tf;getline(input,line); cnt++;}
     else if (line=="#Courant-Friedrichs-Lewy condition"){input>>_cfl; getline(input,line); cnt++;}
     else if (line=="#order")                            {input>>_order; getline(input,line); cnt++;}
@@ -53,8 +54,8 @@ void deck::readDeck(const char *fileName)
     } // if on line
   }
 
-  // Check to make sure we read all the mandatory options (9 right now)
-  if(cnt < 9){
+  // Check to make sure we read all the mandatory options (8 right now)
+  if(cnt < 8){
     std::cout<<"Input deck is incomplete. Exiting."<< std::endl;
     exit(1);
   }
