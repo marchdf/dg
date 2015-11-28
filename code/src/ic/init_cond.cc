@@ -4302,18 +4302,35 @@ void init_dg_cfplrun_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 // }
 void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
 
+  scalar Wtype  = ic_inputs[0]; // Acoustic wave type (Currently unused)
+  scalar input_size;
+  if ((Wtype==0) || (Wtype ==1)){
+    input_size = 7;
+  }
+  else if (Wtype==2){
+    input_size = 8;
+  }
+
   // Read inputs
-  if (ic_inputs.size() != 7){
+  if (ic_inputs.size() != input_size){
     printf("Wrong initial condition inputs. Exiting\n");
     exit(1);
   }
-  scalar Wtype  = ic_inputs[0]; // Acoustic wave type (Currently unused)
+
   scalar pa     = ic_inputs[1]; // Acoustic wave amplitude
   scalar Aratio = ic_inputs[2]; // interface amplitude to wavelength ratio
   scalar Wratio = ic_inputs[3]; // Wavewidth to interface wavelength ratio
   scalar vcoord = ic_inputs[4]; //140;//111;//51.5;//134;//72.9; // coordinate shift upwards
   scalar racoef = ic_inputs[5]; // Rho_air multiplier
   scalar gwcoef = ic_inputs[6]; // Gamma_water_multiplier
+  scalar Rratio;
+
+  if (Wtype==2) {
+    Rratio = ic_inputs[7]; //Ratio of wave rise and fall width of wavelength (included in Wratio)
+  }
+  else {
+    Rratio = 0;
+  }
 
   printf("Wtype=%f, pa=%f, Aratio=%f, Wratio=%f, vcoord=%f, racoef=%f, gwcoef=%f\n",Wtype,pa,Aratio,Wratio,vcoord,racoef,gwcoef);
 
@@ -4323,6 +4340,7 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar yinterface = 0*Lx; // interface location 
   scalar Wwave = Wratio*Lx; // wavewidth
   scalar ywave = yinterface+10*Aratio; // initial wave location (in wavelength units)
+  scalar Rwave = Rratio*Lx; // wave rise time for ramp-up-ramp-down wave
 
   // The diffusion layer thickness (in wavelength units)
   scalar delta=0.08*Lx;
@@ -4383,7 +4401,8 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   Lx = Lx/L_ND;
   Wwave = Wwave/L_ND;
   ywave = ywave/L_ND;
-  Wwave = Wratio/L_ND; 
+  Wwave = Wratio/L_ND;
+  Rwave = Rratio/L_ND;
   yinterface = yinterface/L_ND;
   delta = delta/L_ND;
   
@@ -4441,6 +4460,21 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 	  u = u0 + uW*wx;
 	  v = v0 + vW*wx;
 	  p = p0 + pW*wx;
+	}
+	else if (Wtype == 2) { //Ramp up, then flat, then ramp down
+	  if ((yc >= (ywave-1e-6))&&(yc < ywave+Rwave)){ // in-wave rise region
+	    wx = (y-ywave)/Rwave;
+	  }
+	  else if ((yc >= ywave+Rwave) && (yc < ywave+Wwave-Rwave) ){ // in flat region
+	    wx = 1;
+	  }
+	  else if ((yc >= ywave+Wwave-Rwave) && (yc < ywave+Wwave) ){ // in fall region
+	    wx = 1 - (y-(ywave+Wwave-Rwave))/Rwave;
+	  }
+	  rho   = rho01 + rhoW*wx;
+	  u     = u0 + uW*wx;
+	  v     = v0 + vW*wx;
+	  p     = p0 + pW*wx;
 	}
 	else {
 	  rho = rho01;
