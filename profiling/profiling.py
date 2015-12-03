@@ -142,7 +142,7 @@ def write_submit(WORKDIR,SUBMIT,CMD):
 #================================================================================
 
 # resolution
-resolution = 32;
+resolution = 128;
 
 # method order (number from 1 to 5)
 order      = 1;
@@ -227,9 +227,9 @@ if PARA == 'USE_MPI':
 
 # problem definition
 if problem_type == 1:
-    defs=['MULTIFLUID','5','GAMNCON','ROE','0',str(order),'sinegam',limiting,'0.1','10','0.5',MESHTYPE]
+    defs=['MULTIFLUID','5','GAMNCON','ROE','0',str(order),'sinegam',limiting,'5','5','0.5',MESHTYPE]
 elif problem_type == 2:
-    defs=['MULTIFLUID','5','GAMNCON','ROE','0',str(order),'sodcirc',limiting,'0.002','0.2','0.5',MESHTYPE]
+    defs=['MULTIFLUID','5','GAMNCON','ROE','0',str(order),'sodcirc',limiting,'0.2','0.2','0.5',MESHTYPE]
 
 # Create directory
 WORKDIR=DATADIR+defs[6]+'_'+str(resolution)+'_'+str(order)+'_'+str(NP)+'_'+limiting+'_'+ARCH
