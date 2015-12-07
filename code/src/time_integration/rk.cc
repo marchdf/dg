@@ -184,7 +184,7 @@ void RK::RK_integration(scalar CFL, int restart_step,
       }
 
       // Fix pinf (for stiffened EOS)
-      printf("WARNING. You are using a hack to fix pinf. Only 2D\n");
+      //printf("WARNING. You are using a hack to fix pinf. Only 2D\n");
       Lhack_pinf(N_s, N_E, _Ustar);
      
       // Now you have to calculate f(Ustar)
@@ -213,7 +213,7 @@ void RK::RK_integration(scalar CFL, int restart_step,
     else if (Limiter.getLimitingMethod()==7){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.P0Ilimiting(communicator, sensor, dgsolver, arch(U));}
 
     // Fix pinf (for stiffened EOS)
-    printf("WARNING. You are using a hack to fix pinf. Only 2D\n");
+    //printf("WARNING. You are using a hack to fix pinf. Only 2D\n");
     Lhack_pinf(N_s, N_E, arch(U));
 
     
