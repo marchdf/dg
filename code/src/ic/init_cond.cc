@@ -3530,19 +3530,27 @@ void init_dg_bblwedg_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar rho   = rho_water*(1+rm)/(1+rv);
   scalar u     = V;
   scalar v     = 0.0;
-  scalar p     = V*V/((1+rv)*(1+rv)*Ms*Ms)*rho_water*rv*(1+rm);
   scalar G     = alpha_water/(gamma_water-1.0) + alpha_n2/(gamma_n2-1.0);
   scalar gamma = 1 + 1.0/G; // = alpha_water*gamma_water + alpha_n2*gamma_n2;   scalar G     = 1.0/(gamma-1.0);
-  scalar pinf1 = (1.0/(alpha_water/(gamma_water*(p   +pinf_water)) + alpha_n2/(gamma_n2*p))    - gamma*p)   /gamma;
-  scalar pinf2 = (1.0/(alpha_water/(gamma_water*(patm+pinf_water)) + alpha_n2/(gamma_n2*patm)) - gamma*patm)/gamma;
-  scalar pinf  = pinf1; //0.5*(pinf1+pinf2); // = pinf1 // = pinf2
-  printf("Dimensional initial mixture properties: rho=%f, u=%f, v=%f, p=%f, pinf=%f, 1/(gamma-1)=%f,cs=%f\n",rho,u,v,p,pinf,G,sqrt(gamma*(patm+pinf)/rho));
+  
+  // scalar p     = V*V/((1+rv)*(1+rv)*Ms*Ms)*rho_water*rv*(1+rm);
+  // scalar pinf1 = (1.0/(alpha_water/(gamma_water*(p   +pinf_water)) + alpha_n2/(gamma_n2*p))    - gamma*p)   /gamma;
+  // scalar pinf2 = (1.0/(alpha_water/(gamma_water*(patm+pinf_water)) + alpha_n2/(gamma_n2*patm)) - gamma*patm)/gamma;
+  // scalar pinf  = pinf1; //0.5*(pinf1+pinf2); // = pinf1 // = pinf2
+
+  // scalar p = -(-(gamma_n2*(rho*u*u/(Ms*Ms))) + alpha_n2*gamma_n2*(rho*u*u/(Ms*Ms)) - alpha_n2*gamma_water*(rho*u*u/(Ms*Ms)) + gamma_n2*gamma_water*pinf_water +  sqrt(4*alpha_n2*gamma_n2*pow(gamma_water,2)*(rho*u*u/(Ms*Ms))*pinf_water + pow(alpha_n2*gamma_water*(rho*u*u/(Ms*Ms)) + gamma_n2*((rho*u*u/(Ms*Ms)) - alpha_n2*(rho*u*u/(Ms*Ms)) - gamma_water*pinf_water),2)))/(2.*gamma_n2*gamma_water);
+  // scalar pinf = (-(alpha_n2*gamma*gamma_water*(rho*u*u/(Ms*Ms))) + gamma_n2*((-1 + alpha_n2)*gamma*(rho*u*u/(Ms*Ms)) + 2*gamma_water*(rho*u*u/(Ms*Ms)) + gamma*gamma_water*pinf_water) + gamma*sqrt(4*alpha_n2*gamma_n2*pow(gamma_water,2)*(rho*u*u/(Ms*Ms))*pinf_water + pow(alpha_n2*gamma_water*(rho*u*u/(Ms*Ms)) + gamma_n2*((rho*u*u/(Ms*Ms)) - alpha_n2*(rho*u*u/(Ms*Ms)) - gamma_water*pinf_water),2)))/(2.*gamma*gamma_n2*gamma_water);
+
+  scalar p = (gamma_n2*(rho*u*u/(Ms*Ms)) - alpha_n2*gamma_n2*(rho*u*u/(Ms*Ms)) + alpha_n2*gamma_water*(rho*u*u/(Ms*Ms)) - gamma_n2*gamma_water*pinf_water + sqrt(4*alpha_n2*gamma_n2*pow(gamma_water,2)*(rho*u*u/(Ms*Ms))*pinf_water + pow(alpha_n2*gamma_water*(rho*u*u/(Ms*Ms)) + gamma_n2*((rho*u*u/(Ms*Ms)) - alpha_n2*(rho*u*u/(Ms*Ms)) - gamma_water*pinf_water),2)))/(2.*gamma_n2*gamma_water);
+  scalar pinf = -(alpha_n2*gamma*gamma_water*(rho*u*u/(Ms*Ms)) - gamma_n2*((-1 + alpha_n2)*gamma*(rho*u*u/(Ms*Ms)) + 2*gamma_water*(rho*u*u/(Ms*Ms)) + gamma*gamma_water*pinf_water) + gamma*sqrt(4*alpha_n2*gamma_n2*pow(gamma_water,2)*(rho*u*u/(Ms*Ms))*pinf_water + pow(alpha_n2*gamma_water*(rho*u*u/(Ms*Ms)) + gamma_n2*((rho*u*u/(Ms*Ms)) - alpha_n2*(rho*u*u/(Ms*Ms)) - gamma_water*pinf_water),2)))/(2.*gamma*gamma_n2*gamma_water);
+  
+  printf("Dimensional initial mixture properties: rho=%f, u=%f, v=%f, p=%f, pinf=%f, 1/(gamma-1)=%f,cs=%f,Ms=%f\n",rho,u,v,p,pinf,G,sqrt(gamma*(p+pinf)/rho),u/sqrt(gamma*(p+pinf)/rho));
   rho = rho/rho_ND;
   u = u/u_ND;
   v = v/u_ND;
   pinf = pinf/p_ND;
   p = p/p_ND;
-  printf("Non-dimensionalized initial mixture properties: rho=%f, u=%f, v=%f, p=%f, pinf=%f, 1/(gamma-1)=%f\n",rho,u,v,p,pinf,G);
+  printf("Non-dimensionalized initial mixture properties: rho=%f, u=%f, v=%f, p=%f, pinf=%f, 1/(gamma-1)=%f,cs=%f,Ms=%f\n",rho,u,v,p,pinf,G,sqrt(gamma*(p+pinf)/rho),u/sqrt(gamma*(p+pinf)/rho));
   constants::GLOBAL_P0_BBLWEDG = p;
   scalar Et    = G*p + gamma*pinf/(gamma-1)  + 0.5*rho*(u*u+v*v);
   

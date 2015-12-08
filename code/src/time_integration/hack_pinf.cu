@@ -451,12 +451,16 @@ arch_global void hack_pinf_20150819(int N_s, int N_E, scalar pm, scalar* U){
 
     // material properties (non-dimensionalized)
     scalar gamma_l = 5.5;
-    scalar pinf_l = 492115000/p_ND;
+    scalar pinf_l  = 492115000/p_ND;
     scalar gamma_g = 1.4;
+    scalar G_i     = alpha_water/(gamma_water-1.0) + alpha_n2/(gamma_n2-1.0);
+    scalar gamma_i = 1 + 1.0/G; //gamma;//1.4; // maybe use gamma_g?
+    //scalar gamma_i = 1.81; 	
     scalar pinf_m = (1.0/(alpha_l/(gamma_l*(pm+pinf_l)) + alpha_g/(gamma_g*pm))- gamma*pm)/gamma;
 
+    //
     // redefine the volume fractions to account for the pressure change
-    scalar gamma_i = 1.4; //gamma;//1.4; // maybe use gamma_g?
+    //
     
     // Brent Solver: see pseudocode at https://en.wikipedia.org/wiki/Brent%27s_method
     scalar E = Et;
@@ -473,7 +477,7 @@ arch_global void hack_pinf_20150819(int N_s, int N_E, scalar pm, scalar* U){
 
     // Exit if root is not bracketed
     if (fa*fb>0){
-      //printf("Root is not bracketed (f(a)=%f,f(b)=%f) exit. %f\n",fa,fb); exit(1);
+      printf("Root is not bracketed (f(a)=%f,f(b)=%f) exit. %f\n",fa,fb); exit(1);
       a = -a;
       b = b;
     }
