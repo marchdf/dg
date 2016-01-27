@@ -453,9 +453,9 @@ arch_global void hack_pinf_20150819(int N_s, int N_E, scalar pm, scalar* U){
     scalar gamma_l = 5.5;
     scalar pinf_l  = 492115000/p_ND;
     scalar gamma_g = 1.4;
-    scalar G_i     = alpha_water/(gamma_water-1.0) + alpha_n2/(gamma_n2-1.0);
-    scalar gamma_i = 1 + 1.0/G; //gamma;//1.4; // maybe use gamma_g?
-    //scalar gamma_i = 1.81; 	
+    // scalar G_i     = alpha_water/(gamma_water-1.0) + alpha_n2/(gamma_n2-1.0);
+    // scalar gamma_i = 1 + 1.0/G; //gamma;//1.4; // maybe use gamma_g?
+    scalar gamma_i = gamma; 	
     scalar pinf_m = (1.0/(alpha_l/(gamma_l*(pm+pinf_l)) + alpha_g/(gamma_g*pm))- gamma*pm)/gamma;
 
     //
@@ -477,9 +477,12 @@ arch_global void hack_pinf_20150819(int N_s, int N_E, scalar pm, scalar* U){
 
     // Exit if root is not bracketed
     if (fa*fb>0){
+      printf("rho=%f,u=%f,v=%f,p=%f,gamma=%f,pinf=%f\n",rho,u,v,p,gamma,pinf);      
       printf("Root is not bracketed (f(a)=%f,f(b)=%f) exit. %f\n",fa,fb); exit(1);
       a = -a;
       b = b;
+      fa = -(((a + EmK)*(-1 + gamma))/(gamma*(pinf_m + pm))) + pow((a*gamma_g*(EmK - EmK*gamma + a*(1 - gamma + gamma_l) + gamma_l*pinf_l))/(((a + EmK)*(-1 + gamma) - a*gamma_g)*gamma_l*(a + pinf_l)*rv),1/gamma_i);
+      fb = -(((b + EmK)*(-1 + gamma))/(gamma*(pinf_m + pm))) + pow((b*gamma_g*(EmK - EmK*gamma + b*(1 - gamma + gamma_l) + gamma_l*pinf_l))/(((b + EmK)*(-1 + gamma) - b*gamma_g)*gamma_l*(b + pinf_l)*rv),1/gamma_i);
     }
 
     // swap a and b if a is closer to the root than the other

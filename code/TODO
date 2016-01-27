@@ -67,6 +67,7 @@
   - make if conditions into switches (apparently it's faster)
   - make sure there are NO (!!) if conditions in my gpu kernels
   - GREAT IDEA: put functions that have two versions (CPU/GPU) into different namespaces then I just need to switch on "using namespace GPU" "using namespace CPU"
+  - IMPORTANT: cut down on the number of ifdefs by using function pointers
   - Some data has to be shared by different classes (e.g. phi, J and weigth in dg_solver and limiting), could we create a shared data class that would group these coherently
 
 \mytodo DOXYGEN
