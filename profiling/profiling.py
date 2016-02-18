@@ -142,10 +142,10 @@ def write_submit(WORKDIR,SUBMIT,CMD):
 #================================================================================
 
 # resolution
-resolution = 128;
+resolution = 64;
 
 # method order (number from 1 to 5)
-order      = 1;
+order      = 3;
 
 # number of processors to use
 NP         = 1;
