@@ -146,8 +146,8 @@ void RK::RK_integration(scalar CFL, int restart_step,
 #endif
       if(Dt<1e-14){ printf("Next time step is too small (%e<1e-14). Exiting at step %7i and time %e.\n",Dt,n,T); exit(1);}
       if(Dt!=Dt  ){ printf("Time step is NaN. Exiting at step %7i and time %e.\n",n,T); exit(1);}
-      if     (Dt>(_Tf  -T)){ DtCFL = Dt; Dt = _Tf  -T; output = true; done = true;}
-      else if(Dt>(Tout -T)){ DtCFL = Dt; Dt = Tout -T; output = true;}
+      if     (Dt>(_Tf  -T)){ DtCFL = Dt; Dt = _Tf  -T; output = true; done = true; }
+      else if(Dt>(Tout -T)){ DtCFL = Dt; Dt = Tout -T; output = true; }
       //printf("current time=%e, this Dt=%e, next output at %e\n",T+Dt,Dt,Tout);
       /* Dt = 1e-7; */
       /* if ((n+1)%100==0){output=true;} */
@@ -183,10 +183,6 @@ void RK::RK_integration(scalar CFL, int restart_step,
 	else if (Limiter.getLimitingMethod()==7) Limiter.P0Ilimiting(communicator, sensor, dgsolver, _Ustar);
       }
 
-      // Fix pinf (for stiffened EOS)
-      //printf("WARNING. You are using a hack to fix pinf. Only 2D\n");
-      Lhack_pinf(N_s, N_E, _Ustar);
-     
       // Now you have to calculate f(Ustar)
       dgsolver.dg_solver(_Ustar,_f);
 	
@@ -211,12 +207,7 @@ void RK::RK_integration(scalar CFL, int restart_step,
     else if (Limiter.getLimitingMethod()==5){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.PRlimiting(communicator, arch(U));}
     else if (Limiter.getLimitingMethod()==6){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.PRIlimiting(communicator, sensor, arch(U));}
     else if (Limiter.getLimitingMethod()==7){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.P0Ilimiting(communicator, sensor, dgsolver, arch(U));}
-
-    // Fix pinf (for stiffened EOS)
-    //printf("WARNING. You are using a hack to fix pinf. Only 2D\n");
-    Lhack_pinf(N_s, N_E, arch(U));
-
-    
+        
     T = T + Dt; // update current time
     n++;        // update the time step counter
 

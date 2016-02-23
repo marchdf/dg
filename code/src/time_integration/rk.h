@@ -20,7 +20,6 @@
 #include "timers.h"
 #include "mem_counter.h"
 #include "lagrange_particles.h"
-#include "hack_pinf.h"
 #ifdef USE_MPI
 #include "mpi.h"
 #endif
@@ -60,11 +59,19 @@ class RK
     // Calculate the output time array
     // if the array was not specified in the deck, default to constant DtOut
     if ((output_time_array.size() == 0) && (DtOut > 0)){
-      scalar next_time = 0;
-      while (next_time <= Tf){
-	_output_time_array.push_back(next_time);
-	next_time = next_time+DtOut;
+
+      // Number of ouputs
+      int num_outputs = (int)Tf/DtOut+1; 
+
+      // Populate the array
+      for(int k=0; k < num_outputs; k ++){
+	_output_time_array.push_back(k*DtOut);
       }
+
+      // Enforce _Tf to be identically exactly the same as the final
+      // time calculated from the for loop that populated the output
+      // time array
+      _Tf = _output_time_array.back(); 
     }
     // if it was specified in the deck, use it
     else if (output_time_array.size() != 0){
