@@ -146,8 +146,8 @@ void RK::RK_integration(scalar CFL, int restart_step,
 #endif
       if(Dt<1e-14){ printf("Next time step is too small (%e<1e-14). Exiting at step %7i and time %e.\n",Dt,n,T); exit(1);}
       if(Dt!=Dt  ){ printf("Time step is NaN. Exiting at step %7i and time %e.\n",n,T); exit(1);}
-      if     (Dt>(_Tf  -T)){ DtCFL = Dt; Dt = _Tf  -T; output = true; done = true;}
-      else if(Dt>(Tout -T)){ DtCFL = Dt; Dt = Tout -T; output = true;}
+      if     (Dt>(_Tf  -T)){ DtCFL = Dt; Dt = _Tf  -T; output = true; done = true; }
+      else if(Dt>(Tout -T)){ DtCFL = Dt; Dt = Tout -T; output = true; }
       //printf("current time=%e, this Dt=%e, next output at %e\n",T+Dt,Dt,Tout);
       /* Dt = 1e-7; */
       /* if ((n+1)%100==0){output=true;} */
