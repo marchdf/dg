@@ -90,8 +90,8 @@ def df_qua_cellcenter_to_numpy(df):
     # is that nodes that differ by less than that amount will now
     # actually share the same coordinate (and the pivot operation will
     # work)
-    df['xc'] = df['xc'].round(8)
-    df['yc'] = df['yc'].round(8)
+    df['xc'] = df['xc'].round(5)
+    df['yc'] = df['yc'].round(5)
 
     # Pivot the table to organize by the cell center coordinates
     df=df.pivot('yc', 'xc', 'fc')
