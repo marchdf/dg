@@ -12,7 +12,7 @@
 ##
 ## @cond
 
-CUDA_INSTALL_PATH := /usr/local/cuda
+CUDA_INSTALL_PATH := /opt/cuda
 CUDA_SDK_PATH     := /home/marchdf/NVIDIA_GPU_Computing_SDK/C
 
 ## @endcond
