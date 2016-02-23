@@ -8,15 +8,13 @@
 */
 #include "rk.h"
 
-void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
+void RK::RK_integration(scalar CFL, int restart_step,
 			int N_E, int N_s, int N_G, int M_T, int M_s, int N_ghosts,
 			scalar* h_Minv, 
 			scalar* h_U,
 			Limiting &Limiter, bool order0, DG_SOLVER &dgsolver, COMMUNICATOR &communicator, PRINTER &printer, SENSOR &sensor, TIMERS &timers, MEM_COUNTER &mem_counter, LAGRANGE_PARTICLES &particles){
   /*!
     \brief Main RK integration function
-    \param[in] DtOut output time step
-    \param[in] Tf final time
     \param[in] CFL CFL number
     \param[in] restart_step output step for a restart
     \param[in] N_E number of elements
@@ -86,7 +84,7 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
   double T = 0;             // current time
   int count = restart_step; // counts the output steps
   double Tstar = 0;
-  double Tout = 0;          // next output time
+  double Tout = _output_time_array[0];   // next output time
   scalar Dt = 0;
   scalar DtCFL = 0;
   int n = 0;                // counts the time steps
@@ -103,8 +101,9 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
       timers.start_timer(2);
       
       if(myid==0){printf("Initial condition written to output file.\n");}
+      if(particles.haveParticles()){particles.advectParticles(0.0, arch(U));} // get the particle locations by advecting them by dt = 0
       printer.print(arch(U), particles, count, T);
-
+      
       // Limit the initial solution before integrating to avoid problems
       if      (Limiter.getLimitingMethod()==1){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.HRlimiting(communicator, arch(U));}
       else if (Limiter.getLimitingMethod()==2){ communicator.CommunicateGhosts(N_F, arch(U)); Limiter.M2limiting(communicator, arch(U));}
@@ -125,9 +124,8 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
       timers.stop_timer(2);
     }
   }
-  Tout = T+DtOut;
   count++;
-
+  Tout = _output_time_array[count];
 
   // Time integration
   timers.start_timer(1);
@@ -136,8 +134,8 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
     // Give the deck a negative CFL for fixed time step and no output
     timers.start_timer(4);
     if(CFL<0){
-      Dt = DtOut; output = false;
-      if(Dt>(Tf  -T)){Dt = Tf  -T; done = true;}
+      Dt = _output_time_array[1] - _output_time_array[0]; output = false;
+      if(Dt>(_Tf  -T)){Dt = _Tf  -T; done = true;}
     }
     else{
       // Find new Dt
@@ -147,9 +145,9 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
       MPI_Allreduce(MPI_IN_PLACE, &Dt, 1, MPI_SCALAR, MPI_MIN, MPI_COMM_WORLD);
 #endif
       if(Dt<1e-14){ printf("Next time step is too small (%e<1e-14). Exiting at step %7i and time %e.\n",Dt,n,T); exit(1);}
-      if(Dt!=Dt){ printf("Time step is NaN. Exiting at step %7i and time %e.\n",n,T); exit(1);}
-      if     (Dt>(Tf  -T)){ DtCFL = Dt; Dt = Tf  -T; output = true; done = true;}
-      else if(Dt>(Tout-T)){ DtCFL = Dt; Dt = Tout-T; output = true;}
+      if(Dt!=Dt  ){ printf("Time step is NaN. Exiting at step %7i and time %e.\n",n,T); exit(1);}
+      if     (Dt>(_Tf  -T)){ DtCFL = Dt; Dt = _Tf  -T; output = true; done = true; }
+      else if(Dt>(Tout -T)){ DtCFL = Dt; Dt = Tout -T; output = true; }
       //printf("current time=%e, this Dt=%e, next output at %e\n",T+Dt,Dt,Tout);
       /* Dt = 1e-7; */
       /* if ((n+1)%100==0){output=true;} */
@@ -221,9 +219,9 @@ void RK::RK_integration(double DtOut, double Tf, scalar CFL, int restart_step,
       printer.print(arch(U), particles, count, T);
       printer.print_sensor(sensor, count, T);
 
-      Tout = T + DtOut; // update the new output time
       count++;
-
+      Tout = _output_time_array[count]; // update the new output time
+      
       // Output conservation of the fields (if wanted). Works only
       // when data is on host (really this is just for small
       // validation runs)
