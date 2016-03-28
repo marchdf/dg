@@ -2,22 +2,32 @@
 #
 # Read and format the output of a timers.dat file
 #
-# TODO: make it capable of processing timers from MPI runs
 __author__ = 'marchdf'
 def usage(): 
-    print '\nUsage: {0:s} [options ...]\nOptions:\n  -d, --dir\tdirectory to post-process (default to cwd)\n  -h, --help\tshow this message and exit\n'.format(sys.argv[0])
+    print '\nUsage: {0:s} [options ...]\nOptions:\n  -d, --dir\tdirectory to post-process (default to cwd)\n  -f, --file\tfile to post-process (default to timers.dat)\n  -h, --help\tshow this message and exit\n'.format(sys.argv[0])
 
+
+#================================================================================
+#
+# Imports
+#
+#================================================================================
 import sys, getopt
 from numpy import *
 import matplotlib.axis as axis
 from pylab import*
 import os
 
+#================================================================================
+#
 # Parse command line arguments using getopt (argparse is better but require python 1.7 at least)
+#
+#================================================================================
 # from: http://www.cyberciti.biz/faq/python-command-line-arguments-argv-example/
 fdir = './' # post-process current dir by default
+rootname = "timers.dat" # post-process this file name by default
 try:
-    myopts, args = getopt.getopt(sys.argv[1:],"hd:",["help","dir="])
+    myopts, args = getopt.getopt(sys.argv[1:],"hd:f:",["help","dir=",'file='])
 except getopt.GetoptError as e:
     print (str(e))
     usage()
@@ -29,8 +39,15 @@ for o, a in myopts:
         sys.exit()
     elif o == '-d':
         fdir=a+'/'
-print 'Parsing directory', fdir
+    elif o == '-f':
+        rootname=a
+print 'Parsing directory', fdir, 'and file', rootname
 
+#================================================================================
+#
+# Default parameters
+#
+#================================================================================
 rc('text', usetex=True)
 rc('font', family='serif', serif='Times')
 
@@ -40,6 +57,13 @@ markertype = ['s','d','o','p','h']
 linetype = ['-','--','-.',':']
 dashseq = [[1,0],[10,5],[10, 4, 3, 4],[3, 3],[10, 4, 3, 4, 3, 4],[3, 3],[3, 3]];
 
+
+#================================================================================
+#
+# Function definitions
+#
+#================================================================================
+#================================================================================
 def get_timer(fname,name):
     # Returns the time and count of a timer called name in file fname
     with open(fdir+fname,"r") as f:
@@ -49,6 +73,7 @@ def get_timer(fname,name):
                 return float(info[0]), int(info[1])
     return 0,0
 
+#================================================================================
 def print_children(fname,parent_time,children,other_name):
     # Format the output for the subroutines in a given list (children)
     # wrt a parent time. Returns the sorted times, percentages, and
@@ -76,9 +101,21 @@ def print_children(fname,parent_time,children,other_name):
     return times,times_percent,array(children)[idx]
 
 
-# Get the timer files 
-tfiles = [fname for fname in os.listdir(fdir) if fname.startswith("timers.dat")]
+#================================================================================
+#
+# Setup
+#
+#================================================================================
+# Get the timer files
+tfiles = [fname for fname in os.listdir(fdir) if fname.startswith(rootname)]
+tfiles.sort()
+load = []
 
+#================================================================================
+#
+# Process the timers
+#
+#================================================================================
 # Loop over them all
 for cnt, fname in enumerate(tfiles):
     
@@ -87,6 +124,7 @@ for cnt, fname in enumerate(tfiles):
 
     # Main program
     main,_ = get_timer(fname,'main')
+    load.extend([main])
     print 'Main program ({0:.2f}s):'.format(main) 
     print_children(fname,main,['RK'],'other (setup,...)')
 
@@ -110,7 +148,7 @@ for cnt, fname in enumerate(tfiles):
 
     # Communication
     communication,_   = get_timer(fname,'communication')
-    communication_children = ['communication','comm_packaging','comm_unpackaging','comm_memcpy','comm_sendrecv']
+    communication_children = ['comm_packaging','comm_unpackaging','comm_memcpy','comm_sendrecv']
     print 'communication subroutines ({0:.2f}s):'.format(communication) 
     print_children(fname,communication,communication_children,'other (barriers, waits,...)')
 
@@ -119,6 +157,14 @@ for cnt, fname in enumerate(tfiles):
     output_children = ['format_output','write_output','format_sensor','write_sensor','write_particles']
     print 'output subroutines ({0:.2f}s):'.format(output) 
     print_children(fname,output,output_children,'other')
+
+
+# load balancing check
+avg_load = mean(load)
+print '\nLoad balancing check:'
+print 'average time per processor: {0:.2f}s'.format(avg_load)
+for k,l in enumerate(load):
+    print '\tTime spent on proc {0:.0f}: {1:10.2f}s (or {2:6.2f}% wrt average)'.format(k,l,100*(avg_load-l)/avg_load)
 
 
 # # Plot
