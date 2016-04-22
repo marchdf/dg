@@ -32,6 +32,10 @@ for ((i=0; i<${#res[@]}; i++)); do #C style loop with the array length
 	    echo ''
 	    gmsh -2 -order $p -part ${nprocs[k]} my_square_qua.geo -o ./$wrkdir/square_qua_${res[i]}_${p}_np${nprocs[k]}.msh;
 	    gmsh -2 -order $p -part ${nprocs[k]} my_square_tri.geo -o ./$wrkdir/square_tri_${res[i]}_${p}_np${nprocs[k]}.msh;
+
+	    $GMSH -2 -order $p -part ${nprocs[k]} my_square_qua.geo -o ./$wrkdir/square_qua_${res[i]}_${p}_np${nprocs[k]}.msh;
+	    $GMSH -2 -order $p -part ${nprocs[k]} my_square_tri.geo -o ./$wrkdir/square_tri_${res[i]}_${p}_np${nprocs[k]}.msh;
+
 	done
     done
     rm -f my_square*.geo;    
