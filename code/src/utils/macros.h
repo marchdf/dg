@@ -32,7 +32,7 @@
 //
 #define MIN(X,Y)  ((X) < (Y) ? (X) : (Y))
 #define MAX(X,Y)  ((X) > (Y) ? (X) : (Y))
-#define blkE 4 // number of elements per block on GPU
-#define blkT 8 // number of faces per block on GPU
+#define blkE 32 // number of elements per block on GPU
+#define blkT 256 // number of faces per block on GPU
 #define blkComm 1 // number of communication elements per block on GPU
 #endif
