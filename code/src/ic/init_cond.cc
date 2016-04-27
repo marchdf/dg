@@ -1401,16 +1401,16 @@ void init_dg_rminstb_multifluid(const int N_s, const int N_E, const fullMatrix<s
   // pre-shock density (material 1)
   // The shock is initialized in here
   scalar rho01   = 1.351;//5.494;//1.351;
-  scalar gamma01 = 1.4;//1.093;//1.276;//
+  scalar gamma01 = 1.276;//1.4;//1.093;//1.276;//
   scalar alpha01 = 1/(gamma01-1);
   scalar c01     = sqrt(gamma01*p0/rho01); // sound speed
   scalar M01     = 34.76; // molecular weight
 
   // pre-shock density (material 2)
   scalar rho02   = rho01*Dratio;//5.494;//1.351;//
-  scalar gamma02 = gamma01;//1.093;//1.276;//
+  scalar gamma02 = 1.093;//gamma01;//1.093;//1.276;//
   scalar alpha02 = 1/(gamma02-1);
-  scalar M02     = M01;//146.05;//34.76;//
+  scalar M02     = 146.05;//M01;//146.05;//34.76;//
 
   // Non-dimensional parameters
   scalar L_ND = Lx; // use wavelength to non-dimensionalize

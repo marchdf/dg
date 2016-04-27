@@ -31,7 +31,7 @@
 ## NFLD           | -
 ## MASS           | 0-10
 ## PROF           | OFF (or ON)
-## ERROR          | NOERROR (or ERROR)
+## ERRR           | NOERROR (or ERROR)
 ## CONS           | NOCONS (or CONS)
 ## @cond           
 

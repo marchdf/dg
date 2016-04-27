@@ -676,7 +676,7 @@ void simpleMesh::buildNeighbors(int N_N, int N_E)
   _neighbors = new int[N_N*N_E]; for(int k=0; k < N_N*N_E; k++){_neighbors[k]=0;}
 
   int N_I = _interfaces.size();       // number of interfaces                   (i index)
-  double eps = 1e-7; // used for comparisons of smallness
+  double eps = 1e-6;                  // used for comparisons of smallness
   
   // A neighbor counter for each element, set to zero
   int* nn = new int[N_E];  for(int k=0; k<N_E; k++){ nn[k]=0;} 
@@ -708,6 +708,8 @@ void simpleMesh::buildNeighbors(int N_N, int N_E)
       // do the reverse if el2 belongs to me
       if (el2num>=0){ if(el2->getPartition()==_myid){ _neighbors[el2num*N_N+nn[el2num]] = el1num; nn[el2num]++;}}
     }
+
+    // cartesian mesh
     else if (_cartesian){ // sort in LRDU order
       double nx = _normals(0,i);
 #ifdef ONED
@@ -741,7 +743,7 @@ void simpleMesh::buildNeighbors(int N_N, int N_E)
 	if (el2num>=0){ if(el2->getPartition()==_myid){ _neighbors[el2num*N_N+2] = el1num;}}
       }
       else{
-	printf("Error in neighbor creation!!\n");
+	printf("Error in neighbor creation: n=(%.16f,%.16f),\n\t for element 1 = %i and element 2 = %i !!\n",nx,ny,el1->getId(),el2->getId());
 	exit(1);
       }
     } // end if cartesian
