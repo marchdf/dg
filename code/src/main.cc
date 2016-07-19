@@ -213,6 +213,7 @@ int main (int argc, char **argv)
   bool bblwedg = false;
   bool cfplrun = false;
   bool rmawave = false;
+  bool rmalayr = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="tranvtx") tranvtx = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
@@ -251,6 +252,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="bblwedg") bblwedg = true;
   else if (inputs.getInitialCondition()=="cfplrun") cfplrun = true;
   else if (inputs.getInitialCondition()=="rmawave") rmawave = true;
+  else if (inputs.getInitialCondition()=="rmalayr") rmalayr = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // Restart option step
@@ -694,11 +696,11 @@ int main (int argc, char **argv)
   else if (bblwedg) init_dg_bblwedg_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
   else if (cfplrun) init_dg_cfplrun_stiffened(N_s, N_E, XYZNodes, XYZCen, U, m, elem_type, inputs.getInitialConditionInputs());
   else if (rmawave) init_dg_rmawave_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
+  else if (rmalayr) init_dg_rmalayr_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
 #endif
 
   if (order0) average_cell_p0(N_s, N_E, U);
   
-
   //////////////////////////////////////////////////////////////////////////   
   //
   // Calculate the jacobian matrix for each integration point
@@ -864,7 +866,6 @@ int main (int argc, char **argv)
 #ifdef ONED
   Limiting Limiter = Limiting(limiterMethod, N_s, N_E, N_N, m, Lag2Mono, Mono2Lag, timers, mem_counter);
 #elif TWOD
-
   Limiting Limiter = Limiting(limiterMethod, N_s, N_E, order, cartesian, N_N, N_G, N_ghosts, m, refArea, Lag2MonoX, MonoX2MonoY, MonoY2Lag, timers, mem_counter);
 
   // //

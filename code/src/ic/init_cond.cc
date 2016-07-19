@@ -4300,8 +4300,9 @@ void init_dg_cfplrun_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 //     }
 //   }
 // }
-void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
 
+void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
+  
   scalar Wtype  = ic_inputs[0]; // Acoustic wave type (Currently unused)
   scalar input_size;
   if ((Wtype==0) || (Wtype ==1)){
@@ -4323,14 +4324,13 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar vcoord = ic_inputs[4]; //140;//111;//51.5;//134;//72.9; // coordinate shift upwards
   scalar racoef = ic_inputs[5]; // Rho_air multiplier
   scalar gwcoef = ic_inputs[6]; // Gamma_water_multiplier
-  scalar Rratio;
+  scalar Rratio = 0;
 
   if (Wtype==2) {
     Rratio = ic_inputs[7]; //Ratio of wave rise and fall width of wavelength (included in Wratio)
   }
-  else {
-    Rratio = 0;
-  }
+
+  
 
   printf("Wtype=%f, pa=%f, Aratio=%f, Wratio=%f, vcoord=%f, racoef=%f, gwcoef=%f\n",Wtype,pa,Aratio,Wratio,vcoord,racoef,gwcoef);
 
@@ -4355,13 +4355,13 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar gamma_air = 1.4;
   scalar pinf_air = 0.0;
   scalar patm = 101325;
-  scalar cs_air = sqrt(gamma_air*patm/rho_air);
+  scalar cs_air = sqrt(gamma_air*patm/rho_air); //347.23729
 
   // water at 300K
   scalar rho_water = 996; // use 970 if gelatine/water mixture as in Bourne1992
   scalar gamma_water = 5.5;// Shahab uses different EoS model and so 2.35;
   scalar pinf_water = 492115000;// Shahab uses: 1e9;
-  scalar cs_water = sqrt(gamma_water*(patm+pinf_water)/rho_water);
+  scalar cs_water = sqrt(gamma_water*(patm+pinf_water)/rho_water); //1648.65
 
   scalar p0 = patm;
 
@@ -4378,6 +4378,247 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 
   // pre-wave density (material 2) //Currently set for air
   scalar rho02   = rho_air*racoef;
+  scalar gamma02 = rho_air;
+  scalar alpha02 = 1/(gamma_air-1);
+  scalar pinf02 = pinf_air;
+  scalar M02     = 28.966;//146.05;//34.76;//
+
+  // Non-dimensional properties
+  scalar L_ND   = Lx; 
+  scalar rho_ND = rho_air;
+  scalar u_ND   = cs_air;
+  scalar p_ND   = rho_air*cs_air*cs_air;
+  printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f\n",L_ND,rho_ND,u_ND,p_ND);
+
+  // Post-wave perturbation (added to base state) (material 1) (see Anderson) %Location dependent, add in loop
+  scalar uW   = 0;
+  scalar vW   = -pa/(rho01*c01); // wave is moving downwards
+  scalar pW   = pa;
+  scalar rhoW = pa/(c01*c01);
+
+  // N-D lengths
+  A0 = A0/L_ND;
+  Lx = Lx/L_ND;
+  Wwave = Wwave/L_ND;
+  ywave = ywave/L_ND;
+  Wwave = Wratio/L_ND;
+  Rwave = Rratio/L_ND;
+  yinterface = yinterface/L_ND;
+  delta = delta/L_ND;
+  
+  scalar xc=0, yc=0, x=0, y=0,rho,u,v,p,gamma,jx,wx,alphainf;
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+#ifdef ONED
+      A0 = 0;
+      yc = XYZCen(e,0);
+      y  = XYZNodes(i,e*D+0);
+#elif TWOD
+      xc = XYZCen(e,0);
+      x  = XYZNodes(i,e*D+0);
+      yc = XYZCen(e,1);
+      y  = XYZNodes(i,e*D+1);
+#endif
+
+      //Determine wave region
+      if (yc > (ywave+Wwave)) { // post-wave region
+	//Determine eave type
+	if (Wtype == 0) { //Ramp wave
+	  rho   = rho01 + rhoW;
+	  u     = u0 + uW;
+	  v     = v0 + vW;
+	  p     = p0 + pW;
+	}
+	else { //Any wave that ends at the same value it started at.
+	  rho   = rho01;
+	  u     = u0;
+	  v     = v0;
+	  p     = p0;
+	}
+
+	gamma = gamma01;
+	alphainf = gamma01*pinf01/(gamma01-1);
+	jx    = 0;
+      }
+      else if ((yc >= (ywave-1e-6))&&(yc < ywave+Wwave)){ // in-wave region
+	if (Wtype == 0) { //Ramp wave
+	  wx    = (y-ywave)/Wwave;
+	  rho   = rho01 + rhoW*wx;
+	  u     = u0 + uW*wx;
+	  v     = v0 + vW*wx;
+	  p     = p0 + pW*wx;
+  	}
+	else if (Wtype == 1) { //US-like pulse
+	  scalar fwhm_ratio, ky_ratio, envelope;
+	  fwhm_ratio = 15; //(half) Full-width half maximum per wavelength
+	  ky_ratio = 1.25663706; //peaks per intf-wavelength (k=c/omega; ~1.25 is from [fc =1.5 MHz, lambda = 200e-6 or fc =3.0 MHz, lambda = 100e-6])
+	  envelope = exp(-(y - (ywave+Wwave/2.0))*(y - (ywave+Wwave/2.0))/(2*(fwhm_ratio/(2*sqrt(log(2))))*(fwhm_ratio/(2*sqrt(log(2)))))); //Gaussian envelope for waveform
+	  wx = sin(ky_ratio*(y-(ywave+Wwave/2.0)))*envelope;
+	  rho = rho01 + rhoW*wx;
+	  u = u0 + uW*wx;
+	  v = v0 + vW*wx;
+	  p = p0 + pW*wx;
+	}
+	else if (Wtype == 2) { //Ramp up, then flat, then ramp down
+	  if ((yc >= (ywave-1e-6))&&(yc < ywave+Rwave)){ // in-wave rise region
+	    wx = (y-ywave)/Rwave;
+	  }
+	  else if ((yc >= ywave+Rwave) && (yc < ywave+Wwave-Rwave) ){ // in flat region
+	    wx = 1;
+	  }
+	  else if ((yc >= ywave+Wwave-Rwave) && (yc < ywave+Wwave) ){ // in fall region
+	    wx = 1 - (y-(ywave+Wwave-Rwave))/Rwave;
+	  }
+	  rho   = rho01 + rhoW*wx;
+	  u     = u0 + uW*wx;
+	  v     = v0 + vW*wx;
+	  p     = p0 + pW*wx;
+	}
+	else {
+	  rho = rho01;
+	  u = u0;
+	  v = v0;
+	  p = p0;
+	}
+	gamma = gamma01;
+	alphainf = gamma01*pinf01/(gamma01-1);
+	jx    = 0;  
+      }    
+      else{
+	u = u0;
+	v = v0;
+	p = p0;
+
+	// vertical distance from interface
+	scalar d = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterface)/(2*delta);
+	
+	// Calculate volume fractions
+	scalar vol=0;
+	if      ((d<1)&&(d>0)) vol = exp(log(1e-16)*pow(fabs(d),8));
+	else if (d<=0)         vol = 1;
+	else                   vol = 0;
+
+	jx  = 1-vol;
+	rho = jx*rho02+(1-jx)*rho01;
+	scalar jy  = jx*rho02/(jx*rho02+(1-jx)*rho01);      // mass fraction
+	scalar jM  = 1/(jy/M02+(1-jy)/M01);                 // total molecular weight
+	
+	scalar alpha = jy*alpha02*jM/M02+(1-jy)*alpha01*jM/M01;
+	gamma = 1+1.0/alpha;
+	alphainf = gamma02*pinf02/(gamma02-1)*jy*jM/M02+(1-jy)*gamma01*pinf01/(gamma01-1)*jM/M01;
+      }
+
+      // Non-dimensionalize
+      rho = rho/rho_ND;
+      u   = u/u_ND;
+      v   = v/u_ND;
+      p   = p/p_ND;
+      alphainf = alphainf/p_ND;
+
+      int fcnt = 0;
+      U(i,e*N_F+fcnt) = rho; fcnt++;
+#ifdef ONED
+      U(i,e*N_F+fcnt) = rho*v; fcnt++;
+#elif TWOD
+      U(i,e*N_F+fcnt) = rho*u; fcnt++;
+      U(i,e*N_F+fcnt) = rho*v; fcnt++;
+#endif
+      U(i,e*N_F+fcnt) = p/(gamma-1)+ alphainf  + 0.5*rho*(u*u+v*v); fcnt++; //Energy
+      U(i,e*N_F+fcnt) = 1.0/(gamma-1); fcnt++;
+      U(i,e*N_F+fcnt) = alphainf; fcnt++;
+
+      // Mass fractions
+      U(i,e*N_F+fcnt) = (1-jx)*rho; fcnt++;
+
+    }
+  }
+}
+
+
+
+
+void init_dg_rmalayr_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
+  scalar Wtype  = ic_inputs[0]; // Acoustic wave type (Currently unused)
+  scalar input_size;
+  if ((Wtype==0) || (Wtype ==1)){
+    input_size = 8;
+  }
+  else if (Wtype==2){
+    input_size = 9;
+  }
+
+  // Read inputs
+  if (ic_inputs.size() != input_size){
+    printf("Wrong initial condition inputs. Exiting\n");
+    exit(1);
+  }
+
+  scalar pa     = ic_inputs[1]; // Acoustic wave amplitude
+  scalar Aratio = ic_inputs[2]; // interface amplitude to wavelength ratio
+  scalar Wratio = ic_inputs[3]; // Wavewidth to interface wavelength ratio
+  scalar vcoord = ic_inputs[4]; // 140;//111;//51.5;//134;//72.9; // coordinate shift upwards
+  scalar Sratio = ic_inputs[5]; // Interface wavelength to gap sidewall thickness ratio
+  scalar Gratio = ic_inputs[6]; // gap between water layers to interface wavelength ratio
+  scalar Tratio = ic_inputs[7]; // water layer thickness to interface wavelength ratio
+  scalar Rratio; 
+  if (Wtype==2) {
+    Rratio = ic_inputs[8]; //Ratio of wave rise and fall width of wavelength (included in Wratio)
+  }
+  else {
+    Rratio = 0;
+  }
+
+  printf("Wtype=%f, pa=%f, Aratio=%f, Wratio=%f, vcoord=%f, Sratio=%f, Gratio=%f, Tratio=%f, Rratio=%f\n",Wtype,pa,Aratio,Wratio,vcoord,Sratio,Gratio,Tratio,Rratio);
+
+  // Initialize
+  scalar Lx = 1; //Interface wavelength
+  scalar A0 = Aratio*Lx;    // initial amplitude
+  scalar yinterface = 0*Lx; // interface location 
+  scalar Wwave = Wratio*Lx; // wavewidth
+  scalar ywave = yinterface+10*Aratio; // initial wave location (in wavelength units)
+  scalar Rwave = Rratio*Lx; // wave rise time for ramp-up-ramp-down wave
+  scalar Wwall = Sratio*Lx; // water sidewall width
+  scalar La = Gratio*Lx; // Thickness of air layers
+  scalar Lw = Tratio*Lx; // Thickness of water layers
+  
+
+  // The diffusion layer thickness (in wavelength units)
+  scalar delta=0.08*Lx;
+    
+  // Velocities/pressures in all materials
+  scalar u0 = 0.0;
+  scalar v0 = 0.0+vcoord;
+
+  // Material properties
+  // air at 300K/27C from http://www.mhtl.uwaterloo.ca/old/onlinetools/airprop/airprop.html
+  scalar rho_air = 1.1765;
+  scalar gamma_air = 1.4;
+  scalar pinf_air = 0.0;
+  scalar patm = 101325;
+  scalar cs_air = sqrt(gamma_air*patm/rho_air); //347.23729
+
+  // water at 300K
+  scalar rho_water = 996; // use 970 if gelatine/water mixture as in Bourne1992
+  scalar gamma_water = 5.5;// Shahab uses different EoS model and so 2.35;
+  scalar pinf_water = 492115000;// Shahab uses: 1e9;
+  scalar cs_water = sqrt(gamma_water*(patm+pinf_water)/rho_water); //1648.65
+
+  scalar p0 = patm;
+
+  // Convention for material order:
+  // mat1 (with wave) | mat 2 
+  // pre-wave density (material 1)
+  // The wave is initialized in here
+  scalar rho01   = rho_water;
+  scalar gamma01 = gamma_water;
+  scalar alpha01 = 1/(gamma01-1);
+  scalar pinf01  = pinf_water;
+  scalar c01     = cs_water;
+  scalar M01     = 18.01528; // molecular weight
+
+  // pre-wave density (material 2) //Currently set for air
+  scalar rho02   = rho_air;
   scalar gamma02 = rho_air;
   scalar alpha02 = 1/(gamma_air-1);
   scalar pinf02 = pinf_air;
@@ -4453,7 +4694,7 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 	else if (Wtype == 1) { //US-like pulse
 	  scalar fwhm_ratio, ky_ratio, envelope;
 	  fwhm_ratio = 15; //(half) Full-width half maximum per wavelength
-	  ky_ratio = 1.25663706; //peaks per intf-wavelength (fc =1.5 MHz)
+	  ky_ratio = 1.25663706; //peaks per intf-wavelength (k=c/omega; ~1.25 is from [fc =1.5 MHz, lambda = 200e-6 or fc =3.0 MHz, lambda = 100e-6])
 	  envelope = exp(-(y - (ywave+Wwave/2.0))*(y - (ywave+Wwave/2.0))/(2*(fwhm_ratio/(2*sqrt(log(2))))*(fwhm_ratio/(2*sqrt(log(2)))))); //Gaussian envelope for waveform
 	  wx = sin(ky_ratio*(y-(ywave+Wwave/2.0)))*envelope;
 	  rho = rho01 + rhoW*wx;
@@ -4491,15 +4732,23 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 	v = v0;
 	p = p0;
 
-
-	// vertical distance from interface
-	scalar d = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterface)/(2*delta);
 	
+	// vertical distance from interface
+	scalar d = ((delta+A0*sin(2*M_PI*x/Lx-M_PI/2))-y+yinterface)/(2*delta); //Distance from initial interface
+	scalar d1 = ((d*2*delta)-floor((d*2*delta)/(La+Lw))*(La+Lw))/(2*delta); //Distance from nearest water-air interface above
+	scalar d2 = (d1*2*delta-La)/(2*delta); //Distance from nearest water-air interface above
+	
+
 	// Calculate volume fractions
 	scalar vol=0;
-	if      ((d<1)&&(d>0)) vol = exp(log(1e-16)*pow(fabs(d),8));
-	else if (d<=0)         vol = 1;
-	else                   vol = 0;
+	//	if      (d1<=0)                 vol = 1;
+	if      (d1<=0)           vol = 1;
+	else if ((d1>0)&&(d1<1))       vol = exp(log(1e-16)*pow(fabs(d1),8));
+	else // if (d1>1)
+	  if (d2<=0)                   vol = 0;
+	  else if ((d2>0)&&(d2<1))     vol = 1-exp(log(1e-16)*pow(fabs(d2),8));
+	  else                         vol = 1; // if (d2 > 1 )         
+
 
 	jx  = 1-vol;
 	rho = jx*rho02+(1-jx)*rho01;
@@ -4536,3 +4785,4 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
     }
   }
 }
+
