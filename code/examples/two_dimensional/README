@@ -5,3 +5,4 @@ mesh generating file sample_mesh.geo.
 To run the example:
 1) First make the mesh: gmsh -2 -order 1 -o sample_mesh_1.msh sample_mesh.geo
 2) Execute run.py
+3) You can then view the results with gmsh in the data directory with was created

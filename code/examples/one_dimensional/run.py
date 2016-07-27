@@ -42,7 +42,7 @@ def write_deck(WORKDIR,preprocessors,defs):
         f.write('#final time\n'+defs[9]+'\n')
         f.write('#Courant-Friedrichs-Lewy condition\n'+defs[10]+'\n')
         f.write('#order\n'+defs[5]+'\n')
-        f.write('#mesh file\nmesh.msh\nqua\n')
+        f.write('#mesh file\nmesh.msh\nlin\n')
         f.write('#limiter\n'+defs[7]+'\n')
         f.write('#initial condition\n'+defs[6]+'\n')
     return deckname
@@ -169,11 +169,11 @@ for o, a in myopts:
 #
 #================================================================================
 LIEU='HOME'
-ARCH='USE_GPU'
+ARCH='USE_CPU'
 PROF='OFF'
 PARA='NO_MPI'
 PREC='USE_DOUBLE'
-DIMS='TWOD'
+DIMS='ONED'
 preprocessors=[LIEU,ARCH,PROF,PARA,PREC,DIMS]
 
 #================================================================================
@@ -221,7 +221,7 @@ if PARA == 'USE_MPI':
     DG='mpirun '+DG
 
 # Define the problem
-defs=['MULTIFLUID','6','GAMNCON','RUS','1','1','velpert 10','hrl','0.1','4','0.5']
+defs=['MULTIFLUID','5','GAMNCON','ROE','1','1','simblst 1 0.1 3 0.03 0.3333333','hrl','0.1','40','0.5'] 
 
 # Create directory
 WORKDIR=DATADIR+defs[6].replace(" ","_")
