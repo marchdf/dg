@@ -1,0 +1,21 @@
+This folder contains some sample meshes for some problems. With all
+these files you should be able to build the mesh you want.
+
+One dimensional:
+- line.geo: 1D line with zero-gradient boundary conditions
+
+Two dimensional:
+- wedge_stretching.geo: Illustrates how to make an unstructured grid
+  around a wedge and stretch the grid in the farfield.
+
+- drpwall.geo: structured grid with stretching and a wall
+
+- shckdrp.geo: structured grid with stretching in the y-direction
+
+- simblst.geo: simple shock tube geometry
+
+- simblst_long_stretch_half.geo: same as previous with grid stretching
+  and half the domain (exploit symmetry)
+
+- square.geo: simple square geometry with 32^2 cells, periodic boundary conditions
+
