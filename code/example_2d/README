@@ -1,0 +1,7 @@
+This directory is a 2D example of running the code. All it contains is
+the python driver script run.py and a mesh directory with a sample 2D
+mesh generating file sample_mesh.geo.
+
+To run the example:
+1) First make the mesh: gmsh -2 -order 1 -o sample_mesh_1.msh sample_mesh.geo
+2) Execute run.py

@@ -108,6 +108,8 @@ void init_dg_tranvtx_singlefluid(const int N_s, const int N_E, const fullMatrix<
   }
 }
 
+
+
 void init_dg_tranvtx_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
 
   // // For the High-Order Workshop problem C1.4 in 2014
@@ -188,6 +190,100 @@ void init_dg_tranvtx_multifluid(const int N_s, const int N_E, const fullMatrix<s
   //   }
   // }
 }
+
+void init_dg_velpert_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
+
+  // Sinusoidal velocity perturbation at a flat interface
+  // see notes: 20/7/16
+
+  // Problem parameters
+  if (ic_inputs.size() != 1){
+    printf("Wrong initial condition inputs. Exiting\n");
+    exit(1);
+  }
+  scalar A0 = ic_inputs[0]; // initial amplitude of velocity perturbation
+  printf("A0=%f\n",A0);
+
+  // Initialize
+  scalar Lx = 1;
+  scalar yinterface = 0*Lx; // interface location
+
+
+  // Velocities/pressures in all materials
+  scalar u0 = 0.0;
+  scalar v0 = 0.0;
+  scalar p0 = 1e5;
+
+  // Material 
+  scalar rho0   = 1.351;
+  scalar gamma0 = constants::GLOBAL_GAMMA;
+  scalar alpha0 = 1/(gamma0-1);
+  scalar c0     = sqrt(gamma0*p0/rho0); // sound speed
+  scalar M0     = 34.76; // molecular weight
+
+  // Non-dimensional parameters
+  scalar L_ND   = Lx; // use wavelength to non-dimensionalize
+  scalar rho_ND = rho0;
+  scalar u_ND   = c0;
+  scalar p_ND   = rho0*c0*c0;
+  printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f\n",L_ND,rho_ND,u_ND,p_ND);
+
+  // N-D lengths
+  A0 = A0/L_ND;
+  Lx = Lx/L_ND;
+  yinterface = yinterface/L_ND;
+
+  // Loop on elements
+  scalar xc=0, yc=0, x=0, y=0,rho,u,v,p,Et,Y0;
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+      xc = XYZCen(e,0);
+      x  = XYZNodes(i,e*D+0);
+      yc = XYZCen(e,1);
+      y  = XYZNodes(i,e*D+1);
+
+      // Most of these are default
+      rho = rho0;
+      u   = u0;
+      v   = v0;
+      p   = p0;
+
+      // Adjust the velocity for the perturbation
+      //if(fabs(y) < 1e-6 ){
+      v = A0*sin(2*M_PI*x/Lx-M_PI/2) + v0;
+      //}
+
+      // Mass fraction
+      if(yc<0){
+	Y0 = 0;
+      }
+      else{
+	Y0 = 1;
+      }
+      
+      // Non-dimensionalize and energy calculation
+      rho = rho/rho_ND;
+      u   = u/u_ND;
+      v   = v/u_ND;
+      p   = p/p_ND;
+      Et  = p/(gamma0-1) + 0.5*rho*(u*u+v*v);       
+      
+      // set the initial fields
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*u;
+      U(i,e*N_F+2) = rho*v;
+      U(i,e*N_F+3) = Et;
+#ifdef GAMCONS
+      U(i,e*N_F+4) = rho/(gamma0-1);
+#elif GAMNCON
+      U(i,e*N_F+4) = 1.0/(gamma0-1);
+#endif
+      U(i,e*N_F+5) = Y0*rho;
+    }
+  }
+}
+
 
 void init_dg_simplew_multifluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 

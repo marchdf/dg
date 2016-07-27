@@ -176,6 +176,7 @@ int main (int argc, char **argv)
 
   // Setup the initial condition type
   bool tranvtx = false;
+  bool velpert = false;
   bool simplew = false;
   bool sodtube = false;
   bool contact = false;
@@ -215,6 +216,7 @@ int main (int argc, char **argv)
   bool rmawave = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="tranvtx") tranvtx = true;
+  else if (inputs.getInitialCondition()=="velpert") velpert = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
   else if (inputs.getInitialCondition()=="contact") contact = true;
   else if (inputs.getInitialCondition()=="rhotact") rhotact = true;
@@ -654,6 +656,7 @@ int main (int argc, char **argv)
   if(tranvtx) init_dg_tranvtx_singlefluid(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
 #elif MULTIFLUID
   if     (simplew) init_dg_simplew_multifluid(N_s, N_E, XYZNodes, U);
+  else if(velpert) init_dg_velpert_multifluid(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
   else if(tranvtx) init_dg_tranvtx_multifluid(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
   else if(sodtube) init_dg_sodtube_multifluid(N_s, N_E, XYZNodes, U);
   else if(sodmono) init_dg_sodmono_multifluid(N_s, N_E, XYZNodes, U);
