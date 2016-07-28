@@ -4,7 +4,7 @@
 #
 __author__ = 'marchdf'
 def usage(): 
-    print '\nUsage: {0:s} [options ...]\nOptions:\n  -d, --dir\tdirectory to post-process (default to cwd)\n  -f, --file\tfile to post-process (default to timers.dat)\n  -h, --help\tshow this message and exit\n'.format(sys.argv[0])
+    print('\nUsage: {0:s} [options ...]\nOptions:\n  -d, --dir\tdirectory to post-process (default to cwd)\n  -f, --file\tfile to post-process (default to timers.dat)\n  -h, --help\tshow this message and exit\n'.format(sys.argv[0]))
 
 
 #================================================================================
@@ -29,7 +29,7 @@ rootname = "timers.dat" # post-process this file name by default
 try:
     myopts, args = getopt.getopt(sys.argv[1:],"hd:f:",["help","dir=",'file='])
 except getopt.GetoptError as e:
-    print (str(e))
+    print((str(e)))
     usage()
     sys.exit(2)
  
@@ -41,7 +41,7 @@ for o, a in myopts:
         fdir=a+'/'
     elif o == '-f':
         rootname=a
-print 'Parsing directory', fdir, 'and file', rootname
+print('Parsing directory', fdir, 'and file', rootname)
 
 #================================================================================
 #
@@ -96,7 +96,7 @@ def print_children(fname,parent_time,children,other_name):
 
     # Output
     for k in range(0,len(children)):
-        print '\t{0:6.2f}% time (or {1:6.2f}s) spent in {2:s}'.format(times_percent[k],times[k],children[idx[k]])
+        print('\t{0:6.2f}% time (or {1:6.2f}s) spent in {2:s}'.format(times_percent[k],times[k],children[idx[k]]))
 
     return times,times_percent,array(children)[idx]
 
@@ -119,52 +119,52 @@ load = []
 # Loop over them all
 for cnt, fname in enumerate(tfiles):
     
-    print '\n================================================================================'
-    print 'Parsing the timers for processor {0:d}'.format(cnt)
+    print('\n================================================================================')
+    print('Parsing the timers for processor {0:d}'.format(cnt))
 
     # Main program
     main,_ = get_timer(fname,'main')
     load.extend([main])
-    print 'Main program ({0:.2f}s):'.format(main) 
+    print('Main program ({0:.2f}s):'.format(main)) 
     print_children(fname,main,['RK'],'other (setup,...)')
 
     # RK portion
     rk,_   = get_timer(fname,'RK')
     rk_children = ['output','solver','DG','new_dt','limiting','communication','advect_particles']
-    print 'RK subroutines ({0:.2f}s):'.format(rk) 
+    print('RK subroutines ({0:.2f}s):'.format(rk)) 
     print_children(fname,rk,rk_children,'other (setup,copies,axpys,...)')
     
     # DG portion
     dg,_   = get_timer(fname,'DG')
     dg_children = ['mapToFace','rflctiveBoundary','collocationU','collocationdU','collocationUF','evaluate_sf','evaluate_q','redistribute_sf','gemm_s','gemm_f','redistribute_q','gemm_q','mapToElement','addSFQ']
-    print 'DG subroutines ({0:.2f}s):'.format(dg) 
+    print('DG subroutines ({0:.2f}s):'.format(dg)) 
     print_children(fname,dg,dg_children,'other')
     
     # Limiting portion
     limiting,_   = get_timer(fname,'limiting')
     limiting_children = ['sensors']
-    print 'limiting subroutines ({0:.2f}s):'.format(limiting) 
+    print('limiting subroutines ({0:.2f}s):'.format(limiting)) 
     print_children(fname,limiting,limiting_children,'actual limiting')
 
     # Communication
     communication,_   = get_timer(fname,'communication')
     communication_children = ['comm_packaging','comm_unpackaging','comm_memcpy','comm_sendrecv']
-    print 'communication subroutines ({0:.2f}s):'.format(communication) 
+    print('communication subroutines ({0:.2f}s):'.format(communication)) 
     print_children(fname,communication,communication_children,'other (barriers, waits,...)')
 
     # Output
     output,_   = get_timer(fname,'output')
     output_children = ['format_output','write_output','format_sensor','write_sensor','write_particles']
-    print 'output subroutines ({0:.2f}s):'.format(output) 
+    print('output subroutines ({0:.2f}s):'.format(output)) 
     print_children(fname,output,output_children,'other')
 
 
 # load balancing check
 avg_load = mean(load)
-print '\nLoad balancing check:'
-print 'average time per processor: {0:.2f}s'.format(avg_load)
+print('\nLoad balancing check:')
+print('average time per processor: {0:.2f}s'.format(avg_load))
 for k,l in enumerate(load):
-    print '\tTime spent on proc {0:.0f}: {1:10.2f}s (or {2:6.2f}% wrt average)'.format(k,l,100*(avg_load-l)/avg_load)
+    print('\tTime spent on proc {0:.0f}: {1:10.2f}s (or {2:6.2f}% wrt average)'.format(k,l,100*(avg_load-l)/avg_load))
 
 
 # # Plot

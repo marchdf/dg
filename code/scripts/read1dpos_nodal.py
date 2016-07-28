@@ -21,12 +21,12 @@ def read1dpos_nodal(fname,T):
     order = N_x-1
  
     ind = argmin(abs(dt-T))  # get the indexes at the time we want to plot
-    ind = range(ind,int(ind+N_E)) # grab all the elements at that time
+    ind = list(range(ind,int(ind+N_E))) # grab all the elements at that time
 
     x       = zeros(N_E*N_x)
     y       = zeros(N_E*N_x)
-    indx    = range(4,dat.shape[1],8)       # index for x position
-    indy    = range(7,dat.shape[1],8)       # index for y data
+    indx    = list(range(4,dat.shape[1],8))       # index for x position
+    indy    = list(range(7,dat.shape[1],8))       # index for y data
     indsort = argsort(dat[ind[0],indx])  # index for sorting x in ascending order
 
     for i in range(0,int(N_E)):
@@ -48,15 +48,15 @@ def readxtpos_nodal(fname):
  
     x       = zeros(N_E*N_x)
     y       = zeros(N_E*N_x)
-    indx    = range(4,dat.shape[1],8)       # index for x position
-    indy    = range(7,dat.shape[1],8)       # index for y data
+    indx    = list(range(4,dat.shape[1],8))       # index for x position
+    indy    = list(range(7,dat.shape[1],8))       # index for y data
     time = dt[ ::N_E];
     YY = zeros((len(time),len(x)));
 
     for cnt,T in enumerate(time):
         ind = nonzero(dt==T)                    # get the indexes at the time we want to plot
         indsort = argsort(dat[ind[0][0],indx])  # index for sorting x in ascending order
-        print cnt, T
+        print(cnt, T)
 
         for i in range(0,int(N_E)):
             x[i*N_x:(i*N_x+N_x)] = dat[ind[0][i],indx][indsort]

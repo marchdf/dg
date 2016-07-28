@@ -1,0 +1,12 @@
+This folder contains some post-processing scripts that are useful for
+various types of post-processing. Most of these are written to run on
+a cluster such as stampede. They can be adapted for other types of
+machines.
+
+- runpp.py: run post-processors on a bunch of directories. Requires
+  several scripts in simblst/
+
+- convert_pos2txt.py: convert Gmsh data to a plaintext
+  format. Requires aux_functions.py and simblst/pos2txt.geo
+
+- aux_functions.py: auxilliary functions used by convert_pos2txt.py
