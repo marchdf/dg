@@ -4559,7 +4559,7 @@ void init_dg_rmalayr_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar Wratio = ic_inputs[3]; // Wavewidth to interface wavelength ratio
   scalar vcoord = ic_inputs[4]; // 140;//111;//51.5;//134;//72.9; // coordinate shift upwards
   scalar Sratio = ic_inputs[5]; // Interface wavelength to gap sidewall thickness ratio
-  scalar Gratio = ic_inputs[6]; // gap between water layers to interface wavelength ratio
+  scalar Gratio = ic_inputs[6]; // air layer thickness to interface wavelength ratio
   scalar Tratio = ic_inputs[7]; // water layer thickness to interface wavelength ratio
   scalar Rratio; 
   if (Wtype==2) {
@@ -4741,8 +4741,8 @@ void init_dg_rmalayr_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 
 	// Calculate volume fractions
 	scalar vol=0;
-	//	if      (d1<=0)                 vol = 1;
-	if      (d1<=0)           vol = 1;
+	if      (d<=0)                 vol = 1;
+	else if      (d1<=0)           vol = 1;
 	else if ((d1>0)&&(d1<1))       vol = exp(log(1e-16)*pow(fabs(d1),8));
 	else // if (d1>1)
 	  if (d2<=0)                   vol = 0;
