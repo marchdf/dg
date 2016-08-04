@@ -4537,7 +4537,7 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 
 
 
-
+// Added this comment to test git stuff
 void init_dg_rmalayr_stiffened(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs){
   scalar Wtype  = ic_inputs[0]; // Acoustic wave type (Currently unused)
   scalar input_size;
