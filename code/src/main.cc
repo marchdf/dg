@@ -214,6 +214,7 @@ int main (int argc, char **argv)
   bool cfplrun = false;
   bool rmawave = false;
   bool rmalayr = false;
+  bool deltchk = false;
   if      (inputs.getInitialCondition()=="simplew") simplew = true;
   else if (inputs.getInitialCondition()=="tranvtx") tranvtx = true;
   else if (inputs.getInitialCondition()=="sodtube") sodtube = true;
@@ -253,6 +254,7 @@ int main (int argc, char **argv)
   else if (inputs.getInitialCondition()=="cfplrun") cfplrun = true;
   else if (inputs.getInitialCondition()=="rmawave") rmawave = true;
   else if (inputs.getInitialCondition()=="rmalayr") rmalayr = true;
+  else if (inputs.getInitialCondition()=="deltchk") deltchk = true;
   else{printf("Invalid initial condition setup. Correct the deck.\n");}
 
   // Restart option step
@@ -697,6 +699,7 @@ int main (int argc, char **argv)
   else if (cfplrun) init_dg_cfplrun_stiffened(N_s, N_E, XYZNodes, XYZCen, U, m, elem_type, inputs.getInitialConditionInputs());
   else if (rmawave) init_dg_rmawave_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
   else if (rmalayr) init_dg_rmalayr_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
+  else if (deltchk) init_dg_deltchk_stiffened(N_s, N_E, XYZNodes, XYZCen, U, inputs.getInitialConditionInputs());
 #endif
 
   if (order0) average_cell_p0(N_s, N_E, U);
