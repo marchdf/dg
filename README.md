@@ -1,3 +1,12 @@
+# Examples
+
+Examples for running the code can be found in `code/examples`.
+
+# Documentation
+
+Documentation is through `doxygen`. Run `make doc` in the `code`
+directory to generate the documentation.
+
 # Development process
 
 1. Create a branch for the new feature (locally):
