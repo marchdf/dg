@@ -196,6 +196,7 @@ endif
 
 .DELETE_ON_ERROR: *.o
 .IGNORE: *.h
+LAST_MAKECMD       := last_makecmd
 
 # Path where objects and dependencies will be put
 ODIR?=objects
@@ -251,6 +252,7 @@ $(BINDIR)/$(TARGET) : $(objs)
 	@mkdir -p $(@D)
 	$(CXX) -o$@ $(objs) $(INCLUDES) $(LIBS) $(LDFLAGS) $(TRACE)
 	@echo "SUCCESS"
+	@echo "make ARCH="$(ARCH) "PARA="$(PARA) "PREC="$(PREC) "DIMS="$(DIMS) "PROB="$(PROB) "GAMM="$(GAMM) "FLUX="$(FLUX) "LIEU="$(LIEU) "NFLD="$(NFLD) "MASS="$(MASS) "PROF="$(PROF) "ERRR="$(ERRR) "CONS="$(CONS) > $(LAST_MAKECMD)
 
 doc : $(objs)
 	@echo "Generating documentation with Doxygen."
@@ -262,10 +264,10 @@ test : $(objs)
 
 clean :
 	@echo "Clean of $(DDIR), $(ODIR), and $(BINDIR)"
-	@-rm -rf $(DDIR) $(ODIR) $(BINDIR)
+	@-rm -rf $(DDIR) $(ODIR) $(BINDIR) $(LAST_MAKECMD)
 
 cleanall :
-	@-rm -rv $(ODIR) $(DDIR) $(BINDIR)
+	@-rm -rv $(ODIR) $(DDIR) $(BINDIR) $(LAST_MAKECMD)
 
 cleandep :
 	@echo "Cleaning dependencies"
