@@ -14,9 +14,18 @@
 	git merge master            # fix any identified conflicts between "master" and "feature-branch"
 	```
 
-3. Push feature branch to dg1d repository:
+3. Push feature branch to `dg` repository:
 	```{bash}
 	git push -u origin feature-branch
 	```
 
 4. Create a pull request on GitHub. Make sure you ask to merge with master
+
+
+# Licensing
+
+See [LICENSE.md](LICENSE.md)
+
+# Author contact
+
+Marc T. Henry de Frahan (marchdf@umich.edu)
