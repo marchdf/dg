@@ -158,9 +158,7 @@ def clean_data(dir, patterns):
 # Basic information/setup
 #
 #=========================================================================
-BASEDIR = os.getcwd()
-BASEDIR = BASEDIR.split("/code/")[0] + '/'
-CODEDIR = BASEDIR + 'code/'
+CODEDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) + '/'
 BINDIR = CODEDIR + 'bin/'
 BINNAME = 'dgexec'
 TESTDIR = CODEDIR + 'tests/'
