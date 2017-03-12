@@ -4326,9 +4326,10 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar gwcoef = ic_inputs[6]; // Gamma_water_multiplier
   scalar Rratio = 0;
 
-  if (Wtype==2) {
-    Rratio = ic_inputs[7]; //Ratio of wave rise and fall width of wavelength (included in Wratio)
+  if ((Wtype==2) || (Wtype==3)){
+    Rratio = ic_inputs[7]; //Ratio of wave rise and fall width of wavelength (included in Wratio) (or frequency modifer if Wtype ==3)
   }
+
 
   
 
@@ -4340,7 +4341,7 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
   scalar yinterface = 0*Lx; // interface location 
   scalar Wwave = Wratio*Lx; // wavewidth
   scalar ywave = yinterface+10*Aratio; // initial wave location (in wavelength units)
-  scalar Rwave = Rratio*Lx; // wave rise time for ramp-up-ramp-down wave
+  scalar Rwave = Rratio*Lx; // wave rise time for ramp-up-ramp-down wave (or frequency modifier of sin wave)
 
   // The diffusion layer thickness (in wavelength units)
   scalar delta=0.08*Lx;
@@ -4469,6 +4470,15 @@ void init_dg_rmawave_stiffened(const int N_s, const int N_E, const fullMatrix<sc
 	  }
 	  else if ((yc >= ywave+Wwave-Rwave) && (yc < ywave+Wwave) ){ // in fall region
 	    wx = 1 - (y-(ywave+Wwave-Rwave))/Rwave;
+	  }
+	  rho   = rho01 + rhoW*wx;
+	  u     = u0 + uW*wx;
+	  v     = v0 + vW*wx;
+	  p     = p0 + pW*wx;
+	}
+	else if (Wtype == 3) { //sin wave
+	  if ((yc >= (ywave-1e-6))&&(yc < ywave+Wwave)){ // in-wave rise region
+	    wx = sin(2*PI*(y-ywave)/Wwave*Rwave);
 	  }
 	  rho   = rho01 + rhoW*wx;
 	  u     = u0 + uW*wx;
