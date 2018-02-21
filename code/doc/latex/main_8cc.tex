@@ -1,0 +1,206 @@
+\section{src/main.cc File Reference}
+\label{main_8cc}\index{src/main.\-cc@{src/main.\-cc}}
+
+
+Main file\-: sets up and drives the simulations.  
+
+
+{\ttfamily \#include $<$string$>$}\\*
+{\ttfamily \#include $<$iomanip$>$}\\*
+{\ttfamily \#include $<$stdio.\-h$>$}\\*
+{\ttfamily \#include \char`\"{}stdlib.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$cublas.\-h$>$}\\*
+{\ttfamily \#include \char`\"{}mpi.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}full\-Matrix.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}polynomial\-Basis.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}polynomials\-Jacobi.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}Gauss.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}Gmsh\-Defines.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}simple\-Mesh.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}scalar\-\_\-def.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}dg\-\_\-functions.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}deck.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}init\-\_\-cond.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}rk.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}misc.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}misc\-\_\-cuda.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}limiting.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}dg\-\_\-solver.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}communicator.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}printer.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}sensor.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}mem\-\_\-counter.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}timers.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}lagrange\-\_\-particles.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}recovery\-\_\-tools.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}mixedform.\-h\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bfseries get\-\_\-element\-\_\-types} (const int order, int \&msh\-\_\-qua, int \&msh\-\_\-tri, int \&msh\-\_\-lin)\label{main_8cc_a2918ac60d0f8df2781b31712bf75885f}
+
+\item 
+void {\bfseries average\-\_\-cell\-\_\-p0} (const int N\-\_\-s, const int N\-\_\-\-E, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{main_8cc_a49cfa74e202b2a15c1a8265f1960877b}
+
+\item 
+void {\bf vandermonde1d} (const int order, const {\bf full\-Matrix}$<$ scalar $>$ r, {\bf full\-Matrix}$<$ scalar $>$ \&V1\-D)
+\item 
+void {\bf monovandermonde1d} (const int order, const {\bf full\-Matrix}$<$ double $>$ r, {\bf full\-Matrix}$<$ scalar $>$ \&V1\-D)
+\item 
+void {\bf monovandermonde2d} (const int order, const {\bf full\-Matrix}$<$ double $>$ r, {\bf full\-Matrix}$<$ scalar $>$ \&V2\-D)
+\item 
+void {\bf Lag\-Mono2\-D\-Transforms} (const int N\-\_\-\-E, const int N\-\_\-s, const int order, const int L2\-Msize1, const int L2\-Msize2, std\-::string Elem\-Type, const {\bf full\-Matrix}$<$ scalar $>$ X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&Lag2\-Mono, {\bf full\-Matrix}$<$ scalar $>$ \&Mono2\-Lag)
+\item 
+void {\bf get\-Powers\-X\-Y\-Z\-G} (const int N\-\_\-\-E, const int N\-\_\-s, const int N\-\_\-\-G, const int N\-\_\-\-N, const int M\-\_\-\-B, const int order, const {\bf full\-Matrix}$<$ scalar $>$ X\-Y\-Z\-G, const {\bf full\-Matrix}$<$ scalar $>$ X\-Y\-Z\-Cen, const int $\ast$neighbors, const {\bf full\-Matrix}$<$ scalar $>$ shifts, scalar $\ast$powers)
+\item 
+int {\bf get\-Taylor\-Der\-Idx2\-D\-Length} (const int order)
+\item 
+void {\bf get\-Taylor\-Der\-Idx2\-D} (const int order, int $\ast$Taylor\-Dx\-Idx, int $\ast$Taylor\-Dy\-Idx)
+\item 
+void {\bf cartesian\-\_\-permutations} (const int order, const {\bf full\-Matrix}$<$ scalar $>$ X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&Px, {\bf full\-Matrix}$<$ scalar $>$ \&Py)
+\item 
+void {\bf Lag\-Mono2\-D\-Transforms\-Cartesian} (const int order, const int msh\-\_\-lin, const {\bf full\-Matrix}$<$ scalar $>$ Px, const {\bf full\-Matrix}$<$ scalar $>$ Py, {\bf full\-Matrix}$<$ scalar $>$ \&Lag2\-Mono\-X, {\bf full\-Matrix}$<$ scalar $>$ \&Mono\-X2\-Mono\-Y, {\bf full\-Matrix}$<$ scalar $>$ \&Mono\-Y2\-Lag)
+\item 
+int {\bf main} (int argc, char $\ast$$\ast$argv)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Main file\-: sets up and drives the simulations. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em argc} & An integer argument count of the command line arguments \\
+\hline
+\mbox{\tt in}  & {\em argv} & An argument vector of the command line arguments \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+integer 0 upon successful completion 
+\end{DoxyReturn}
+\begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{main.\-cc@{main.\-cc}!cartesian\-\_\-permutations@{cartesian\-\_\-permutations}}
+\index{cartesian\-\_\-permutations@{cartesian\-\_\-permutations}!main.cc@{main.\-cc}}
+\subsubsection[{cartesian\-\_\-permutations}]{\setlength{\rightskip}{0pt plus 5cm}void cartesian\-\_\-permutations (
+\begin{DoxyParamCaption}
+\item[{const int}]{order, }
+\item[{const {\bf full\-Matrix}$<$ scalar $>$}]{X\-Y\-Z\-Nodes, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{Px, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{Py}
+\end{DoxyParamCaption}
+)}\label{main_8cc_aed4537a416e32a2ed52d56cb1d3acf2a}
+Permutations for the cartesian mesh. This function should be used for a cartesian mesh. The idea is to find the permutation matrix to go from the numbering system in gmsh to a system where the nodes are numbered in increasing order for increasing x and decreasing y. Best shown by example\-: for p=2, the values of U are stored at the following indexes\-:
+
+0--4--1 3--5--4 $\vert$ $\vert$ $\vert$ $\vert$ $\vert$ $\vert$ 7--8--5 but we want (for 2\-D limiting) =$>$ 6--8--7 $\vert$ $\vert$ $\vert$ $\vert$ $\vert$ $\vert$ 3--6--2 0--2--1
+
+Therefore\-: U(ordered in x) = Px$\ast$\-U(original) [3 2 6 0 1 4 7 5 8]' = Px $\ast$ [0 1 2 3 4 5 6 7 8]
+
+U(ordered in y) = Py$\ast$\-U(original) [3 0 7 2 1 5 6 4 8]' = Px $\ast$ [0 1 2 3 4 5 6 7 8]
+
+And the inverse transform is given by Px' and Py' (bc inverse of permutation matrix is the transpose)\index{main.\-cc@{main.\-cc}!get\-Powers\-X\-Y\-Z\-G@{get\-Powers\-X\-Y\-Z\-G}}
+\index{get\-Powers\-X\-Y\-Z\-G@{get\-Powers\-X\-Y\-Z\-G}!main.cc@{main.\-cc}}
+\subsubsection[{get\-Powers\-X\-Y\-Z\-G}]{\setlength{\rightskip}{0pt plus 5cm}void get\-Powers\-X\-Y\-Z\-G (
+\begin{DoxyParamCaption}
+\item[{const int}]{N\-\_\-\-E, }
+\item[{const int}]{N\-\_\-s, }
+\item[{const int}]{N\-\_\-\-G, }
+\item[{const int}]{N\-\_\-\-N, }
+\item[{const int}]{M\-\_\-\-B, }
+\item[{const int}]{order, }
+\item[{const {\bf full\-Matrix}$<$ scalar $>$}]{X\-Y\-Z\-G, }
+\item[{const {\bf full\-Matrix}$<$ scalar $>$}]{X\-Y\-Z\-Cen, }
+\item[{const int $\ast$}]{neighbors, }
+\item[{const {\bf full\-Matrix}$<$ scalar $>$}]{shifts, }
+\item[{scalar $\ast$}]{powers}
+\end{DoxyParamCaption}
+)}\label{main_8cc_ab0545b42a55fac768a5c17f2fd8025b5}
+Get the powers of X\-Z\-Y\-G-\/\-X\-Y\-Z\-Cen for each element and his neighbors/ This is precalculated for increased speed in 2\-D limiting.\index{main.\-cc@{main.\-cc}!get\-Taylor\-Der\-Idx2\-D@{get\-Taylor\-Der\-Idx2\-D}}
+\index{get\-Taylor\-Der\-Idx2\-D@{get\-Taylor\-Der\-Idx2\-D}!main.cc@{main.\-cc}}
+\subsubsection[{get\-Taylor\-Der\-Idx2\-D}]{\setlength{\rightskip}{0pt plus 5cm}void get\-Taylor\-Der\-Idx2\-D (
+\begin{DoxyParamCaption}
+\item[{const int}]{order, }
+\item[{int $\ast$}]{Taylor\-Dx\-Idx, }
+\item[{int $\ast$}]{Taylor\-Dy\-Idx}
+\end{DoxyParamCaption}
+)}\label{main_8cc_a897ffd17f8f1fe037a056345bf3bb86a}
+Get the x and y derivative index. Basically gives you the index for various derivatives of a Taylor polynomial. order is the D\-G order dx\-Idx =[idx for 0th derivative wrt x, idx for 1st derivative wrt x, ...]\index{main.\-cc@{main.\-cc}!get\-Taylor\-Der\-Idx2\-D\-Length@{get\-Taylor\-Der\-Idx2\-D\-Length}}
+\index{get\-Taylor\-Der\-Idx2\-D\-Length@{get\-Taylor\-Der\-Idx2\-D\-Length}!main.cc@{main.\-cc}}
+\subsubsection[{get\-Taylor\-Der\-Idx2\-D\-Length}]{\setlength{\rightskip}{0pt plus 5cm}int get\-Taylor\-Der\-Idx2\-D\-Length (
+\begin{DoxyParamCaption}
+\item[{const int}]{order}
+\end{DoxyParamCaption}
+)}\label{main_8cc_ae9d7d65993207d6a4efebc7e0f7f6b86}
+Calculate the length of these indexes \index{main.\-cc@{main.\-cc}!Lag\-Mono2\-D\-Transforms@{Lag\-Mono2\-D\-Transforms}}
+\index{Lag\-Mono2\-D\-Transforms@{Lag\-Mono2\-D\-Transforms}!main.cc@{main.\-cc}}
+\subsubsection[{Lag\-Mono2\-D\-Transforms}]{\setlength{\rightskip}{0pt plus 5cm}void Lag\-Mono2\-D\-Transforms (
+\begin{DoxyParamCaption}
+\item[{const int}]{N\-\_\-\-E, }
+\item[{const int}]{N\-\_\-s, }
+\item[{const int}]{order, }
+\item[{const int}]{L2\-Msize1, }
+\item[{const int}]{L2\-Msize2, }
+\item[{std\-::string}]{Elem\-Type, }
+\item[{const {\bf full\-Matrix}$<$ scalar $>$}]{X\-Y\-Z\-Nodes, }
+\item[{const {\bf full\-Matrix}$<$ scalar $>$}]{X\-Y\-Z\-Cen, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{Lag2\-Mono, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{Mono2\-Lag}
+\end{DoxyParamCaption}
+)}\label{main_8cc_a2b74f11815811e4d85511cbcced1a33c}
+Returns the transforms (and inverse) from Lagrange to Taylor polynomials. N\-B\-: In $>$$<$ to the 1\-D transforms, these are in the physical space! So there is one transform per element.\index{main.\-cc@{main.\-cc}!Lag\-Mono2\-D\-Transforms\-Cartesian@{Lag\-Mono2\-D\-Transforms\-Cartesian}}
+\index{Lag\-Mono2\-D\-Transforms\-Cartesian@{Lag\-Mono2\-D\-Transforms\-Cartesian}!main.cc@{main.\-cc}}
+\subsubsection[{Lag\-Mono2\-D\-Transforms\-Cartesian}]{\setlength{\rightskip}{0pt plus 5cm}void Lag\-Mono2\-D\-Transforms\-Cartesian (
+\begin{DoxyParamCaption}
+\item[{const int}]{order, }
+\item[{const int}]{msh\-\_\-lin, }
+\item[{const {\bf full\-Matrix}$<$ scalar $>$}]{Px, }
+\item[{const {\bf full\-Matrix}$<$ scalar $>$}]{Py, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{Lag2\-Mono\-X, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{Mono\-X2\-Mono\-Y, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{Mono\-Y2\-Lag}
+\end{DoxyParamCaption}
+)}\label{main_8cc_acf794b5df1fd0a5ffc740a9254be2219}
+This function returns the 1\-D transforms for 2\-D transforms of Lagrangian basis. Ax = Lag2\-Mono\-X $\ast$ U, Ay = Mono\-X2\-Mono\-Y $\ast$ Ax, U = Mono\-Y2\-Lag Ay. This might be unnecessarily complicated (bc of the use of the G\-L points) or very smart (i.\-e stable bc of the use of G\-L points)\index{main.\-cc@{main.\-cc}!main@{main}}
+\index{main@{main}!main.cc@{main.\-cc}}
+\subsubsection[{main}]{\setlength{\rightskip}{0pt plus 5cm}int main (
+\begin{DoxyParamCaption}
+\item[{int}]{argc, }
+\item[{char $\ast$$\ast$}]{argv}
+\end{DoxyParamCaption}
+)}\label{main_8cc_a3c04138a5bfe5d72780bb7e82a18e627}
+M\-\_\-\-T \index{main.\-cc@{main.\-cc}!monovandermonde1d@{monovandermonde1d}}
+\index{monovandermonde1d@{monovandermonde1d}!main.cc@{main.\-cc}}
+\subsubsection[{monovandermonde1d}]{\setlength{\rightskip}{0pt plus 5cm}void monovandermonde1d (
+\begin{DoxyParamCaption}
+\item[{const int}]{order, }
+\item[{const {\bf full\-Matrix}$<$ double $>$}]{r, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{V1\-D}
+\end{DoxyParamCaption}
+)}\label{main_8cc_aff248b81ac4d98e0879db813b4ca3966}
+Initialize the 1\-D Vandermonde Matrix, V\-\_\-\{ij\} = (r\-\_\-i)$^\wedge$j/factorial(j);\index{main.\-cc@{main.\-cc}!monovandermonde2d@{monovandermonde2d}}
+\index{monovandermonde2d@{monovandermonde2d}!main.cc@{main.\-cc}}
+\subsubsection[{monovandermonde2d}]{\setlength{\rightskip}{0pt plus 5cm}void monovandermonde2d (
+\begin{DoxyParamCaption}
+\item[{const int}]{order, }
+\item[{const {\bf full\-Matrix}$<$ double $>$}]{r, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{V2\-D}
+\end{DoxyParamCaption}
+)}\label{main_8cc_a7cfd1899ecb2ab6a33345c4d2e821995}
+Initialize the 2\-D Vandermonde Matrix, V = (x\-\_\-i)$^\wedge$nx (y\-\_\-i)$^\wedge$ny / (factorial(nx)$\ast$factorial(ny)). ith line = [1, x\-\_\-i, y\-\_\-i, x\-\_\-i$^\wedge$2/2!, x\-\_\-i$\ast$y\-\_\-i, y\-\_\-i$^\wedge$2/2!, x\-\_\-i$^\wedge$3/3!, x\-\_\-i$^\wedge$2$\ast$y\-\_\-i/2!, x\-\_\-i$\ast$y\-\_\-i$^\wedge$2/2!, y\-\_\-i$^\wedge$3/3!, ...]\index{main.\-cc@{main.\-cc}!vandermonde1d@{vandermonde1d}}
+\index{vandermonde1d@{vandermonde1d}!main.cc@{main.\-cc}}
+\subsubsection[{vandermonde1d}]{\setlength{\rightskip}{0pt plus 5cm}void vandermonde1d (
+\begin{DoxyParamCaption}
+\item[{const int}]{order, }
+\item[{const {\bf full\-Matrix}$<$ scalar $>$}]{r, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{V1\-D}
+\end{DoxyParamCaption}
+)}\label{main_8cc_a7e7067980dc652e7f8779cc3409f93d6}
+Initialize the 1\-D Vandermonde Matrix, V\-\_\-\{ij\} = phi\-\_\-j(r\-\_\-i);

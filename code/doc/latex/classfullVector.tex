@@ -1,0 +1,90 @@
+\section{full\-Vector$<$ scalar $>$ Class Template Reference}
+\label{classfullVector}\index{full\-Vector$<$ scalar $>$@{full\-Vector$<$ scalar $>$}}
+
+
+An abstract interface for vectors of scalar.  
+
+
+
+
+{\ttfamily \#include $<$full\-Matrix.\-h$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries full\-Vector} (int r)\label{classfullVector_a3cb67bf3c868558653c0bbbd0a216adf}
+
+\item 
+{\bfseries full\-Vector} (const {\bf full\-Vector}$<$ scalar $>$ \&other)\label{classfullVector_ae92b77974c90b3fce78dc3c243f968cc}
+
+\item 
+int {\bfseries size} () const \label{classfullVector_a7e35504a99422ea6e0719af9c0b287ec}
+
+\item 
+const scalar $\ast$ {\bfseries get\-Data\-Ptr} () const \label{classfullVector_a8dedfa4f3a237b79b51de33d6b1254ea}
+
+\item 
+scalar {\bfseries operator()} (int i) const \label{classfullVector_ad23d7c556d8808c19bc29ee2f409940f}
+
+\item 
+scalar \& {\bfseries operator()} (int i)\label{classfullVector_a9fddeccbbda0334d5c595356193af6ad}
+
+\item 
+scalar {\bfseries norm} () const \label{classfullVector_ac8cc99c9e4958d57eb0737734a72a11e}
+
+\item 
+bool {\bfseries resize} (int r)\label{classfullVector_a3c8386df4c6384d79721869ec5bc0423}
+
+\item 
+void {\bfseries set\-As\-Proxy} (const {\bf full\-Vector}$<$ scalar $>$ \&original, int r\-\_\-start, int r)\label{classfullVector_ad6402df3f4a766c7cb198a05997cdf9d}
+
+\item 
+void {\bfseries scale} (const scalar s)\label{classfullVector_af5e640f8fd6854646ed13063fadbb449}
+
+\item 
+void {\bfseries set\-All} (const scalar \&m)\label{classfullVector_ac6f541e966a87ec8e40f1affca3997ab}
+
+\item 
+void {\bfseries set\-All} (const {\bf full\-Vector}$<$ scalar $>$ \&m)\label{classfullVector_ad29e1d9256fad352a3b8dba5fbed39eb}
+
+\item 
+scalar {\bfseries operator$\ast$} (const {\bf full\-Vector}$<$ scalar $>$ \&other)\label{classfullVector_ad82863fd38ad347574471e7a8f6f7faa}
+
+\item 
+void {\bfseries axpy} (const {\bf full\-Vector}$<$ scalar $>$ \&x, scalar alpha=1.)\label{classfullVector_ae57d3f44463f6b0390eed329cf915ee4}
+
+\item 
+void {\bfseries mult\-T\-By\-T} (const {\bf full\-Vector}$<$ scalar $>$ \&x)\label{classfullVector_a47348058ffa666314924fa32d368e66a}
+
+\item 
+void {\bfseries print} (const char $\ast$name=\char`\"{}\char`\"{}) const \label{classfullVector_a9dfdc46fed51ff1bb903ed27c750f0ab}
+
+\item 
+void {\bfseries binary\-Save} (F\-I\-L\-E $\ast$f) const \label{classfullVector_addd14dfd7c7538980cb161171aa727e1}
+
+\item 
+void {\bfseries binary\-Load} (F\-I\-L\-E $\ast$f)\label{classfullVector_adfe83dc547b69be33be73e41a9b08b54}
+
+\item 
+{\footnotesize template$<$$>$ }\\void {\bfseries axpy} (const {\bf full\-Vector}$<$ double $>$ \&x, double alpha)\label{classfullVector_a7cb657d55d3be9ed72e526adb1f1eb5a}
+
+\item 
+{\footnotesize template$<$$>$ }\\void {\bfseries axpy} (const {\bf full\-Vector}$<$ float $>$ \&x, float alpha)\label{classfullVector_aa13101a6028ab55c070d44a5ef101662}
+
+\end{DoxyCompactItemize}
+\subsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+class {\bfseries full\-Matrix$<$ scalar $>$}\label{classfullVector_a99bcc788e28d2395beb20c1f995c359f}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$class scalar$>$class full\-Vector$<$ scalar $>$}
+
+An abstract interface for vectors of scalar. 
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+src/matrix/{\bf full\-Matrix.\-h}\end{DoxyCompactItemize}

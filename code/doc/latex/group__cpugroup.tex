@@ -1,0 +1,39 @@
+\section{C\-P\-U Group}
+\label{group__cpugroup}\index{C\-P\-U Group@{C\-P\-U Group}}
+\subsection*{Files}
+\begin{DoxyCompactItemize}
+\item 
+file {\bf communicator\-\_\-cpu.\-cc}
+\begin{DoxyCompactList}\small\item\em C\-P\-U implementation of Communicate\-Ghosts. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R\-::\-Communicate\-Ghosts} (int Nfields, scalar $\ast$U)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Group of functions for the C\-P\-U functions 
+
+\subsection{Function Documentation}
+\index{C\-P\-U Group@{C\-P\-U Group}!Communicate\-Ghosts@{Communicate\-Ghosts}}
+\index{Communicate\-Ghosts@{Communicate\-Ghosts}!CPU Group@{C\-P\-U Group}}
+\subsubsection[{Communicate\-Ghosts}]{\setlength{\rightskip}{0pt plus 5cm}void C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R\-::\-Communicate\-Ghosts (
+\begin{DoxyParamCaption}
+\item[{int}]{Nfields, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{group__cpugroup_ga368437df64cf816ad1c3ab8297bba03c}
+Communicate the ghosts (C\-P\-U implementation) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em Nfields} & number of fields to act on \\
+\hline
+\mbox{\tt in}  & {\em U} & solution to communicate\\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+This function communicates the elements which are not in my partition. Basically you send the elements of U that other partitions need and you receive the elements from other partitions that you will need. You store these in the back columns of U.
+
+Had to declare Nfields when we operate on just one field instead of N\-\_\-\-F
+
+See also \doxyref{Communicate\-Ghosts() }{p.}{communicator__gpu_8cc} the G\-P\-U implementation

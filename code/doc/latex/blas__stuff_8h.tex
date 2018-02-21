@@ -1,0 +1,77 @@
+\section{src/utils/blas\-\_\-stuff.h File Reference}
+\label{blas__stuff_8h}\index{src/utils/blas\-\_\-stuff.\-h@{src/utils/blas\-\_\-stuff.\-h}}
+
+
+Functions to wrap B\-L\-A\-S calls.  
+
+
+{\ttfamily \#include $<$complex$>$}\\*
+{\ttfamily \#include $<$string.\-h$>$}\\*
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define {\bfseries F77\-N\-A\-M\-E}(x)~(x\label{blas__stuff_8h_a9b91c72ded7de2f0b393ea75de53929b}
+
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+int F77\-N\-A\-M\-E() {\bfseries idamax} (int $\ast$n, double $\ast$x, int $\ast$incx)\label{blas__stuff_8h_a66cabba1ac4373e8498d5f6e1fb3b1f2}
+
+\item 
+int F77\-N\-A\-M\-E() {\bfseries isamax} (int $\ast$n, float $\ast$x, int $\ast$incx)\label{blas__stuff_8h_aa42319c4154b7cebd2df2c9244289ae0}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries dcopy} (int $\ast$n, double $\ast$x, int $\ast$incx, double $\ast$y, int $\ast$incy)\label{blas__stuff_8h_ae8a8438f6e0e9d30372d675dd220d379}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries scopy} (int $\ast$n, float $\ast$x, int $\ast$incx, float $\ast$y, int $\ast$incy)\label{blas__stuff_8h_ad2cb0af1768f034288ceb26ee34aa4d0}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries daxpy} (int $\ast$n, double $\ast$alpha, double $\ast$x, int $\ast$incx, double $\ast$y, int $\ast$incy)\label{blas__stuff_8h_af36d165a6d25c8420e679954723a7b8e}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries saxpy} (int $\ast$n, float $\ast$alpha, float $\ast$x, int $\ast$incx, float $\ast$y, int $\ast$incy)\label{blas__stuff_8h_a5ad2d43cf46f42b980f9d51c0543cef9}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries dgemm} (const char $\ast$transa, const char $\ast$transb, int $\ast$m, int $\ast$n, int $\ast$k, double $\ast$alpha, double $\ast$a, int $\ast$lda, double $\ast$b, int $\ast$ldb, double $\ast$beta, double $\ast$c, int $\ast$ldc)\label{blas__stuff_8h_ab1457f7cd5621a26837f99863b4bb4c4}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries sgemm} (const char $\ast$transa, const char $\ast$transb, int $\ast$m, int $\ast$n, int $\ast$k, float $\ast$alpha, float $\ast$a, int $\ast$lda, float $\ast$b, int $\ast$ldb, float $\ast$beta, float $\ast$c, int $\ast$ldc)\label{blas__stuff_8h_ad16a1af4831140a3947ddee4358b92a0}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries zgemm} (const char $\ast$transa, const char $\ast$transb, int $\ast$m, int $\ast$n, int $\ast$k, std\-::complex$<$ double $>$ $\ast$alpha, std\-::complex$<$ double $>$ $\ast$a, int $\ast$lda, std\-::complex$<$ double $>$ $\ast$b, int $\ast$ldb, std\-::complex$<$ double $>$ $\ast$beta, std\-::complex$<$ double $>$ $\ast$c, int $\ast$ldc)\label{blas__stuff_8h_a2f47dca573db1da2d540cfa438c8be69}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries dgemv} (const char $\ast$trans, int $\ast$m, int $\ast$n, double $\ast$alpha, double $\ast$a, int $\ast$lda, double $\ast$x, int $\ast$incx, double $\ast$beta, double $\ast$y, int $\ast$incy)\label{blas__stuff_8h_ab52e24d0727149333366414cd33821a3}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries sgemv} (const char $\ast$trans, int $\ast$m, int $\ast$n, float $\ast$alpha, float $\ast$a, int $\ast$lda, float $\ast$x, int $\ast$incx, float $\ast$beta, float $\ast$y, int $\ast$incy)\label{blas__stuff_8h_a78ad03a21ef7454cd6c4ea40c1169235}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries zgemv} (const char $\ast$trans, int $\ast$m, int $\ast$n, std\-::complex$<$ double $>$ $\ast$alpha, std\-::complex$<$ double $>$ $\ast$a, int $\ast$lda, std\-::complex$<$ double $>$ $\ast$x, int $\ast$incx, std\-::complex$<$ double $>$ $\ast$beta, std\-::complex$<$ double $>$ $\ast$y, int $\ast$incy)\label{blas__stuff_8h_a030c8e4ccfdc3267d04dd47d5d66eeb0}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries dscal} (int $\ast$n, double $\ast$alpha, double $\ast$x, int $\ast$incx)\label{blas__stuff_8h_a5940e4bbace078a3cb76d96647f1f213}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries sscal} (int $\ast$n, float $\ast$alpha, float $\ast$x, int $\ast$incx)\label{blas__stuff_8h_aee69fd7524cc39972bc9b3d902e38823}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries zscal} (int $\ast$n, std\-::complex$<$ double $>$ $\ast$alpha, std\-::complex$<$ double $>$ $\ast$x, int $\ast$incx)\label{blas__stuff_8h_a9c69f424b9c6054552f2123afa19aa37}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Functions to wrap B\-L\-A\-S calls. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+\subsection{Description}\label{scalar__def_8h_Description}
+Functions to wrap B\-L\-A\-S call to F77 routines 

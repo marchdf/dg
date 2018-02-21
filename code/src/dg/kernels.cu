@@ -65,6 +65,7 @@ arch_global void mapToFace(int M_s, int M_T, int N_s, int* map, scalar* U, scala
 	  face = ((t*N_F+fc)*2+d)*M_s+j;
 	  // Get the interface we will operate on and relate it to the index of U
 	  UF[face] = U[map[face]];
+	  //	  printf("mapToFace: t=%d, j=%d, fc=%f, side=%d: face index=%d, map[face]=%d, UF=%f\n",t,j,fc,d,face,map[face],UF[face]);
 	}
 	
 #ifdef USE_CPU
@@ -151,7 +152,7 @@ arch_global void mapToElement(int N_s, int N_E, int M_s, int N_N, int* invmap, s
    
 
 //==========================================================================
-arch_global void redistribute_sf(int N_G, int N_E, scalar* sJ, scalar* fJ, scalar* s, scalar* f, scalar* J, scalar* invJac){
+    arch_global void redistribute_sf(int N_G, int N_E, scalar* sJ, scalar* fJ, scalar* s, scalar* f, scalar* J, scalar* detJ_full, scalar* invJac){
   /*!
     \brief Take into account the geometry by multiplying with Jacobians
     \param[in] N_G number of gaussian nodes per element
@@ -161,8 +162,17 @@ arch_global void redistribute_sf(int N_G, int N_E, scalar* sJ, scalar* fJ, scala
     \param[in] s source array
     \param[in] f flux array
     \param[in] J Jacobian
+    \param[in] detJ_full determinant of Jacobian at each quadrature point
     \param[in] invJac inverse Jacobian (for the fluxes)
   */
+
+  /*
+    PEJ 11/02/2017: Altering use of element
+    jacobian matrix; instead of multiplying by same j
+    value over the entire element, account for
+    perturbed quad elements by using particular j
+    value at each quadrature point instead
+   */
 
 #ifdef USE_CPU
   for(int e = 0; e < N_E; e++){
@@ -176,13 +186,15 @@ arch_global void redistribute_sf(int N_G, int N_E, scalar* sJ, scalar* fJ, scala
     int fc= threadIdx.y;
 #endif
 
-	scalar j = J[e];
+    //scalar j = J[e];
+    scalar j = detJ_full[e*N_G + g];
 	scalar sol = 0.0; 
 
 	sJ[(e*N_F+fc)*N_G+g] = s[(e*N_F+fc)*N_G+g] * j;
 	for(int alpha = 0; alpha < D; alpha++){
 	  for(int a = 0; a < D; a++){
 	    sol += invJac[((e*N_G+g)*D+alpha)*D+a]*f[((e*N_F+fc)*N_G+g)*D+a] * j;
+	    //sol += invJac[((e*N_G+g)*D+a)*D+alpha]*f[((e*N_F+fc)*N_G+g)*D+a] * j;
 	  }
 	  fJ[((e*N_F+fc)*N_G+g)*D+alpha] = sol;
 	  sol = 0;
@@ -282,6 +294,7 @@ void LmapToFace(int M_s, int M_T, int N_s, int* map, scalar* U, scalar* UF){
     threads. blkT controls the number of interfaces to set on each
     block
   */
+  //printf("CAlling LmapToFace\n");
 #ifdef USE_GPU
   int div = M_T/blkT;
   int mod = 0;
@@ -322,7 +335,7 @@ void LmapToElement(int N_s, int N_E, int M_s, int N_N, int* invmap, scalar* Q, s
 
 
 extern "C" 
-void Lredistribute_sf(int N_G, int N_E, scalar* sJ, scalar* fJ, scalar* s, scalar* f, scalar* J, scalar* invJac){
+  void Lredistribute_sf(int N_G, int N_E, scalar* sJ, scalar* fJ, scalar* s, scalar* f, scalar* J, scalar* detJ_full, scalar* invJac){
   /*!
     \brief Host C function to launch redistribute_sf kernel.
     \param[in] N_G number of gaussian nodes per element
@@ -332,6 +345,7 @@ void Lredistribute_sf(int N_G, int N_E, scalar* sJ, scalar* fJ, scalar* s, scala
     \param[in] s source array
     \param[in] f flux array
     \param[in] J Jacobian
+    \param[in] detJ_full Jacobian, populated at each quadrature point
     \param[in] invJac inverse Jacobian (for the fluxes)
     \section Description
     In GPU mode, launches N_E/blkE blocks of N_G x N_F x blkE
@@ -345,7 +359,7 @@ void Lredistribute_sf(int N_G, int N_E, scalar* sJ, scalar* fJ, scalar* s, scala
   dim3 dimGrid(div+mod,1);
 #endif
 
-  redistribute_sf arch_args (N_G, N_E, sJ, fJ, s, f, J, invJac);
+  redistribute_sf arch_args (N_G, N_E, sJ, fJ, s, f, J, detJ_full, invJac);
 }
 
 extern "C"
@@ -397,4 +411,3 @@ void LaddSFQ(int N_s, int N_E, scalar* A, scalar* S, scalar* F, scalar* Q){
 
   addSFQ arch_args (N_s, N_E, A, S, F, Q);
 }
-

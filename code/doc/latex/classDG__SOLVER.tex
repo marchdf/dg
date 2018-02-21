@@ -1,0 +1,179 @@
+\section{D\-G\-\_\-\-S\-O\-L\-V\-E\-R Class Reference}
+\label{classDG__SOLVER}\index{D\-G\-\_\-\-S\-O\-L\-V\-E\-R@{D\-G\-\_\-\-S\-O\-L\-V\-E\-R}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bf D\-G\-\_\-\-S\-O\-L\-V\-E\-R} (int N\-\_\-\-E, int N\-\_\-s, int N\-\_\-\-G, int N\-\_\-\-N, int M\-\_\-\-T, int M\-\_\-s, int M\-\_\-\-G, int M\-\_\-\-B, int $\ast$map, int $\ast$invmap, scalar $\ast$phi, scalar $\ast$dphi, scalar $\ast$phi\-\_\-w, scalar $\ast$dphi\-\_\-w, scalar $\ast$psi, scalar $\ast$psi\-\_\-w, scalar $\ast$J, scalar $\ast$inv\-Jac, scalar $\ast$J\-F, scalar $\ast$weight, scalar $\ast$normals, {\bf simple\-Mesh} \&m, {\bf T\-I\-M\-E\-R\-S} \&timers, {\bf M\-E\-M\-\_\-\-C\-O\-U\-N\-T\-E\-R} \&mem\-\_\-counter, scalar $\ast$Jac\-\_\-trace, scalar $\ast$inv\-Jac\-\_\-trace, scalar $\ast$phig\-F, scalar $\ast$dphig\-F, int $\ast$B\-R2\-\_\-\-Map, scalar $\ast$M\-\_\-inv, scalar $\ast$weight\-\_\-trace, scalar Mu, scalar Pr, scalar K\-Temp, scalar $\ast$P\-S\-Ix\-R\-\_\-\-Global, scalar $\ast$P\-S\-Ix\-R\-\_\-elemwise, scalar $\ast$Sig\-Face\-\_\-from\-\_\-\-Uhat\-\_\-elemwise, int $\ast$Reco\-Pair, int $\ast$Binary\-Side\-Address, scalar $\ast$serial\-\_\-\-M\-Sig\-Vol, scalar $\ast$serial\-\_\-\-M\-Sig\-Surf, int $\ast$Alt\-\_\-\-Face\-From\-Elem, scalar $\ast$serial\-\_\-\-Sig\-Face\-\_\-from\-\_\-\-D\-O\-F)
+\begin{DoxyCompactList}\small\item\em Constructor. \end{DoxyCompactList}\item 
+{\bf $\sim$\-D\-G\-\_\-\-S\-O\-L\-V\-E\-R} ()
+\item 
+void {\bf dg\-\_\-solver} (scalar $\ast$U, scalar $\ast$f\-\_\-rk, scalar ruk)
+\begin{DoxyCompactList}\small\item\em Main solver function. \end{DoxyCompactList}\item 
+void {\bf conservation} (scalar $\ast$U, double time)
+\item 
+scalar $\ast$ {\bf get\-Phi\-W} () const 
+\end{DoxyCompactItemize}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\index{D\-G\-\_\-\-S\-O\-L\-V\-E\-R@{D\-G\-\_\-\-S\-O\-L\-V\-E\-R}!D\-G\-\_\-\-S\-O\-L\-V\-E\-R@{D\-G\-\_\-\-S\-O\-L\-V\-E\-R}}
+\index{D\-G\-\_\-\-S\-O\-L\-V\-E\-R@{D\-G\-\_\-\-S\-O\-L\-V\-E\-R}!DG_SOLVER@{D\-G\-\_\-\-S\-O\-L\-V\-E\-R}}
+\subsubsection[{D\-G\-\_\-\-S\-O\-L\-V\-E\-R}]{\setlength{\rightskip}{0pt plus 5cm}D\-G\-\_\-\-S\-O\-L\-V\-E\-R\-::\-D\-G\-\_\-\-S\-O\-L\-V\-E\-R (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-G, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{M\-\_\-s, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{M\-\_\-\-B, }
+\item[{int $\ast$}]{map, }
+\item[{int $\ast$}]{invmap, }
+\item[{scalar $\ast$}]{phi, }
+\item[{scalar $\ast$}]{dphi, }
+\item[{scalar $\ast$}]{phi\-\_\-w, }
+\item[{scalar $\ast$}]{dphi\-\_\-w, }
+\item[{scalar $\ast$}]{psi, }
+\item[{scalar $\ast$}]{psi\-\_\-w, }
+\item[{scalar $\ast$}]{J, }
+\item[{scalar $\ast$}]{inv\-Jac, }
+\item[{scalar $\ast$}]{J\-F, }
+\item[{scalar $\ast$}]{weight, }
+\item[{scalar $\ast$}]{normals, }
+\item[{{\bf simple\-Mesh} \&}]{m, }
+\item[{{\bf T\-I\-M\-E\-R\-S} \&}]{timers, }
+\item[{{\bf M\-E\-M\-\_\-\-C\-O\-U\-N\-T\-E\-R} \&}]{mem\-\_\-counter, }
+\item[{scalar $\ast$}]{Jac\-\_\-trace, }
+\item[{scalar $\ast$}]{inv\-Jac\-\_\-trace, }
+\item[{scalar $\ast$}]{phig\-F, }
+\item[{scalar $\ast$}]{dphig\-F, }
+\item[{int $\ast$}]{B\-R2\-\_\-\-Map, }
+\item[{scalar $\ast$}]{M\-\_\-inv, }
+\item[{scalar $\ast$}]{weight\-\_\-trace, }
+\item[{scalar}]{Mu, }
+\item[{scalar}]{Pr, }
+\item[{scalar}]{K\-Temp, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-\-Global, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-elemwise, }
+\item[{scalar $\ast$}]{Sig\-Face\-\_\-from\-\_\-\-Uhat\-\_\-elemwise, }
+\item[{int $\ast$}]{Reco\-Pair, }
+\item[{int $\ast$}]{Binary\-Side\-Address, }
+\item[{scalar $\ast$}]{serial\-\_\-\-M\-Sig\-Vol, }
+\item[{scalar $\ast$}]{serial\-\_\-\-M\-Sig\-Surf, }
+\item[{int $\ast$}]{Alt\-\_\-\-Face\-From\-Elem, }
+\item[{scalar $\ast$}]{serial\-\_\-\-Sig\-Face\-\_\-from\-\_\-\-D\-O\-F}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classDG__SOLVER_a6e2362ea25dcb7cae7104768fbaff22a}
+
+
+Constructor. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-G} & number of gaussian nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbors per element \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-G} & number of gaussian nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-B} & number of boundaries \\
+\hline
+\mbox{\tt in}  & {\em map} & map from elements to interfaces \\
+\hline
+\mbox{\tt in}  & {\em invmap} & map from interfaces to elements \\
+\hline
+\mbox{\tt in}  & {\em phi} & element polynomial basis \\
+\hline
+\mbox{\tt in}  & {\em phi\-\_\-w} & element polynomial basis (premultiplied by weights) \\
+\hline
+\mbox{\tt in}  & {\em dphi} & element polynomial basis derivative \\
+\hline
+\mbox{\tt in}  & {\em dphi\-\_\-w} & element polynomial basis derivative (premultiplied by weights) \\
+\hline
+\mbox{\tt in}  & {\em psi} & interface polynomial basis \\
+\hline
+\mbox{\tt in}  & {\em psi\-\_\-w} & interface polynomial basis (premultiplied by weights) \\
+\hline
+\mbox{\tt in}  & {\em J} & jacobian of each element \\
+\hline
+\mbox{\tt in}  & {\em inv\-Jac} & inverse jacobian of each element \\
+\hline
+\mbox{\tt in}  & {\em J\-F} & jacobian of each interface \\
+\hline
+\mbox{\tt in}  & {\em weight} & integration weights \\
+\hline
+\mbox{\tt in}  & {\em normals} & normals to all the interfaces \\
+\hline
+\mbox{\tt in}  & {\em m} & mesh we are operating on \\
+\hline
+\mbox{\tt in}  & {\em timers} & timers to use \\
+\hline
+\mbox{\tt in}  & {\em mem\-\_\-counter} & memory counter to use \\
+\hline
+\end{DoxyParams}
+\index{D\-G\-\_\-\-S\-O\-L\-V\-E\-R@{D\-G\-\_\-\-S\-O\-L\-V\-E\-R}!$\sim$\-D\-G\-\_\-\-S\-O\-L\-V\-E\-R@{$\sim$\-D\-G\-\_\-\-S\-O\-L\-V\-E\-R}}
+\index{$\sim$\-D\-G\-\_\-\-S\-O\-L\-V\-E\-R@{$\sim$\-D\-G\-\_\-\-S\-O\-L\-V\-E\-R}!DG_SOLVER@{D\-G\-\_\-\-S\-O\-L\-V\-E\-R}}
+\subsubsection[{$\sim$\-D\-G\-\_\-\-S\-O\-L\-V\-E\-R}]{\setlength{\rightskip}{0pt plus 5cm}D\-G\-\_\-\-S\-O\-L\-V\-E\-R\-::$\sim$\-D\-G\-\_\-\-S\-O\-L\-V\-E\-R (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classDG__SOLVER_a85f7528b230f0d052f4e6c5bae8d471b}
+Destructor 
+
+\subsection{Member Function Documentation}
+\index{D\-G\-\_\-\-S\-O\-L\-V\-E\-R@{D\-G\-\_\-\-S\-O\-L\-V\-E\-R}!conservation@{conservation}}
+\index{conservation@{conservation}!DG_SOLVER@{D\-G\-\_\-\-S\-O\-L\-V\-E\-R}}
+\subsubsection[{conservation}]{\setlength{\rightskip}{0pt plus 5cm}void D\-G\-\_\-\-S\-O\-L\-V\-E\-R\-::conservation (
+\begin{DoxyParamCaption}
+\item[{scalar $\ast$}]{U, }
+\item[{double}]{time}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classDG__SOLVER_abeabcb927f3ee30ba06a869c79b3abbc}
+Function to calculate and output conservation of certain quantities 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em U} & solution to evaluate (Lagrange nodal), on the host (C\-P\-U) \\
+\hline
+\mbox{\tt in}  & {\em time} & time step\\
+\hline
+\end{DoxyParams}
+\index{D\-G\-\_\-\-S\-O\-L\-V\-E\-R@{D\-G\-\_\-\-S\-O\-L\-V\-E\-R}!dg\-\_\-solver@{dg\-\_\-solver}}
+\index{dg\-\_\-solver@{dg\-\_\-solver}!DG_SOLVER@{D\-G\-\_\-\-S\-O\-L\-V\-E\-R}}
+\subsubsection[{dg\-\_\-solver}]{\setlength{\rightskip}{0pt plus 5cm}void D\-G\-\_\-\-S\-O\-L\-V\-E\-R\-::dg\-\_\-solver (
+\begin{DoxyParamCaption}
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{f\-\_\-rk, }
+\item[{scalar}]{ruk}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classDG__SOLVER_ac1f7e00457314b028ebb457eb94fd4ae}
+
+
+Main solver function. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em U} & solution \\
+\hline
+\mbox{\tt out}  & {\em f\-\_\-rk} & f(t,\-U) with D\-G for d\-U/dt = f(t,\-U) \\
+\hline
+\end{DoxyParams}
+\index{D\-G\-\_\-\-S\-O\-L\-V\-E\-R@{D\-G\-\_\-\-S\-O\-L\-V\-E\-R}!get\-Phi\-W@{get\-Phi\-W}}
+\index{get\-Phi\-W@{get\-Phi\-W}!DG_SOLVER@{D\-G\-\_\-\-S\-O\-L\-V\-E\-R}}
+\subsubsection[{get\-Phi\-W}]{\setlength{\rightskip}{0pt plus 5cm}scalar$\ast$ D\-G\-\_\-\-S\-O\-L\-V\-E\-R\-::get\-Phi\-W (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classDG__SOLVER_a73584264f47d24e38f35d86647b0f4d9}
+Return phi 
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+src/dg/{\bf dg\-\_\-solver.\-h}\end{DoxyCompactItemize}

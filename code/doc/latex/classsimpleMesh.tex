@@ -1,0 +1,503 @@
+\section{simple\-Mesh Class Reference}
+\label{classsimpleMesh}\index{simple\-Mesh@{simple\-Mesh}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bf simple\-Mesh} (int myid=0, int numprocs=1)
+\begin{DoxyCompactList}\small\item\em Constructor for \doxyref{simple\-Mesh}{p.}{classsimpleMesh}. \end{DoxyCompactList}\item 
+const std\-::vector\\*
+$<$ {\bf simple\-Interface} $>$ \& {\bf get\-Interfaces} () const 
+\item 
+const std\-::vector\\*
+$<$ {\bf simple\-Element} $>$ \& {\bf get\-Elements} (int type) const 
+\item 
+const std\-::vector\\*
+$<$ {\bf simple\-Element} $>$ \& {\bf get\-Other\-Elements} (int type) const 
+\item 
+const {\bf full\-Matrix}$<$ double $>$ \& {\bf get\-Nodes} () const 
+\item 
+const {\bf full\-Matrix}$<$ scalar $>$ \& {\bf get\-Normals} () const 
+\item 
+const std\-::map$<$ int, int $>$ \& {\bf get\-Element\-Map} () const 
+\item 
+const std\-::map$<$ int, int $>$ \& {\bf get\-Ghost\-Element\-Map} () const 
+\item 
+void {\bf load} (const char $\ast$file\-Name)
+\item 
+void {\bf write\-Solution} (const scalar $\ast$solution, const int N\-\_\-s, const int N\-\_\-\-E, int type, std\-::vector$<$ std\-::string $>$ fnames, std\-::vector$<$ std\-::string $>$ names, int step, double time) const 
+\item 
+void {\bf read\-Solution} (const int N\-\_\-s, const int N\-\_\-\-E, int type, std\-::vector$<$ std\-::string $>$ fnames, std\-::vector$<$ std\-::string $>$ names, const int step, double \&time, scalar $\ast$solution)
+\item 
+void {\bf build\-Interfaces} (int type\-Interface, int type\-Element, int nsides)
+\item 
+void {\bf build\-Element\-Map} (int elem\-\_\-type)
+\item 
+void {\bf build\-Communicators} (int elem\-\_\-type)
+\item 
+void {\bf build\-Normals} (int type\-Interface, int type\-Element)
+\item 
+int {\bf get\-Nb\-Ghosts} () const 
+\item 
+int $\ast$ {\bf get\-Ghost\-Element\-Send} () const 
+\item 
+int $\ast$ {\bf get\-Ghost\-Element\-Recv} () const 
+\item 
+void {\bf build\-Boundary} ()
+\item 
+int {\bf get\-Boundary\-Size} () const 
+\item 
+int $\ast$ {\bf get\-Boundary\-Map} () const 
+\item 
+int $\ast$ {\bf get\-Boundary\-Idx} () const 
+\item 
+void {\bf build\-Neighbors} (int N\-\_\-\-N, int N\-\_\-\-E)
+\item 
+int $\ast$ {\bf get\-Neighbors} () const 
+\item 
+void {\bf build\-Boundary\-Element\-Shift1\-D} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes)
+\item 
+void {\bf build\-Boundary\-Element\-Shift2\-D} (int order, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes\-F, std\-::map$<$ int, int $>$ \&Element\-Map)
+\item 
+const {\bf full\-Matrix}$<$ scalar $>$ \& {\bf get\-Shifts} () const 
+\item 
+{\bf full\-Matrix}$<$ scalar $>$ {\bf get\-Element\-Centroids} (const int N\-\_\-\-E, const int ncorners, const {\bf full\-Matrix}$<$ scalar $>$ X\-Y\-Z\-Nodes)
+\item 
+bool {\bf iscartesian} (std\-::string type\-Element, const int elem\-\_\-type)
+\item 
+void {\bf set\-Dx} (const int N\-\_\-\-N, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes)
+\item 
+scalar {\bf get\-Dx} () const 
+\item 
+scalar {\bf distance\-\_\-to\-\_\-edge} (scalar x0, scalar y0, scalar x1, scalar y1, scalar x2, scalar y2)
+\end{DoxyCompactItemize}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\index{simple\-Mesh@{simple\-Mesh}!simple\-Mesh@{simple\-Mesh}}
+\index{simple\-Mesh@{simple\-Mesh}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{simple\-Mesh}]{\setlength{\rightskip}{0pt plus 5cm}simple\-Mesh\-::simple\-Mesh (
+\begin{DoxyParamCaption}
+\item[{int}]{myid = {\ttfamily 0}, }
+\item[{int}]{numprocs = {\ttfamily 1}}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_ab96089c73692f9ab7770bebe5ccc4a95}
+
+
+Constructor for \doxyref{simple\-Mesh}{p.}{classsimpleMesh}. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em myid} & my processor id (default=0) \\
+\hline
+\mbox{\tt in}  & {\em numprocs} & number of processors (default=1) \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Function Documentation}
+\index{simple\-Mesh@{simple\-Mesh}!build\-Boundary@{build\-Boundary}}
+\index{build\-Boundary@{build\-Boundary}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{build\-Boundary}]{\setlength{\rightskip}{0pt plus 5cm}void simple\-Mesh\-::build\-Boundary (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}\label{classsimpleMesh_ace4361835d69ad5d824a8eb697fa39f6}
+Build a list of special boundaries\subsection{Description}\label{scalar__def_8h_Description}
+This is just going to get us a list of the interfaces where the boundaries are not farfield or periodic. For example, it will have the list of reflective B\-C (and other, more complicated, ones if we want).
+
+Returns boundary\-Map and boundaryidx. boundary\-Map holds\-: [ [t1 ..] [t1 ..]] reflective otherone boundaryidx holds\-: the idx of where each of those start
+
+The boundary type is deduced from the physical of the interface (defined when you build the mesh\-: (3=rflctive)).\index{simple\-Mesh@{simple\-Mesh}!build\-Boundary\-Element\-Shift1\-D@{build\-Boundary\-Element\-Shift1\-D}}
+\index{build\-Boundary\-Element\-Shift1\-D@{build\-Boundary\-Element\-Shift1\-D}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{build\-Boundary\-Element\-Shift1\-D}]{\setlength{\rightskip}{0pt plus 5cm}void simple\-Mesh\-::build\-Boundary\-Element\-Shift1\-D (
+\begin{DoxyParamCaption}
+\item[{const int}]{N\-\_\-s, }
+\item[{const int}]{N\-\_\-\-E, }
+\item[{const {\bf full\-Matrix}$<$ scalar $>$ \&}]{X\-Y\-Z\-Nodes}
+\end{DoxyParamCaption}
+)}\label{classsimpleMesh_aa3a743072b98362ed99bb1ccb77d7ab5}
+Build 1\-D shifts to bring an element next to his neighbor 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em X\-Y\-Z\-Nodes} & element node coordinates \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Objective\-: create Boundary\-Elem\-Shift elem1 $\vert$ elem2 $\vert$ xshift (tgt element) his neighbor shifts to bring elem2 next to elem1\index{simple\-Mesh@{simple\-Mesh}!build\-Boundary\-Element\-Shift2\-D@{build\-Boundary\-Element\-Shift2\-D}}
+\index{build\-Boundary\-Element\-Shift2\-D@{build\-Boundary\-Element\-Shift2\-D}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{build\-Boundary\-Element\-Shift2\-D}]{\setlength{\rightskip}{0pt plus 5cm}void simple\-Mesh\-::build\-Boundary\-Element\-Shift2\-D (
+\begin{DoxyParamCaption}
+\item[{int}]{order, }
+\item[{const {\bf full\-Matrix}$<$ scalar $>$ \&}]{X\-Y\-Z\-Nodes\-F, }
+\item[{std\-::map$<$ int, int $>$ \&}]{Element\-Map}
+\end{DoxyParamCaption}
+)}\label{classsimpleMesh_a44ef631fb2e44f79274caeaaf5b8f48a}
+Build 2\-D shifts to bring an element next to his neighbor 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em order} & D\-G order \\
+\hline
+\mbox{\tt in}  & {\em X\-Y\-Z\-Nodes\-F} & nodal coordinates of interfaces \\
+\hline
+\mbox{\tt in}  & {\em Element\-Map} & map from element id to element index \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Objective\-: create Boundary\-Elem\-Shift elem1 $\vert$ elem2 $\vert$ xshift $\vert$ yshift (tgt element) his neighbor shifts to bring elem2 next to elem1\index{simple\-Mesh@{simple\-Mesh}!build\-Communicators@{build\-Communicators}}
+\index{build\-Communicators@{build\-Communicators}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{build\-Communicators}]{\setlength{\rightskip}{0pt plus 5cm}void simple\-Mesh\-::build\-Communicators (
+\begin{DoxyParamCaption}
+\item[{int}]{elem\-\_\-type}
+\end{DoxyParamCaption}
+)}\label{classsimpleMesh_ad752e9e94670db50f52fcd5ce7cbb7d9}
+Build the necessary maps and matrices to communicate between processes. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em elem\-\_\-type} & the associated key number referencing that element\\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Create ghost\-Element\-Map. If el2 of an interface belongs to another partition, store a unique number. This will be used to access back columns of U/\-A in the limiting procedure (using the neighbors vector)
+
+Create ghost\-Element\-Send matrix containing the element index to send to other partitions, the number of that partition to send to, and its global id (as tag for communication).
+
+Create ghost\-Element\-Recv matrix containing the element index to store an element from another partition, the source partition of that element, and its global id (as tag for communication).\index{simple\-Mesh@{simple\-Mesh}!build\-Element\-Map@{build\-Element\-Map}}
+\index{build\-Element\-Map@{build\-Element\-Map}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{build\-Element\-Map}]{\setlength{\rightskip}{0pt plus 5cm}void simple\-Mesh\-::build\-Element\-Map (
+\begin{DoxyParamCaption}
+\item[{int}]{elem\-\_\-type}
+\end{DoxyParamCaption}
+)}\label{classsimpleMesh_a893276e6621e87219098ec7d32fb6559}
+Build a map relating element id to element index 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em elem\-\_\-type} & the associated key number referencing that element \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Map for element I\-D -\/$>$ element index in order of the U matrix\index{simple\-Mesh@{simple\-Mesh}!build\-Interfaces@{build\-Interfaces}}
+\index{build\-Interfaces@{build\-Interfaces}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{build\-Interfaces}]{\setlength{\rightskip}{0pt plus 5cm}void simple\-Mesh\-::build\-Interfaces (
+\begin{DoxyParamCaption}
+\item[{int}]{type\-Interface, }
+\item[{int}]{type\-Element, }
+\item[{int}]{nsides}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_a8b556a55b127ea67d308dbd962d5fba9}
+Calls Build\-Interfaces \index{simple\-Mesh@{simple\-Mesh}!build\-Neighbors@{build\-Neighbors}}
+\index{build\-Neighbors@{build\-Neighbors}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{build\-Neighbors}]{\setlength{\rightskip}{0pt plus 5cm}void simple\-Mesh\-::build\-Neighbors (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-N, }
+\item[{int}]{N\-\_\-\-E}
+\end{DoxyParamCaption}
+)}\label{classsimpleMesh_a1f487d27cbd72df24033e7933fcf7003}
+Build the neighbors \subsection{Description}\label{scalar__def_8h_Description}
+Objective\-: find the neighbors of each element get \-\_\-neighbors, a N\-\_\-\-N x N\-\_\-\-E vector\-: $\vert$ neighbor1 $\vert$ ... $\vert$ neighbor2 $\vert$ ...\index{simple\-Mesh@{simple\-Mesh}!build\-Normals@{build\-Normals}}
+\index{build\-Normals@{build\-Normals}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{build\-Normals}]{\setlength{\rightskip}{0pt plus 5cm}void simple\-Mesh\-::build\-Normals (
+\begin{DoxyParamCaption}
+\item[{int}]{type\-Interface, }
+\item[{int}]{type\-Element}
+\end{DoxyParamCaption}
+)}\label{classsimpleMesh_a344c6f8d6e8189b8172746e4c7e3aebd}
+Build the normals to all the elements 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em type\-Interface} & the associated key number referencing the type of interface \\
+\hline
+\mbox{\tt in}  & {\em type\-Element} & the associated key number referencing the type of element \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Build the normals to all the elements\index{simple\-Mesh@{simple\-Mesh}!distance\-\_\-to\-\_\-edge@{distance\-\_\-to\-\_\-edge}}
+\index{distance\-\_\-to\-\_\-edge@{distance\-\_\-to\-\_\-edge}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{distance\-\_\-to\-\_\-edge}]{\setlength{\rightskip}{0pt plus 5cm}scalar simple\-Mesh\-::distance\-\_\-to\-\_\-edge (
+\begin{DoxyParamCaption}
+\item[{scalar}]{x0, }
+\item[{scalar}]{y0, }
+\item[{scalar}]{x1, }
+\item[{scalar}]{y1, }
+\item[{scalar}]{x2, }
+\item[{scalar}]{y2}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_afe9e859f3123b551fa6da9f6261985e2}
+Distance from center to an edge 
+\begin{DoxyParams}{Parameters}
+{\em x0} & x-\/coordinate of cell center \\
+\hline
+{\em y0} & y-\/coordinate of cell center \\
+\hline
+{\em x1} & x-\/coordinate of first node defining the edge \\
+\hline
+{\em y1} & y-\/coordinate of first node defining the edge \\
+\hline
+{\em x2} & x-\/coordinate of secon node defining the edge \\
+\hline
+{\em y2} & y-\/coordinate of second node defining the edge \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+distance 
+\end{DoxyReturn}
+\subsection{Description}\label{scalar__def_8h_Description}
+from {\tt http\-://mathworld.\-wolfram.\-com/\-Point-\/\-Line\-Distance2-\/\-Dimensional.\-html}\index{simple\-Mesh@{simple\-Mesh}!get\-Boundary\-Idx@{get\-Boundary\-Idx}}
+\index{get\-Boundary\-Idx@{get\-Boundary\-Idx}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Boundary\-Idx}]{\setlength{\rightskip}{0pt plus 5cm}int$\ast$ simple\-Mesh\-::get\-Boundary\-Idx (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_a89923c15178a7f1ddb4812d2dab98bdb}
+Return boundary index mesh \index{simple\-Mesh@{simple\-Mesh}!get\-Boundary\-Map@{get\-Boundary\-Map}}
+\index{get\-Boundary\-Map@{get\-Boundary\-Map}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Boundary\-Map}]{\setlength{\rightskip}{0pt plus 5cm}int$\ast$ simple\-Mesh\-::get\-Boundary\-Map (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_a329ac262566316ecd1afbfe0511d872e}
+Return boundary map \index{simple\-Mesh@{simple\-Mesh}!get\-Boundary\-Size@{get\-Boundary\-Size}}
+\index{get\-Boundary\-Size@{get\-Boundary\-Size}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Boundary\-Size}]{\setlength{\rightskip}{0pt plus 5cm}int simple\-Mesh\-::get\-Boundary\-Size (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_ad604e16141a6da37078c899bfdde75d6}
+Return boundary size \index{simple\-Mesh@{simple\-Mesh}!get\-Dx@{get\-Dx}}
+\index{get\-Dx@{get\-Dx}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Dx}]{\setlength{\rightskip}{0pt plus 5cm}scalar simple\-Mesh\-::get\-Dx (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_a01ce435c1d5ef3caddaa26778195b510}
+Return smallest Dx in mesh \index{simple\-Mesh@{simple\-Mesh}!get\-Element\-Centroids@{get\-Element\-Centroids}}
+\index{get\-Element\-Centroids@{get\-Element\-Centroids}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Element\-Centroids}]{\setlength{\rightskip}{0pt plus 5cm}{\bf full\-Matrix}$<$ scalar $>$ simple\-Mesh\-::get\-Element\-Centroids (
+\begin{DoxyParamCaption}
+\item[{const int}]{N\-\_\-\-E, }
+\item[{const int}]{ncorners, }
+\item[{const {\bf full\-Matrix}$<$ scalar $>$}]{X\-Y\-Z\-Nodes}
+\end{DoxyParamCaption}
+)}\label{classsimpleMesh_a2bcfc35cac803b7522b47e496ce2ea29}
+Calculate the element centroid coordinates 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em ncorners} & number of vertices \\
+\hline
+\mbox{\tt in}  & {\em X\-Y\-Z\-Nodes} & element nodal coordinates. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Return a matrix which is N\-\_\-\-E x D containing the element centroids
+\end{DoxyReturn}
+\index{simple\-Mesh@{simple\-Mesh}!get\-Element\-Map@{get\-Element\-Map}}
+\index{get\-Element\-Map@{get\-Element\-Map}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Element\-Map}]{\setlength{\rightskip}{0pt plus 5cm}const std\-::map$<$int,int$>$\& simple\-Mesh\-::get\-Element\-Map (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_a6413aabfbb52c5b999dd3c6608f242d7}
+Return elements mappings \index{simple\-Mesh@{simple\-Mesh}!get\-Elements@{get\-Elements}}
+\index{get\-Elements@{get\-Elements}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Elements}]{\setlength{\rightskip}{0pt plus 5cm}const std\-::vector$<${\bf simple\-Element}$>$\& simple\-Mesh\-::get\-Elements (
+\begin{DoxyParamCaption}
+\item[{int}]{type}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_af9104d886c1a3cd71f7171267956aa9e}
+Return elements \index{simple\-Mesh@{simple\-Mesh}!get\-Ghost\-Element\-Map@{get\-Ghost\-Element\-Map}}
+\index{get\-Ghost\-Element\-Map@{get\-Ghost\-Element\-Map}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Ghost\-Element\-Map}]{\setlength{\rightskip}{0pt plus 5cm}const std\-::map$<$int,int$>$\& simple\-Mesh\-::get\-Ghost\-Element\-Map (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_a1fc1d4d0a26d4b2d31b4ad3a7ee81fd6}
+Return ghost elements mappings \index{simple\-Mesh@{simple\-Mesh}!get\-Ghost\-Element\-Recv@{get\-Ghost\-Element\-Recv}}
+\index{get\-Ghost\-Element\-Recv@{get\-Ghost\-Element\-Recv}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Ghost\-Element\-Recv}]{\setlength{\rightskip}{0pt plus 5cm}int$\ast$ simple\-Mesh\-::get\-Ghost\-Element\-Recv (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_a79ba2195c3dd18c211afcb16d48000c0}
+Return ghost elements to send \index{simple\-Mesh@{simple\-Mesh}!get\-Ghost\-Element\-Send@{get\-Ghost\-Element\-Send}}
+\index{get\-Ghost\-Element\-Send@{get\-Ghost\-Element\-Send}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Ghost\-Element\-Send}]{\setlength{\rightskip}{0pt plus 5cm}int$\ast$ simple\-Mesh\-::get\-Ghost\-Element\-Send (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_a3d0177a98a972a2e2d644745e7aa6320}
+Return ghost elements to send \index{simple\-Mesh@{simple\-Mesh}!get\-Interfaces@{get\-Interfaces}}
+\index{get\-Interfaces@{get\-Interfaces}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Interfaces}]{\setlength{\rightskip}{0pt plus 5cm}const std\-::vector$<${\bf simple\-Interface}$>$\& simple\-Mesh\-::get\-Interfaces (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_aa657d1500c3e7096608f6137898fe874}
+Return interfaces \index{simple\-Mesh@{simple\-Mesh}!get\-Nb\-Ghosts@{get\-Nb\-Ghosts}}
+\index{get\-Nb\-Ghosts@{get\-Nb\-Ghosts}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Nb\-Ghosts}]{\setlength{\rightskip}{0pt plus 5cm}int simple\-Mesh\-::get\-Nb\-Ghosts (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_acf22546866e5be149a269b7448ed03c7}
+Return number of ghost elements \index{simple\-Mesh@{simple\-Mesh}!get\-Neighbors@{get\-Neighbors}}
+\index{get\-Neighbors@{get\-Neighbors}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Neighbors}]{\setlength{\rightskip}{0pt plus 5cm}int$\ast$ simple\-Mesh\-::get\-Neighbors (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_a994b56604c1bab97829c5875e0c9e092}
+Return element neighbors mesh \index{simple\-Mesh@{simple\-Mesh}!get\-Nodes@{get\-Nodes}}
+\index{get\-Nodes@{get\-Nodes}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Nodes}]{\setlength{\rightskip}{0pt plus 5cm}const {\bf full\-Matrix}$<$double$>$\& simple\-Mesh\-::get\-Nodes (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_aab1f27034c5ca16cebc0a74d5818ffed}
+Return nodes \index{simple\-Mesh@{simple\-Mesh}!get\-Normals@{get\-Normals}}
+\index{get\-Normals@{get\-Normals}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Normals}]{\setlength{\rightskip}{0pt plus 5cm}const {\bf full\-Matrix}$<$scalar$>$\& simple\-Mesh\-::get\-Normals (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_ad408b4f796df836f770d9992e22480ab}
+Return normals \index{simple\-Mesh@{simple\-Mesh}!get\-Other\-Elements@{get\-Other\-Elements}}
+\index{get\-Other\-Elements@{get\-Other\-Elements}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Other\-Elements}]{\setlength{\rightskip}{0pt plus 5cm}const std\-::vector$<${\bf simple\-Element}$>$\& simple\-Mesh\-::get\-Other\-Elements (
+\begin{DoxyParamCaption}
+\item[{int}]{type}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_a3424ce7ab22931c35cd349a8da935a5f}
+Return elements not in my partition \index{simple\-Mesh@{simple\-Mesh}!get\-Shifts@{get\-Shifts}}
+\index{get\-Shifts@{get\-Shifts}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{get\-Shifts}]{\setlength{\rightskip}{0pt plus 5cm}const {\bf full\-Matrix}$<$scalar$>$\& simple\-Mesh\-::get\-Shifts (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleMesh_ad2724527f5bc29da34a3d4c8df01d3d5}
+Return shifts \index{simple\-Mesh@{simple\-Mesh}!iscartesian@{iscartesian}}
+\index{iscartesian@{iscartesian}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{iscartesian}]{\setlength{\rightskip}{0pt plus 5cm}bool simple\-Mesh\-::iscartesian (
+\begin{DoxyParamCaption}
+\item[{std\-::string}]{type\-Element, }
+\item[{const int}]{elem\-\_\-type}
+\end{DoxyParamCaption}
+)}\label{classsimpleMesh_a0ea8aa3921587e9574f6891290864c1d}
+Figure out if the mesh is cartesian 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em type\-Element} & the type of element we are dealing with \\
+\hline
+\mbox{\tt in}  & {\em elem\-\_\-type} & the associated key number referencing that element \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+true if it's a cartesian mesh
+\end{DoxyReturn}
+\index{simple\-Mesh@{simple\-Mesh}!load@{load}}
+\index{load@{load}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{load}]{\setlength{\rightskip}{0pt plus 5cm}void simple\-Mesh\-::load (
+\begin{DoxyParamCaption}
+\item[{const char $\ast$}]{file\-Name}
+\end{DoxyParamCaption}
+)}\label{classsimpleMesh_a2bf370841f3a83786c2952bf62a6d68b}
+Load a mesh file 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em file\-Name} & mesh file to load\\
+\hline
+\end{DoxyParams}
+\index{simple\-Mesh@{simple\-Mesh}!read\-Solution@{read\-Solution}}
+\index{read\-Solution@{read\-Solution}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{read\-Solution}]{\setlength{\rightskip}{0pt plus 5cm}void simple\-Mesh\-::read\-Solution (
+\begin{DoxyParamCaption}
+\item[{const int}]{N\-\_\-s, }
+\item[{const int}]{N\-\_\-\-E, }
+\item[{int}]{type, }
+\item[{std\-::vector$<$ std\-::string $>$}]{fnames, }
+\item[{std\-::vector$<$ std\-::string $>$}]{names, }
+\item[{const int}]{step, }
+\item[{double \&}]{time, }
+\item[{scalar $\ast$}]{solution}
+\end{DoxyParamCaption}
+)}\label{classsimpleMesh_aa4d900e503f20444c8d91d9f127ef1ed}
+Read the solution from input files 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em type} & element type to output \\
+\hline
+\mbox{\tt in}  & {\em fnames} & vector of output file names (w/o extension) \\
+\hline
+\mbox{\tt in}  & {\em names} & vector of output field names \\
+\hline
+\mbox{\tt in}  & {\em step} & time step number (of file to read) \\
+\hline
+\mbox{\tt out}  & {\em time} & time value \\
+\hline
+\mbox{\tt out}  & {\em solution} & array of solution to output \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Pretty obvious what this does.\index{simple\-Mesh@{simple\-Mesh}!set\-Dx@{set\-Dx}}
+\index{set\-Dx@{set\-Dx}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{set\-Dx}]{\setlength{\rightskip}{0pt plus 5cm}void simple\-Mesh\-::set\-Dx (
+\begin{DoxyParamCaption}
+\item[{const int}]{N\-\_\-\-N, }
+\item[{const int}]{N\-\_\-\-E, }
+\item[{const {\bf full\-Matrix}$<$ scalar $>$ \&}]{X\-Y\-Z\-Cen, }
+\item[{const {\bf full\-Matrix}$<$ scalar $>$ \&}]{X\-Y\-Z\-Nodes}
+\end{DoxyParamCaption}
+)}\label{classsimpleMesh_a91d891e0f9fc82b7afd70ceb2006d3e1}
+Sets the minimum delta x in the mesh 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbor of one element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em X\-Y\-Z\-Cen} & element centroid coordinates \\
+\hline
+\mbox{\tt in}  & {\em X\-Y\-Z\-Nodes} & element nodal coordinates.\\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+This function finds the minium Dx of all the elements in the mesh. It is later used for the C\-F\-L condition and the adaptive time-\/stepping.
+
+For 1\-D, it's straight forward. For 2\-D, it calculates the minimum distance from the cell center to edges of the element and it sets Dx to twice that value. This means Dx will be equal to the conventional Dx for a square element and it will be equal to the diameter of the inscribed circle for a triangular element.\index{simple\-Mesh@{simple\-Mesh}!write\-Solution@{write\-Solution}}
+\index{write\-Solution@{write\-Solution}!simpleMesh@{simple\-Mesh}}
+\subsubsection[{write\-Solution}]{\setlength{\rightskip}{0pt plus 5cm}void simple\-Mesh\-::write\-Solution (
+\begin{DoxyParamCaption}
+\item[{const scalar $\ast$}]{solution, }
+\item[{const int}]{N\-\_\-s, }
+\item[{const int}]{N\-\_\-\-E, }
+\item[{int}]{type, }
+\item[{std\-::vector$<$ std\-::string $>$}]{fnames, }
+\item[{std\-::vector$<$ std\-::string $>$}]{names, }
+\item[{int}]{step, }
+\item[{double}]{time}
+\end{DoxyParamCaption}
+) const}\label{classsimpleMesh_a1e1ba6bf9d76f5ed1bdc40f2e7a87e9d}
+Write the solution to a file 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em solution} & array of solution to output \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em type} & element type to output \\
+\hline
+\mbox{\tt in}  & {\em fnames} & vector of output file names (w/o extension) \\
+\hline
+\mbox{\tt in}  & {\em names} & vector of output field names \\
+\hline
+\mbox{\tt in}  & {\em step} & time step number \\
+\hline
+\mbox{\tt in}  & {\em time} & time value \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Pretty obvious what this does.
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+src/mesh/{\bf simple\-Mesh.\-h}\item 
+src/mesh/{\bf simple\-Mesh.\-cc}\end{DoxyCompactItemize}

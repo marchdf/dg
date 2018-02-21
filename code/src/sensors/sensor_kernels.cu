@@ -164,6 +164,174 @@ arch_global void calc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bo
   } // loop on elements
 }
 
+
+
+arch_global void calc_sensors_radsinglefluid(int N_E, int N_N, bool sensor1, scalar thresh1, bool sensor2, scalar thresh2, bool sensor3, scalar thresh3, int* neighbors, scalar* Uavg, int* sensors){
+  /*!
+    \brief Calculate the sensors kernel, specialized for singlefluid and radsinglefluid physics. Also extendend to 3D singlefluid and radsinglefluid cases
+    \param[in] N_E number of elements
+    \param[in] N_N number of neighbors
+    \param[in] sensor1 true if using first sensor
+    \param[in] thresh1 threshold value for first sensor
+    \param[in] sensor2 true if using second sensor
+    \param[in] thresh2 threshold value for second sensor
+    \param[in] sensor3 true if using third sensor
+    \param[in] thresh3 threshold value for third sensor
+    \param[in] neighbors array of neighbor element indices
+    \param[in] Uavg average of solution in element
+    \param[out] sensors array to hold the sensor
+  */
+#ifdef USE_CPU
+  for(int e = 0; e < N_E; e++){
+#elif USE_GPU
+  int e = blockIdx.x*blkE+threadIdx.z;
+  if (e < N_E){
+#endif
+    
+    // Check only if it hasn't been flagged yet
+    if(sensors[e] == 0){
+      
+      // Initialize
+      scalar rhoL,vxL,vyL=0,vzL=0,alphaL,gammaL,betaL=0,pinfL=0,EtL,pL,iL,aL,HL;
+      scalar rhoR,vxR,vyR=0,vzR=0,alphaR,gammaR,betaR=0,pinfR=0,EtR,pR,iR,aR,HR;
+      scalar RT, vx, vy=0, vz=0, alpha, gamma, a, i, H, drho, dp, dV2,G,PHI,PSI,W;
+
+      // Get variables for this element (call it left)
+      int fc=0;
+      rhoL   = Uavg[e*N_F+fc];       fc++;
+      vxL    = Uavg[e*N_F+fc]/rhoL;  fc++;
+#ifdef TWOD
+      vyL    = Uavg[e*N_F+fc]/rhoL;  fc++;
+#endif
+#ifdef THREED
+      vyL    = Uavg[e*N_F+fc]/rhoL;  fc++;
+      vzL    = Uavg[e*N_F+fc]/rhoL;  fc++;
+#endif
+      EtL    = Uavg[e*N_F+fc];       fc++;
+
+      gammaL = constants::GLOBAL_GAMMA;
+   
+      pL = (gammaL-1.0) * (EtL - 0.5*rhoL*(vxL*vxL + vyL*vyL + vzL*vzL));
+      aL = sqrt(gammaL * pL/rhoL);
+      HL = (EtL + pL)/rhoL;
+
+      //      printf("Inside calc_sensors_radsinglefluid, e=%d, rhoL=%f, uL=%f, EtL=%f, pL=%f, HL=%f\n",e,rhoL,vxL,EtL,pL,HL);
+      // Loop on neighbors
+      bool done_detecting = false;
+      for(int nn = 0; (nn < N_N) && (!done_detecting) ; nn++){
+	int right = neighbors[e*N_N+nn]; // neighbor index
+	//	printf("\tright element = %d\n",right);
+	if (right >= 0){
+	 
+	  // Get variables for this neighbor (call it right)
+	  fc=0;
+	  rhoR   = Uavg[right*N_F+fc];       fc++;
+	  vxR    = Uavg[right*N_F+fc]/rhoR;  fc++;
+#ifdef TWOD
+	  vyR    = Uavg[right*N_F+fc]/rhoR;  fc++;
+#endif
+#ifdef THREED
+	  vyR    = Uavg[right*N_F+fc]/rhoR;  fc++;
+	  vzR    = Uavg[right*N_F+fc]/rhoR;  fc++;
+#endif
+	  EtR    = Uavg[right*N_F+fc];       fc++;
+
+	  gammaR = gammaL;
+
+	  pR = (gamma-1.0) * (EtR - 0.5*rhoR*(vxR*vxR + vyR*vyR + vzR*vzR));
+	  aR = sqrt(gamma * pR/rhoR);
+	  HR = (EtR + pR)/rhoR;
+
+	  // Roe averages
+	  RT    = sqrt(rhoR/rhoL);
+	  vx    = (vxL + RT*vxR) / (1+RT);
+	  vy    = (vyL + RT*vyR) / (1+RT);
+	  vz    = (vzL + RT*vzR) / (1+RT);
+
+	  gamma = gammaL;
+	  H     = (HL + RT*HR) / (1+RT);
+	  a     = sqrt((gamma-1) * (H-0.5*(vx*vx + vy*vy + vz*vz)));
+	  /*
+	  printf("\t\tFlow properties at this point:\n");
+	  printf("\t\trhoL,uL,HL=%f,%f,%f\n",rhoL,vxL,HL);
+	  printf("\t\trhoR,uR,HR=%f,%f,%f\n",rhoR,vxR,HR);
+	  */
+	  // First sensor (contact sensor from Sreenivas)
+	  if(sensor1){
+	    // Wave strength for contact
+	    drho = rhoR - rhoL;
+	    dp = pR-pL;
+	    dV2 = drho - dp/(a*a);
+
+	    G = fabs(dV2)/(rhoL+rhoR);
+	    PHI = 2*G/((1+G)*(1+G));
+	    //	    printf("\t\t\tinside sensor 1 check:\n");
+	    //    printf("\t\t\tPHI=%f, thresh1=%f\n",PHI, thresh1);
+	    if(PHI>thresh1){
+	      sensors[e]     = 1;
+	      sensors[right] = 1;  // this is basically a race condition (another thread could be messing with this too)
+	      done_detecting = true;
+	      //   printf("Sensor 1 tripped\n");
+	    }
+	  } // sensor 1
+
+	  // Second sensor (shock sensor from Sreenivas)
+	  if((sensor2)&&(!done_detecting)){
+	    if(((vxL-aL > vx-a) && (vx-a > vxR-aR)) || ((vyL-aL > vy-a) && (vy-a > vyR-aR)) || ((vzL-aL > vz-a) && (vz-a > vzR-aR))){
+	      PSI = fabs(pR-pL)/(pL+pR);
+	      W   = 2*PSI/((1+PSI)*(1+PSI));
+	      //   printf("\t\t\tinside sensor 2 check:\n");
+	      //  printf("\t\t\tPSI=%f, W=%f, thresh2=%f\n",PSI,W,thresh2);
+	      if(W>thresh2){
+		sensors[e]     = 2;
+		sensors[right] = 2; 
+		done_detecting = true;
+		//	printf("Sensor 2 tripped\n");
+	      }
+	    }
+	  } // sensor 2
+	  /*
+	  if (sensors[e]>0)
+	    {
+	      printf("running sensor in e=%d, inspecting with neighbor element %d, TRIGGERED\n",e,right);
+	    }
+	  else
+	    {
+	      printf("running sensor in e=%d, inspecting with neighbor element %d\n",e,right);
+	    }
+	  */
+	  /*
+	  // Third sensor (contact sensor based on gamma)
+	  if((sensor3)&&(!done_detecting)){
+	    G   = fabs(gammaR-gammaL)/(gammaL+gammaR);
+	    PHI = 2*G/((1+G)*(1+G));
+	    if(PHI>thresh3){
+	      sensors[e]     = 3;
+	      sensors[right] = 3; 
+	      done_detecting = true;
+	    }
+	  } // sensor 3
+	  */
+	}
+
+	// If right < 0 then we are at a interesting boundary (and we
+	// turn on the sensor)
+	else{
+	  // printf("running sensor in e=%d, neighbor less than zero\n",e);
+	  sensors[e] = 1; done_detecting = true;
+	}
+      
+      } // loop on neighbors
+    } // if sensor is zero
+    /*
+    else
+      {
+	printf("e=%d had already been tagged as trouble, so sensor skipped it\n",e);
+      }
+    */
+  } // loop on elements
+}
+
 arch_global void copy_detected(int N_s, int N_E, int* sensors, scalar* Uold, scalar* U){
   /*!
     \brief Copy only the elements which were detected with a sensor and limited.
@@ -232,6 +400,37 @@ void Lcalc_sensors(int N_E, int N_N, bool sensor1, scalar thresh1, bool sensor2,
 #endif
 
   calc_sensors arch_args (N_E,N_N,sensor1,thresh1,sensor2,thresh2,sensor3,thresh3,neighbors,Uavg,sensors);
+};
+
+extern "C"
+void Lcalc_sensors_radsinglefluid(int N_E, int N_N, bool sensor1, scalar thresh1, bool sensor2, scalar thresh2, bool sensor3, scalar thresh3, int* neighbors, scalar* Uavg, int* sensors){
+  /*!
+    \brief Host C function to launch calc_sensors kernel.
+    \param[in] N_E number of elements
+    \param[in] N_N number of neighbors
+    \param[in] sensor1 true if using first sensor
+    \param[in] thresh1 threshold value for first sensor
+    \param[in] sensor2 true if using second sensor
+    \param[in] thresh2 threshold value for second sensor
+    \param[in] sensor3 true if using third sensor
+    \param[in] thresh3 threshold value for third sensor
+    \param[in] neighbors array of neighbor element indices
+    \param[in] Uavg average of solution in element
+    \param[out] sensors array to hold the sensor
+    \section Description
+    In GPU mode, launches N_E/blkE blocks of 1 x 1 x blkE
+    threads. blkE controls the number of elements to set on each block
+  */
+
+#ifdef USE_GPU
+  int div = N_E/blkE;
+  int mod = 0;
+  if (N_E%blkE != 0) mod = 1;
+  dim3 dimBlock(1,1,blkE);
+  dim3 dimGrid(div+mod,1);
+#endif
+
+  calc_sensors_radsinglefluid arch_args (N_E,N_N,sensor1,thresh1,sensor2,thresh2,sensor3,thresh3,neighbors,Uavg,sensors);
 };
 
 extern "C"

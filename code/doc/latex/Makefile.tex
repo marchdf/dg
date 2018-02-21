@@ -1,0 +1,65 @@
+\section{Makefile File Reference}
+\label{Makefile}\index{Makefile@{Makefile}}
+
+
+Main makefile for the code.  
+
+
+
+
+\subsection{Detailed Description}
+Main makefile for the code. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan
+\end{DoxyAuthor}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em A\-R\-C\-H} & processor to use \\
+\hline
+\mbox{\tt in}  & {\em P\-A\-R\-A} & to use or not to use parallel computing \\
+\hline
+\mbox{\tt in}  & {\em P\-R\-E\-C} & double or single precision (only double works right now but single could be made to work easily) \\
+\hline
+\mbox{\tt in}  & {\em P\-R\-O\-B} & equation to use \\
+\hline
+\mbox{\tt in}  & {\em G\-A\-M\-M} & gamma model to use \\
+\hline
+\mbox{\tt in}  & {\em F\-L\-U\-X} & Riemann solver to use \\
+\hline
+\mbox{\tt in}  & {\em L\-I\-E\-U} & Compile location \\
+\hline
+\mbox{\tt in}  & {\em N\-F\-L\-D} & Total number of fields \\
+\hline
+\mbox{\tt in}  & {\em M\-A\-S\-S} & Number of mass fraction fields \\
+\hline
+\mbox{\tt in}  & {\em P\-R\-O\-F} & to use or not to use profiling \\
+\hline
+\mbox{\tt in}  & {\em E\-R\-R\-O\-R} & to output or not to output final solution error (L1, L2, Linfinity) \\
+\hline
+\mbox{\tt in}  & {\em C\-O\-N\-S} & to output or not to ouptut conservation errors \\
+\hline
+\mbox{\tt in}  & {\em V\-I\-S\-C} & viscosity rule\\
+\hline
+\end{DoxyParams}
+\begin{TabularC}{2}
+\hline
+\rowcolor{lightgray}{\bf Parameter }&{\bf Default values (or other valid values)  }\\\cline{1-2}
+A\-R\-C\-H &U\-S\-E\-\_\-\-C\-P\-U (or U\-S\-E\-\_\-\-G\-P\-U) \\\cline{1-2}
+P\-A\-R\-A &N\-O\-\_\-\-M\-P\-I (or U\-S\-E\-\_\-\-M\-P\-I) \\\cline{1-2}
+P\-R\-E\-C &U\-S\-E\-\_\-\-D\-O\-U\-B\-L\-E (or U\-S\-E\-\_\-\-F\-L\-O\-A\-T) \\\cline{1-2}
+P\-R\-O\-B &M\-U\-L\-T\-I\-F\-L\-U\-I\-D (or S\-I\-N\-G\-L\-E\-F\-L\-U\-I\-D or P\-A\-S\-S\-I\-V\-E) \\\cline{1-2}
+G\-A\-M\-M &G\-A\-M\-N\-C\-O\-N (or G\-A\-M\-C\-O\-N\-S) \\\cline{1-2}
+F\-L\-U\-X &R\-O\-E (or H\-L\-L or L\-L\-F) \\\cline{1-2}
+L\-I\-E\-U &H\-O\-M\-E (or T\-A\-C\-C or A\-N\-L or F\-L\-U\-X) \\\cline{1-2}
+N\-F\-L\-D &-\/ \\\cline{1-2}
+M\-A\-S\-S &0-\/10 \\\cline{1-2}
+P\-R\-O\-F &O\-F\-F (or O\-N) \\\cline{1-2}
+E\-R\-R\-R &N\-O\-E\-R\-R\-O\-R (or E\-R\-R\-O\-R) \\\cline{1-2}
+C\-O\-N\-S &N\-O\-C\-O\-N\-S (or C\-O\-N\-S) \\\cline{1-2}
+V\-I\-S\-C &(C\-O\-N\-S\-T\-A\-N\-T\-V\-I\-S, N\-O\-V\-I\-S, or S\-U\-T\-H\-E\-R\-L\-A\-N\-D). Default=N\-O\-V\-I\-S \\\cline{1-2}
+\end{TabularC}

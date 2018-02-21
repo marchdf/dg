@@ -1,0 +1,102 @@
+\section{src/sensors/sensor\-\_\-kernels.h File Reference}
+\label{sensor__kernels_8h}\index{src/sensors/sensor\-\_\-kernels.\-h@{src/sensors/sensor\-\_\-kernels.\-h}}
+
+
+Functions to launch \doxyref{S\-E\-N\-S\-O\-R}{p.}{classSENSOR} kernels.  
+
+
+{\ttfamily \#include \char`\"{}scalar\-\_\-def.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$math.\-h$>$}\\*
+{\ttfamily \#include \char`\"{}macros.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}constants.\-h\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bf Lcalc\-\_\-sensors} (int N\-\_\-\-E, int N\-\_\-\-N, bool sensor1, scalar thresh1, bool sensor2, scalar thresh2, bool sensor3, scalar thresh3, int $\ast$neighbors, scalar $\ast$Uavg, int $\ast$sensors)
+\item 
+void {\bf Lcopy\-\_\-detected} (int N\-\_\-s, int N\-\_\-\-E, int $\ast$sensors, scalar $\ast$Uold, scalar $\ast$U)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Functions to launch \doxyref{S\-E\-N\-S\-O\-R}{p.}{classSENSOR} kernels. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{sensor\-\_\-kernels.\-h@{sensor\-\_\-kernels.\-h}!Lcalc\-\_\-sensors@{Lcalc\-\_\-sensors}}
+\index{Lcalc\-\_\-sensors@{Lcalc\-\_\-sensors}!sensor_kernels.h@{sensor\-\_\-kernels.\-h}}
+\subsubsection[{Lcalc\-\_\-sensors}]{\setlength{\rightskip}{0pt plus 5cm}void Lcalc\-\_\-sensors (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{bool}]{sensor1, }
+\item[{scalar}]{thresh1, }
+\item[{bool}]{sensor2, }
+\item[{scalar}]{thresh2, }
+\item[{bool}]{sensor3, }
+\item[{scalar}]{thresh3, }
+\item[{int $\ast$}]{neighbors, }
+\item[{scalar $\ast$}]{Uavg, }
+\item[{int $\ast$}]{sensors}
+\end{DoxyParamCaption}
+)}\label{sensor__kernels_8h_aa803a6151cd8c8813bbfebabcbe74b91}
+Host C function to launch calc\-\_\-sensors kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbors \\
+\hline
+\mbox{\tt in}  & {\em sensor1} & true if using first sensor \\
+\hline
+\mbox{\tt in}  & {\em thresh1} & threshold value for first sensor \\
+\hline
+\mbox{\tt in}  & {\em sensor2} & true if using second sensor \\
+\hline
+\mbox{\tt in}  & {\em thresh2} & threshold value for second sensor \\
+\hline
+\mbox{\tt in}  & {\em sensor3} & true if using third sensor \\
+\hline
+\mbox{\tt in}  & {\em thresh3} & threshold value for third sensor \\
+\hline
+\mbox{\tt in}  & {\em neighbors} & array of neighbor element indices \\
+\hline
+\mbox{\tt in}  & {\em Uavg} & average of solution in element \\
+\hline
+\mbox{\tt out}  & {\em sensors} & array to hold the sensor \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of 1 x 1 x blk\-E threads. blk\-E controls the number of elements to set on each block\index{sensor\-\_\-kernels.\-h@{sensor\-\_\-kernels.\-h}!Lcopy\-\_\-detected@{Lcopy\-\_\-detected}}
+\index{Lcopy\-\_\-detected@{Lcopy\-\_\-detected}!sensor_kernels.h@{sensor\-\_\-kernels.\-h}}
+\subsubsection[{Lcopy\-\_\-detected}]{\setlength{\rightskip}{0pt plus 5cm}void Lcopy\-\_\-detected (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int $\ast$}]{sensors, }
+\item[{scalar $\ast$}]{Uold, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{sensor__kernels_8h_a864ed7c48ce66baf636503a6f99abc63}
+Host C function to launch copy\-\_\-detected kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element. \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em sensors} & array to hold the sensor \\
+\hline
+\mbox{\tt in}  & {\em Uold} & solution containing the limited solutions \\
+\hline
+\mbox{\tt out}  & {\em U} & solution to receive the limited elements \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E blocks of N\-\_\-s x N\-\_\-\-F x 1 threads.

@@ -1,0 +1,210 @@
+\section{full\-Matrix$<$ scalar $>$ Class Template Reference}
+\label{classfullMatrix}\index{full\-Matrix$<$ scalar $>$@{full\-Matrix$<$ scalar $>$}}
+
+
+An abstract interface for dense matrix of scalar.  
+
+
+
+
+{\ttfamily \#include $<$full\-Matrix.\-h$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries full\-Matrix} (scalar $\ast$original, int r, int c)\label{classfullMatrix_a164b98fcbf19db0462e3f912ad1f6c9a}
+
+\item 
+{\bfseries full\-Matrix} ({\bf full\-Matrix}$<$ scalar $>$ \&original, int c\-\_\-start, int c)\label{classfullMatrix_a6afcd37aa8b8f3627238359883f83b1e}
+
+\item 
+{\bfseries full\-Matrix} (int r, int c)\label{classfullMatrix_a873075dcbf65e6cda11f9dd74e0f64e6}
+
+\item 
+{\bfseries full\-Matrix} (int r, int c, double $\ast$data)\label{classfullMatrix_abbae4023db6557e7282437546f9e1a8e}
+
+\item 
+{\bfseries full\-Matrix} (const {\bf full\-Matrix}$<$ scalar $>$ \&other)\label{classfullMatrix_a44e2a03f9372a2ad1456fc594e25011a}
+
+\item 
+int {\bfseries size1} () const \label{classfullMatrix_ad8aac7de8f59da96decf71f1373ebf16}
+
+\item 
+int {\bfseries size2} () const \label{classfullMatrix_aa095c160618e1cbb54d56b9824647a67}
+
+\item 
+const scalar $\ast$ {\bfseries get\-Data\-Ptr} () const \label{classfullMatrix_af920edd1814e7ae3815f99917676413f}
+
+\item 
+scalar {\bfseries get} (int r, int c) const \label{classfullMatrix_a61d4532cd32e463925f1a94a2785e22b}
+
+\item 
+void {\bfseries set} (int r, int c, scalar v)\label{classfullMatrix_a735f82b112020b39d9d93605d1eae8d5}
+
+\item 
+scalar {\bfseries norm} () const \label{classfullMatrix_a9381333d7486f0b3085a89a50c6b845c}
+
+\item 
+bool {\bfseries resize} (int r, int c, bool reset\-Value=true)\label{classfullMatrix_a8d0af3903c823e1666eebfc9f44647bc}
+
+\item 
+void {\bfseries set\-As\-Proxy} (const {\bf full\-Matrix}$<$ scalar $>$ \&original)\label{classfullMatrix_a644b05b2a68abe1a3f2bbb69803e18e2}
+
+\item 
+void {\bfseries set\-As\-Proxy} (const {\bf full\-Matrix}$<$ scalar $>$ \&original, int c\-\_\-start, int c)\label{classfullMatrix_aa2be7cb032b3389a1f8afd5f52e8682a}
+
+\item 
+void {\bfseries set\-As\-Shape\-Proxy} ({\bf full\-Matrix}$<$ scalar $>$ \&original, int nb\-Row, int nb\-Col)\label{classfullMatrix_a7a11045f7597bbc012aa885900e22605}
+
+\item 
+{\bf full\-Matrix}$<$ scalar $>$ \& {\bfseries operator=} (const {\bf full\-Matrix}$<$ scalar $>$ \&other)\label{classfullMatrix_a81db22de4219a23eca151b91a3fd63ae}
+
+\item 
+void {\bfseries operator+=} (const {\bf full\-Matrix}$<$ scalar $>$ \&other)\label{classfullMatrix_a1a6073f2973475def36a539c7ac5841e}
+
+\item 
+scalar {\bfseries operator()} (int i, int j) const \label{classfullMatrix_a86b846a5fe83e189a0681d70b1da8f45}
+
+\item 
+scalar \& {\bfseries operator()} (int i, int j)\label{classfullMatrix_a0e0316ca46021548332a2cf027b06e1b}
+
+\item 
+void {\bfseries copy} (const {\bf full\-Matrix}$<$ scalar $>$ \&a, int i0, int ni, int j0, int nj, int desti0, int destj0)\label{classfullMatrix_ae1460aa1d835bec0da787b4a3bd143f1}
+
+\item 
+void {\bfseries copy} (const {\bf full\-Matrix}$<$ scalar $>$ \&a)\label{classfullMatrix_aa7f217d03d086d97900ad96bf282ebf5}
+
+\item 
+void {\bfseries mult\-\_\-naive} (const {\bf full\-Matrix}$<$ scalar $>$ \&b, {\bf full\-Matrix}$<$ scalar $>$ \&c) const \label{classfullMatrix_a52dc876b1826b5bb3b915daaede088c0}
+
+\item 
+void {\bfseries mult} (const {\bf full\-Matrix}$<$ scalar $>$ \&b, {\bf full\-Matrix}$<$ scalar $>$ \&c) const \label{classfullMatrix_a116826053c8db3494a0d1739bfdb027b}
+
+\item 
+void {\bfseries mult\-T\-By\-T} (const {\bf full\-Matrix}$<$ scalar $>$ \&a)\label{classfullMatrix_a96479776cf19dd78df0d701b4825faaa}
+
+\item 
+void {\bfseries gemm\-\_\-naive} (const {\bf full\-Matrix}$<$ scalar $>$ \&a, const {\bf full\-Matrix}$<$ scalar $>$ \&b, scalar alpha=1., scalar beta=1.)\label{classfullMatrix_aa1bdd6eeedfe97d327e83ce143a7b5f7}
+
+\item 
+void {\bfseries gemm} (const {\bf full\-Matrix}$<$ scalar $>$ \&a, const {\bf full\-Matrix}$<$ scalar $>$ \&b, scalar alpha=1., scalar beta=1.)\label{classfullMatrix_a2d899ddb35639676a5950f8aa3ab9feb}
+
+\item 
+void {\bfseries set\-All} (const scalar \&m)\label{classfullMatrix_a4c6d321804e56eaf3e06247ba95790ea}
+
+\item 
+void {\bfseries set\-All} (const {\bf full\-Matrix}$<$ scalar $>$ \&m)\label{classfullMatrix_a3160001559cfd931475e64fbede5c2ac}
+
+\item 
+void {\bfseries scale} (const double s)\label{classfullMatrix_a5fe48868291f6f4ff9f7d3ce773e7ff1}
+
+\item 
+void {\bfseries scale} (const float s)\label{classfullMatrix_a5c8896026548f0d79e44c294092da9c2}
+
+\item 
+void {\bfseries add} (const double \&a)\label{classfullMatrix_a9b1e033679715bedb2cfe8916e34114f}
+
+\item 
+void {\bfseries add} (const {\bf full\-Matrix}$<$ scalar $>$ \&m)\label{classfullMatrix_a0bbbce0cad2f89982099ce3854594a99}
+
+\item 
+void {\bfseries add} (const {\bf full\-Matrix}$<$ scalar $>$ \&m, const double \&a)\label{classfullMatrix_ac87653d1c39ab6f945f7f23701512e4d}
+
+\item 
+void {\bfseries mult} (const {\bf full\-Vector}$<$ scalar $>$ \&x, {\bf full\-Vector}$<$ scalar $>$ \&y) const \label{classfullMatrix_a92754f8e604d7ba8cc5ab637bfd7b023}
+
+\item 
+{\bf full\-Matrix}$<$ scalar $>$ {\bfseries transpose} ()\label{classfullMatrix_ad054bfb33c419783296ae22e03543a18}
+
+\item 
+void {\bfseries transpose\-In\-Place} ()\label{classfullMatrix_abf6486cc39ac0ce4b665ed4d5eb5172d}
+
+\item 
+bool {\bfseries lu\-Solve} (const {\bf full\-Vector}$<$ scalar $>$ \&rhs, {\bf full\-Vector}$<$ scalar $>$ \&result)\label{classfullMatrix_a7482094d84f8fb50b07860acd9a97923}
+
+\item 
+bool {\bfseries invert\-In\-Place} ()\label{classfullMatrix_acfb82d4d02773c86fad5407dd0409e43}
+
+\item 
+bool {\bfseries eig} ({\bf full\-Vector}$<$ float $>$ \&eigen\-Val\-Real, {\bf full\-Vector}$<$ float $>$ \&eigen\-Val\-Imag, {\bf full\-Matrix}$<$ scalar $>$ \&left\-Eigen\-Vect, {\bf full\-Matrix}$<$ scalar $>$ \&right\-Eigen\-Vect, bool sort\-Real\-Part=false)\label{classfullMatrix_ac9513f74358e05a9272a312dc87d7e5f}
+
+\item 
+bool {\bfseries eig} ({\bf full\-Vector}$<$ double $>$ \&eigen\-Val\-Real, {\bf full\-Vector}$<$ double $>$ \&eigen\-Val\-Imag, {\bf full\-Matrix}$<$ scalar $>$ \&left\-Eigen\-Vect, {\bf full\-Matrix}$<$ scalar $>$ \&right\-Eigen\-Vect, bool sort\-Real\-Part=false)\label{classfullMatrix_abffb631cd1bbb7d9b71d5fb2bd8a2b6a}
+
+\item 
+bool {\bfseries invert} ({\bf full\-Matrix}$<$ scalar $>$ \&result) const \label{classfullMatrix_a7947ac086f8d4d40b39b5c347ab0da25}
+
+\item 
+{\bf full\-Matrix}$<$ scalar $>$ {\bfseries cofactor} (int i, int j) const \label{classfullMatrix_ae6c9932625abd474fc469fc4ed49b51d}
+
+\item 
+scalar {\bfseries determinant} () const \label{classfullMatrix_a7d28a282ddfca1adb3be76399680d6e1}
+
+\item 
+bool {\bfseries svd} ({\bf full\-Matrix}$<$ scalar $>$ \&V, {\bf full\-Vector}$<$ scalar $>$ \&S)\label{classfullMatrix_ae547e42692f3302cd54555e6ec42e8a0}
+
+\item 
+void {\bfseries print2} () const \label{classfullMatrix_a62b8e0b92fa3c149fa6ba9988bcbed97}
+
+\item 
+void {\bfseries print} (const std\-::string name=\char`\"{}\char`\"{}) const \label{classfullMatrix_adfaa308571fcfa232a9a4b0c46eab453}
+
+\item 
+void {\bfseries print} (const std\-::string name=\char`\"{}\char`\"{}, const std\-::string fname=\char`\"{}\char`\"{}) const \label{classfullMatrix_a7a83c0b4db828cc61989ed7aa2c56c4c}
+
+\item 
+void {\bfseries copy\-Matrix\-To\-Pointer} (scalar $\ast$h\-\_\-\-A) const \label{classfullMatrix_a5294f88a7d8cb9cf2960257153f15776}
+
+\item 
+{\footnotesize template$<$$>$ }\\void {\bfseries scale} (const float s)\label{classfullMatrix_a29131c6c324a3f36444c0b41959b8ac9}
+
+\item 
+{\footnotesize template$<$$>$ }\\void {\bfseries scale} (const double s)\label{classfullMatrix_a263288bc530912102585b2384b3ef296}
+
+\item 
+{\footnotesize template$<$$>$ }\\void {\bfseries mult} (const {\bf full\-Matrix}$<$ float $>$ \&b, {\bf full\-Matrix}$<$ float $>$ \&c) const\label{classfullMatrix_abb98d8f13f95dc655b75c79ea19f6eaf}
+
+\item 
+{\footnotesize template$<$$>$ }\\void {\bfseries mult} (const {\bf full\-Matrix}$<$ std\-::complex$<$ double $>$ $>$ \&b, {\bf full\-Matrix}$<$ std\-::complex$<$ double $>$ $>$ \&c) const\label{classfullMatrix_afda3de318c1e48c43dc8d2d2dbaf6066}
+
+\item 
+{\footnotesize template$<$$>$ }\\void {\bfseries gemm} (const {\bf full\-Matrix}$<$ float $>$ \&a, const {\bf full\-Matrix}$<$ float $>$ \&b, float alpha, float beta)\label{classfullMatrix_a847a1302692b5b201d7560c9fae44061}
+
+\item 
+{\footnotesize template$<$$>$ }\\void {\bfseries gemm} (const {\bf full\-Matrix}$<$ std\-::complex$<$ double $>$ $>$ \&a, const {\bf full\-Matrix}$<$ std\-::complex$<$ double $>$ $>$ \&b, std\-::complex$<$ double $>$ alpha, std\-::complex$<$ double $>$ beta)\label{classfullMatrix_a3f4c5853431f1dfb6d5126a12f5be4b5}
+
+\item 
+{\footnotesize template$<$$>$ }\\void {\bfseries mult} (const {\bf full\-Vector}$<$ float $>$ \&x, {\bf full\-Vector}$<$ float $>$ \&y) const\label{classfullMatrix_a55fb3f95c0f4df7f29b079ee7ca7375e}
+
+\item 
+{\footnotesize template$<$$>$ }\\void {\bfseries mult} (const {\bf full\-Vector}$<$ std\-::complex$<$ double $>$ $>$ \&x, {\bf full\-Vector}$<$ std\-::complex$<$ double $>$ $>$ \&y) const\label{classfullMatrix_adac30f005dda7115027631d1b16c6408}
+
+\item 
+{\footnotesize template$<$$>$ }\\bool {\bfseries eig} ({\bf full\-Vector}$<$ float $>$ \&D\-R, {\bf full\-Vector}$<$ float $>$ \&D\-I, {\bf full\-Matrix}$<$ float $>$ \&V\-L, {\bf full\-Matrix}$<$ float $>$ \&V\-R, bool sort\-Real\-Part)\label{classfullMatrix_a87ce34a99a7ac9e16c47d6f9dab98540}
+
+\item 
+{\footnotesize template$<$$>$ }\\bool {\bfseries lu\-Solve} (const {\bf full\-Vector}$<$ float $>$ \&rhs, {\bf full\-Vector}$<$ float $>$ \&result)\label{classfullMatrix_ab9d45451fc0500ec52eff9a47f5e3d06}
+
+\item 
+{\footnotesize template$<$$>$ }\\bool {\bfseries invert} ({\bf full\-Matrix}$<$ float $>$ \&result) const\label{classfullMatrix_aa3293aa76d5f1b215097f390923d1968}
+
+\item 
+{\footnotesize template$<$$>$ }\\bool {\bfseries invert\-In\-Place} ()\label{classfullMatrix_a1c6364fb8d23a4544e95b3bc42e63115}
+
+\item 
+{\footnotesize template$<$$>$ }\\float {\bfseries determinant} () const\label{classfullMatrix_a66344b0277cd1201448e51ae73883ba7}
+
+\item 
+{\footnotesize template$<$$>$ }\\bool {\bfseries svd} ({\bf full\-Matrix}$<$ float $>$ \&V, {\bf full\-Vector}$<$ float $>$ \&S)\label{classfullMatrix_aeeb27efffe2375f72e7d7225893cc338}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$class scalar$>$class full\-Matrix$<$ scalar $>$}
+
+An abstract interface for dense matrix of scalar. 
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+src/matrix/{\bf full\-Matrix.\-h}\end{DoxyCompactItemize}

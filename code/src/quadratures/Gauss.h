@@ -21,6 +21,7 @@ struct IntPt{
 int GaussLegendreTri(int n1, int n2, IntPt *pts);
 int GaussLegendreTet(int n1, int n2, int n3, IntPt *pts); 
 int GaussLegendreHex(int n1, int n2, int n3, IntPt *pts);
+//int GaussLegendreHex(int n1, int n2, int n3, IntPt pts);
 int GaussLegendrePri(int n1, int n2, int n3, IntPt *pts); 
 
 int getNGQLPts (int order);
@@ -40,6 +41,7 @@ IntPt *getGQPriPts(int order);
 
 int getNGQHPts(int order);
 IntPt *getGQHPts(int order);
+//IntPt getGQHPts(int order);
 
 //For now this class is only for bindings but maybe the interface is
 //cleaner (it does not add new types) and it can replace the other

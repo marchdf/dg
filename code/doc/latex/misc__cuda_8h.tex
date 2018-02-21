@@ -1,0 +1,39 @@
+\section{src/utils/misc\-\_\-cuda.h File Reference}
+\label{misc__cuda_8h}\index{src/utils/misc\-\_\-cuda.\-h@{src/utils/misc\-\_\-cuda.\-h}}
+
+
+Small functions that run on host but that interface with the G\-P\-U.  
+
+
+{\ttfamily \#include $<$stdio.\-h$>$}\\*
+{\ttfamily \#include $<$assert.\-h$>$}\\*
+{\ttfamily \#include $<$cuda\-\_\-runtime\-\_\-api.\-h$>$}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+cuda\-Error\-\_\-t {\bf check\-Cuda} (cuda\-Error\-\_\-t result)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Small functions that run on host but that interface with the G\-P\-U. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{misc\-\_\-cuda.\-h@{misc\-\_\-cuda.\-h}!check\-Cuda@{check\-Cuda}}
+\index{check\-Cuda@{check\-Cuda}!misc_cuda.h@{misc\-\_\-cuda.\-h}}
+\subsubsection[{check\-Cuda}]{\setlength{\rightskip}{0pt plus 5cm}cuda\-Error\-\_\-t check\-Cuda (
+\begin{DoxyParamCaption}
+\item[{cuda\-Error\-\_\-t}]{result}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{misc__cuda_8h_a41aa6c499b66c4b5823ac47c14cebe8f}
+Check cuda function execution. \subsection{Description}\label{scalar__def_8h_Description}
+Convenience function for checking C\-U\-D\-A runtime A\-P\-I results can be wrapped around any runtime A\-P\-I call. No-\/op in release builds. From {\tt http\-://devblogs.\-nvidia.\-com/parallelforall/how-\/optimize-\/data-\/transfers-\/cuda-\/cc/}

@@ -1,0 +1,60 @@
+\section{src/matrix/full\-Matrix.cc File Reference}
+\label{fullMatrix_8cc}\index{src/matrix/full\-Matrix.\-cc@{src/matrix/full\-Matrix.\-cc}}
+
+
+Function definitions for \doxyref{full\-Matrix}{p.}{classfullMatrix} and \doxyref{full\-Vector}{p.}{classfullVector} functions.  
+
+
+{\ttfamily \#include $<$complex$>$}\\*
+{\ttfamily \#include $<$string.\-h$>$}\\*
+{\ttfamily \#include \char`\"{}full\-Matrix.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}blas\-\_\-stuff.\-h\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void F77\-N\-A\-M\-E() {\bfseries sgesv} (int $\ast$N, int $\ast$nrhs, float $\ast$A, int $\ast$lda, int $\ast$ipiv, float $\ast$b, int $\ast$ldb, int $\ast$info)\label{fullMatrix_8cc_a83814b8367223cb87bd8c38fa3c8b374}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries sgetrf} (int $\ast$M, int $\ast$N, float $\ast$A, int $\ast$lda, int $\ast$ipiv, int $\ast$info)\label{fullMatrix_8cc_a08206d2d0446e6daaa6810e1fc743c68}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries sgetri} (int $\ast$M, float $\ast$A, int $\ast$lda, int $\ast$ipiv, float $\ast$work, int $\ast$lwork, int $\ast$info)\label{fullMatrix_8cc_a046880f07fdc60a55889c227d060d8e2}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries sgesvd} (const char $\ast$jobu, const char $\ast$jobvt, int $\ast$M, int $\ast$N, float $\ast$A, int $\ast$lda, float $\ast$S, float $\ast$U, int $\ast$ldu, float $\ast$V\-T, int $\ast$ldvt, float $\ast$work, int $\ast$lwork, int $\ast$info)\label{fullMatrix_8cc_a5b23cba0a4aab80ec4b06746ffb004a9}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries sgeev} (const char $\ast$jobvl, const char $\ast$jobvr, int $\ast$n, float $\ast$a, int $\ast$lda, float $\ast$wr, float $\ast$wi, float $\ast$vl, int $\ast$ldvl, float $\ast$vr, int $\ast$ldvr, float $\ast$work, int $\ast$lwork, int $\ast$info)\label{fullMatrix_8cc_a6c543a3c3428e642a569ac6c7c94fe85}
+
+\item 
+void {\bfseries eig\-Sort} (int n, float $\ast$wr, float $\ast$wi, float $\ast$V\-L, float $\ast$V\-R)\label{fullMatrix_8cc_a8497991a05a791144e9eb6048adb7f00}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries dgesv} (int $\ast$N, int $\ast$nrhs, double $\ast$A, int $\ast$lda, int $\ast$ipiv, double $\ast$b, int $\ast$ldb, int $\ast$info)\label{fullMatrix_8cc_aa9bf7c5ae2d5e3d42a39b4f271072c8e}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries dgetrf} (int $\ast$M, int $\ast$N, double $\ast$A, int $\ast$lda, int $\ast$ipiv, int $\ast$info)\label{fullMatrix_8cc_ac8cb81abc17fb2e936fb7fb618fc17f5}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries dgetri} (int $\ast$M, double $\ast$A, int $\ast$lda, int $\ast$ipiv, double $\ast$work, int $\ast$lwork, int $\ast$info)\label{fullMatrix_8cc_a8d813845b8a3ae08e4fc86969292a015}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries dgesvd} (const char $\ast$jobu, const char $\ast$jobvt, int $\ast$M, int $\ast$N, double $\ast$A, int $\ast$lda, double $\ast$S, double $\ast$U, int $\ast$ldu, double $\ast$V\-T, int $\ast$ldvt, double $\ast$work, int $\ast$lwork, int $\ast$info)\label{fullMatrix_8cc_afda3e3d649cace78da2f3a74f7e17308}
+
+\item 
+void F77\-N\-A\-M\-E() {\bfseries dgeev} (const char $\ast$jobvl, const char $\ast$jobvr, int $\ast$n, double $\ast$a, int $\ast$lda, double $\ast$wr, double $\ast$wi, double $\ast$vl, int $\ast$ldvl, double $\ast$vr, int $\ast$ldvr, double $\ast$work, int $\ast$lwork, int $\ast$info)\label{fullMatrix_8cc_a2eb4667e5959b0282bce32346e1fc9ec}
+
+\item 
+void {\bfseries eig\-Sort} (int n, double $\ast$wr, double $\ast$wi, double $\ast$V\-L, double $\ast$V\-R)\label{fullMatrix_8cc_a6f2a3b1649cc2b162831cc84501c59a1}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Function definitions for \doxyref{full\-Matrix}{p.}{classfullMatrix} and \doxyref{full\-Vector}{p.}{classfullVector} functions. \begin{DoxyCopyright}{Copyright}
+Gmsh -\/ Copyright (C) 1997-\/2010 
+\end{DoxyCopyright}
+\begin{DoxyAuthor}{Authors}
+C. Geuzaine, J.-\/\-F. Remacle
+\end{DoxyAuthor}
+See the L\-I\-C\-E\-N\-S\-E.\-txt file for license information. Please report all bugs and problems to {\tt gmsh@geuz.\-org}. 

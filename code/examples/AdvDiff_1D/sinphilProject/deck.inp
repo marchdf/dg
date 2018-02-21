@@ -1,0 +1,35 @@
+#Make options
+LIEU=HOME
+ARCH=USE_CPU
+PROF=OFF
+PARA=NO_MPI
+PREC=USE_DOUBLE
+DIMS=ONED
+ERRR=ERROR
+VISC=CONSTANTVIS
+FSOL=ICBN
+PROB=SCALARAD
+NFLD=1
+GAMM=GAMNCON
+FLUX=CEN
+MASS=0
+#Code options
+#time integration
+rk4
+#output time step size
+0.5
+#final time
+30.0
+#Courant-Friedrichs-Lewy condition
+0.5
+#Von Neumann condition
+0.99
+#order
+5
+#mesh file
+mesh.msh
+lin
+#limiter
+null
+#initial condition
+sinphilProject

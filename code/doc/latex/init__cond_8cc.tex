@@ -1,0 +1,202 @@
+\section{src/ic/init\-\_\-cond.cc File Reference}
+\label{init__cond_8cc}\index{src/ic/init\-\_\-cond.\-cc@{src/ic/init\-\_\-cond.\-cc}}
+
+
+Initial condition function definitions.  
+
+
+{\ttfamily \#include \char`\"{}init\-\_\-cond.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$stdlib.\-h$>$}\\*
+{\ttfamily \#include $<$gsl/gsl\-\_\-integration.\-h$>$}\\*
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct {\bf rtaylor\-\_\-density\-\_\-params}
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bfseries init\-\_\-dg\-\_\-\-Hi\-O\-Wvtx\-\_\-singlefluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_a8333da28129bd87c890cc62a3aab1f58}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-sodphil\-\_\-singlefluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a1cc84f891d4ae3b8ceafb14a0b0989fb}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-normvtx\-\_\-singlefluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a043fa3d53a043b04b9b7268fc3c8bed4}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-shckvtx\-\_\-singlefluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a5075be7cc4df4aa1371daccbdaedae19}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-sinphil\-\_\-singlefluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a0f965e297238e1bb6c228ecf9701a0cb}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-sinphil\-Project\-\_\-singlefluid} (const int N\-\_\-s, const int N\-\_\-\-E, const int G\-Qres, {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-\_\-\-G\-Q, {\bf full\-Matrix}$<$ scalar $>$ \&Super\-Weight, {\bf full\-Matrix}$<$ scalar $>$ \&Superdet\-J, {\bf full\-Matrix}$<$ scalar $>$ \&Super\-Phi, scalar $\ast$h\-\_\-\-Minv, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_acb7391b3bfc82323d6a99a3a4da4f7bd}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-rhobump\-Project\-\_\-singlefluid} (const int N\-\_\-s, const int N\-\_\-\-E, const int G\-Qres, {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-\_\-\-G\-Q, {\bf full\-Matrix}$<$ scalar $>$ \&Super\-Weight, {\bf full\-Matrix}$<$ scalar $>$ \&Superdet\-J, {\bf full\-Matrix}$<$ scalar $>$ \&Super\-Phi, scalar $\ast$h\-\_\-\-Minv, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a832b4cdedee81b5eb9193874a9182883}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-shallow} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_ab925bf9fb2c60220628e218e1c530d70}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-tranvtx\-\_\-singlefluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_ad3c7b4a445de0cb89c26615bffa3d76a}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-tranvtx\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_adca88d4a88266161095097054c36d7b4}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-velpert\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_a10d8612d0bfbe8587556c05b7df649ff}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-simplew\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a09c88c3865d7af5c24b4fde30a2675ee}
+
+\item 
+void {\bfseries build\-L\-Rstates\-\_\-multifluid} (scalar rho\-L, scalar u\-L, scalar Et\-L, scalar gamma\-L, scalar rho\-R, scalar u\-R, scalar Et\-R, scalar gamma\-R, const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_abf0d45c3303a86810fb3bb83e5c55d80}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-sodtube\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a13f2401a9ad8ecadf104bb1979d6abb7}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-sodmono\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_aedd0a8830a24370417296a7cc268c626}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-contact\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_ab62ad158c606f821436b483b56c23d6a}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-rhotact\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a3afd9ee6675095249e3d011aa306917f}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-matfrnt\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a35b48cc18f1bbb070aeefe7fdbdd6dd8}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-sinegam\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a4d9a8eea46e0cf15246d2099dd0d6f23}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-expogam\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a6818d28db7e076a0d50e1160595a4451}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-shckint\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const double Tf)\label{init__cond_8cc_a15e7b1d58fbc0e0d1ded98c9eeb8ef16}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-shuoshe\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a4b9af7af4d2a099b8f8f3efb432ec40a}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-multint\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a650db4d9601dba17a24282f11d4ec098}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-blast1d\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a8f126b98d14e7a3093f46ca878bdea54}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-simblst\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_a8cea5bb23886f0e5e32716abafa2301c}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-shckrar\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_a47db1d1184c311aa6f5933cbbd3b07f6}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-sodcirc\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a7230f29512c4f783c3d3d71f2a29fee0}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-rminstb\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_a4e4804a15ffb7c55470dc08bda833feb}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-rmmulti\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a7b4211d16331bc4d8459b472731fd546}
+
+\item 
+double {\bf rtaylor\-\_\-density} (double y, void $\ast$p)
+\item 
+void {\bfseries init\-\_\-dg\-\_\-rtaylor\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_afc5b7edecc1e8295bba89fdd074d16e9}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-khdrake\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_aa44a032b419164079515f7e5bab4bbfa}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-khuramp\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_a9c1c34338e590c44f9473fde83e53931}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-khinstb\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_ad596ca3bcfb7867c46d282db29ba0302}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-khblast\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_ab090d742ad67de29d5c253bc7e1dc754}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-khpertu\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a373b5978360a1fbbafb90fa762821ce2}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-rarecon\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_a3972c133cc77b10a19f3fb15842b11c5}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-blastrm\-\_\-multifluid} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_aaba18aeeb40e0d19b9869ae987be559d}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-sinephi\-\_\-passive} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_ae307850e5461da8963acc925bc36d1dc}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-sodmono\-\_\-passive} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_ab740be91844be6cc7d9344d9165b2c36}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-stffrnt\-\_\-stiffened} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a9337e2dbc52df550b2a211823b13daf0}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-stfshck\-\_\-stiffened} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_aace9146532de5f2d8edbf43fbb256def}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-stfbubl\-\_\-stiffened} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a3b68b717c6ccb48475316b2e2e5a6ec7}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-shckdrp\-\_\-stiffened} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_aee31d4fe9ccac2b1d907ce05dfee61b4}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-drpwall\-\_\-stiffened} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U)\label{init__cond_8cc_a54362f77ebdb9b7cdfdad70c50d8d06c}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-jetcrss\-\_\-stiffened} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_a88cab0ba810a2d1b36825ee04af791fc}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-prsrflw\-\_\-stiffened} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_a27cab5b1d501f3d89b9f0e230dce5271}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-injectr\-\_\-stiffened} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_acebfd54abd5c6801476402f6e8f7443c}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-bblwedg\-\_\-stiffened} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_a0a67f23ae766153c46982ac46f217bd4}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-cfplrun\-\_\-stiffened} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const {\bf simple\-Mesh} \&m, int type\-Element, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_adaf51f0656407dc5f10fa19acf5a81e1}
+
+\item 
+void {\bfseries init\-\_\-dg\-\_\-rmawave\-\_\-stiffened} (const int N\-\_\-s, const int N\-\_\-\-E, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Cen, {\bf full\-Matrix}$<$ scalar $>$ \&U, const std\-::vector$<$ double $>$ \&ic\-\_\-inputs)\label{init__cond_8cc_a254623361a0f99baeadbb41279f577e2}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Initial condition function definitions. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{init\-\_\-cond.\-cc@{init\-\_\-cond.\-cc}!rtaylor\-\_\-density@{rtaylor\-\_\-density}}
+\index{rtaylor\-\_\-density@{rtaylor\-\_\-density}!init_cond.cc@{init\-\_\-cond.\-cc}}
+\subsubsection[{rtaylor\-\_\-density}]{\setlength{\rightskip}{0pt plus 5cm}double rtaylor\-\_\-density (
+\begin{DoxyParamCaption}
+\item[{double}]{y, }
+\item[{void $\ast$}]{p}
+\end{DoxyParamCaption}
+)}\label{init__cond_8cc_aa8f086cf2c1a8e3262d0f3a1aa3a708a}
+Rayleigh-\/\-Taylor density setup for a diffuse interface 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em y} & y-\/position \\
+\hline
+\mbox{\tt in}  & {\em p} & pointer to a structure containing initial setup \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+This is used when you are initializing a diffuse interface and need to integrate using the G\-S\-L lib.

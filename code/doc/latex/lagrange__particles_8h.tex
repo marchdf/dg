@@ -1,0 +1,42 @@
+\section{src/particles/lagrange\-\_\-particles.h File Reference}
+\label{lagrange__particles_8h}\index{src/particles/lagrange\-\_\-particles.\-h@{src/particles/lagrange\-\_\-particles.\-h}}
+
+
+Class deals with the lagrange particles.  
+
+
+{\ttfamily \#include $<$vector$>$}\\*
+{\ttfamily \#include \char`\"{}macros.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}misc.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}scalar\-\_\-def.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}timers.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}mem\-\_\-counter.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}simple\-Mesh.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}full\-Matrix.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}lagrange\-\_\-particles\-\_\-kernels.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}mpi.\-h\char`\"{}}\\*
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class {\bf L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Class deals with the lagrange particles. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan
+\end{DoxyAuthor}
+This is a pure C\-P\-U implementation of Lagrange particles. The reasons for this are detailed in my notes 10/09/14 but it boils down to the following\-:
+
+
+\begin{DoxyItemize}
+\item the G\-P\-U would need to know X\-Y\-Z coordinates of the elements (lots of memory use!!) to locate the particle in an element
+\item it would be necessary to implement a reduction/search in parallel on the G\-P\-U to (1) find which elements the particles belong to and (2) do this efficiently. This can be complicated to implement well on a G\-P\-U.
+\item The main downside\-: at every time step, to advect the particle on the C\-P\-U, I will need to communicate the field quantities from the G\-P\-U to the C\-P\-U. This array will be small (N\-\_\-\-F $\ast$ N\-\_\-s) but still... I think I can live with this because I will most likely not be running many G\-P\-U simulations which require Lagrange particles. 
+\end{DoxyItemize}

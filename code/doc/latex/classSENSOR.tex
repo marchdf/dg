@@ -1,0 +1,72 @@
+\section{S\-E\-N\-S\-O\-R Class Reference}
+\label{classSENSOR}\index{S\-E\-N\-S\-O\-R@{S\-E\-N\-S\-O\-R}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bf S\-E\-N\-S\-O\-R} (int N\-\_\-s, int N\-\_\-\-E, int N\-\_\-\-N, {\bf T\-I\-M\-E\-R\-S} \&timers, {\bf M\-E\-M\-\_\-\-C\-O\-U\-N\-T\-E\-R} \&mem\-\_\-counter, const std\-::vector$<$ double $>$ \&thresholds=std\-::vector$<$ double $>$())\label{classSENSOR_a9cced597424a3b9b76cdc12fc65bed3b}
+
+\begin{DoxyCompactList}\small\item\em Constructor. \end{DoxyCompactList}\item 
+{\bf $\sim$\-S\-E\-N\-S\-O\-R} ()\label{classSENSOR_ae0b466e0ba759f6dc724d7a6994f5c4e}
+
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
+int $\ast$ {\bf get\-Sensors} () const 
+\item 
+bool {\bf is\-Sensor} () const 
+\item 
+void {\bf sensing} (int $\ast$neighbors, scalar $\ast$U)
+\item 
+void {\bf copy\-\_\-detected\-\_\-elements} (scalar $\ast$Uold, scalar $\ast$U)
+\end{DoxyCompactItemize}
+
+
+\subsection{Member Function Documentation}
+\index{S\-E\-N\-S\-O\-R@{S\-E\-N\-S\-O\-R}!copy\-\_\-detected\-\_\-elements@{copy\-\_\-detected\-\_\-elements}}
+\index{copy\-\_\-detected\-\_\-elements@{copy\-\_\-detected\-\_\-elements}!SENSOR@{S\-E\-N\-S\-O\-R}}
+\subsubsection[{copy\-\_\-detected\-\_\-elements}]{\setlength{\rightskip}{0pt plus 5cm}void S\-E\-N\-S\-O\-R\-::copy\-\_\-detected\-\_\-elements (
+\begin{DoxyParamCaption}
+\item[{scalar $\ast$}]{Uold, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{classSENSOR_a3ad7742bac1d68b40367afd2693dd7cb}
+Copy only the elements which were detected with a sensor and limited. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em Uold} & solution containing the limited solutions \\
+\hline
+\mbox{\tt out}  & {\em U} & solution to receive the limited elements\\
+\hline
+\end{DoxyParams}
+\index{S\-E\-N\-S\-O\-R@{S\-E\-N\-S\-O\-R}!get\-Sensors@{get\-Sensors}}
+\index{get\-Sensors@{get\-Sensors}!SENSOR@{S\-E\-N\-S\-O\-R}}
+\subsubsection[{get\-Sensors}]{\setlength{\rightskip}{0pt plus 5cm}int$\ast$ S\-E\-N\-S\-O\-R\-::get\-Sensors (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classSENSOR_af2a3b46fc0d54c6d9e8f3227bfecd42f}
+Return sensor array \index{S\-E\-N\-S\-O\-R@{S\-E\-N\-S\-O\-R}!is\-Sensor@{is\-Sensor}}
+\index{is\-Sensor@{is\-Sensor}!SENSOR@{S\-E\-N\-S\-O\-R}}
+\subsubsection[{is\-Sensor}]{\setlength{\rightskip}{0pt plus 5cm}bool S\-E\-N\-S\-O\-R\-::is\-Sensor (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classSENSOR_a07799cc6148e670e951d68e73fcc6fff}
+Return true if using sensors \index{S\-E\-N\-S\-O\-R@{S\-E\-N\-S\-O\-R}!sensing@{sensing}}
+\index{sensing@{sensing}!SENSOR@{S\-E\-N\-S\-O\-R}}
+\subsubsection[{sensing}]{\setlength{\rightskip}{0pt plus 5cm}void S\-E\-N\-S\-O\-R\-::sensing (
+\begin{DoxyParamCaption}
+\item[{int $\ast$}]{neighbors, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{classSENSOR_aa661dc34708a19efdef0d2d741037bab}
+Main sensor function to drive all the sensor calculations 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em neighbors} & array of neighbor element indices \\
+\hline
+\mbox{\tt in}  & {\em U} & main solution\\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+src/sensors/{\bf sensor.\-h}\item 
+src/sensors/{\bf sensor.\-cc}\end{DoxyCompactItemize}

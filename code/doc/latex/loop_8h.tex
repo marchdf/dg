@@ -1,0 +1,25 @@
+\section{src/utils/loop.h File Reference}
+\label{loop_8h}\index{src/utils/loop.\-h@{src/utils/loop.\-h}}
+
+
+Preprocessor for loop... shady business.  
+
+
+
+
+\subsection{Detailed Description}
+Preprocessor for loop... shady business. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+\subsection{Description}\label{scalar__def_8h_Description}
+This is straight from\-: {\tt http\-://www.\-codeproject.\-com/\-Tips/444338/\-Pre-\/processor-\/\-Iteration} And the code is on github\-: {\tt https\-://github.\-com/debdattabasu/pp\-\_\-\-Iteration} Licensed under The Code Project Open License (C\-P\-O\-L)
+
+Right now things max out at 10 iterations but I could increase that easily
+
+You use it by doing, for example\-: \#include \char`\"{}loopstart.\-h\char`\"{} \#define L\-O\-O\-P\-\_\-\-E\-N\-D 10 \#define M\-A\-C\-R\-O(x) printf(\char`\"{}\%d\textbackslash{}n\char`\"{}, x); \#include \char`\"{}loop.\-h\char`\"{} 

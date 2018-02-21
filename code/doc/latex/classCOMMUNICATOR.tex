@@ -1,0 +1,80 @@
+\section{C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R Class Reference}
+\label{classCOMMUNICATOR}\index{C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R@{C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R}}
+
+
+Class to communicate the faces between cpus and gpus.  
+
+
+
+
+{\ttfamily \#include $<$communicator.\-h$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} (int N\-\_\-ghosts, int N\-\_\-s, {\bf simple\-Mesh} \&m, {\bf T\-I\-M\-E\-R\-S} \&timers, {\bf M\-E\-M\-\_\-\-C\-O\-U\-N\-T\-E\-R} \&mem\-\_\-counter)
+\begin{DoxyCompactList}\small\item\em Constructor sets default number of ghosts and nodes in an element. \end{DoxyCompactList}\item 
+{\bf $\sim$\-C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} ()
+\item 
+void {\bf Communicate\-Ghosts} (int Nfields, scalar $\ast$U)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Class to communicate the faces between cpus and gpus. 
+
+\begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+\subsection{Description}\label{scalar__def_8h_Description}
+Class to communicate the faces between cpus and gpus. 
+
+\subsection{Constructor \& Destructor Documentation}
+\index{C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R@{C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R}!C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R@{C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R}}
+\index{C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R@{C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R}!COMMUNICATOR@{C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R}}
+\subsubsection[{C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R}]{\setlength{\rightskip}{0pt plus 5cm}C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R\-::\-C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-ghosts, }
+\item[{int}]{N\-\_\-s, }
+\item[{{\bf simple\-Mesh} \&}]{m, }
+\item[{{\bf T\-I\-M\-E\-R\-S} \&}]{timers, }
+\item[{{\bf M\-E\-M\-\_\-\-C\-O\-U\-N\-T\-E\-R} \&}]{mem\-\_\-counter}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classCOMMUNICATOR_a71d0bde2e5d1cb3ddddfc7d44e67b797}
+
+
+Constructor sets default number of ghosts and nodes in an element. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-ghosts} & number of ghosts \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes in an element \\
+\hline
+\mbox{\tt in}  & {\em m} & mesh operated on \\
+\hline
+\mbox{\tt in}  & {\em timers} & timers to use \\
+\hline
+\mbox{\tt in}  & {\em mem\-\_\-counter} & memory counter to use \\
+\hline
+\end{DoxyParams}
+\index{C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R@{C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R}!$\sim$\-C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R@{$\sim$\-C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R}}
+\index{$\sim$\-C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R@{$\sim$\-C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R}!COMMUNICATOR@{C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R}}
+\subsubsection[{$\sim$\-C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R}]{\setlength{\rightskip}{0pt plus 5cm}C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R\-::$\sim$\-C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classCOMMUNICATOR_a583e213a97c9b47219f16a121cbe5f23}
+Destructor 
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+src/communication/{\bf communicator.\-h}\item 
+src/communication/{\bf communicator\-\_\-cpu.\-cc}\item 
+src/communication/{\bf communicator\-\_\-gpu.\-cc}\end{DoxyCompactItemize}

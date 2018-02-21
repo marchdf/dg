@@ -17,6 +17,7 @@
 #include <map>
 #include "macros.h"
 #include <math.h>
+#include "philmesh.h"
 
 /*!
   \class simpleElement simpleMesh.h
@@ -55,8 +56,10 @@ class simpleInterface {
   inline int getPhysicalTag() const {/*!return physical tag of interface*/return _physicalTag;}
   inline const simpleElement *getElement(int i) const {/*!return the element of a side of the interface*/return _elements[i];}
   inline int getClosureId(int i) const {/*!return the closure id of a side of the interface*/return _closureId[i];}
-  static void BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterface> &interfaces, int typeInterface, int typeElement, int nsides);
-  simpleInterface(int physicalTag = 0);
+  static void BuildInterfaces(simpleMesh &mesh, std::vector<simpleInterface> &interfaces, int typeInterface, int typeElement, int nsides, int PeriCo2D);
+  static void BuildInterfaces_PERIFIX(simpleMesh &mesh, std::vector<simpleInterface> &interfaces, int typeInterface, int typeElement, int nsides);
+  static void FixClosures(simpleMesh &mesh, std::vector<simpleInterface> &interfaces, int typeInterface, int typeElement, int nsides, int PeriCo2D, scalar DomainLength);
+  simpleInterface(int physicalTag = 0); //I think this is how we declare interfaces
 };
 
 class simpleMesh {
@@ -69,6 +72,13 @@ class simpleMesh {
   fullMatrix<scalar> _normals;
   std::map<int,int> _elementMap;
   std::map<int,int> _ghostElementMap;
+
+  //PEJ 12/01/2017: Messing with the communication routines today,
+  //going to make _ghostElementMap obsolete.
+  std::vector<int> _ghostElement_Key;
+  std::vector<int> _ghostElement_Val;
+  std::vector<int> _ghostElement_HNe;
+
   bool _cartesian;
   int* _ghostElementSend;
   int* _ghostElementRecv;
@@ -93,16 +103,29 @@ class simpleMesh {
   inline const fullMatrix<scalar> & getNormals () const {/*! Return normals*/return _normals;}
   inline const std::map<int,int> & getElementMap () const {/*! Return elements mappings*/return _elementMap;}
   inline const std::map<int,int> & getGhostElementMap () const {/*! Return ghost elements mappings*/return _ghostElementMap;}
+  inline const std::vector<int> & getGhostElement_Key () const {/*! Return ghost element key*/return _ghostElement_Key;}
+  inline const std::vector<int> & getGhostElement_Val () const {/*! Return ghost element values*/return _ghostElement_Val;}
+  inline const std::vector<int> & getGhostElement_HNe () const {/*! Return ghost element values*/return _ghostElement_HNe;}
   void load (const char *fileName);
   void writeSolution (const scalar* solution, const int N_s, const int N_E, int type, std::vector<std::string> fnames, std::vector<std::string> names, int step, double time) const;
   void readSolution (const int N_s, const int N_E, int type, std::vector<std::string> fnames, std::vector<std::string> names, const int step, double &time, scalar* solution);
-  inline void buildInterfaces(int typeInterface, int typeElement, int nsides) {
+  void readSolutionNoTime (const int N_s, const int N_E, int type, std::vector<std::string> fnames, std::vector<std::string> names, const int step, scalar* solution);
+  inline void buildInterfaces(int typeInterface, int typeElement, int nsides, int PeriCo2D) {
     /*! Calls BuildInterfaces*/
-    simpleInterface::BuildInterfaces(*this, _interfaces, typeInterface, typeElement, nsides);
+    simpleInterface::BuildInterfaces(*this, _interfaces, typeInterface, typeElement, nsides, PeriCo2D);
   }
+  inline void buildInterfaces_PERIFIX(int typeInterface, int typeElement, int nsides) {
+    /*! Calls BuildInterfaces*/
+    simpleInterface::BuildInterfaces_PERIFIX(*this, _interfaces, typeInterface, typeElement, nsides);
+  }
+  
+  inline void fixclosures(int typeInterface, int typeElement, int nsides, int PeriCo2D, scalar DomainLength) {
+    simpleInterface::FixClosures(*this, _interfaces, typeInterface, typeElement, nsides, PeriCo2D, DomainLength);
+  }
+
   void buildElementMap(int elem_type);
   void buildCommunicators(int elem_type);
-  void buildNormals(int typeInterface, int typeElement);
+  void buildNormals(int typeInterface, int typeElement, int PeriCo2D, std::vector<std::vector<int> > elemNodes, int order, int N_N);
 
   int getNbGhosts() const {/*! Return number of ghost elements*/return _N_ghosts;}
   int* getGhostElementSend()const {/*! Return ghost elements to send*/return _ghostElementSend;}
@@ -113,6 +136,7 @@ class simpleMesh {
   int* getBoundaryMap()const {/*! Return boundary map*/return _boundary;}
   int* getBoundaryIdx()const {/*! Return boundary index mesh*/return _boundaryIdx;}
 
+  int SeekGhost(/*const simpleElement* elHome, int om_on, */int GmshId_on, int GmshId_off);
   void buildNeighbors(int N_N, int N_E);
   int* getNeighbors()const {/*! Return element neighbors mesh*/return _neighbors;}
   void buildBoundaryElementShift1D(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes);

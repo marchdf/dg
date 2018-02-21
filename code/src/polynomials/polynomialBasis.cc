@@ -4,6 +4,8 @@
   \copyright Gmsh - Copyright (C) 1997-2010
   \authors C. Geuzaine, J.-F. Remacle, Koen Hillewaert
   
+  PEJ 09/11/2017: Modifying for hex functionality in 3D
+
   See the LICENSE.txt file for license information. Please report all
   bugs and problems to <gmsh@geuz.org>.
 */
@@ -105,24 +107,51 @@ static fullMatrix<double> generatePascalQuad(int order)
 // generate all monomials xi^m * eta^n with n and m <= order
 static fullMatrix<double> generatePascalHex(int order)
 {
-
+  //This function modified by PEJ 09/11/2017: I don't know what it does,
+  //but before I fixed it, it generated a segfault
   fullMatrix<double> monomials( (order+1)*(order+1)*(order+1), 3);
   int index = 0;
+  for (int i1 = 0; i1 < order+1; i1++)
+    {
+      for (int i2 = 0; i2 < order+1; i2++)
+	{
+	  for (int i3 = 0; i3 < order+1; i3++)
+	    {
+	      monomials(index,0) = i1;
+	      monomials(index,1) = i2;
+	      monomials(index,2) = i3;
+	      //   printf("monomials(%d,%d)=%f\n",index,0,monomials(index,0));
+	      //   printf("monomials(%d,%d)=%f\n",index,1,monomials(index,1));
+	      //   printf("monomials(%d,%d)=%f\n",index,2,monomials(index,2));
+	      index++;
+	    }
+	}
+    }
+  /*
   for (int p = 0; p <= order; p++) {
     for(int i = 0; i < p; i++) {
-      for(int j = 0; j < i; j++, index++) {
+      for(int j = 0; j < i; j++) {
 	monomials(index, 0) = p;
 	monomials(index, 1) = i;
 	monomials(index, 2) = j;
+	printf("monomials(%d,%d)=%f\n",index,0,monomials(index,0));
+	printf("monomials(%d,%d)=%f\n",index,1,monomials(index,1));
+	printf("monomials(%d,%d)=%f\n",index,2,monomials(index,2));
+	index++;
       }
     }
-    for(int i = 0; i <= p; i++, index++) {
-      for(int j = 0; j <= p; i++, index++) {
+    for(int i = 0; i <= p; i++) {
+    for(int j = 0; j <= p; j++) {
 	monomials(index, 0) = p-i;
 	monomials(index, 1) = p;
+	printf("monomials(%d,%d)=%f\n",index,0,monomials(index,0));
+	printf("monomials(%d,%d)=%f\n",index,1,monomials(index,1));
+	index++;
       }
+  index++;
     }
   }
+  */
   return monomials;
 }
 
@@ -750,6 +779,232 @@ static fullMatrix<double> gmshGeneratePointsQuad(int order, bool serendip)
   return point;
 }
 
+//PEJ insertion 09/11/2017:
+static fullMatrix<double> gmshGeneratePointsHex(int order, bool serendip)
+{
+  int verbose = 0;
+  int nbPoints = pow(order+1, 3);
+  printf("In gmshGeneratePointsHex: nbPoints = %d\n", nbPoints);
+  fullMatrix<double> point(nbPoints, 3);
+  if (serendip == true) {printf("CATASTROPHE: gmshGeneratePointsHex not ready for serindipity element\n");}
+  if (order > 0)
+    {
+      //8 points defining the hexahedron vertices (these need to run in some kind of direction):
+      //After inspecting the order that gmsh associates the nodes in (m.getElements(MSH_HEX)), I think this is how it needs to go:
+      //node 0: - xi, - eta, + zeta
+      //node 1: + xi, - eta, + zeta
+      //node 2: + xi, - eta, - eta
+      //node 3: - xi, - eta, - zeta
+      //node 4: - xi, + eta, + zeta Observe that the two-component change occurs between node 3 and node 4
+      //node 5: + xi, + eta, + zeta
+      //node 6: + xi, + eta, - zeta
+      //node 7: - xi, + eta, - zeta
+      point(0,0) = -1; //xi coordinate
+      point(0,1) = -1; //eta coordinate
+      point(0,2) = 1; //zeta coordinate
+
+      point(1,0) = 1;
+      point(1,1) = -1;
+      point(1,2) = 1;
+      
+      point(2,0) = 1;
+      point(2,1) = -1;
+      point(2,2) = -1;
+      
+      point(3,0) = -1;
+      point(3,1) = -1;
+      point(3,2) = -1;
+ 
+     //Finished with negative eta face, now move to + eta
+      point(4,0) = -1;
+      point(4,1) = 1;
+      point(4,2) = 1;
+      
+      point(5,0) = 1;
+      point(5,1) = 1;
+      point(5,2) = 1;
+      
+      point(6,0) = 1;
+      point(6,1) = 1;
+      point(6,2) = -1;
+
+      point(7,0) = -1;
+      point(7,1) = 1;
+      point(7,2) = -1;
+      if (verbose > 0)
+	{
+      for (int k = 0; k < 8; k++)
+	{
+	  printf("point (%d): xi,eta,zeta = (%f, %f, %f)\n",k,point(k,0), point(k,1), point(k,2) );
+	}
+	}
+
+      if (order > 1)
+	{
+	  //Now we must populate some points on non-vertex locations
+	  int index = 8; //this is where interior points begin
+	  //Each hexahedron face defined by four vertices
+	  /*
+	  const static int faces[6][4] = {{3,0,4,7}, //-xi face
+					  {2,1,5,6}, //+xi face
+					  {2,3,7,6}, //-zeta face
+					  {1,0,4,5}, //+zeta face
+					  {7,6,5,4}, //+eta face
+					  {3,2,1,0}};//-eta face
+	  */
+	  const static int faces[6][4] = {{3,2,1,0}, //-eta face
+					  {1,0,4,5}, //+zeta face
+					  {3,0,4,7}, //-xi face
+					  {2,1,5,6}, //+xi face
+					  {2,3,7,6}, //-zeta face
+					  {7,6,5,4}}; //+eta face
+
+	  //These built to match the ordering of the nodes
+	  //I observed from geometry in a .msh file
+	  const static int edges[12][2] = {{0,1},
+					   {0,3},
+					   {0,4},
+					   {1,2},
+					   {1,5},
+					   {2,3},
+					   {2,6},
+					   {3,7},
+					   {4,5},
+					   {4,7},
+					   {5,6},
+					   {6,7}}; //each edge defined by two vertices
+	  /*
+	  const static int edges[12][2] = {{3,0},
+					   {0,4},
+					   {4,7},
+					   {7,3},
+					   {2,1},
+					   {1,5},
+					   {5,6},
+					   {6,2},
+					   {3,2},
+					   {0,1},
+					   {4,5},
+					   {7,6}}; //each edge defined by two vertices
+	  */
+
+	  /*
+	  //face 0 perimeter:
+	  edges[0] = {0,1};
+	  edges[1] = {1,2};
+	  edges[2] = {2,3};
+	  edges[3] = {3,0};
+	  //face 1 perimeter
+	  edges[4] = {1,6};
+	  edges[5] = {6,5};
+	  edges[6] = {5,2};
+	  //face 2 perimeter:
+	  edges[7] = {6,7};
+	  edges[8] = {7,4};
+	  edges[9] = {4,5};
+	  //face 4 perimeter:
+	  edges[10] = {7,0};
+	  edges[11] = {3,4};
+	  */
+	  //p2 element: one node on midpoint of each edge, centroid of each face, element centroid
+	  //Build the edge midpoints:
+	  if (order == 2)
+	    {
+	      for (int j = 0; j < 12; j++)
+		{
+		  for (int a = 0; a < D; a++)
+		    {
+		      point(index, a) = 0.5 * (point(edges[j][0], a) + point(edges[j][1],a));
+		    }
+		  if (verbose > 0){printf("point (%d): xi,eta,zeta = (%f,%f,%f)\n",index,point(index,0),point(index,1),point(index, 2));}
+		  index++;
+		}
+	      //The edge midpoints have been defined. Now, the face centroids
+	      for (int j = 0; j < 6; j++)
+		{
+		  for (int a = 0; a < D; a++)
+		    {
+		      point(index,a) = 0.25* (point(faces[j][0],a) + point(faces[j][1],a) + point(faces[j][2],a) + point(faces[j][3],a));
+		    }
+		  if (verbose > 0) {printf("point (%d): xi,eta,zeta = (%f,%f,%f)\n",index,point(index,0),point(index,1),point(index, 2));}
+		  index++;
+		}
+	      //Finally, the centroid
+	      point(index,0) = 0;
+	      point(index,1) = 0;
+	      point(index,2) = 0;
+	      if (verbose > 0) {printf("Centroid point(%d) = (%f,%f,%f)\n", index, point(index,0),point(index,1),point(index, 2));}
+	    }
+	  else if (order == 3)
+	    {
+	      for (int j = 0; j < 12; j++) //loop over all edges
+		{
+		  for (int jsub = 0; jsub < order-1; jsub++) //2 non-vertex points per edge
+		    {
+		      for (int a = 0; a < D; a++)
+			{
+			  //get the vector component in "a" direction
+			  double path_a = point(edges[j][1],a) - point(edges[j][0],a);
+			  //Now use that vector component to populate the edge point
+			  point(index,a) = point(edges[j][0],a) + 1.0/(order+0.0) * (jsub + 1.0) * path_a;
+			}
+		      if (verbose > 0) {printf("point (%d): xi,eta,zeta = (%f, %f, %f)\n", index, point(index,0), point(index,1), point(index,2));}
+		      index++;
+		    }
+		}
+	      //Now, the non-vertex points on each face
+	      for (int j = 0; j < 6; j++) //loop over all the faces
+		{
+		  //for each face in the p3 case, the non-vertex face points are miniature versions,
+		  //scaled by 1/3, of the four vertices for each face.
+		  //However, they must then be translated to the proper face, hence usage
+		  //of xiavg
+		  //4=(order-2)^2, may be helpful for generalizing in future
+		  double Xi_avg[D]; //average Xi on this face
+		  for (int a = 0; a < D; a++)
+		    {
+		      Xi_avg[a] = 0.0; 
+		      for (int jsub = 0; jsub < 4; jsub++) //4 vertex points per face
+			{
+			  //Xi_avg[a] += point(faces[j][jsub], a) / 6.0;
+			  Xi_avg[a] += point(faces[j][jsub], a) / 4.0;
+			}
+		    }
+		  //The usage of Xi_avg lifts these face points to the proper face.
+		  for (int jsub = 0; jsub < 4; jsub++)
+		    {
+		      //For each of these 4 points, it is 1/3 of a native vertex point, plus a translation in a particular direction
+		      for (int a = 0; a < D; a++)
+			{
+			  //point(index, a) = 1.0/3.0*point(faces[j][jsub], a) + Xi_avg[a];
+			  point(index, a) = 1.0/3.0*point(faces[j][jsub], a) + Xi_avg[a]*2.0/3.0;
+			}
+		      if (verbose > 0) {printf("point (%d): xi,eta,zeta = (%f, %f, %f)\n", index, point(index,0), point(index,1), point(index,2));}
+		      index++;
+		    }
+		}
+	      //To finish, the truly interior nodes, which lie completely inside the reference cube:
+	      //These are minature versions of the first eight nodes
+	      for (int j = 0; j < 8; j++)
+		{
+		  for (int a = 0; a < D; a++)
+		    {
+		      point(index,a) = 1.0/3.0 * point(j,a);
+		    }
+		  if (verbose > 0) {printf("point (%d): xi,eta,zeta = (%f, %f, %f)\n", index, point(index,0), point(index,1), point(index,2));}
+		  index++;
+		}
+	    }
+	  else
+	    {
+	      printf("CATASTROPHE!! gmshGeneratePointsHex not ready for p>3\n");
+	    }
+	} //end if for order>1
+    }
+  //exit(1);
+  return point;
+}
+
 static fullMatrix<double> generateLagrangeMonomialCoefficients
   (const fullMatrix<double>& monomial, const fullMatrix<double>& point)
 {
@@ -845,7 +1100,7 @@ static void getFaceClosure(int iFace, int iSign, int iRotate, std::vector<int> &
 
 static void generate3dFaceClosure(polynomialBasis::clCont &closure, int order)
 {
-
+  
   closure.clear();
   for (int iRotate = 0; iRotate < 3; iRotate++){
     for (int iSign = 1; iSign >= -1; iSign -= 2){
@@ -856,6 +1111,279 @@ static void generate3dFaceClosure(polynomialBasis::clCont &closure, int order)
       }
     }
   }
+}
+
+//PEJ 09/13/2017:
+static void generate3dFaceClosureHex(polynomialBasis::clCont &closure, int order)
+{
+  //clCont data type is a vector of vector of integeres, int[][]
+  //the closure has to tell each of the D+N_N faces of the element who its
+  //four associated nodes are.
+  //These face indices match with how I set up hex points in generateHexPoints
+  int NumFaces = 6;
+  closure.clear();
+  closure.resize(12); //sides per element x 2 cuz sometimes we need to run backwards
+  std::vector<int> entry;
+  if (order == 1)
+    {
+      entry.resize(4);
+      entry[0] = 3; entry[1] = 0; entry[2] = 4; entry[3] = 7;
+      //      entry = {3,0,4,7};
+      closure[0] = entry;
+
+      entry[0] = 2; entry[1] = 1; entry[2] = 5; entry[3] = 6;
+      //     entry = {2,1,5,6};
+      closure[1] = entry;
+
+
+      entry[0] = 2; entry[1] = 3; entry[2] = 7; entry[3] = 6;
+      //  entry = {2,3,7,6};
+      closure[2] = entry;
+      
+      entry[0] = 1; entry[1] = 0; entry[2] = 4; entry[3] = 5;
+      //  entry = {1,0,4,5};
+      closure[3] = entry;
+
+      entry[0] = 7; entry[1] = 6; entry[2] = 5; entry[3] = 4;
+      //  entry = {7,6,5,4};
+      closure[4] = entry;
+
+      entry[0] = 3; entry[1] = 2; entry[2] = 1; entry[3] = 0;
+      //   entry = {3,2,1,0};
+      closure[5] = entry;
+/*
+      //printf("Entering closure assignement structure, p=1\n");
+      entry.resize(4); //4 nodes defining each face
+      entry[0] = 0; entry[1] = 1; entry[2] = 5; entry[3] = 4;
+      closure[0] = entry;
+
+      entry[0] = 1; entry[1] = 2; entry[2] = 6; entry[3] = 5;
+      closure[1] = entry;
+
+      entry[0] = 2; entry[1] = 3; entry[2] = 7; entry[3] = 6;
+      closure[2] = entry;
+
+      entry[0] = 3; entry[1] = 0; entry[2] = 4; entry[3] = 7;
+      closure[3] = entry;
+
+      entry[0] = 4; entry[1] = 5; entry[2] = 6; entry[3] = 7;
+      closure[4] = entry;
+
+      entry[0] = 3; entry[1] = 2; entry[2] = 1; entry[3] = 0;
+      closure[5] = entry;
+     */
+      //printf("Done with closure[5]\n"); fflush(stdout);
+      //Next six closures are reverses of first six
+      for (int j = 0; j < 6; j++)
+	{
+	  //printf("j=%d\n", j);
+	  for (int k = 0; k < 4; k++)
+	    {
+	      //printf("k=%d\n",k);
+	      //entry[k] = closure[j][(4-k)%4];
+	      //entry[k] = closure[j][4-1-k]; //start at adjacent corner, run in opposite direction
+	      //entry[k] = closure[j][(k+2)%4]; //start in opposite corner, run same direction
+	      entry[k] = closure[j][k]; //identical 
+	      //entry[k] = closure[j][(k-2+4)%4]; //identical 
+	      /*
+	      closure[12-1-j][k] = closure[j][4-1-k];
+	      printf("closure[%d][%d] = %d\n", 12-1-j,k,closure[12-1-j][k]);
+	      */
+	    }
+	  closure[j+6] = entry;
+	  //closure[12-1-j] = entry;
+	}
+    }
+  else if (order == 2)
+    {
+      entry.resize(9); //9 supported nodes per face
+
+      
+      //four supported vertex nodes:
+      entry[0] = 3; entry[1] = 0; entry[2] = 4; entry[3] = 7;
+      //four supported edge nodes:
+      entry[4] = 9; entry[5] = 10; entry[6] = 17; entry[7] = 15;
+      //the face centroid node:
+      entry[8] = 22;
+      closure[0] = entry;
+
+      //four supported vertex nodes:
+      entry[0] = 2; entry[1] = 1; entry[2] = 5; entry[3] = 6;
+      //four supported edge nodes:
+      entry[4] = 11; entry[5] = 12; entry[6] = 18; entry[7] = 14;
+      //the face centroid node:
+      entry[8] = 23;
+      closure[1] = entry;
+
+      //four supported vertex nodes:
+      entry[0] = 2; entry[1] = 3; entry[2] = 7; entry[3] = 6;
+      //four supported edge nodes:
+      entry[4] = 13; entry[5] = 15; entry[6] = 19; entry[7] = 14;
+      //the face centroid node:
+      entry[8] = 24;
+      closure[2] = entry;
+      
+      //four supported vertex nodes:
+      entry[0] = 1; entry[1] = 0; entry[2] = 4; entry[3] = 5;
+      //four supported edge nodes:
+      entry[4] = 8; entry[5] = 10; entry[6] = 16; entry[7] = 12;
+      //the face centroid node:
+      entry[8] = 21;
+      closure[3] = entry;
+
+      //four supported vertex nodes:
+      entry[0] = 7; entry[1] = 6; entry[2] = 5; entry[3] = 4;
+      //four supported edge nodes:
+      entry[4] = 19; entry[5] = 18; entry[6] = 16; entry[7] = 17;
+      //the face centroid node:
+      entry[8] = 25;
+      closure[4] = entry;
+
+      //four supported vertex nodes:
+      entry[0] = 3; entry[1] = 2; entry[2] = 1; entry[3] = 0;
+      //four supported edge nodes:
+      entry[4] = 13; entry[5] = 11; entry[6] = 8; entry[7] = 9;
+      //the face centroid node:
+      entry[8] = 20;
+      closure[5] = entry;
+
+      //Next six closures are replicants of first six
+      for (int j = 0; j < 6; j++)
+	{
+	  //printf("j=%d\n", j);
+	  for (int k = 0; k < 9; k++)
+	    {
+	      //printf("k=%d\n",k);
+	      //entry[k] = closure[j][(4-k)%4];
+	      //entry[k] = closure[j][4-1-k]; //start at adjacent corner, run in opposite direction
+	      //entry[k] = closure[j][(k+2)%4]; //start in opposite corner, run same direction
+	      entry[k] = closure[j][k]; //identical 
+	      //entry[k] = closure[j][(k-2+4)%4]; //identical 
+	      /*
+	      closure[12-1-j][k] = closure[j][4-1-k];
+	      printf("closure[%d][%d] = %d\n", 12-1-j,k,closure[12-1-j][k]);
+	      */
+	    }
+	  closure[j+6] = entry;
+	  //closure[12-1-j] = entry;
+	}
+    }
+  else if (order == 3)
+    {
+      entry.resize(16);
+
+      //the zeroth face: follow order from gmshGeneratePointsHex
+      //entry[0] = 0; entry[1] = 3; entry[2] = 2; entry[3] = 1; //starting with 4 face vertices.
+      entry[0] = 3; entry[1] = 0; entry[2] = 4; entry[3] = 7;
+      //The face's interior nodes:
+      //      entry[12] = 32; entry[13] = 33; entry[14] = 34; entry[15] = 35;
+      entry[12] = 43; entry[13] = 40; entry[14] = 41; entry[15] = 42;
+      //The face's non-vertex edge nodes: run in the direction dictated by vertex nodes
+      entry[4] = 11; entry[5] = 10; 
+      entry[6] = 12; entry[7] = 13;
+      entry[8] = 26; entry[9] = 27;
+      entry[10] = 23; entry[11] = 22;
+      
+      closure[0] = entry;
+      //-----------------------------
+
+      //The 1 face:
+      //      entry[0] = 0; entry[1] = 1; entry[2] = 5; entry[3] = 4;
+      entry[0] = 2; entry[1] = 1; entry[2] = 5; entry[3] = 6;
+      //the face's interior nodes:
+      entry[12] = 45; entry[13] = 44; entry[14] = 47; entry[15] = 46;
+      //The face's non-vertex edge nodes: run in the direction dictated by vertex nodes
+      entry[4] = 15; entry[5] = 14; 
+      entry[6] = 16; entry[7] = 17;
+      entry[8] = 28; entry[9] = 29;
+      entry[10] = 21; entry[11] = 20;
+
+      closure[1] = entry;
+      //-------------------------------
+
+      //The 2 face:
+      //      entry[0] = 0; entry[1] = 4; entry[2] = 7; entry[3] = 3;
+      entry[0] = 2; entry[1] = 3; entry[2] = 7; entry[3] = 6;
+      //the face's interior nodes:
+      entry[12] = 48; entry[13] = 49; entry[14] = 50; entry[15] = 51;
+      //The face's non-vertex edge nodes: run in the direction dictated by vertex nodes
+      entry[4] = 18; entry[5] = 19; 
+      entry[6] = 22; entry[7] = 23;
+      entry[8] = 31; entry[9] = 30;
+      entry[10] = 21; entry[11] = 20;
+
+      closure[2] = entry;
+      //------------------------------
+
+      //The 3 face:
+      //entry[0] = 1; entry[1] = 2; entry[2] = 6; entry[3] = 5;
+      entry[0] = 1; entry[1] = 0; entry[2] = 4; entry[3] = 5;
+      //the face's interior nodes:
+      entry[12] = 37; entry[13] = 36; entry[14] = 39; entry[15] = 38;
+      //The face's non-vertex edge nodes:
+      entry[4] = 9; entry[5] = 8;
+      entry[6] = 12; entry[7] = 13;
+      entry[8] = 24; entry[9] = 25;
+      entry[10] = 17; entry[11] = 16;
+
+      closure[3] = entry;
+      //-----------------------------
+      
+      //The 4 face:
+      // entry[0] = 2; entry[1] = 3; entry[2] = 7; entry[3] = 6;
+      entry[0] = 7; entry[1] = 6; entry[2] = 5; entry[3] = 4;
+      //the face's interior nodes:
+      entry[12] = 55; entry[13] = 54; entry[14] = 53; entry[15] = 52;
+      //The face's non-vertex edge nodes: run in the direction dictated by vertex nodes
+      entry[4] = 31; entry[5] = 30; 
+      entry[6] = 29; entry[7] = 28;
+      entry[8] = 25; entry[9] = 24;
+      entry[10] = 26; entry[11] = 27;
+
+      closure[4] = entry;
+      //-----------------------------
+
+      //The 5 face:
+      //      entry[0] = 4; entry[1] = 5; entry[2] = 6; entry[3] = 7;
+      entry[0] = 3; entry[1] = 2; entry[2] = 1; entry[3] = 0;
+      //the face's interior nodes:
+      entry[12] = 33; entry[13] = 34; entry[14] = 35; entry[15] = 32;
+      //The face's non-vertex edge nodes: run in the direction dictated by vertex nodes
+      entry[4] = 19; entry[5] = 18; 
+      entry[6] = 15; entry[7] = 14;
+      entry[8] = 9; entry[9] = 8;
+      entry[10] = 10; entry[11] = 11;
+
+      closure[5] = entry;
+      //------------------------
+
+       //Next six closures are replicants of first six
+      for (int j = 0; j < 6; j++)
+	{
+	  //printf("j=%d\n", j);
+	  for (int k = 0; k < 16; k++) //16 supported nodes per element face
+	    {
+	      //printf("k=%d\n",k);
+	      //entry[k] = closure[j][(4-k)%4];
+	      //entry[k] = closure[j][4-1-k]; //start at adjacent corner, run in opposite direction
+	      //entry[k] = closure[j][(k+2)%4]; //start in opposite corner, run same direction
+	      entry[k] = closure[j][k]; //identical 
+	      //entry[k] = closure[j][(k-2+4)%4]; //identical 
+	      /*
+	      closure[12-1-j][k] = closure[j][4-1-k];
+	      printf("closure[%d][%d] = %d\n", 12-1-j,k,closure[12-1-j][k]);
+	      */
+	    }
+	  closure[j+6] = entry;
+	  //closure[12-1-j] = entry;
+	}
+    }
+  else
+    {
+      printf("CATASTROPHE!! generate3dFaceClosureHex not ready for p outside os {1,3}\n");
+    }
+ 
+
 }
 
 static void getFaceClosurePrism(int iFace, int iSign, int iRotate,
@@ -937,11 +1465,12 @@ std::map<int, polynomialBasis> polynomialBases::fs;
 
 const polynomialBasis *polynomialBases::find(int tag)
 {
+  //  printf("Entered polynomial basis find subroutine, tag=%d\n", tag);
   std::map<int, polynomialBasis>::const_iterator it = fs.find(tag);
   if (it != fs.end())     return &it->second;
   polynomialBasis F;
   F.numFaces = -1;
-
+  
   switch (tag){
   case MSH_PNT:
     F.numFaces = 1;
@@ -1344,7 +1873,45 @@ const polynomialBasis *polynomialBases::find(int tag)
     F.points =    gmshGeneratePointsPrism(2, false);
     generate3dFaceClosurePrism(F.closures, 2);
     break;
-
+  case MSH_HEX_8 :
+    {
+    F.numFaces = 6;
+    int orderLocal = 1;
+    printf("Calling generatePascalHex\n");
+    F.monomials = generatePascalHex(orderLocal);
+    printf("Calling gmshGeneratePointsHex\n");
+    F.points = gmshGeneratePointsHex(orderLocal, false);
+    //generate3dFaceClosureHex(F.closures, orderLocal, 6);
+    printf("Calling gmsh generic generate3dFaceClosure\n");
+    generate3dFaceClosureHex(F.closures, orderLocal);
+    break;
+    }
+  case MSH_HEX_27:
+    {
+      F.numFaces = 6;
+      int orderLocal = 2;
+      //   printf("Calling generatePascalHex, p2hex\n");
+      F.monomials = generatePascalHex(orderLocal);
+      //   printf("Calling gmshGeneratePointsHex, p2hex\n");
+      F.points = gmshGeneratePointsHex(orderLocal, false);
+      //generate3dFaceClosureHex(F.closures, orderLocal, 6);
+      //     printf("Calling gmsh generic generate3dFaceClosure, p2hex\n");
+      generate3dFaceClosureHex(F.closures, orderLocal);
+      break;
+    }
+  case MSH_HEX_64:
+    {
+      F.numFaces = 6;
+      int orderLocal = 3;
+            printf("Calling generatePascalHex, p3hex\n");
+      F.monomials = generatePascalHex(orderLocal);
+         printf("Calling gmshGeneratePointsHex, p3hex\n");
+      F.points = gmshGeneratePointsHex(orderLocal, false);
+      //generate3dFaceClosureHex(F.closures, orderLocal, 6);
+         printf("Calling gmsh generic generate3dFaceClosure, p3hex\n");
+      generate3dFaceClosureHex(F.closures, orderLocal);
+      break;
+    }
   default :
     printf("Unknown function space %d: reverting to TET_4", tag);
     F.numFaces = 4;

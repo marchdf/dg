@@ -1,0 +1,535 @@
+\section{src/quadratures/\-Gauss\-Quadrature\-Tri.cc File Reference}
+\label{GaussQuadratureTri_8cc}\index{src/quadratures/\-Gauss\-Quadrature\-Tri.\-cc@{src/quadratures/\-Gauss\-Quadrature\-Tri.\-cc}}
+
+
+Quadratures for triangles.  
+
+
+{\ttfamily \#include \char`\"{}Gauss.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}Gauss\-Legendre1\-D.\-h\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bf Int\-Pt} $\ast$ {\bfseries get\-G\-Q\-T\-Pts} (int order)\label{GaussQuadratureTri_8cc_ae8fb7deac4099c740896daf028f56b92}
+
+\item 
+int {\bfseries get\-N\-G\-Q\-T\-Pts} (int order)\label{GaussQuadratureTri_8cc_ab695c73eeb045af972383bd170d97e62}
+
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-T1} [1]
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-T2} [3]
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-T3} [4]
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-T4} [6]
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-T5} [7]
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-T6} [12]
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-T7} [13]
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-T8} [16]
+\item 
+{\bf Int\-Pt} $\ast$ {\bfseries G\-Q\-T} [9] = \{G\-Q\-T1,G\-Q\-T1,G\-Q\-T2,G\-Q\-T3,G\-Q\-T4,G\-Q\-T5,G\-Q\-T6,G\-Q\-T7,G\-Q\-T8\}\label{GaussQuadratureTri_8cc_a5747498aa17571be37bab7170bfddfa4}
+
+\item 
+{\bf Int\-Pt} $\ast$ {\bfseries G\-Q\-Tdegen} [17] = \{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\}\label{GaussQuadratureTri_8cc_ac63783026eab60ed505ef292a0d1872a}
+
+\item 
+int {\bfseries G\-Q\-Tn\-Pt} [9] = \{1,1,3,4,6,7,12,13,16\}\label{GaussQuadratureTri_8cc_a087ccc8b4bc0190f05c5c0c9ca3d246a}
+
+\item 
+{\bf Int\-Pt} {\bf tri\-P1\-Solin} [1]
+\item 
+{\bf Int\-Pt} {\bf tri\-P2\-Solin} [3]
+\item 
+{\bf Int\-Pt} {\bf tri\-P3\-Solin} [4]
+\item 
+{\bf Int\-Pt} {\bf tri\-P4\-Solin} [6]
+\item 
+{\bf Int\-Pt} {\bf tri\-P5\-Solin} [7]
+\item 
+{\bf Int\-Pt} {\bf tri\-P6\-Solin} [12]
+\item 
+{\bf Int\-Pt} {\bf tri\-P7\-Solin} [13]
+\item 
+{\bf Int\-Pt} {\bf tri\-P8\-Solin} [16]
+\item 
+{\bf Int\-Pt} {\bf tri\-P9\-Solin} [19]
+\item 
+{\bf Int\-Pt} {\bf tri\-P10\-Solin} [25]
+\item 
+{\bf Int\-Pt} {\bf tri\-P11\-Solin} [27]
+\item 
+{\bf Int\-Pt} {\bf tri\-P12\-Solin} [33]
+\item 
+{\bf Int\-Pt} {\bf tri\-P13\-Solin} [37]
+\item 
+{\bf Int\-Pt} {\bf tri\-P14\-Solin} [42]
+\item 
+{\bf Int\-Pt} {\bf tri\-P15\-Solin} [48]
+\item 
+{\bf Int\-Pt} {\bf tri\-P16\-Solin} [52]
+\item 
+{\bf Int\-Pt} {\bf tri\-P17\-Solin} [61]
+\item 
+{\bf Int\-Pt} {\bf tri\-P18\-Solin} [70]
+\item 
+{\bf Int\-Pt} {\bf tri\-P19\-Solin} [73]
+\item 
+{\bf Int\-Pt} {\bf tri\-P20\-Solin} [79]
+\item 
+{\bf Int\-Pt} $\ast$ {\bfseries G\-Q\-T\-Solin} [21]
+\item 
+int {\bfseries G\-Q\-Tn\-Pt\-Solin} [21]
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Quadratures for triangles. \begin{DoxyCopyright}{Copyright}
+Gmsh -\/ Copyright (C) 1997-\/2010 
+\end{DoxyCopyright}
+\begin{DoxyAuthor}{Authors}
+C. Geuzaine, J.-\/\-F. Remacle
+\end{DoxyAuthor}
+See the L\-I\-C\-E\-N\-S\-E.\-txt file for license information. Please report all bugs and problems to {\tt gmsh@geuz.\-org}. 
+
+\subsection{Variable Documentation}
+\index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!G\-Q\-T1@{G\-Q\-T1}}
+\index{G\-Q\-T1@{G\-Q\-T1}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{G\-Q\-T1}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-T1[1]}\label{GaussQuadratureTri_8cc_aeceb706d3f538f6fd894f2cca342ce5a}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{ 
+  \{\{0.333333333333333, 0.333333333333333, 0.\}, 0.500000000000000\}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!G\-Q\-T2@{G\-Q\-T2}}
+\index{G\-Q\-T2@{G\-Q\-T2}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{G\-Q\-T2}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-T2[3]}\label{GaussQuadratureTri_8cc_aa673e2a9ad7b91fe634813409d31aec0}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.166666666666667, 0.166666666666667, 0.\}, 0.166666666666667\},
+  \{\{0.666666666666667, 0.166666666666667, 0.\}, 0.166666666666667\},
+  \{\{0.166666666666667, 0.666666666666667, 0.\}, 0.166666666666667\}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!G\-Q\-T3@{G\-Q\-T3}}
+\index{G\-Q\-T3@{G\-Q\-T3}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{G\-Q\-T3}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-T3[4]}\label{GaussQuadratureTri_8cc_ad7623b8877e36488352abf81ac66b203}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.333333333333333, 0.333333333333333, 0.\}, -0.281250000000000\},
+  \{\{0.600000000000000, 0.200000000000000, 0.\}, +0.260416666666667\},
+  \{\{0.200000000000000, 0.600000000000000, 0.\}, +0.260416666666667\},
+  \{\{0.200000000000000, 0.200000000000000, 0.\}, +0.260416666666667\}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!G\-Q\-T4@{G\-Q\-T4}}
+\index{G\-Q\-T4@{G\-Q\-T4}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{G\-Q\-T4}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-T4[6]}\label{GaussQuadratureTri_8cc_aca7cc0c5b620af0477fb4813c9700f42}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.816847572980459, 0.091576213509771, 0.\}, 0.054975871827661\},
+  \{\{0.091576213509771, 0.816847572980459, 0.\}, 0.054975871827661\},
+  \{\{0.091576213509771, 0.091576213509771, 0.\}, 0.054975871827661\},
+  \{\{0.108103018168070, 0.445948490915965, 0.\}, 0.111690794839005\},
+  \{\{0.445948490915965, 0.108103018168070, 0.\}, 0.111690794839005\},
+  \{\{0.445948490915965, 0.445948490915965, 0.\}, 0.111690794839005\}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!G\-Q\-T5@{G\-Q\-T5}}
+\index{G\-Q\-T5@{G\-Q\-T5}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{G\-Q\-T5}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-T5[7]}\label{GaussQuadratureTri_8cc_a45b9ca027b84f1804ce350bd720ca81a}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.333333333333333, 0.333333333333333, 0.\}, 0.112500000000000\},
+  \{\{0.797426985353087, 0.101286507323456, 0.\}, 0.062969590272414\},
+  \{\{0.101286507323456, 0.797426985353087, 0.\}, 0.062969590272414\},
+  \{\{0.101286507323456, 0.101286507323456, 0.\}, 0.062969590272414\},
+  \{\{0.470142064105115, 0.059715871789770, 0.\}, 0.066197076394253\},
+  \{\{0.059715871789770, 0.470142064105115, 0.\}, 0.066197076394253\},
+  \{\{0.470142064105115, 0.470142064105115, 0.\}, 0.066197076394253\}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!G\-Q\-T6@{G\-Q\-T6}}
+\index{G\-Q\-T6@{G\-Q\-T6}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{G\-Q\-T6}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-T6[12]}\label{GaussQuadratureTri_8cc_a89351403e7d645bf9dfcfb251d942c6e}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.873821971016996, 0.063089014491502, 0.\}, 0.025422453185104\},
+  \{\{0.063089014491502, 0.873821971016996, 0.\}, 0.025422453185104\},
+  \{\{0.063089014491502, 0.063089014491502, 0.\}, 0.025422453185104\},
+  \{\{0.501426509658179, 0.249286745170910, 0.\}, 0.058393137863189\},
+  \{\{0.249286745170910, 0.501426509658179, 0.\}, 0.058393137863189\},
+  \{\{0.249286745170910, 0.249286745170910, 0.\}, 0.058393137863189\},
+  \{\{0.636502499121399, 0.310352451033785, 0.\}, 0.041425537809187\},
+  \{\{0.310352451033785, 0.636502499121399, 0.\}, 0.041425537809187\},
+  \{\{0.636502499121399, 0.053145049844816, 0.\}, 0.041425537809187\},
+  \{\{0.310352451033785, 0.053145049844816, 0.\}, 0.041425537809187\},
+  \{\{0.053145049844816, 0.310352451033785, 0.\}, 0.041425537809187\},
+  \{\{0.053145049844816, 0.636502499121399, 0.\}, 0.041425537809187\}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!G\-Q\-T7@{G\-Q\-T7}}
+\index{G\-Q\-T7@{G\-Q\-T7}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{G\-Q\-T7}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-T7[13]}\label{GaussQuadratureTri_8cc_a844d6699b611fd7061305c8f188af52d}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.333333333333333, 0.333333333333333, 0.\}, -0.074785022233841\},
+  \{\{0.479308067841920, 0.260345966079040, 0.\}, +0.087807628716604\},
+  \{\{0.260345966079040, 0.479308067841920, 0.\}, +0.087807628716604\},
+  \{\{0.260345966079040, 0.260345966079040, 0.\}, +0.087807628716604\},
+  \{\{0.869739794195568, 0.065130102902216, 0.\}, +0.026673617804419\},
+  \{\{0.065130102902216, 0.869739794195568, 0.\}, +0.026673617804419\},
+  \{\{0.065130102902216, 0.065130102902216, 0.\}, +0.026673617804419\},
+  \{\{0.048690315425316, 0.312865496004874, 0.\}, +0.038556880445128\},
+  \{\{0.312865496004874, 0.048690315425316, 0.\}, +0.038556880445128\},
+  \{\{0.638444188569810, 0.048690315425316, 0.\}, +0.038556880445128\},
+  \{\{0.048690315425316, 0.638444188569810, 0.\}, +0.038556880445128\},
+  \{\{0.312865496004874, 0.638444188569810, 0.\}, +0.038556880445128\},
+  \{\{0.638444188569810, 0.312865496004874, 0.\}, +0.038556880445128\}
+
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!G\-Q\-T8@{G\-Q\-T8}}
+\index{G\-Q\-T8@{G\-Q\-T8}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{G\-Q\-T8}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-T8[16]}\label{GaussQuadratureTri_8cc_a7491cc4146946298545f76d9a2954056}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.333333333333333, 0.333333333333333, 0.\}, 0.072157803838894\},
+  \{\{0.081414823414554, 0.459292588292723, 0.\}, 0.047545817133643\},
+  \{\{0.459292588292723, 0.081414823414554, 0.\}, 0.047545817133643\},
+  \{\{0.459292588292723, 0.459292588292723, 0.\}, 0.047545817133643\},
+  \{\{0.658861384496480, 0.170569307751760, 0.\}, 0.051608685267359\},
+  \{\{0.170569307751760, 0.658861384496480, 0.\}, 0.051608685267359\},
+  \{\{0.170569307751760, 0.170569307751760, 0.\}, 0.051608685267359\},
+  \{\{0.898905543365938, 0.050547228317031, 0.\}, 0.016229248811599\},
+  \{\{0.050547228317031, 0.898905543365938, 0.\}, 0.016229248811599\},
+  \{\{0.050547228317031, 0.050547228317031, 0.\}, 0.016229248811599\},  
+  \{\{0.008394777409958, 0.728492392955404, 0.\}, 0.013615157087217\},
+  \{\{0.728492392955404, 0.008394777409958, 0.\}, 0.013615157087217\},
+  \{\{0.263112829634638, 0.008394777409958, 0.\}, 0.013615157087217\},
+  \{\{0.008394777409958, 0.263112829634638, 0.\}, 0.013615157087217\},
+  \{\{0.263112829634638, 0.728492392955404, 0.\}, 0.013615157087217\},
+  \{\{0.728492392955404, 0.263112829634638, 0.\}, 0.013615157087217\}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!G\-Q\-Tn\-Pt\-Solin@{G\-Q\-Tn\-Pt\-Solin}}
+\index{G\-Q\-Tn\-Pt\-Solin@{G\-Q\-Tn\-Pt\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{G\-Q\-Tn\-Pt\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}int G\-Q\-Tn\-Pt\-Solin[21]}\label{GaussQuadratureTri_8cc_af168e33382c06856747d0f62faa2facb}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  1,
+  1,
+  3,
+  4,
+  6,
+  7,
+  12,
+  13,
+  16,
+  19,
+  25,
+  27,
+  33,
+  37,
+  42,
+  48,
+  52,
+  61,
+  70,
+  73,
+  79\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!G\-Q\-T\-Solin@{G\-Q\-T\-Solin}}
+\index{G\-Q\-T\-Solin@{G\-Q\-T\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{G\-Q\-T\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt}$\ast$ G\-Q\-T\-Solin[21]}\label{GaussQuadratureTri_8cc_ae885202c123e6a8671ebbc6add7c97f9}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  triP1Solin,
+  triP1Solin,
+  triP2Solin,
+  triP3Solin,
+  triP4Solin,
+  triP5Solin,
+  triP6Solin,
+  triP7Solin,
+  triP8Solin,
+  triP9Solin,
+  triP10Solin,
+  triP11Solin,
+  triP12Solin,
+  triP13Solin,
+  triP14Solin,
+  triP15Solin,
+  triP16Solin,
+  triP17Solin,
+  triP18Solin,
+  triP19Solin,
+  triP20Solin
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P10\-Solin@{tri\-P10\-Solin}}
+\index{tri\-P10\-Solin@{tri\-P10\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P10\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P10\-Solin[25]}\label{GaussQuadratureTri_8cc_ad50df357ca6ce18b91ba80adb44ca253}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.3333333333330, 0.3333333333330, 0.\}, 0.04540899519140\},
+  \{\{0.4855776333840, 0.4855776333840, 0.\}, 0.01836297887825\},
+  \{\{0.4855776333840, 0.0288447332327, 0.\}, 0.01836297887825\},
+  \{\{0.0288447332327, 0.4855776333840, 0.\}, 0.01836297887825\},
+  \{\{0.1094815754850, 0.1094815754850, 0.\}, 0.02266052971775\},
+  \{\{0.1094815754850, 0.7810368490300, 0.\}, 0.02266052971775\},
+  \{\{0.7810368490300, 0.1094815754850, 0.\}, 0.02266052971775\},
+  \{\{0.3079398387640, 0.5503529418210, 0.\}, 0.03637895842270\},
+  \{\{0.5503529418210, 0.1417072194150, 0.\}, 0.03637895842270\},
+  \{\{0.1417072194150, 0.3079398387640, 0.\}, 0.03637895842270\},
+  \{\{0.3079398387640, 0.1417072194150, 0.\}, 0.03637895842270\},
+  \{\{0.5503529418210, 0.3079398387640, 0.\}, 0.03637895842270\},
+  \{\{0.1417072194150, 0.5503529418210, 0.\}, 0.03637895842270\},
+  \{\{0.2466725606400, 0.7283239045970, 0.\}, 0.01416362126555\},
+  \{\{0.7283239045970, 0.0250035347627, 0.\}, 0.01416362126555\},
+  \{\{0.0250035347627, 0.2466725606400, 0.\}, 0.01416362126555\},
+  \{\{0.2466725606400, 0.0250035347627, 0.\}, 0.01416362126555\},
+  \{\{0.7283239045970, 0.2466725606400, 0.\}, 0.01416362126555\},
+  \{\{0.0250035347627, 0.7283239045970, 0.\}, 0.01416362126555\},
+  \{\{0.0668032510122, 0.9236559335870, 0.\}, 0.00471083348185\},
+  \{\{0.9236559335870, 0.0095408154003, 0.\}, 0.00471083348185\},
+  \{\{0.0095408154003, 0.0668032510122, 0.\}, 0.00471083348185\},
+  \{\{0.0668032510122, 0.0095408154003, 0.\}, 0.00471083348185\},
+  \{\{0.9236559335870, 0.0668032510122, 0.\}, 0.00471083348185\},
+  \{\{0.0095408154003, 0.9236559335870, 0.\}, 0.00471083348185\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 10 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P11\-Solin@{tri\-P11\-Solin}}
+\index{tri\-P11\-Solin@{tri\-P11\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P11\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P11\-Solin[27]}\label{GaussQuadratureTri_8cc_a08e5040f67360320981357fbc749039d}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{+0.5346110482710, +0.5346110482710, 0.\}, 0.00046350316448\},
+  \{\{-0.0692220965415, +0.5346110482710, 0.\}, 0.00046350316448\},
+  \{\{+0.5346110482710, -0.0692220965415, 0.\}, 0.00046350316448\},
+  \{\{+0.3989693029660, +0.3989693029660, 0.\}, 0.03857476745740\},
+  \{\{+0.2020613940680, +0.3989693029660, 0.\}, 0.03857476745740\},
+  \{\{+0.3989693029660, +0.2020613940680, 0.\}, 0.03857476745740\},
+  \{\{+0.2033099004310, +0.2033099004310, 0.\}, 0.02966148869040\},
+  \{\{+0.5933801991370, +0.2033099004310, 0.\}, 0.02966148869040\},
+  \{\{+0.2033099004310, +0.5933801991370, 0.\}, 0.02966148869040\},
+  \{\{+0.1193509122830, +0.1193509122830, 0.\}, 0.01809227025170\},
+  \{\{+0.7612981754350, +0.1193509122830, 0.\}, 0.01809227025170\},
+  \{\{+0.1193509122830, +0.7612981754350, 0.\}, 0.01809227025170\},
+  \{\{+0.0323649481113, +0.0323649481113, 0.\}, 0.00682986550135\},
+  \{\{+0.9352701037770, +0.0323649481113, 0.\}, 0.00682986550135\},
+  \{\{+0.0323649481113, +0.9352701037770, 0.\}, 0.00682986550135\},
+  \{\{+0.5932012134280, +0.3566206482610, 0.\}, 0.02616855598110\},
+  \{\{+0.0501781383105, +0.5932012134280, 0.\}, 0.02616855598110\},
+  \{\{+0.3566206482610, +0.0501781383105, 0.\}, 0.02616855598110\},
+  \{\{+0.0501781383105, +0.3566206482610, 0.\}, 0.02616855598110\},
+  \{\{+0.3566206482610, +0.5932012134280, 0.\}, 0.02616855598110\},
+  \{\{+0.5932012134280, +0.0501781383105, 0.\}, 0.02616855598110\},
+  \{\{+0.8074890031600, +0.1714889803040, 0.\}, 0.01035382981955\},
+  \{\{+0.0210220165362, +0.8074890031600, 0.\}, 0.01035382981955\},
+  \{\{+0.1714889803040, +0.0210220165362, 0.\}, 0.01035382981955\},
+  \{\{+0.0210220165362, +0.1714889803040, 0.\}, 0.01035382981955\},
+  \{\{+0.1714889803040, +0.8074890031600, 0.\}, 0.01035382981955\},
+  \{\{+0.8074890031600, +0.0210220165362, 0.\}, 0.01035382981955\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 11 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P12\-Solin@{tri\-P12\-Solin}}
+\index{tri\-P12\-Solin@{tri\-P12\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P12\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P12\-Solin[33]}\label{GaussQuadratureTri_8cc_a823cf041018ec28f3b069167cde3cdfd}
+Quadrature rule for an interpolation of order 12 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P13\-Solin@{tri\-P13\-Solin}}
+\index{tri\-P13\-Solin@{tri\-P13\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P13\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P13\-Solin[37]}\label{GaussQuadratureTri_8cc_af10f75e4675d556d5f889039234edfde}
+Quadrature rule for an interpolation of order 13 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P14\-Solin@{tri\-P14\-Solin}}
+\index{tri\-P14\-Solin@{tri\-P14\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P14\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P14\-Solin[42]}\label{GaussQuadratureTri_8cc_a9e38341ab1d46b0118a6b0dd5b1b81af}
+Quadrature rule for an interpolation of order 14 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P15\-Solin@{tri\-P15\-Solin}}
+\index{tri\-P15\-Solin@{tri\-P15\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P15\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P15\-Solin[48]}\label{GaussQuadratureTri_8cc_a24034fcdfbcc914d957f20175c987421}
+Quadrature rule for an interpolation of order 15 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P16\-Solin@{tri\-P16\-Solin}}
+\index{tri\-P16\-Solin@{tri\-P16\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P16\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P16\-Solin[52]}\label{GaussQuadratureTri_8cc_a308e82e53adf07017c0aed1f3c00e774}
+Quadrature rule for an interpolation of order 16 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P17\-Solin@{tri\-P17\-Solin}}
+\index{tri\-P17\-Solin@{tri\-P17\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P17\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P17\-Solin[61]}\label{GaussQuadratureTri_8cc_a1145370ddf9a18ca95091bb4385eac05}
+Quadrature rule for an interpolation of order 17 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P18\-Solin@{tri\-P18\-Solin}}
+\index{tri\-P18\-Solin@{tri\-P18\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P18\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P18\-Solin[70]}\label{GaussQuadratureTri_8cc_ad10c9c203b705e936c824b3b8d5a5086}
+Quadrature rule for an interpolation of order 18 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P19\-Solin@{tri\-P19\-Solin}}
+\index{tri\-P19\-Solin@{tri\-P19\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P19\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P19\-Solin[73]}\label{GaussQuadratureTri_8cc_ae9a62bf1edc7b1b58030638a65c50e4d}
+Quadrature rule for an interpolation of order 19 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P1\-Solin@{tri\-P1\-Solin}}
+\index{tri\-P1\-Solin@{tri\-P1\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P1\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P1\-Solin[1]}\label{GaussQuadratureTri_8cc_ab4c9758a3678b9e50a6ac61b933c84e5}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.333333333333333, 0.333333333333333, 0.\}, 0.500000000000000\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 1 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P20\-Solin@{tri\-P20\-Solin}}
+\index{tri\-P20\-Solin@{tri\-P20\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P20\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P20\-Solin[79]}\label{GaussQuadratureTri_8cc_ae1011cfa5b4956209870fb9e3ad9f712}
+Quadrature rule for an interpolation of order 20 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P2\-Solin@{tri\-P2\-Solin}}
+\index{tri\-P2\-Solin@{tri\-P2\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P2\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P2\-Solin[3]}\label{GaussQuadratureTri_8cc_ad1c74b1d13a90edd7851fd6d9713ac34}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.166666666666667, 0.166666666666667, 0.\}, 0.166666666666667\},
+  \{\{0.166666666666667, 0.666666666666667, 0.\}, 0.166666666666667\},
+  \{\{0.666666666666667, 0.166666666666667, 0.\}, 0.166666666666667\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 2 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P3\-Solin@{tri\-P3\-Solin}}
+\index{tri\-P3\-Solin@{tri\-P3\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P3\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P3\-Solin[4]}\label{GaussQuadratureTri_8cc_a2d7d9ecfa22a260b380c9f2f41e70c69}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.333333333333333, 0.333333333333333, 0.\}, -0.281250000000000\},
+  \{\{0.200000000000000, 0.200000000000000, 0.\}, 0.260416666666667\},
+  \{\{0.200000000000000, 0.600000000000000, 0.\}, 0.260416666666667\},
+  \{\{0.600000000000000, 0.200000000000000, 0.\}, 0.260416666666667\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 3 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P4\-Solin@{tri\-P4\-Solin}}
+\index{tri\-P4\-Solin@{tri\-P4\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P4\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P4\-Solin[6]}\label{GaussQuadratureTri_8cc_a453290b805c63461ef585e9d5926bf28}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.445948490915965, 0.445948490915965, 0.\}, 0.111690794839005\},
+  \{\{0.445948490915965, 0.108103018168070, 0.\}, 0.111690794839005\},
+  \{\{0.108103018168070, 0.445948490915965, 0.\}, 0.111690794839005\},
+  \{\{0.091576213509771, 0.091576213509771, 0.\}, 0.054975871827661\},
+  \{\{0.091576213509771, 0.816847572980459, 0.\}, 0.054975871827661\},
+  \{\{0.816847572980459, 0.091576213509771, 0.\}, 0.054975871827661\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 4 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P5\-Solin@{tri\-P5\-Solin}}
+\index{tri\-P5\-Solin@{tri\-P5\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P5\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P5\-Solin[7]}\label{GaussQuadratureTri_8cc_a73e0401d555332f266f292c9873f76f0}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.333333333333333, 0.333333333333333, 0.\}, 0.112500000000000\},
+  \{\{0.470142064105115, 0.470142064105115, 0.\}, 0.066197076394253\},
+  \{\{0.470142064105115, 0.059715871789770, 0.\}, 0.066197076394253\},
+  \{\{0.059715871789770, 0.470142064105115, 0.\}, 0.066197076394253\},
+  \{\{0.101286507323456, 0.101286507323456, 0.\}, 0.062969590272414\},
+  \{\{0.101286507323456, 0.797426985353087, 0.\}, 0.062969590272414\},
+  \{\{0.797426985353087, 0.101286507323456, 0.\}, 0.062969590272414\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 5 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P6\-Solin@{tri\-P6\-Solin}}
+\index{tri\-P6\-Solin@{tri\-P6\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P6\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P6\-Solin[12]}\label{GaussQuadratureTri_8cc_ab5f71a4d305f7a0c99437436c7c2533d}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.249286745170910, 0.249286745170910, 0.\}, 0.058393137863189\},
+  \{\{0.249286745170910, 0.501426509658179, 0.\}, 0.058393137863189\},
+  \{\{0.501426509658179, 0.249286745170910, 0.\}, 0.058393137863189\},
+  \{\{0.063089014491502, 0.063089014491502, 0.\}, 0.025422453185104\},
+  \{\{0.063089014491502, 0.873821971016996, 0.\}, 0.025422453185104\},
+  \{\{0.873821971016996, 0.063089014491502, 0.\}, 0.025422453185104\},
+  \{\{0.310352451033785, 0.636502499121399, 0.\}, 0.041425537809187\},
+  \{\{0.636502499121399, 0.053145049844816, 0.\}, 0.041425537809187\},
+  \{\{0.053145049844816, 0.310352451033785, 0.\}, 0.041425537809187\},
+  \{\{0.310352451033785, 0.053145049844816, 0.\}, 0.041425537809187\},
+  \{\{0.636502499121399, 0.310352451033785, 0.\}, 0.041425537809187\},
+  \{\{0.053145049844816, 0.636502499121399, 0.\}, 0.041425537809187\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 6 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P7\-Solin@{tri\-P7\-Solin}}
+\index{tri\-P7\-Solin@{tri\-P7\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P7\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P7\-Solin[13]}\label{GaussQuadratureTri_8cc_a5b268edddb0d46913735af4b6360c51d}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.333333333333333, 0.333333333333333, 0.\}, -0.074785022233841\},
+  \{\{0.260345966079040, 0.260345966079040, 0.\}, 0.087807628716604\},
+  \{\{0.260345966079040, 0.479308067841920, 0.\}, 0.087807628716604\},
+  \{\{0.479308067841920, 0.260345966079040, 0.\}, 0.087807628716604\},
+  \{\{0.065130102902216, 0.065130102902216, 0.\}, 0.026673617804419\},
+  \{\{0.065130102902216, 0.869739794195568, 0.\}, 0.026673617804419\},
+  \{\{0.869739794195568, 0.065130102902216, 0.\}, 0.026673617804419\},
+  \{\{0.312865496004874, 0.638444188569810, 0.\}, 0.038556880445128\},
+  \{\{0.638444188569810, 0.048690315425316, 0.\}, 0.038556880445128\},
+  \{\{0.048690315425316, 0.312865496004874, 0.\}, 0.038556880445128\},
+  \{\{0.312865496004874, 0.048690315425316, 0.\}, 0.038556880445128\},
+  \{\{0.638444188569810, 0.312865496004874, 0.\}, 0.038556880445128\},
+  \{\{0.048690315425316, 0.638444188569810, 0.\}, 0.038556880445128\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 7 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P8\-Solin@{tri\-P8\-Solin}}
+\index{tri\-P8\-Solin@{tri\-P8\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P8\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P8\-Solin[16]}\label{GaussQuadratureTri_8cc_a91a7584c2ed57e0302857ae4ea79fd5d}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.333333333333333, 0.333333333333333, 0.\}, 0.072157803838894\},
+  \{\{0.459292588292723, 0.459292588292723, 0.\}, 0.047545817133643\},
+  \{\{0.459292588292723, 0.081414823414554, 0.\}, 0.047545817133643\},
+  \{\{0.081414823414554, 0.459292588292723, 0.\}, 0.047545817133643\},
+  \{\{0.170569307751760, 0.170569307751760, 0.\}, 0.051608685267359\},
+  \{\{0.170569307751760, 0.658861384496480, 0.\}, 0.051608685267359\},
+  \{\{0.658861384496480, 0.170569307751760, 0.\}, 0.051608685267359\},
+  \{\{0.050547228317031, 0.050547228317031, 0.\}, 0.016229248811599\},
+  \{\{0.050547228317031, 0.898905543365938, 0.\}, 0.016229248811599\},
+  \{\{0.898905543365938, 0.050547228317031, 0.\}, 0.016229248811599\},
+  \{\{0.263112829634638, 0.728492392955404, 0.\}, 0.013615157087217\},
+  \{\{0.728492392955404, 0.008394777409958, 0.\}, 0.013615157087217\},
+  \{\{0.008394777409958, 0.263112829634638, 0.\}, 0.013615157087217\},
+  \{\{0.263112829634638, 0.008394777409958, 0.\}, 0.013615157087217\},
+  \{\{0.728492392955404, 0.263112829634638, 0.\}, 0.013615157087217\},
+  \{\{0.008394777409958, 0.728492392955404, 0.\}, 0.013615157087217\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 8 on the triangle \index{Gauss\-Quadrature\-Tri.\-cc@{Gauss\-Quadrature\-Tri.\-cc}!tri\-P9\-Solin@{tri\-P9\-Solin}}
+\index{tri\-P9\-Solin@{tri\-P9\-Solin}!GaussQuadratureTri.cc@{Gauss\-Quadrature\-Tri.\-cc}}
+\subsubsection[{tri\-P9\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tri\-P9\-Solin[19]}\label{GaussQuadratureTri_8cc_ac61a9c4db54f321e271eb5fa3dee6e61}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.3333333333330, 0.3333333333333, 0.\}, 0.04856789814140\},
+  \{\{0.4896825191990, 0.4896825191990, 0.\}, 0.01566735011355\},
+  \{\{0.4896825191990, 0.0206349616025, 0.\}, 0.01566735011355\},
+  \{\{0.0206349616025, 0.4896825191990, 0.\}, 0.01566735011355\},
+  \{\{0.4370895914930, 0.4370895914930, 0.\}, 0.03891377050240\},
+  \{\{0.4370895914930, 0.1258208170140, 0.\}, 0.03891377050240\},
+  \{\{0.1258208170140, 0.4370895914930, 0.\}, 0.03891377050240\},
+  \{\{0.1882035356190, 0.1882035356190, 0.\}, 0.03982386946360\},
+  \{\{0.1882035356190, 0.6235929287620, 0.\}, 0.03982386946360\},
+  \{\{0.6235929287620, 0.1882035356190, 0.\}, 0.03982386946360\},
+  \{\{0.0447295133945, 0.0447295133945, 0.\}, 0.01278883782935\},
+  \{\{0.0447295133945, 0.9105409732110, 0.\}, 0.01278883782935\},
+  \{\{0.9105409732110, 0.0447295133945, 0.\}, 0.01278883782935\},
+  \{\{0.2219629891610, 0.7411985987840, 0.\}, 0.02164176968865\},
+  \{\{0.7411985987840, 0.0368384120547, 0.\}, 0.02164176968865\},
+  \{\{0.0368384120547, 0.2219629891610, 0.\}, 0.02164176968865\},
+  \{\{0.2219629891610, 0.0368384120547, 0.\}, 0.02164176968865\},
+  \{\{0.7411985987840, 0.2219629891610, 0.\}, 0.02164176968865\},
+  \{\{0.0368384120547, 0.7411985987840, 0.\}, 0.02164176968865\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 9 on the triangle 

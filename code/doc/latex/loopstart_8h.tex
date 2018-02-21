@@ -1,0 +1,34 @@
+\section{src/utils/loopstart.h File Reference}
+\label{loopstart_8h}\index{src/utils/loopstart.\-h@{src/utils/loopstart.\-h}}
+
+
+Start definitions fo preprocessor for loop.  
+
+
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define {\bfseries L\-O\-O\-P\-\_\-\-S\-T\-A\-R\-T}~0\label{loopstart_8h_a9507da22ddeb73d01876cdf1562696d7}
+
+\item 
+\#define {\bfseries L\-O\-O\-P\-\_\-\-M\-A\-X}~10\label{loopstart_8h_a1174cdfd5f134281d6b0f0a208118c97}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Start definitions fo preprocessor for loop. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+\subsection{Description}\label{scalar__def_8h_Description}
+This is straight from\-: {\tt http\-://www.\-codeproject.\-com/\-Tips/444338/\-Pre-\/processor-\/\-Iteration} And the code is on github\-: {\tt https\-://github.\-com/debdattabasu/pp\-\_\-\-Iteration}
+
+Right now things max out at 10 iterations but I could increase that easily
+
+You use it by doing, for example\-: \#include \char`\"{}loopstart.\-h\char`\"{} \#define L\-O\-O\-P\-\_\-\-E\-N\-D 10 \#define M\-A\-C\-R\-O(x) printf(\char`\"{}\%d\textbackslash{}n\char`\"{}, x); \#include \char`\"{}loop.\-h\char`\"{} 

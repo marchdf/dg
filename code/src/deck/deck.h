@@ -4,6 +4,7 @@
   \copyright Copyright (C) 2012-2015, Regents of the University of Michigan
   \license This project is released under the GNU Public License. See LICENSE.
   \author Marc T. Henry de Frahan <marchdf@umich.edu>, Computational Flow Physics Laboratory, University of Michigan
+  \Modified PEJ 06/01/2017 for VNN input
 */
 #ifndef DECK_H
 #define DECK_H
@@ -22,6 +23,7 @@ class deck {
   double _Dt;
   double _tf;
   double _cfl;
+  double _vnn; //PEJ 06/01/2017
   int _order;
   std::string _meshfile;
   std::string _elemType;
@@ -40,6 +42,7 @@ class deck {
   inline double getOutputTimeStep() {/*!Return output time step*/return _Dt;}
   inline double getFinalTime() {/*!Return final time*/return _tf;}
   inline double getCFL() {/*!Return CFL number*/return _cfl;}
+  inline double getVNN() {/*!Return VN number*/return _vnn;}
   inline int getOrder() {/*!Return DG order*/return _order;}
   inline std::string getMeshfile() {/*!Return the name of the mesh file*/return _meshfile;}
   inline std::string getElemType() {/*!Return type of element in the mesh*/return _elemType;}

@@ -1,0 +1,39 @@
+#Make options
+LIEU=HOME
+ARCH=USE_CPU
+PROF=OFF
+PARA=USE_MPI
+PREC=USE_DOUBLE
+DIMS=THREED
+ERRR=NOERROR
+VISC=CONSTANTVIS
+FSOL=SIMPLE
+CONS=NULL
+TGVS=TGVSTATS
+PROB=SINGLEFLUID
+NFLD=5
+GAMM=GAMNCON
+FLUX=SLAU
+MASS=0
+#Code options
+#time integration
+rk4
+#output time step size
+0.5
+#final time
+10.5
+#Courant-Friedrichs-Lewy condition
+0.5
+#Von Neumann condition
+1.4
+#sensor thresholds
+0.1 0.1 0.1
+#order
+2
+#mesh file
+mesh.msh
+hex
+#limiter
+null
+#initial condition
+tgrvrtx

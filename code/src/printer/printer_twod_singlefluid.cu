@@ -71,6 +71,7 @@ arch_global void formater(int N_s, int N_E, scalar* U, scalar* output, bool inve
 #endif
 
 	// Get fields from output
+	printf("Fetching field from output e=%d,node=%d:",e,i);
 	scalar rho   = output[(e*N_F+0)*N_s+i];
 	scalar ux    = output[(e*N_F+1)*N_s+i];
 	scalar uy    = output[(e*N_F+2)*N_s+i];
@@ -81,6 +82,8 @@ arch_global void formater(int N_s, int N_E, scalar* U, scalar* output, bool inve
 	U[(e*N_F+1)*N_s+i] = rho*ux;
 	U[(e*N_F+2)*N_s+i] = rho*uy;
 	U[(e*N_F+3)*N_s+i] = p/(gamma-1) + 0.5*rho*(ux*ux+uy*uy);
+
+	printf("Imported (rho,ux,uy,p)=(%f,%f,%f,%f), set (rho,mox,moy,en)=(%f,%f,%f,%f)\n",rho,ux,uy,p,U[(e*N_F+0)*N_s+i],U[(e*N_F+1)*N_s+i],U[(e*N_F+2)*N_s+i],U[(e*N_F+3)*N_s+i]);
       } // loop on nodes
     }  // loop on elements
   } // if inverse

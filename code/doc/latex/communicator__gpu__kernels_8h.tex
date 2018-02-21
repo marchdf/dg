@@ -1,0 +1,88 @@
+\section{src/communication/communicator\-\_\-gpu\-\_\-kernels.h File Reference}
+\label{communicator__gpu__kernels_8h}\index{src/communication/communicator\-\_\-gpu\-\_\-kernels.\-h@{src/communication/communicator\-\_\-gpu\-\_\-kernels.\-h}}
+
+
+Functions to launch communicator kernels.  
+
+
+{\ttfamily \#include \char`\"{}scalar\-\_\-def.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}macros.\-h\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bf Lpackager} (int N\-\_\-s, int N\-\_\-ghosts, int Nfields, int $\ast$ghost\-Element\-Send, scalar $\ast$buffer, scalar $\ast$U)
+\item 
+void {\bf Lunpackager} (int N\-\_\-s, int N\-\_\-ghosts, int Nfields, int $\ast$ghost\-Element\-Recv, scalar $\ast$buffer, scalar $\ast$U)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Functions to launch communicator kernels. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{communicator\-\_\-gpu\-\_\-kernels.\-h@{communicator\-\_\-gpu\-\_\-kernels.\-h}!Lpackager@{Lpackager}}
+\index{Lpackager@{Lpackager}!communicator_gpu_kernels.h@{communicator\-\_\-gpu\-\_\-kernels.\-h}}
+\subsubsection[{Lpackager}]{\setlength{\rightskip}{0pt plus 5cm}void Lpackager (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-ghosts, }
+\item[{int}]{Nfields, }
+\item[{int $\ast$}]{ghost\-Element\-Send, }
+\item[{scalar $\ast$}]{buffer, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{communicator__gpu__kernels_8h_ae28d5801d16c77056f1337a2ac56558f}
+Host C function to launch packager kernel 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-ghosts} & number of ghost elements \\
+\hline
+\mbox{\tt in}  & {\em Nfields} & number of fields to operate on \\
+\hline
+\mbox{\tt in}  & {\em ghost\-Element\-Send} & list of element indices to communicate \\
+\hline
+\mbox{\tt out}  & {\em buffer} & buffer to hold data to communicate to C\-P\-U \\
+\hline
+\mbox{\tt in}  & {\em U} & solution to communicate \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-ghosts blocks of N\-\_\-s x Nfields threads (if blk\-Comm=1). blk\-Comm can be set to increase the number of ghost elements per block.\index{communicator\-\_\-gpu\-\_\-kernels.\-h@{communicator\-\_\-gpu\-\_\-kernels.\-h}!Lunpackager@{Lunpackager}}
+\index{Lunpackager@{Lunpackager}!communicator_gpu_kernels.h@{communicator\-\_\-gpu\-\_\-kernels.\-h}}
+\subsubsection[{Lunpackager}]{\setlength{\rightskip}{0pt plus 5cm}void Lunpackager (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-ghosts, }
+\item[{int}]{Nfields, }
+\item[{int $\ast$}]{ghost\-Element\-Recv, }
+\item[{scalar $\ast$}]{buffer, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{communicator__gpu__kernels_8h_acac189d67aca05e493093af8a8db1767}
+Host C function to launch unpackager kernel 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-ghosts} & number of ghost elements \\
+\hline
+\mbox{\tt in}  & {\em Nfields} & number of fields to operate on \\
+\hline
+\mbox{\tt in}  & {\em ghost\-Element\-Recv} & list of element indices to communicate \\
+\hline
+\mbox{\tt in}  & {\em buffer} & buffer to hold data to distribute to G\-P\-U \\
+\hline
+\mbox{\tt out}  & {\em U} & solution to communicate \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-ghosts blocks of N\-\_\-s x Nfields threads (if blk\-Comm=1). blk\-Comm can be set to increase the number of ghost elements per block.

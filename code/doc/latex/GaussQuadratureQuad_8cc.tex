@@ -1,0 +1,256 @@
+\section{src/quadratures/\-Gauss\-Quadrature\-Quad.cc File Reference}
+\label{GaussQuadratureQuad_8cc}\index{src/quadratures/\-Gauss\-Quadrature\-Quad.\-cc@{src/quadratures/\-Gauss\-Quadrature\-Quad.\-cc}}
+
+
+Quadratures for quadrangles.  
+
+
+{\ttfamily \#include \char`\"{}Gauss.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}Gauss\-Legendre1\-D.\-h\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bf Int\-Pt} $\ast$ {\bfseries get\-G\-Q\-Q\-Pts} (int order)\label{GaussQuadratureQuad_8cc_a9cfdd754ad7f19d7e4190f97cf81d81a}
+
+\item 
+int {\bfseries get\-N\-G\-Q\-Q\-Pts} (int order)\label{GaussQuadratureQuad_8cc_a176646b904ec6b07b5d1264da5b0bff0}
+
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-Q1} [1]
+\item 
+const double {\bfseries xq3} [3] = \{0.\-816496580928,-\/0.\-408248290464,-\/0.\-408248290464\}\label{GaussQuadratureQuad_8cc_a427ba3b88c752a2cf34adf4b5cf026e6}
+
+\item 
+const double {\bfseries yq3} [3] = \{0.\-0,0.\-840896415255,-\/0.\-840896415255\}\label{GaussQuadratureQuad_8cc_ae527a7b0ef9c700479e0b5ecdfc4398d}
+
+\item 
+const double {\bfseries pq3} [3] = \{1.\-3333333333333,1.\-3333333333333,1.\-3333333333333\}\label{GaussQuadratureQuad_8cc_ac51516c4c929cec0fc29f583acba9f63}
+
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-Q3} [3]
+\item 
+const double {\bfseries xq4} [4] = \{0.\-577350269189626,-\/0.\-577350269189626,0.\-577350269189626,-\/0.\-577350269189626\}\label{GaussQuadratureQuad_8cc_a3fd943929e534a1c2512b817949fae78}
+
+\item 
+const double {\bfseries yq4} [4] = \{0.\-577350269189626,0.\-577350269189626,-\/0.\-577350269189626,-\/0.\-577350269189626\}\label{GaussQuadratureQuad_8cc_a0718857d38640a1a036f9d10bc21ee59}
+
+\item 
+const double {\bfseries pq4} [4] = \{1.,1.,1.,1.\}\label{GaussQuadratureQuad_8cc_acbbe9a1dc5267a9e5e466a1a9fb1e221}
+
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-Q4} [4]
+\item 
+const double {\bfseries pq7} [7]
+\item 
+const double {\bfseries xq7} [7]
+\item 
+const double {\bfseries yq7} [7]
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-Q7} [7]
+\item 
+const double {\bfseries a9} = 0.\-774596669241483\label{GaussQuadratureQuad_8cc_a10f785f45d977c9373bd2c9235bf8ea0}
+
+\item 
+const double {\bfseries z} = 0.\-0\label{GaussQuadratureQuad_8cc_a923337b333ce340581179d1d05edc238}
+
+\item 
+const double {\bfseries xq9} [9] = \{-\/a9, z, a9, -\/a9, z, a9, -\/a9, z, a9\}\label{GaussQuadratureQuad_8cc_a4bcd1dfcf78a7f8595e578cb6504c1a3}
+
+\item 
+const double {\bfseries yq9} [9] = \{-\/a9, -\/a9, -\/a9, z, z, z, a9, a9, a9\}\label{GaussQuadratureQuad_8cc_a8cd82e2d26ad9fbc83b39cd66ba111fe}
+
+\item 
+const double {\bfseries pb2} = 0.\-888888888888889$\ast$0.\-888888888888889\label{GaussQuadratureQuad_8cc_a2914f6fd1ef11326e8a26fb758cf565d}
+
+\item 
+const double {\bfseries pc2} = 0.\-555555555555556$\ast$0.\-555555555555556\label{GaussQuadratureQuad_8cc_ad8be096e83ccb974f00f7af7b1d1298a}
+
+\item 
+const double {\bfseries pbc} = 0.\-555555555555556$\ast$0.\-888888888888889\label{GaussQuadratureQuad_8cc_a23456a4393a6992a164adfbeba63a1d7}
+
+\item 
+const double {\bfseries pq9} [9] = \{pc2, pbc, pc2, pbc, pb2, pbc, pc2, pbc , pc2\}\label{GaussQuadratureQuad_8cc_a7f424347deeecf558def8190808e2909}
+
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-Q9} [9]
+\item 
+const double {\bfseries a16} = 0.\-861136311594053\label{GaussQuadratureQuad_8cc_a7de2ac3d553e2d0ee4428119fc75edc0}
+
+\item 
+const double {\bfseries b16} = 0.\-339981043584856\label{GaussQuadratureQuad_8cc_a2d76e6648f0d488f0e8309d6c82ee5d5}
+
+\item 
+const double {\bfseries xq16} [16]
+\item 
+const double {\bfseries yq16} [16]
+\item 
+const double {\bfseries pe2} = 0.\-347854845137454 $\ast$ 0.\-347854845137454\label{GaussQuadratureQuad_8cc_aa3dbb2502b99aa05f996edb6ad687809}
+
+\item 
+const double {\bfseries pf2} = 0.\-652145154862546 $\ast$ 0.\-652145154862546\label{GaussQuadratureQuad_8cc_aaf49b053a0c0ce5d5f42860c19daf312}
+
+\item 
+const double {\bfseries pef} = 0.\-347854845137454 $\ast$ 0.\-652145154862546\label{GaussQuadratureQuad_8cc_a6e431065c336b4686ea46c7111e2aa32}
+
+\item 
+double {\bfseries pq16} [16]
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-Q16} [16]
+\item 
+{\bf Int\-Pt} $\ast$ {\bfseries G\-Q\-Q} [27] = \{G\-Q\-Q1,G\-Q\-Q1,G\-Q\-Q3,G\-Q\-Q4,G\-Q\-Q7,G\-Q\-Q9,G\-Q\-Q16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\}\label{GaussQuadratureQuad_8cc_a196c2b621de3178305f27607eb19eacd}
+
+\item 
+int {\bfseries G\-Q\-Qn\-Pt} [7] = \{1,1,3,4,7,9,16\}\label{GaussQuadratureQuad_8cc_a32c5be2fce33c0274ef5e9999a796160}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Quadratures for quadrangles. \begin{DoxyCopyright}{Copyright}
+Gmsh -\/ Copyright (C) 1997-\/2010 
+\end{DoxyCopyright}
+\begin{DoxyAuthor}{Authors}
+C. Geuzaine, J.-\/\-F. Remacle
+\end{DoxyAuthor}
+See the L\-I\-C\-E\-N\-S\-E.\-txt file for license information. Please report all bugs and problems to {\tt gmsh@geuz.\-org}. 
+
+\subsection{Variable Documentation}
+\index{Gauss\-Quadrature\-Quad.\-cc@{Gauss\-Quadrature\-Quad.\-cc}!G\-Q\-Q1@{G\-Q\-Q1}}
+\index{G\-Q\-Q1@{G\-Q\-Q1}!GaussQuadratureQuad.cc@{Gauss\-Quadrature\-Quad.\-cc}}
+\subsubsection[{G\-Q\-Q1}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-Q1[1]}\label{GaussQuadratureQuad_8cc_a88e6c88776d0df4ee7914dbc65f70125}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{ \{0.0,0.0,0.0\},4.0 \}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Quad.\-cc@{Gauss\-Quadrature\-Quad.\-cc}!G\-Q\-Q16@{G\-Q\-Q16}}
+\index{G\-Q\-Q16@{G\-Q\-Q16}!GaussQuadratureQuad.cc@{Gauss\-Quadrature\-Quad.\-cc}}
+\subsubsection[{G\-Q\-Q16}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-Q16[16]}\label{GaussQuadratureQuad_8cc_ac6c30d3cbb5b45e8ef2f7de48f2e4d6d}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{ \{xq16[0],yq16[0],0\},pq16[0] \},
+  \{ \{xq16[1],yq16[1],0\},pq16[1] \},
+  \{ \{xq16[2],yq16[2],0\},pq16[2] \},
+  \{ \{xq16[3],yq16[3],0\},pq16[3] \},
+  \{ \{xq16[4],yq16[4],0\},pq16[4] \},
+  \{ \{xq16[5],yq16[5],0\},pq16[5] \},
+  \{ \{xq16[6],yq16[6],0\},pq16[6] \},
+  \{ \{xq16[7],yq16[7],0\},pq16[7] \},
+  \{ \{xq16[8],yq16[8],0\},pq16[8] \},
+  \{ \{xq16[9],yq16[9],0\},pq16[9] \},
+  \{ \{xq16[10],yq16[10],0\},pq16[10] \},
+  \{ \{xq16[11],yq16[11],0\},pq16[11] \},
+  \{ \{xq16[12],yq16[12],0\},pq16[12] \},
+  \{ \{xq16[13],yq16[13],0\},pq16[13] \},
+  \{ \{xq16[14],yq16[14],0\},pq16[14] \},
+  \{ \{xq16[15],yq16[15],0\},pq16[15] \}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Quad.\-cc@{Gauss\-Quadrature\-Quad.\-cc}!G\-Q\-Q3@{G\-Q\-Q3}}
+\index{G\-Q\-Q3@{G\-Q\-Q3}!GaussQuadratureQuad.cc@{Gauss\-Quadrature\-Quad.\-cc}}
+\subsubsection[{G\-Q\-Q3}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-Q3[3]}\label{GaussQuadratureQuad_8cc_a3d3cedb99fa6488bfcb5340e05292338}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{ \{xq3[0],yq3[0],0\},pq3[0] \},
+  \{ \{xq3[1],yq3[1],0\},pq3[1] \},
+  \{ \{xq3[2],yq3[2],0\},pq3[2] \}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Quad.\-cc@{Gauss\-Quadrature\-Quad.\-cc}!G\-Q\-Q4@{G\-Q\-Q4}}
+\index{G\-Q\-Q4@{G\-Q\-Q4}!GaussQuadratureQuad.cc@{Gauss\-Quadrature\-Quad.\-cc}}
+\subsubsection[{G\-Q\-Q4}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-Q4[4]}\label{GaussQuadratureQuad_8cc_a4d442449f3d0cea919e018b4b26b403e}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{ \{xq4[0],yq4[0],0\},pq4[0] \},
+  \{ \{xq4[1],yq4[1],0\},pq4[1] \},
+  \{ \{xq4[2],yq4[2],0\},pq4[2] \},
+  \{ \{xq4[3],yq4[3],0\},pq4[3] \},
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Quad.\-cc@{Gauss\-Quadrature\-Quad.\-cc}!G\-Q\-Q7@{G\-Q\-Q7}}
+\index{G\-Q\-Q7@{G\-Q\-Q7}!GaussQuadratureQuad.cc@{Gauss\-Quadrature\-Quad.\-cc}}
+\subsubsection[{G\-Q\-Q7}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-Q7[7]}\label{GaussQuadratureQuad_8cc_a701651c6fee7ab3f7d6720575c23d303}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{ \{xq7[0],yq7[0],0\},pq7[0] \},
+  \{ \{xq7[1],yq7[1],0\},pq7[1] \},
+  \{ \{xq7[2],yq7[2],0\},pq7[2] \},
+  \{ \{xq7[3],yq7[3],0\},pq7[3] \},
+  \{ \{xq7[4],yq7[4],0\},pq7[4] \},
+  \{ \{xq7[5],yq7[5],0\},pq7[5] \},
+  \{ \{xq7[6],yq7[6],0\},pq7[6] \}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Quad.\-cc@{Gauss\-Quadrature\-Quad.\-cc}!G\-Q\-Q9@{G\-Q\-Q9}}
+\index{G\-Q\-Q9@{G\-Q\-Q9}!GaussQuadratureQuad.cc@{Gauss\-Quadrature\-Quad.\-cc}}
+\subsubsection[{G\-Q\-Q9}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-Q9[9]}\label{GaussQuadratureQuad_8cc_a679401d9a58221e45dbc13556f8cb47d}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{ \{xq9[0],yq9[0],0\},pq9[0] \},
+  \{ \{xq9[1],yq9[1],0\},pq9[1] \},
+  \{ \{xq9[2],yq9[2],0\},pq9[2] \},
+  \{ \{xq9[3],yq9[3],0\},pq9[3] \},
+  \{ \{xq9[4],yq9[4],0\},pq9[4] \},
+  \{ \{xq9[5],yq9[5],0\},pq9[5] \},
+  \{ \{xq9[6],yq9[6],0\},pq9[6] \},
+  \{ \{xq9[7],yq9[7],0\},pq9[7] \},
+  \{ \{xq9[8],yq9[8],0\},pq9[8] \}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Quad.\-cc@{Gauss\-Quadrature\-Quad.\-cc}!pq16@{pq16}}
+\index{pq16@{pq16}!GaussQuadratureQuad.cc@{Gauss\-Quadrature\-Quad.\-cc}}
+\subsubsection[{pq16}]{\setlength{\rightskip}{0pt plus 5cm}double pq16[16]}\label{GaussQuadratureQuad_8cc_a20d2f4df342cb9a301810b0c933bd33f}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{ pe2, pef,  pef, pe2, pef, pf2, pf2, pef, 
+                    pef, pf2, pf2, pef, pe2, pef, pef, pe2\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Quad.\-cc@{Gauss\-Quadrature\-Quad.\-cc}!pq7@{pq7}}
+\index{pq7@{pq7}!GaussQuadratureQuad.cc@{Gauss\-Quadrature\-Quad.\-cc}}
+\subsubsection[{pq7}]{\setlength{\rightskip}{0pt plus 5cm}const double pq7[7]}\label{GaussQuadratureQuad_8cc_a79446c762c132d61207b8d8cb9857406}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{1.142857142857,0.595238095238,0.595238095238,
+                       0.416666666666,0.416666666666,0.416666666666,0.416666666666\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Quad.\-cc@{Gauss\-Quadrature\-Quad.\-cc}!xq16@{xq16}}
+\index{xq16@{xq16}!GaussQuadratureQuad.cc@{Gauss\-Quadrature\-Quad.\-cc}}
+\subsubsection[{xq16}]{\setlength{\rightskip}{0pt plus 5cm}const double xq16[16]}\label{GaussQuadratureQuad_8cc_a01e790583b20ceef4a6696e950524386}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{-a16, -b16, b16, a16, -a16, -b16, b16, a16,  
+                   -a16, -b16, b16, a16, -a16, -b16, b16, a16\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Quad.\-cc@{Gauss\-Quadrature\-Quad.\-cc}!xq7@{xq7}}
+\index{xq7@{xq7}!GaussQuadratureQuad.cc@{Gauss\-Quadrature\-Quad.\-cc}}
+\subsubsection[{xq7}]{\setlength{\rightskip}{0pt plus 5cm}const double xq7[7]}\label{GaussQuadratureQuad_8cc_a9b4a8348a860d2e93874944d660b4e2d}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{0.0,-0.683130051064,0.683130051064,0.890654421782,
+                       -0.890654421782,0.374256642286,-0.374256642286\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Quad.\-cc@{Gauss\-Quadrature\-Quad.\-cc}!yq16@{yq16}}
+\index{yq16@{yq16}!GaussQuadratureQuad.cc@{Gauss\-Quadrature\-Quad.\-cc}}
+\subsubsection[{yq16}]{\setlength{\rightskip}{0pt plus 5cm}const double yq16[16]}\label{GaussQuadratureQuad_8cc_a55b461d8cbdcc03b5a9a47927c5e28d9}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{-a16, -a16, -a16, -a16, -b16, -b16, -b16, -b16,
+                         b16, b16, b16, b16, a16, a16, a16, a16\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Quad.\-cc@{Gauss\-Quadrature\-Quad.\-cc}!yq7@{yq7}}
+\index{yq7@{yq7}!GaussQuadratureQuad.cc@{Gauss\-Quadrature\-Quad.\-cc}}
+\subsubsection[{yq7}]{\setlength{\rightskip}{0pt plus 5cm}const double yq7[7]}\label{GaussQuadratureQuad_8cc_a0cea94e94830c1098b554d9fa5be8fef}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{0.0,-0.683130051064,0.683130051064,-0.374256642286,0.374256642286,
+                       -0.890654421782,0.890654421782,\}
+\end{DoxyCode}

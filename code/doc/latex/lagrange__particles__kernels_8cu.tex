@@ -1,0 +1,142 @@
+\section{src/particles/lagrange\-\_\-particles\-\_\-kernels.cu File Reference}
+\label{lagrange__particles__kernels_8cu}\index{src/particles/lagrange\-\_\-particles\-\_\-kernels.\-cu@{src/particles/lagrange\-\_\-particles\-\_\-kernels.\-cu}}
+
+
+Kernels used by the \doxyref{L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S}{p.}{classLAGRANGE__PARTICLES} class.  
+
+
+{\ttfamily \#include \char`\"{}lagrange\-\_\-particles\-\_\-kernels.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$stdio.\-h$>$}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bf get\-\_\-verts\-\_\-of\-\_\-element} (const int e, const int nvert, const {\bf full\-Matrix}$<$ scalar $>$ X\-Y\-Z\-Nodes, scalar $\ast$verts)
+\item 
+int {\bf pnpoly} (int nvert, scalar $\ast$verts, scalar $\ast$position)
+\item 
+int {\bf Lget\-\_\-element\-\_\-belong} (scalar $\ast$position, int prev\-\_\-el, const int $\ast$neighbors, const {\bf full\-Matrix}$<$ scalar $>$ X\-Y\-Z\-Nodes, const int nvert, const int N\-\_\-\-N, const int N\-\_\-\-E)
+\item 
+void {\bf Lget\-\_\-velocity\-\_\-at\-\_\-position} (scalar $\ast$position, int el, int N\-\_\-s, scalar $\ast$U, scalar $\ast$solution, scalar $\ast$avg\-\_\-velocity)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Kernels used by the \doxyref{L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S}{p.}{classLAGRANGE__PARTICLES} class. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{lagrange\-\_\-particles\-\_\-kernels.\-cu@{lagrange\-\_\-particles\-\_\-kernels.\-cu}!get\-\_\-verts\-\_\-of\-\_\-element@{get\-\_\-verts\-\_\-of\-\_\-element}}
+\index{get\-\_\-verts\-\_\-of\-\_\-element@{get\-\_\-verts\-\_\-of\-\_\-element}!lagrange_particles_kernels.cu@{lagrange\-\_\-particles\-\_\-kernels.\-cu}}
+\subsubsection[{get\-\_\-verts\-\_\-of\-\_\-element}]{\setlength{\rightskip}{0pt plus 5cm}void get\-\_\-verts\-\_\-of\-\_\-element (
+\begin{DoxyParamCaption}
+\item[{const int}]{e, }
+\item[{const int}]{nvert, }
+\item[{const {\bf full\-Matrix}$<$ scalar $>$}]{X\-Y\-Z\-Nodes, }
+\item[{scalar $\ast$}]{verts}
+\end{DoxyParamCaption}
+)}\label{lagrange__particles__kernels_8cu_a7b6925ac8d0e71bf3ba35e330b29b20d}
+Get the vertex coordinates of an element 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em e} & element index \\
+\hline
+\mbox{\tt in}  & {\em nvert} & number of vertices in the polygon \\
+\hline
+\mbox{\tt in}  & {\em X\-Y\-Z\-Nodes} & matrix of all the nodal coordinates \\
+\hline
+\mbox{\tt out}  & {\em verts} & array containing the coordinates of the polygon's vertices.\\
+\hline
+\end{DoxyParams}
+\index{lagrange\-\_\-particles\-\_\-kernels.\-cu@{lagrange\-\_\-particles\-\_\-kernels.\-cu}!Lget\-\_\-element\-\_\-belong@{Lget\-\_\-element\-\_\-belong}}
+\index{Lget\-\_\-element\-\_\-belong@{Lget\-\_\-element\-\_\-belong}!lagrange_particles_kernels.cu@{lagrange\-\_\-particles\-\_\-kernels.\-cu}}
+\subsubsection[{Lget\-\_\-element\-\_\-belong}]{\setlength{\rightskip}{0pt plus 5cm}int Lget\-\_\-element\-\_\-belong (
+\begin{DoxyParamCaption}
+\item[{scalar $\ast$}]{position, }
+\item[{int}]{prev\-\_\-el, }
+\item[{const int $\ast$}]{neighbors, }
+\item[{const {\bf full\-Matrix}$<$ scalar $>$}]{X\-Y\-Z\-Nodes, }
+\item[{const int}]{nvert, }
+\item[{const int}]{N\-\_\-\-N, }
+\item[{const int}]{N\-\_\-\-E}
+\end{DoxyParamCaption}
+)}\label{lagrange__particles__kernels_8cu_ac555b7ee6d6ac3c9333255b7f08aaf62}
+Host C function to launch figure out which element the point is in 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em position} & coordinates of particle \\
+\hline
+\mbox{\tt in}  & {\em prev\-\_\-el} & element the point belonged to previously \\
+\hline
+\mbox{\tt in}  & {\em neighbors} & index of neighboring elements \\
+\hline
+\mbox{\tt in}  & {\em X\-Y\-Z\-Nodes} & matrix of the nodal coordinates \\
+\hline
+\mbox{\tt in}  & {\em nvert} & number of vertices per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbors \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+elnum index to the element the point belongs to
+\end{DoxyReturn}
+\index{lagrange\-\_\-particles\-\_\-kernels.\-cu@{lagrange\-\_\-particles\-\_\-kernels.\-cu}!Lget\-\_\-velocity\-\_\-at\-\_\-position@{Lget\-\_\-velocity\-\_\-at\-\_\-position}}
+\index{Lget\-\_\-velocity\-\_\-at\-\_\-position@{Lget\-\_\-velocity\-\_\-at\-\_\-position}!lagrange_particles_kernels.cu@{lagrange\-\_\-particles\-\_\-kernels.\-cu}}
+\subsubsection[{Lget\-\_\-velocity\-\_\-at\-\_\-position}]{\setlength{\rightskip}{0pt plus 5cm}void Lget\-\_\-velocity\-\_\-at\-\_\-position (
+\begin{DoxyParamCaption}
+\item[{scalar $\ast$}]{position, }
+\item[{int}]{el, }
+\item[{int}]{N\-\_\-s, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{solution, }
+\item[{scalar $\ast$}]{avg\-\_\-velocity}
+\end{DoxyParamCaption}
+)}\label{lagrange__particles__kernels_8cu_a6ac387318cda1a41f74ecd1ce51e7794}
+Host C function to get the velocity at a given position 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em position} & coordinates of particle \\
+\hline
+\mbox{\tt in}  & {\em el} & element index the particle belongs to \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes \\
+\hline
+\mbox{\tt in}  & {\em U} & solution in all the elements \\
+\hline
+\mbox{\tt in}  & {\em solution} & the nodal solution in that element \\
+\hline
+\mbox{\tt out}  & {\em avg\-\_\-velocity} & the velocity at the position (average in element) \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+We will return the average velocity in the element to which the particle belongs to. To be more accurate we should really be interpolation and evaluating the basis functions at that point precisely. Doing that is more expensive and harder to code, so we won't be doing velocity interpolation. In theory we could do all this directly on the G\-P\-U (to avoid some memory transfer).\index{lagrange\-\_\-particles\-\_\-kernels.\-cu@{lagrange\-\_\-particles\-\_\-kernels.\-cu}!pnpoly@{pnpoly}}
+\index{pnpoly@{pnpoly}!lagrange_particles_kernels.cu@{lagrange\-\_\-particles\-\_\-kernels.\-cu}}
+\subsubsection[{pnpoly}]{\setlength{\rightskip}{0pt plus 5cm}int pnpoly (
+\begin{DoxyParamCaption}
+\item[{int}]{nvert, }
+\item[{scalar $\ast$}]{verts, }
+\item[{scalar $\ast$}]{position}
+\end{DoxyParamCaption}
+)}\label{lagrange__particles__kernels_8cu_a47250aac842099a9455837978048e796}
+Find out if a point is in a polygon 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em nvert} & number of vertices in the polygon \\
+\hline
+\mbox{\tt in}  & {\em verts} & array containing the coordinates of the polygon's vertices. \\
+\hline
+\mbox{\tt in}  & {\em position} & coordinates of the test point. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+c 1 if the point is in the polygon, 0 if not 
+\end{DoxyReturn}
+\subsection{Description}\label{scalar__def_8h_Description}
+The 1\-D portion is pretty straightforward. For the 2\-D part of this function\-: It is stolen from {\tt http\-://www.\-ecse.\-rpi.\-edu/\-Homepages/wrf/\-Research/\-Short\-\_\-\-Notes/pnpoly.\-html} Uses ray tracing combined with the Jordan curve theorem. Works for 2\-D polygon (convex, concave, holes, etc) Copyright (c) 1970-\/2003, Wm. Randolph Franklin
+
+Works with\-: scalar$\ast$ vertx = new scalar[N]; vertx[0] = 0; vertx[1] = 1; vertx[2] = 1; vertx[3] = 0; scalar$\ast$ verty = new scalar[N]; verty[0] = 0; verty[1] = 0; verty[2] = 1; verty[3] = 1; printf(\char`\"{}1\-: \%d (1 expected)\textbackslash{}n\char`\"{}, pnpoly(4, vertx, verty, 0.\-1, 0.\-5)); printf(\char`\"{}1\-: \%d (0 expected)\textbackslash{}n\char`\"{}, pnpoly(4, vertx, verty, 0.\-1,-\/0.\-5)); O\-R scalar x1[] = \{ 0, 1, 1, 0 \}; scalar y1[] = \{ 0, 0, 1, 1 \}; printf(\char`\"{}1\-: \%d (1 expected)\textbackslash{}n\char`\"{}, pnpoly(4, x1, y1, 0.\-8, 0.\-8)); printf(\char`\"{}1\-: \%d (0 expected)\textbackslash{}n\char`\"{}, pnpoly(4, x1, y1, -\/0.\-8, -\/0.\-8));

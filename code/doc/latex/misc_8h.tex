@@ -1,0 +1,222 @@
+\section{src/utils/misc.h File Reference}
+\label{misc_8h}\index{src/utils/misc.\-h@{src/utils/misc.\-h}}
+
+
+Header for miscellaneous functions used by host functions.  
+
+
+{\ttfamily \#include \char`\"{}scalar\-\_\-def.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}blas\-\_\-stuff.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$vector$>$}\\*
+{\ttfamily \#include $<$fstream$>$}\\*
+{\ttfamily \#include $<$sstream$>$}\\*
+{\ttfamily \#include $<$iostream$>$}\\*
+{\ttfamily \#include \char`\"{}full\-Matrix.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$algorithm$>$}\\*
+{\ttfamily \#include \char`\"{}macros.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$map$>$}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bf blas\-Scopy} (int N, float $\ast$x, int I\-N\-C\-X, float $\ast$y, int I\-N\-C\-Y)
+\item 
+void {\bf blas\-Saxpy} (int M, float alpha, float $\ast$x, int I\-N\-C\-X, float $\ast$y, int I\-N\-C\-Y)
+\item 
+void {\bf blas\-Sgemm} (char or1, char or2, int M, int N, int K, float alpha, float $\ast$A, int L\-D\-A, float $\ast$B, int L\-D\-B, float beta, float $\ast$C, int L\-D\-C)
+\item 
+int {\bf blas\-Isamax} (int N, float $\ast$x, int incx)
+\item 
+void {\bf blas\-Dcopy} (int N, double $\ast$x, int I\-N\-C\-X, double $\ast$y, int I\-N\-C\-Y)
+\item 
+void {\bf blas\-Daxpy} (int M, double alpha, double $\ast$x, int I\-N\-C\-X, double $\ast$y, int I\-N\-C\-Y)
+\item 
+void {\bf blas\-Dgemm} (char or1, char or2, int M, int N, int K, double alpha, double $\ast$A, int L\-D\-A, double $\ast$B, int L\-D\-B, double beta, double $\ast$C, int L\-D\-C)
+\item 
+int {\bf blas\-Idamax} (int N, double $\ast$x, int I\-N\-C\-X)
+\item 
+void {\bf make\-Zero} (scalar $\ast$A, int size)
+\item 
+int {\bf factorial} (int n)
+\item 
+void {\bf read\-Table} (const char $\ast$file\-Name, {\bf full\-Matrix}$<$ scalar $>$ \&X\-W\-U\-P, scalar \&gamma, scalar \&alpha, scalar \&Q)
+\item 
+scalar {\bf interpolate} (scalar x, std\-::vector$<$ std\-::pair$<$ scalar, scalar $>$ $>$ table, scalar B\-C\-L, scalar B\-C\-R)
+\item 
+void {\bf get\-\_\-node\-\_\-rgb\-\_\-map} (const char $\ast$file\-Name, std\-::map$<$ int, std\-::vector$<$ int $>$ $>$ \&node\-\_\-rgb\-\_\-map)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Header for miscellaneous functions used by host functions. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{misc.\-h@{misc.\-h}!blas\-Daxpy@{blas\-Daxpy}}
+\index{blas\-Daxpy@{blas\-Daxpy}!misc.h@{misc.\-h}}
+\subsubsection[{blas\-Daxpy}]{\setlength{\rightskip}{0pt plus 5cm}void blas\-Daxpy (
+\begin{DoxyParamCaption}
+\item[{int}]{M, }
+\item[{double}]{alpha, }
+\item[{double $\ast$}]{x, }
+\item[{int}]{I\-N\-C\-X, }
+\item[{double $\ast$}]{y, }
+\item[{int}]{I\-N\-C\-Y}
+\end{DoxyParamCaption}
+)}\label{misc_8h_ac8bc8a4c212e120e5c8e671654bd9c02}
+Call double B\-L\-A\-S axpy \index{misc.\-h@{misc.\-h}!blas\-Dcopy@{blas\-Dcopy}}
+\index{blas\-Dcopy@{blas\-Dcopy}!misc.h@{misc.\-h}}
+\subsubsection[{blas\-Dcopy}]{\setlength{\rightskip}{0pt plus 5cm}void blas\-Dcopy (
+\begin{DoxyParamCaption}
+\item[{int}]{N, }
+\item[{double $\ast$}]{x, }
+\item[{int}]{I\-N\-C\-X, }
+\item[{double $\ast$}]{y, }
+\item[{int}]{I\-N\-C\-Y}
+\end{DoxyParamCaption}
+)}\label{misc_8h_ae058c624e336b6a02296c711137c1f9f}
+Call double B\-L\-A\-S copy \index{misc.\-h@{misc.\-h}!blas\-Dgemm@{blas\-Dgemm}}
+\index{blas\-Dgemm@{blas\-Dgemm}!misc.h@{misc.\-h}}
+\subsubsection[{blas\-Dgemm}]{\setlength{\rightskip}{0pt plus 5cm}void blas\-Dgemm (
+\begin{DoxyParamCaption}
+\item[{char}]{or1, }
+\item[{char}]{or2, }
+\item[{int}]{M, }
+\item[{int}]{N, }
+\item[{int}]{K, }
+\item[{double}]{alpha, }
+\item[{double $\ast$}]{A, }
+\item[{int}]{L\-D\-A, }
+\item[{double $\ast$}]{B, }
+\item[{int}]{L\-D\-B, }
+\item[{double}]{beta, }
+\item[{double $\ast$}]{C, }
+\item[{int}]{L\-D\-C}
+\end{DoxyParamCaption}
+)}\label{misc_8h_a4c35df5374e79d600ab66f2d6b101777}
+Call double B\-L\-A\-S gemm \index{misc.\-h@{misc.\-h}!blas\-Idamax@{blas\-Idamax}}
+\index{blas\-Idamax@{blas\-Idamax}!misc.h@{misc.\-h}}
+\subsubsection[{blas\-Idamax}]{\setlength{\rightskip}{0pt plus 5cm}int blas\-Idamax (
+\begin{DoxyParamCaption}
+\item[{int}]{N, }
+\item[{double $\ast$}]{x, }
+\item[{int}]{I\-N\-C\-X}
+\end{DoxyParamCaption}
+)}\label{misc_8h_aea745c0506e6ecd2976d0271df731bbf}
+Call int B\-L\-A\-S amax \index{misc.\-h@{misc.\-h}!blas\-Isamax@{blas\-Isamax}}
+\index{blas\-Isamax@{blas\-Isamax}!misc.h@{misc.\-h}}
+\subsubsection[{blas\-Isamax}]{\setlength{\rightskip}{0pt plus 5cm}int blas\-Isamax (
+\begin{DoxyParamCaption}
+\item[{int}]{N, }
+\item[{float $\ast$}]{x, }
+\item[{int}]{incx}
+\end{DoxyParamCaption}
+)}\label{misc_8h_a12a3f7b6912fb2a6d5bfd87d335800b4}
+Call float B\-L\-A\-S amax \index{misc.\-h@{misc.\-h}!blas\-Saxpy@{blas\-Saxpy}}
+\index{blas\-Saxpy@{blas\-Saxpy}!misc.h@{misc.\-h}}
+\subsubsection[{blas\-Saxpy}]{\setlength{\rightskip}{0pt plus 5cm}void blas\-Saxpy (
+\begin{DoxyParamCaption}
+\item[{int}]{M, }
+\item[{float}]{alpha, }
+\item[{float $\ast$}]{x, }
+\item[{int}]{I\-N\-C\-X, }
+\item[{float $\ast$}]{y, }
+\item[{int}]{I\-N\-C\-Y}
+\end{DoxyParamCaption}
+)}\label{misc_8h_a14cdb361233458db985ca089328e6846}
+Call float B\-L\-A\-S axpy \index{misc.\-h@{misc.\-h}!blas\-Scopy@{blas\-Scopy}}
+\index{blas\-Scopy@{blas\-Scopy}!misc.h@{misc.\-h}}
+\subsubsection[{blas\-Scopy}]{\setlength{\rightskip}{0pt plus 5cm}void blas\-Scopy (
+\begin{DoxyParamCaption}
+\item[{int}]{N, }
+\item[{float $\ast$}]{x, }
+\item[{int}]{I\-N\-C\-X, }
+\item[{float $\ast$}]{y, }
+\item[{int}]{I\-N\-C\-Y}
+\end{DoxyParamCaption}
+)}\label{misc_8h_a4c4710f6a9b4e79c2338b988d71f3f76}
+Call float B\-L\-A\-S copy \index{misc.\-h@{misc.\-h}!blas\-Sgemm@{blas\-Sgemm}}
+\index{blas\-Sgemm@{blas\-Sgemm}!misc.h@{misc.\-h}}
+\subsubsection[{blas\-Sgemm}]{\setlength{\rightskip}{0pt plus 5cm}void blas\-Sgemm (
+\begin{DoxyParamCaption}
+\item[{char}]{or1, }
+\item[{char}]{or2, }
+\item[{int}]{M, }
+\item[{int}]{N, }
+\item[{int}]{K, }
+\item[{float}]{alpha, }
+\item[{float $\ast$}]{A, }
+\item[{int}]{L\-D\-A, }
+\item[{float $\ast$}]{B, }
+\item[{int}]{L\-D\-B, }
+\item[{float}]{beta, }
+\item[{float $\ast$}]{C, }
+\item[{int}]{L\-D\-C}
+\end{DoxyParamCaption}
+)}\label{misc_8h_a0fb663801df01e1bb70a8bd15b4455c6}
+Call float B\-L\-A\-S gemm \index{misc.\-h@{misc.\-h}!factorial@{factorial}}
+\index{factorial@{factorial}!misc.h@{misc.\-h}}
+\subsubsection[{factorial}]{\setlength{\rightskip}{0pt plus 5cm}int factorial (
+\begin{DoxyParamCaption}
+\item[{int}]{n}
+\end{DoxyParamCaption}
+)}\label{misc_8h_ae1b37c26bb8e5744f5747d6cd6505356}
+Recursive factorial function \index{misc.\-h@{misc.\-h}!get\-\_\-node\-\_\-rgb\-\_\-map@{get\-\_\-node\-\_\-rgb\-\_\-map}}
+\index{get\-\_\-node\-\_\-rgb\-\_\-map@{get\-\_\-node\-\_\-rgb\-\_\-map}!misc.h@{misc.\-h}}
+\subsubsection[{get\-\_\-node\-\_\-rgb\-\_\-map}]{\setlength{\rightskip}{0pt plus 5cm}void get\-\_\-node\-\_\-rgb\-\_\-map (
+\begin{DoxyParamCaption}
+\item[{const char $\ast$}]{file\-Name, }
+\item[{std\-::map$<$ int, std\-::vector$<$ int $>$ $>$ \&}]{node\-\_\-rgb\-\_\-map}
+\end{DoxyParamCaption}
+)}\label{misc_8h_a962f890661bddd171593b17b608ba5cc}
+Read the data from the jpeg\-\_\-mesh.\-py script linking the node id to an rgb value of the image 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em filename} & name of file containing the data \\
+\hline
+\mbox{\tt out}  & {\em node\-\_\-rgb\-\_\-map} & map between the node I\-D and the R\-G\-B value at that node\\
+\hline
+\end{DoxyParams}
+\index{misc.\-h@{misc.\-h}!interpolate@{interpolate}}
+\index{interpolate@{interpolate}!misc.h@{misc.\-h}}
+\subsubsection[{interpolate}]{\setlength{\rightskip}{0pt plus 5cm}scalar interpolate (
+\begin{DoxyParamCaption}
+\item[{scalar}]{x, }
+\item[{std\-::vector$<$ std\-::pair$<$ scalar, scalar $>$ $>$}]{table, }
+\item[{scalar}]{B\-C\-L, }
+\item[{scalar}]{B\-C\-R}
+\end{DoxyParamCaption}
+)}\label{misc_8h_a1d7d3d9665e31ae9aa5409de3aa4d020}
+Linear interpolation of the data in table. \subsection{Description}\label{scalar__def_8h_Description}
+From {\tt http\-://stackoverflow.\-com/questions/11396860/better-\/way-\/than-\/if-\/else-\/if-\/else-\/for-\/linear-\/interpolation}
+
+Assumes that \char`\"{}table\char`\"{} is sorted by .first
+
+Linear interpolation of the data in table. If x is out of bounds, replace with boundary condition of the left (B\-C\-L) or right (B\-C\-R).
+
+It is used by \doxyref{init\-\_\-cond.\-cc}{p.}{init__cond_8cc}.\index{misc.\-h@{misc.\-h}!make\-Zero@{make\-Zero}}
+\index{make\-Zero@{make\-Zero}!misc.h@{misc.\-h}}
+\subsubsection[{make\-Zero}]{\setlength{\rightskip}{0pt plus 5cm}void make\-Zero (
+\begin{DoxyParamCaption}
+\item[{scalar $\ast$}]{A, }
+\item[{int}]{size}
+\end{DoxyParamCaption}
+)}\label{misc_8h_a03e7e1445920dfc4b187f62d0fabb46f}
+Set a vector entries to 0 \index{misc.\-h@{misc.\-h}!read\-Table@{read\-Table}}
+\index{read\-Table@{read\-Table}!misc.h@{misc.\-h}}
+\subsubsection[{read\-Table}]{\setlength{\rightskip}{0pt plus 5cm}void read\-Table (
+\begin{DoxyParamCaption}
+\item[{const char $\ast$}]{file\-Name, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{X\-W\-U\-P, }
+\item[{scalar \&}]{gamma, }
+\item[{scalar \&}]{alpha, }
+\item[{scalar \&}]{Q}
+\end{DoxyParamCaption}
+)}\label{misc_8h_a5fc66aca50aa3fc183521df637c95b95}
+Read the data from a table in a txt file (used by \doxyref{init\-\_\-cond.\-cc}{p.}{init__cond_8cc}) 

@@ -1,0 +1,166 @@
+\section{Limiting Class Reference}
+\label{classLimiting}\index{Limiting@{Limiting}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bf Limiting} (int method, int N\-\_\-s, int N\-\_\-\-E, int N\-\_\-\-N, {\bf simple\-Mesh} \&m, {\bf full\-Matrix}$<$ scalar $>$ \&Lag2\-Mono, {\bf full\-Matrix}$<$ scalar $>$ \&Mono2\-Lag, {\bf T\-I\-M\-E\-R\-S} \&timers, {\bf M\-E\-M\-\_\-\-C\-O\-U\-N\-T\-E\-R} \&mem\-\_\-counter)\label{classLimiting_a9d6ab8cfbc95257f60dc63daa6600918}
+
+\begin{DoxyCompactList}\small\item\em Constructor for 1\-D limiting. \end{DoxyCompactList}\item 
+{\bf Limiting} (int method, int N\-\_\-s, int N\-\_\-\-E, int order, bool cartesian, int N\-\_\-\-N, int N\-\_\-\-G, int N\-\_\-ghosts, {\bf simple\-Mesh} \&m, scalar ref\-Area, {\bf full\-Matrix}$<$ scalar $>$ \&Lag2\-Mono\-X, {\bf full\-Matrix}$<$ scalar $>$ \&Mono\-X2\-Mono\-Y, {\bf full\-Matrix}$<$ scalar $>$ \&Mono\-Y2\-Lag, {\bf T\-I\-M\-E\-R\-S} \&timers, {\bf M\-E\-M\-\_\-\-C\-O\-U\-N\-T\-E\-R} \&mem\-\_\-counter)\label{classLimiting_a4c5ec2dc8c2c9d048f9a5f87e89d70a4}
+
+\begin{DoxyCompactList}\small\item\em Constructor for 2\-D limiting for structured mesh (method 7 is for an arbitrary mesh) \end{DoxyCompactList}\item 
+{\bf $\sim$\-Limiting} ()\label{classLimiting_a5db475cb481018398d619da2029fb7d6}
+
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
+int {\bf get\-Limiting\-Method} () const 
+\item 
+void {\bf H\-Rlimiting} ({\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} \&communicator, scalar $\ast$U)
+\item 
+void {\bf P\-Rlimiting} ({\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} \&communicator, scalar $\ast$U)
+\item 
+void {\bf M2limiting} ({\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} \&communicator, scalar $\ast$U)
+\item 
+void {\bf H\-R\-Ilimiting} ({\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} \&communicator, {\bf S\-E\-N\-S\-O\-R} \&sensor, scalar $\ast$U)
+\item 
+void {\bf P\-R\-Ilimiting} ({\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} \&communicator, {\bf S\-E\-N\-S\-O\-R} \&sensor, scalar $\ast$U)
+\item 
+void {\bf M2\-Ilimiting} ({\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} \&communicator, {\bf S\-E\-N\-S\-O\-R} \&sensor, scalar $\ast$U)
+\item 
+void {\bf P0\-Ilimiting} ({\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} \&communicator, {\bf S\-E\-N\-S\-O\-R} \&sensor, {\bf D\-G\-\_\-\-S\-O\-L\-V\-E\-R} \&dgsolver, scalar $\ast$U)
+\end{DoxyCompactItemize}
+
+
+\subsection{Member Function Documentation}
+\index{Limiting@{Limiting}!get\-Limiting\-Method@{get\-Limiting\-Method}}
+\index{get\-Limiting\-Method@{get\-Limiting\-Method}!Limiting@{Limiting}}
+\subsubsection[{get\-Limiting\-Method}]{\setlength{\rightskip}{0pt plus 5cm}int Limiting\-::get\-Limiting\-Method (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classLimiting_af037945b75a04e8f117c44ca00d7896a}
+Return limiting method \index{Limiting@{Limiting}!H\-R\-Ilimiting@{H\-R\-Ilimiting}}
+\index{H\-R\-Ilimiting@{H\-R\-Ilimiting}!Limiting@{Limiting}}
+\subsubsection[{H\-R\-Ilimiting}]{\setlength{\rightskip}{0pt plus 5cm}void Limiting\-::\-H\-R\-Ilimiting (
+\begin{DoxyParamCaption}
+\item[{{\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} \&}]{communicator, }
+\item[{{\bf S\-E\-N\-S\-O\-R} \&}]{sensor, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{classLimiting_ab809ba8d0bb5d4e97da51c4127b24a77}
+H\-R limiting function for limiting each element individually 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em communicator} & communicator object for M\-P\-I communications \\
+\hline
+\mbox{\tt in}  & {\em sensor} & sensor object \\
+\hline
+\mbox{\tt out}  & {\em U} & solution to be limited\\
+\hline
+\end{DoxyParams}
+\index{Limiting@{Limiting}!H\-Rlimiting@{H\-Rlimiting}}
+\index{H\-Rlimiting@{H\-Rlimiting}!Limiting@{Limiting}}
+\subsubsection[{H\-Rlimiting}]{\setlength{\rightskip}{0pt plus 5cm}void Limiting\-::\-H\-Rlimiting (
+\begin{DoxyParamCaption}
+\item[{{\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} \&}]{communicator, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{classLimiting_ad0e9f7f23d628bd92012c91d0b94361d}
+H\-R limiting function 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em communicator} & communicator object for M\-P\-I communications \\
+\hline
+\mbox{\tt out}  & {\em U} & solution to be limited\\
+\hline
+\end{DoxyParams}
+\index{Limiting@{Limiting}!M2\-Ilimiting@{M2\-Ilimiting}}
+\index{M2\-Ilimiting@{M2\-Ilimiting}!Limiting@{Limiting}}
+\subsubsection[{M2\-Ilimiting}]{\setlength{\rightskip}{0pt plus 5cm}void Limiting\-::\-M2\-Ilimiting (
+\begin{DoxyParamCaption}
+\item[{{\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} \&}]{communicator, }
+\item[{{\bf S\-E\-N\-S\-O\-R} \&}]{sensor, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{classLimiting_a47e7a4196f22923221b3b4ca937666f5}
+modified limiting function (see jcp2014) for limiting each element individually 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em communicator} & communicator object for M\-P\-I communications \\
+\hline
+\mbox{\tt in}  & {\em sensor} & sensor object \\
+\hline
+\mbox{\tt out}  & {\em U} & solution to be limited\\
+\hline
+\end{DoxyParams}
+\index{Limiting@{Limiting}!M2limiting@{M2limiting}}
+\index{M2limiting@{M2limiting}!Limiting@{Limiting}}
+\subsubsection[{M2limiting}]{\setlength{\rightskip}{0pt plus 5cm}void Limiting\-::\-M2limiting (
+\begin{DoxyParamCaption}
+\item[{{\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} \&}]{communicator, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{classLimiting_a7dda419e7434fd5186640fca44645f93}
+Modified limiting function (see jcp2014) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em communicator} & communicator object for M\-P\-I communications \\
+\hline
+\mbox{\tt out}  & {\em U} & solution to be limited\\
+\hline
+\end{DoxyParams}
+\index{Limiting@{Limiting}!P0\-Ilimiting@{P0\-Ilimiting}}
+\index{P0\-Ilimiting@{P0\-Ilimiting}!Limiting@{Limiting}}
+\subsubsection[{P0\-Ilimiting}]{\setlength{\rightskip}{0pt plus 5cm}void Limiting\-::\-P0\-Ilimiting (
+\begin{DoxyParamCaption}
+\item[{{\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} \&}]{communicator, }
+\item[{{\bf S\-E\-N\-S\-O\-R} \&}]{sensor, }
+\item[{{\bf D\-G\-\_\-\-S\-O\-L\-V\-E\-R} \&}]{dgsolver, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{classLimiting_af31cfdc16b8e201fb67e8e2f1c8b9222}
+based on a sensor, reduce the element to his cell average (p=0 solution). This works for any kind of mesh (triangles, etc). 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em communicator} & communicator object for M\-P\-I communications \\
+\hline
+\mbox{\tt in}  & {\em sensor} & sensor object \\
+\hline
+\mbox{\tt in}  & {\em dgsolver} & dgsolver object \\
+\hline
+\mbox{\tt out}  & {\em U} & solution to be limited\\
+\hline
+\end{DoxyParams}
+\index{Limiting@{Limiting}!P\-R\-Ilimiting@{P\-R\-Ilimiting}}
+\index{P\-R\-Ilimiting@{P\-R\-Ilimiting}!Limiting@{Limiting}}
+\subsubsection[{P\-R\-Ilimiting}]{\setlength{\rightskip}{0pt plus 5cm}void Limiting\-::\-P\-R\-Ilimiting (
+\begin{DoxyParamCaption}
+\item[{{\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} \&}]{communicator, }
+\item[{{\bf S\-E\-N\-S\-O\-R} \&}]{sensor, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{classLimiting_accaf1cc3d8a37471dc8ba7b65ccd15df}
+P\-R limiting function for limiting each element individually (primitive variables) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em communicator} & communicator object for M\-P\-I communications \\
+\hline
+\mbox{\tt in}  & {\em sensor} & sensor object \\
+\hline
+\mbox{\tt out}  & {\em U} & solution to be limited\\
+\hline
+\end{DoxyParams}
+\index{Limiting@{Limiting}!P\-Rlimiting@{P\-Rlimiting}}
+\index{P\-Rlimiting@{P\-Rlimiting}!Limiting@{Limiting}}
+\subsubsection[{P\-Rlimiting}]{\setlength{\rightskip}{0pt plus 5cm}void Limiting\-::\-P\-Rlimiting (
+\begin{DoxyParamCaption}
+\item[{{\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} \&}]{communicator, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{classLimiting_a92f059663fc2a398c38afa5dde0a9809}
+P\-R limiting function (like H\-Rlimiting but limit the primitive variables) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em communicator} & communicator object for M\-P\-I communications \\
+\hline
+\mbox{\tt out}  & {\em U} & solution to be limited\\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+src/limiting/{\bf limiting.\-h}\item 
+src/limiting/{\bf limiting.\-cc}\end{DoxyCompactItemize}

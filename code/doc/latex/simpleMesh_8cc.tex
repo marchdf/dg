@@ -1,0 +1,106 @@
+\section{src/mesh/simple\-Mesh.cc File Reference}
+\label{simpleMesh_8cc}\index{src/mesh/simple\-Mesh.\-cc@{src/mesh/simple\-Mesh.\-cc}}
+
+
+Function definitions for the \doxyref{simple\-Mesh}{p.}{classsimpleMesh} class.  
+
+
+{\ttfamily \#include \char`\"{}simple\-Mesh.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}Gmsh\-Defines.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$fstream$>$}\\*
+{\ttfamily \#include $<$sstream$>$}\\*
+{\ttfamily \#include $<$iostream$>$}\\*
+{\ttfamily \#include $<$set$>$}\\*
+{\ttfamily \#include $<$algorithm$>$}\\*
+{\ttfamily \#include \char`\"{}polynomial\-Basis.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}Gauss.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$stdexcept$>$}\\*
+{\ttfamily \#include $<$bitset$>$}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+bool {\bf pair\-Periodic} (const {\bf full\-Matrix}$<$ double $>$ \&mesh\-Nodes, std\-::vector$<$ int $>$ nodes1, std\-::vector$<$ int $>$ nodes2)
+\item 
+int {\bf unique\-Tag} (int id1, int id2, int N=0)
+\item 
+int {\bf cantor} (int k1, int k2)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Function definitions for the \doxyref{simple\-Mesh}{p.}{classsimpleMesh} class. Class deals with the mesh. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{simple\-Mesh.\-cc@{simple\-Mesh.\-cc}!cantor@{cantor}}
+\index{cantor@{cantor}!simpleMesh.cc@{simple\-Mesh.\-cc}}
+\subsubsection[{cantor}]{\setlength{\rightskip}{0pt plus 5cm}int cantor (
+\begin{DoxyParamCaption}
+\item[{int}]{k1, }
+\item[{int}]{k2}
+\end{DoxyParamCaption}
+)}\label{simpleMesh_8cc_a97ed2df1bdfbd4279f14d5444f1d6cca}
+Cantor pairing function. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em k1} & first number \\
+\hline
+\mbox{\tt in}  & {\em k2} & second number \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Generates a number based on two other ones.
+
+This will overflow when for (k1,k2)=(65535, 65535). You can represent all 16-\/bit integers using 32-\/bit integers but you can't go further than that without using a 64-\/bit integer.\index{simple\-Mesh.\-cc@{simple\-Mesh.\-cc}!pair\-Periodic@{pair\-Periodic}}
+\index{pair\-Periodic@{pair\-Periodic}!simpleMesh.cc@{simple\-Mesh.\-cc}}
+\subsubsection[{pair\-Periodic}]{\setlength{\rightskip}{0pt plus 5cm}bool pair\-Periodic (
+\begin{DoxyParamCaption}
+\item[{const {\bf full\-Matrix}$<$ double $>$ \&}]{mesh\-Nodes, }
+\item[{std\-::vector$<$ int $>$}]{nodes1, }
+\item[{std\-::vector$<$ int $>$}]{nodes2}
+\end{DoxyParamCaption}
+)}\label{simpleMesh_8cc_ab8623059ec614f1d5569955f3d92dcd8}
+Figure out if interfaces are periodic pairs 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em mesh\-Nodes} & coordinates of all the nodes in the mesh \\
+\hline
+\mbox{\tt in}  & {\em nodes1} & node coordinates of the first interface \\
+\hline
+\mbox{\tt in}  & {\em nodes2} & node coordinates of the second interface \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+true if periodic pairs 
+\end{DoxyReturn}
+\subsection{Description}\label{scalar__def_8h_Description}
+Given a list of nodes on an interface and their coordinates, figure out if they are periodic pairs.
+
+Used by Build\-Interfaces.\index{simple\-Mesh.\-cc@{simple\-Mesh.\-cc}!unique\-Tag@{unique\-Tag}}
+\index{unique\-Tag@{unique\-Tag}!simpleMesh.cc@{simple\-Mesh.\-cc}}
+\subsubsection[{unique\-Tag}]{\setlength{\rightskip}{0pt plus 5cm}int unique\-Tag (
+\begin{DoxyParamCaption}
+\item[{int}]{id1, }
+\item[{int}]{id2, }
+\item[{int}]{N = {\ttfamily 0}}
+\end{DoxyParamCaption}
+)}\label{simpleMesh_8cc_a3c6c21c1ebf28a86723fa224f99c5718}
+Generates a unique tag given two numbers 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em id1} & first number \\
+\hline
+\mbox{\tt in}  & {\em id2} & second number \\
+\hline
+\mbox{\tt in}  & {\em N} & total number of pairs\\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+This is not used anymore... but I keep it because it's kind of cool
+
+Given two numbers (the global id of el1 and el2 of an interface), create a unique number. Ideally I would use a perfect hash. But for that I would need a 64-\/bit integer to represent all pairs of 32-\/bit integers. For a good discussion on this see {\tt http\-://stackoverflow.\-com/questions/919612/mapping-\/two-\/integers-\/to-\/one-\/in-\/a-\/unique-\/and-\/deterministic-\/way} {\tt http\-://stackoverflow.\-com/questions/682438/hash-\/function-\/providing-\/unique-\/uint-\/from-\/an-\/integer-\/coordinate-\/pair} {\tt http\-://stackoverflow.\-com/questions/11786635/fast-\/bi-\/directional-\/hash-\/of-\/two-\/integers-\/in-\/c}

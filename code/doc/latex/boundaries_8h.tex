@@ -1,0 +1,153 @@
+\section{src/bc/boundaries.h File Reference}
+\label{boundaries_8h}\index{src/bc/boundaries.\-h@{src/bc/boundaries.\-h}}
+
+
+Functions to launch B\-C kernels.  
+
+
+{\ttfamily \#include \char`\"{}scalar\-\_\-def.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$math.\-h$>$}\\*
+{\ttfamily \#include \char`\"{}macros.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}constants.\-h\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bf Lrflctive\-Boundary} (int M\-\_\-s, int M\-\_\-\-B, int $\ast$boundary\-Map, scalar $\ast$normals, int start, scalar $\ast$U\-F)
+\item 
+void {\bf Lnoslip\-Boundary} (int M\-\_\-s, int M\-\_\-\-B, int $\ast$boundary\-Map, scalar $\ast$normals, int start, scalar $\ast$U\-F)
+\item 
+void {\bf Lnograd\-Boundary} (int M\-\_\-s, int M\-\_\-\-B, int $\ast$boundary\-Map, scalar $\ast$normals, int start, scalar $\ast$d\-Ug\-F)
+\item 
+void {\bf L\-Anflw\-Boundary} (int M\-\_\-s, int M\-\_\-\-B, int $\ast$boundary\-Map, scalar $\ast$normals, int start, scalar $\ast$U\-F)
+\item 
+scalar {\bfseries get\-Mew} (scalar mew\-\_\-ref, scalar T\-\_\-ref, scalar Cvis, scalar T)\label{boundaries_8h_ac48429583cb7094b338db866283fa0a1}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Functions to launch B\-C kernels. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{boundaries.\-h@{boundaries.\-h}!L\-Anflw\-Boundary@{L\-Anflw\-Boundary}}
+\index{L\-Anflw\-Boundary@{L\-Anflw\-Boundary}!boundaries.h@{boundaries.\-h}}
+\subsubsection[{L\-Anflw\-Boundary}]{\setlength{\rightskip}{0pt plus 5cm}void L\-Anflw\-Boundary (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-s, }
+\item[{int}]{M\-\_\-\-B, }
+\item[{int $\ast$}]{boundary\-Map, }
+\item[{scalar $\ast$}]{normals, }
+\item[{int}]{start, }
+\item[{scalar $\ast$}]{U\-F}
+\end{DoxyParamCaption}
+)}\label{boundaries_8h_a13f78579e6639c94d06464c2595b8ab9}
+Host C function to launch Anflw kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes on an interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-B} & number of boundaries to treat; specifically, the number of A inflow boundaries \\
+\hline
+\mbox{\tt in}  & {\em boundary\-Map} & index of interfaces to treat \\
+\hline
+\mbox{\tt in}  & {\em normals} & normals to the interfaces \\
+\hline
+\mbox{\tt in}  & {\em start} & start index of A inflow B\-C in boundary\-Map \\
+\hline
+\mbox{\tt out}  & {\em U\-F} & suitably modified for B\-Cs \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches M\-\_\-\-B blocks of M\-\_\-s threads.\index{boundaries.\-h@{boundaries.\-h}!Lnograd\-Boundary@{Lnograd\-Boundary}}
+\index{Lnograd\-Boundary@{Lnograd\-Boundary}!boundaries.h@{boundaries.\-h}}
+\subsubsection[{Lnograd\-Boundary}]{\setlength{\rightskip}{0pt plus 5cm}void Lnograd\-Boundary (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-s, }
+\item[{int}]{M\-\_\-\-B, }
+\item[{int $\ast$}]{boundary\-Map, }
+\item[{scalar $\ast$}]{normals, }
+\item[{int}]{start, }
+\item[{scalar $\ast$}]{d\-Ug\-F}
+\end{DoxyParamCaption}
+)}\label{boundaries_8h_a805d6d95f01026c240096d1c3e54c58b}
+Host C function to launch nograd kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes on an interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-B} & number of boundaries to treat; specifically, the number of zero-\/gradient boundaries \\
+\hline
+\mbox{\tt in}  & {\em boundary\-Map} & index of interfaces to treat \\
+\hline
+\mbox{\tt in}  & {\em normals} & normals to the interfaces \\
+\hline
+\mbox{\tt in}  & {\em start} & start index of zero-\/gradient B\-C in boundary\-Map \\
+\hline
+\mbox{\tt out}  & {\em d\-Ug\-F} & suitably modified for B\-Cs \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches M\-\_\-\-B blocks of M\-\_\-s threads.\index{boundaries.\-h@{boundaries.\-h}!Lnoslip\-Boundary@{Lnoslip\-Boundary}}
+\index{Lnoslip\-Boundary@{Lnoslip\-Boundary}!boundaries.h@{boundaries.\-h}}
+\subsubsection[{Lnoslip\-Boundary}]{\setlength{\rightskip}{0pt plus 5cm}void Lnoslip\-Boundary (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-s, }
+\item[{int}]{M\-\_\-\-B, }
+\item[{int $\ast$}]{boundary\-Map, }
+\item[{scalar $\ast$}]{normals, }
+\item[{int}]{start, }
+\item[{scalar $\ast$}]{U\-F}
+\end{DoxyParamCaption}
+)}\label{boundaries_8h_ae178e0bb67332705dfbc025a9b4bb800}
+Host C function to launch noslip kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes on an interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-B} & number of boundaries to treat; specifically, the number of no-\/slip boundaries \\
+\hline
+\mbox{\tt in}  & {\em boundary\-Map} & index of interfaces to treat \\
+\hline
+\mbox{\tt in}  & {\em normals} & normals to the interfaces \\
+\hline
+\mbox{\tt in}  & {\em start} & start index of noslip B\-C in boundary\-Map \\
+\hline
+\mbox{\tt out}  & {\em U\-F} & suitably modified for B\-Cs \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches M\-\_\-\-B blocks of M\-\_\-s threads.\index{boundaries.\-h@{boundaries.\-h}!Lrflctive\-Boundary@{Lrflctive\-Boundary}}
+\index{Lrflctive\-Boundary@{Lrflctive\-Boundary}!boundaries.h@{boundaries.\-h}}
+\subsubsection[{Lrflctive\-Boundary}]{\setlength{\rightskip}{0pt plus 5cm}void Lrflctive\-Boundary (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-s, }
+\item[{int}]{M\-\_\-\-B, }
+\item[{int $\ast$}]{boundary\-Map, }
+\item[{scalar $\ast$}]{normals, }
+\item[{int}]{start, }
+\item[{scalar $\ast$}]{U\-F}
+\end{DoxyParamCaption}
+)}\label{boundaries_8h_aff7c0b1ad8ed9e1c307c3c124b8c23da}
+Host C function to launch rflctive kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes on an interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-B} & number of boundaries to treat \\
+\hline
+\mbox{\tt in}  & {\em boundary\-Map} & index of interfaces to treat \\
+\hline
+\mbox{\tt in}  & {\em normals} & normals to the interfaces \\
+\hline
+\mbox{\tt in}  & {\em start} & start index of reflective B\-C in boundary\-Map \\
+\hline
+\mbox{\tt out}  & {\em U\-F} & suitably modified for B\-Cs \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches M\-\_\-\-B blocks of M\-\_\-s threads.

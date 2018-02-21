@@ -14,5 +14,6 @@
 extern "C" void Lsolver(int N_s, int N_E, scalar Dt, scalar* Minv, scalar* f, scalar* DU);
 extern "C" void Laverage_cell_p0(const int N_s, const int N_E, scalar* DU);
 extern "C" void LfindUPA(const int N_s, const int N_E, scalar* U, scalar* UPA);
+extern "C" void LfindMew(const int N_s, const int N_E, scalar* U, scalar* Mew);
 
 #endif

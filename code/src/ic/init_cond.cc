@@ -12,6 +12,1591 @@
 scalar constants::GLOBAL_GX;
 scalar constants::GLOBAL_GY;
 
+//BI1 Initialization for Workshop, Insviscid vortex transport
+void init_dg_HiOWvtx_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs)
+{
+  
+   // For the High-Order Workshop problem C1.4 in 2014
+  // Vortex transport by uniform flow
+
+  // Problem parameters
+  if (ic_inputs.size() != 3){
+    printf("Wrong initial condition inputs. Exiting\n");
+    exit(1);
+  }
+  scalar M_inf = ic_inputs[0]; // Mach number
+  scalar beta  = ic_inputs[1]; // vortex strength
+  scalar R     = ic_inputs[2]; // characteristic radius
+  printf("M_inf=%f, beta=%f, R=%f\n",M_inf,beta,R);
+  
+  // Initial conditions
+  scalar gamma = constants::GLOBAL_GAMMA;
+  scalar Rgas  = 287.15; // J/kg K
+  scalar p_inf = 1e5;   // N/m^2
+  scalar T_inf  = 300.0; // K
+  scalar rho_inf = p_inf / (Rgas*T_inf);
+  scalar u_inf = M_inf*sqrt(gamma*Rgas*T_inf);
+  scalar Cp = gamma/(gamma-1)*Rgas;
+  printf("gamma=%f, Rgas=%f, p_inf=%f, T_inf=%f, rho_inf=%f, u_inf=%f, Cp=%f\n",gamma,Rgas,p_inf,T_inf,rho_inf,u_inf,Cp);
+
+  scalar XC = 0.05; // x-center of vortex [m]
+  scalar YC = 0.05; // y-center of vortex [m]
+  /*
+  // Non-dimensional parameters
+  scalar L_ND   = 0.1; // use characteristic radius to ND
+  scalar rho_ND = rho_inf;
+  scalar u_ND   = u_inf;
+  scalar p_ND   = rho_inf*u_inf*u_inf;
+  printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f\n",L_ND,rho_ND,u_ND,p_ND);
+
+  // N-D lengths
+  XC = XC/L_ND;
+  YC = YC/L_ND;
+  R  = R/L_ND*/
+  
+  // Non-dimensional parameters
+  scalar L_ND   = 0.1; // use characteristic radius to ND
+  scalar rho_ND = rho_inf;
+  scalar u_ND   = u_inf;
+  scalar p_ND   = rho_inf*u_inf*u_inf;
+  printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f\n",L_ND,rho_ND,u_ND,p_ND);
+
+  // N-D lengths
+  XC = XC/L_ND * L_ND;
+  YC = YC/L_ND * L_ND;
+  R  = R/L_ND * L_ND;
+
+  scalar rho0=0,T0=0,dT=0,p0=0,u0=0,v0=0,du=0,dv=0,Et0=0,r=0;  
+  scalar xc=0, yc=0, x=0, y=0;
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+      xc = XYZCen(e,0);
+      x  = XYZNodes(i,e*D+0);
+      yc = XYZCen(e,1);
+      y  = XYZNodes(i,e*D+1);
+
+      // perturbation quantities
+      r = sqrt( (x-XC)*(x-XC) + (y-YC)*(y-YC) )/R;
+      du = -(u_inf*beta)*(y-YC)/R*exp(-0.5*r*r);
+      dv =  (u_inf*beta)*(x-XC)/R*exp(-0.5*r*r);
+      dT = 0.5*(u_inf*beta)*(u_inf*beta)*exp(-r*r)/Cp;
+	
+      // initial flow
+      T0 = T_inf-dT;
+      u0 = u_inf+du;
+      v0 =       dv;
+      rho0 = rho_inf*pow(T0/T_inf,1.0/(gamma-1));
+      p0   = rho0*Rgas*T0;
+      /*
+      // Non-dimensionalize and energy calculation
+      rho0 = rho0/rho_ND;
+      u0   = u0/u_ND;
+      v0   = v0/u_ND;
+      p0   = p0/p_ND;
+      */
+      Et0  = p0/(gamma-1) + 0.5*rho0*(u0*u0+v0*v0);       
+      
+      // set the initial fields
+      U(i,e*N_F+0) = rho0;
+      U(i,e*N_F+1) = rho0*u0;
+      U(i,e*N_F+2) = rho0*v0;
+      U(i,e*N_F+3) = Et0;
+    }
+  }
+  
+  /*
+  // For the High-Order Workshop problem Bi1 n 2016
+  // Vortex transport by uniform flow
+
+  // Problem parameters
+  if (ic_inputs.size() != 3){
+    printf("Wrong initial condition inputs. Exiting\n");
+    exit(1);
+  }
+  scalar Mach_free       = ic_inputs[0]; // Freestream Mach number
+  scalar Beta_vortex  = ic_inputs[1]; // vortex strength
+  scalar R_vortex     = ic_inputs[2]; // characteristic radius
+  printf("-----Populating Initial Distribution:-----\n");
+  printf("M_inf=%f, beta=%f, R=%f\n",Mach_free,Beta_vortex,R_vortex);
+  scalar gamma = constants::GLOBAL_GAMMA;
+  scalar Rg = 287.15;
+  printf("Using gas constant = %f\n", Rg);
+  scalar X_epi = 0.05; //vortex origin
+  scalar Y_epi = 0.05;
+  //Freestream parameters:
+  scalar p_free = 100000.0;
+  scalar T_free = 300.0;
+  scalar rho_free = p_free / (Rg*T_free);
+  scalar u_free = Mach_free * sqrt( gamma*Rg*T_free );
+  scalar v_free = 0;
+  scalar cv = Rg/(gamma-1); //specific heat
+  scalar cp = gamma*Rg / (gamma-1.0); //specific heat
+  printf("rho, u, v, p in freestream = %f, %f, %f, %f\n", rho_free, u_free, v_free, p_free);
+  for(int e = 0; e < N_E; e++)
+    {
+      //printf("For Element %d:\n",e);
+      for(int i = 0; i < N_s; i++)
+	{
+	  //printf("\tnode %d:",i);
+	  scalar x_loc = XYZNodes(i,e*D+0);
+	  scalar y_loc = XYZNodes(i,e*D+1);
+	  
+	  scalar x_sq = (x_loc-X_epi) * (x_loc-X_epi);
+	  scalar y_sq = (y_loc-Y_epi) * (y_loc-Y_epi);
+	  scalar r_epi = sqrt( x_sq + y_sq ) / R_vortex;
+	  scalar r_sq = r_epi*r_epi;
+	  
+	  scalar u_pert = (-u_free*Beta_vortex) * (y_loc-Y_epi) / R_vortex * pow(e,-0.5*r_sq);
+	  scalar v_pert = (u_free*Beta_vortex) * (x_loc-X_epi) / R_vortex * pow(e,-0.5*r_sq);
+	  scalar T_pert =  0.5*pow(u_free*Beta_vortex , 2.0) / cp * pow(e,-r_sq); 
+	  
+	  scalar T_out = T_free - T_pert;
+	  scalar u_out = u_free + u_pert;
+	  scalar v_out = 0.0 + v_pert;
+	  scalar rho_out = rho_free * pow(T_out/T_free , 1.0/(gamma-1.0));
+	  scalar p_out = rho_out * Rg * T_out;
+	  
+	  scalar Et_out = p_out/(gamma-1.0) + 0.5*rho_out*(u_out*u_out + v_out*v_out);
+	  //printf("rho, u, v, p = %f, %f, %f, %f\n",rho_out,u_out,v_out,p_out);
+	  // set the initial fields (conserved variables)
+	  U(i,e*N_F+0) = rho_out;
+	  U(i,e*N_F+1) = rho_out*u_out;
+	  U(i,e*N_F+2) = rho_out*v_out;
+	  U(i,e*N_F+3) = Et_out;
+	}
+      //printf("\n");
+    }
+  printf("-----Finished populating Initial Distribution-----\n");
+  */
+}
+void init_dg_HiOWvtxProject_singlefluid(const int N_s, const int N_E, const int GQres, fullMatrix<scalar> &XYZ_GQ, fullMatrix<scalar> &SuperWeight, fullMatrix<scalar> &SuperdetJ, fullMatrix<scalar> &SuperPhi, scalar* h_Minv, fullMatrix<scalar> &U)
+{
+  // For the High-Order Workshop problem VI1 in 2017
+  // Vortex transport by uniform flow
+/*
+    input N_s: DOF per element
+    input N_E: element count
+    input GQres: number of super-quadrature nodes per element
+    input XYZ_GQ: physical locations of super-resolution quadrature nodes
+    input SuperWeight: quadrature weights of super-resolution quadrature
+    input SuperDetJ: determinant of Jacobian at each super-resolution quadrature point
+    input SuperPhi: the DG solution/testing basis at super-resolution ref quadrature nodes
+    input h_Minv: the inverse mass matrix in 1D array storage format
+    output U: the initial DOF of the problem
+   */
+  scalar exp_const = 2.71828182845904523536;
+  //vortex parameters
+  scalar Mach_free = 0.5;
+  scalar p_free = 100000;
+  scalar T_free = 300.0;
+  scalar Rg = 287.15;
+  scalar rsh = 1.4;
+  scalar cp = Rg*(rsh)/(rsh-1.0);
+  scalar rho_free = p_free/(Rg*T_free);
+  scalar a_free = sqrt(rsh*p_free / rho_free);
+  scalar u_free = Mach_free*a_free;
+  scalar v_free = 0.0;
+  scalar X_epi = 0.05;
+  scalar Y_epi = 0.05;
+  scalar R_vortex = 0.005;
+  scalar Beta_vortex = 0.2;
+
+  printf("Called Galerkin HiOWvtxProject\n");
+  for (int e = 0; e < N_E; e++)
+    {
+      //printf("Called Galerkin HiOWvtxProject, e=%d\n",e);
+      //Step 1:integrate the residual for each shape function
+      fullMatrix<scalar> Residual(N_s,N_F);
+      for (int k = 0; k < N_s; k++) {
+	for (int fc = 0; fc < N_F; fc++) {
+	  Residual(k,fc) = 0.0;
+	}}
+      
+      for (int row = 0; row < N_s; row++)
+	{
+	  for (int g = 0; g < GQres; g++)
+	    {
+	      scalar x_loc = XYZ_GQ(g, e*D + 0);
+	      scalar y_loc = XYZ_GQ(g, e*D + 1);
+	      scalar x_sq = (x_loc-X_epi) * (x_loc-X_epi);
+	      scalar y_sq = (y_loc-Y_epi) * (y_loc-Y_epi);
+	      scalar r_epi = sqrt( x_sq + y_sq ) / R_vortex;
+	      scalar r_sq = r_epi*r_epi;
+	      
+	      scalar u_pert = (-u_free*Beta_vortex) * (y_loc-Y_epi) / R_vortex * pow(exp_const,-0.5*r_sq);
+	      scalar v_pert = (u_free*Beta_vortex) * (x_loc-X_epi) / R_vortex * pow(exp_const,-0.5*r_sq);
+	      scalar T_pert =  0.5*pow(u_free*Beta_vortex , 2.0) / cp * pow(exp_const,-r_sq); 
+
+	      scalar T_out = T_free - T_pert;
+	      scalar u_out = u_free + u_pert;
+	      scalar v_out = 0.0 + v_pert;
+	      scalar rho_out = rho_free * pow(T_out/T_free , 1.0/(rsh-1.0));
+	      scalar p_out = rho_out * Rg * T_out;
+
+
+	      //conserved variables
+	      scalar Ulocal[N_F];
+	      Ulocal[0] = rho_out;
+	      Ulocal[1] = rho_out*u_out;
+	      Ulocal[2] = rho_out*v_out;
+	      Ulocal[N_F-1] = p_out/(rsh-1.0) + 0.5*rho_out*(u_out*u_out + v_out*v_out);
+#ifdef THREED
+	      Ulocal[3] = 0.0;
+#endif
+	      for (int fc = 0; fc < N_F; fc++)
+		{
+		  //   printf("x=%f, rho=%f\n", x, rhoEx);
+		  Residual(row, fc) += SuperWeight(g,0)*SuperdetJ(e,g)*Ulocal[fc]*SuperPhi(g,row);
+		}
+	    }
+	}
+      //The element's initialization residual has been formed, all field variables
+
+      //Step 2:multiply residual by inverse mass matrix to get the initial DOF
+      fullMatrix<scalar> Minv_local(N_s, N_s);
+      for (int row = 0; row < N_s; row++)
+	{
+	  //for organization of h_Minv, see the solve function in time_integration/rk_kernels.cu.
+	  for (int col = 0; col < N_s; col++)
+	    {
+	      Minv_local(row,col) = h_Minv[(e*N_s+col)*N_s+row];
+	    }
+	}
+      
+      fullMatrix<scalar> DOF(N_s, N_F);
+      DOF.gemm(Minv_local, Residual);
+
+      //Communicate the DOF to global storage
+      for (int k = 0; k < N_s; k++)
+	{
+	  for (int fc = 0; fc < N_F; fc++)
+	    {
+	      // printf("\t\tDOF(e=%d,k=%d,f=%d) = %f\n", e, k, fc, DOF(k,fc));
+	      U(k, e*N_F + fc) = DOF(k, fc);
+	    }
+	}
+    }
+}
+void init_dg_tgrvrtx_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U)
+{
+  //Doreen vortex parameters
+  scalar rsh = 1.4; //ratio of specific heats, needs to match with CONSTANTS:gamma
+  scalar Rg = 287.15; //better match constants.h
+  //Parameters to mathc Re=1600:
+  scalar L = 1.0;
+  scalar mew = 0.000625;
+  scalar V0 = 1.0;
+  scalar rho0 = 1.0;
+
+  //For setting run.py: 1 convective time unit is tc=L/V0
+
+  //Mandated Mach number and necessary mathcing temperature:
+  scalar Mach = 0.1;
+  scalar T0 = pow(V0/Mach , 2) / (rsh*Rg);
+  scalar p0 = rho0*Rg*T0;
+  printf("Taylor-Green Initialization: Re = %f, T0 = %f, p0 = %f\n", rho0*V0*L/mew , T0, p0);
+  
+  // Loop on elements and nodes, populate initial condition
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+      scalar x = XYZNodes(i,e*D+0);
+      scalar y = XYZNodes(i,e*D+1);
+      scalar z = XYZNodes(i,e*D+2);
+      scalar w = 0.0;
+      scalar v = -V0*cos(x/L)*sin(y/L)*cos(z/L);
+      scalar u =  V0*sin(x/L)*cos(y/L)*cos(z/L);
+      scalar p = p0 + rho0*V0*V0/16.0 * (cos(2*x/L) + cos(2*y/L)) * (cos(2*z/L) + 2.0);
+      scalar rho = p / (Rg*T0);
+      scalar Et = p/(rsh-1.0) + 0.5*rho*(u*u + v*v + w*w);       
+      // set the initial fields
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*u;
+      U(i,e*N_F+2) = rho*v;
+      U(i,e*N_F+3) = rho*w;
+      U(i,e*N_F+4) = Et;
+    }
+  }
+}
+void init_dg_tgrvrtxOLD_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U)
+{
+  //Doreen vortex parameters
+  scalar rsh = 1.4; //ratio of specific heats, needs to match with CONSTANTS:gamma
+  scalar Rg = 287.15; //better match constants.h
+  //Parameters to mathc Re=1600:
+  scalar L = 1.0;
+  scalar mew = 0.001;
+  scalar V0 = 1.6;
+  scalar rho0 = 1.0;
+
+  //For setting run.py: 1 convective time unit is tc=L/V0
+
+  //Mandated Mach number and necessary mathcing temperature:
+  scalar Mach = 0.1;
+  scalar T0 = pow(V0/Mach , 2) / (rsh*Rg);
+  scalar p0 = rho0*Rg*T0;
+  printf("Taylor-Green Initialization: Re = %f, T0 = %f, p0 = %f\n", rho0*V0*L/mew , T0, p0);
+  
+  // Loop on elements and nodes, populate initial condition
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+      scalar x = XYZNodes(i,e*D+0);
+      scalar y = XYZNodes(i,e*D+1);
+      scalar z = XYZNodes(i,e*D+2);
+      scalar w = 0.0;
+      scalar v = -V0*cos(x/L)*sin(y/L)*cos(z/L);
+      scalar u =  V0*sin(x/L)*cos(y/L)*cos(z/L);
+      scalar p = p0 + rho0*V0*V0/16.0 * (cos(2*x/L) + cos(2*y/L)) * (cos(2*z/L) + 2.0);
+      scalar rho = p / (Rg*T0);
+      scalar Et = p/(rsh-1.0) + 0.5*rho*(u*u + v*v + w*w);       
+      // set the initial fields
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*u;
+      U(i,e*N_F+2) = rho*v;
+      U(i,e*N_F+3) = rho*w;
+      U(i,e*N_F+4) = Et;
+    }
+  }
+}
+void init_dg_sodphil_singlefluid(const int N_s, const int N_E,const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U)
+{
+  // Left state
+  scalar rhoL = 1;
+  scalar uL   = 0;
+  scalar pL   = 1.0;
+  scalar gammaL= 1.4;
+  scalar EtL  = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
+    
+  // Right state
+  scalar rhoR = 0.125;
+  scalar uR   = 0;
+  scalar pR   = 0.1;
+  scalar gammaR= 1.4;
+  scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
+  
+  scalar rho0=0,T0=0,dT=0,p0=0,u0=0,v0=0,du=0,dv=0,Et0=0,r=0;  
+  scalar  x=0, xc=0;
+
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+      x  = XYZNodes(i,e*D+0);
+
+      //if (x <= 0.0)
+      if (x < -pow(10,-8))
+	{
+	  rho0 = rhoL;
+	  u0 = uL;
+	  Et0 = EtL;
+	}
+      else
+	{
+	  rho0 = rhoR;
+	  u0 = uR;
+	  Et0 = EtR;
+	}
+      printf("e=%d,i=%d, x=%f, rho=%f, u=%f, Et=%f\n",e,i,x,rho0,u0,Et0);
+      // set the initial fields
+#ifdef ONED
+      {
+      //Assume singlefluid. Small alteration necessary for RAD singlefluid
+      U(i,e*N_F+0) = rho0;
+      U(i,e*N_F+1) = rho0*u0;
+      U(i,e*N_F+2) = Et0;
+#ifdef RADSINGLEFLUID
+      //initialize the C parameter:
+      U(i,e*N_F+3) = 0.0;
+#endif //end if for RADSINGLEGLUID
+    }
+#endif //END if for ONED
+#ifdef TWOD
+      {
+      //Assume singlefluid. Small alteration necessary for RAD singlefluid
+      U(i,e*N_F+0) = rho0;
+      U(i,e*N_F+1) = rho0*u0;
+      U(i,e*N_F+2) = 0.0;
+      U(i,e*N_F+3) = Et0;
+#ifdef RADSINGLEFLUID
+      //initialize the C parameter
+      U(i,e*N_F+4) = 0.0;
+#endif //end if for RADSINGLEGLUID
+    }
+#endif
+    }
+  }
+
+}
+void init_dg_shosher_singlefluid(const int N_s, const int N_E,const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U)
+{
+  //Shu-osher problem taken from 1989 JCP (see their figure 14 for proper solution at t=1.8)
+  // Left state
+  scalar rhoL = 3.857143;
+  scalar uL   = 2.629369;
+  scalar pL   = 10.33333;
+  scalar gammaL= 1.4;
+  scalar EtL  = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
+    
+  // Right state
+  scalar rhoR = 1.0;
+  scalar uR   = 0;
+  scalar pR   = 1.0;
+  scalar gammaR= 1.4;
+  scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
+  
+  scalar rho0=0,T0=0,dT=0,p0=0,u0=0,v0=0,du=0,dv=0,Et0=0,r=0;  
+  scalar  x=0, xc=0;
+
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+      x  = XYZNodes(i,e*D+0);
+
+      //if (x <= 0.0)
+      if (x < -4.0-pow(10,-8))
+	//if (x < -8.0-pow(10,-8))
+	{
+	  rho0 = rhoL;
+	  u0 = uL;
+	  Et0 = EtL;
+	}
+      else
+	{
+	  //rho0 = rhoR + 1.0/(2.0*M_PI)*sin(2.0*M_PI*x);
+	  rho0 = rhoR + 0.2*sin(5*x);
+	  u0 = uR;
+	  Et0 = 1.0/(gammaR-1.0)*pR + 0.5*rho0*u0*u0;
+	}
+      printf("e=%d,i=%d, x=%f, rho=%f, u=%f, Et=%f\n",e,i,x,rho0,u0,Et0);
+      // set the initial fields
+#ifdef ONED
+      {
+      //Assume singlefluid. Small alteration necessary for RAD singlefluid
+      U(i,e*N_F+0) = rho0;
+      U(i,e*N_F+1) = rho0*u0;
+      U(i,e*N_F+2) = Et0;
+#ifdef RADSINGLEFLUID
+      //initialize the C parameter:
+      U(i,e*N_F+3) = 0.0;
+#endif //end if for RADSINGLEGLUID
+    }
+#endif //END if for ONED
+#ifdef TWOD
+      {
+      //Assume singlefluid. Small alteration necessary for RAD singlefluid
+      U(i,e*N_F+0) = rho0;
+      U(i,e*N_F+1) = rho0*u0;
+      U(i,e*N_F+2) = 0.0;
+      U(i,e*N_F+3) = Et0;
+#ifdef RADSINGLEFLUID
+      //initialize the C parameter
+      U(i,e*N_F+4) = 0.0;
+#endif //end if for RADSINGLEGLUID
+    }
+#endif
+    }
+  }
+
+}
+void init_dg_sodcomp_singlefluid(const int N_s, const int N_E,const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U)
+{
+  // Big League state
+  scalar rhoL = 1;
+  scalar uL   = 0;
+  scalar pL   = 1.0;
+  scalar gammaL= 1.4;
+  scalar EtL  = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
+    
+  // Little state
+  scalar rhoR = 0.125;
+  scalar uR   = 0;
+  scalar pR   = 0.1;
+  scalar gammaR= 1.4;
+  scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
+  
+  scalar rho0=0,T0=0,dT=0,p0=0,u0=0,v0=0,du=0,dv=0,Et0=0,r=0;  
+  scalar  x=0, xc=0;
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+      x  = XYZNodes(i,e*D+0);
+
+      if (x >= -0.5 && x <= 0.5)
+	{
+	  rho0 = rhoL;
+	  u0 = uL;
+	  Et0 = EtL;
+	}
+      else
+	{
+	  rho0 = rhoR;
+	  u0 = uR;
+	  Et0 = EtR;
+	}
+      //printf("e=%d,i=%d, x=%f, rho=%f, u=%f, Et=%f\n",e,i,x,rho0,u0,Et0);
+      // set the initial fields
+      U(i,e*N_F+0) = rho0;
+      U(i,e*N_F+1) = rho0*u0;
+#ifdef TWOD
+      U(i,e*N_F+2) = 0;
+      U(i,e*N_F+3) = Et0;
+#endif
+#ifdef ONED
+      U(i,e*N_F+2) = Et0;
+#endif
+    }
+  }
+
+}
+void init_dg_explode_singlefluid(const int N_s, const int N_E,const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U)
+{
+  // Big League state
+  scalar rhoL = 1;
+  scalar uL   = 0;
+  scalar pL   = 1.0;
+  scalar gammaL= 1.4;
+  scalar EtL  = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
+    
+  // Little state
+  scalar rhoR = 0.125;
+  scalar uR   = 0;
+  scalar pR   = 0.1;
+  scalar gammaR= 1.4;
+  scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
+  
+  scalar rho0=0,T0=0,dT=0,p0=0,u0=0,v0=0,du=0,dv=0,Et0=0,r=0;  
+  scalar  x=0, xc=0, y=0;
+#ifdef ONED
+   {
+    for(int e = 0; e < N_E; e++){
+      for(int i = 0; i < N_s; i++){
+
+	x  = XYZNodes(i,e*D+0);
+	if (x >= -0.5 && x <= 0.5)
+	  {
+	rho0 = rhoL;
+	u0 = uL;
+	Et0 = EtL;
+      }
+	else
+	  {
+	rho0 = rhoR;
+	u0 = uR;
+	Et0 = EtR;
+      }
+	//printf("e=%d,i=%d, x=%f, rho=%f, u=%f, Et=%f\n",e,i,x,rho0,u0,Et0);
+	// set the initial fields
+	U(i,e*N_F+0) = rho0;
+	U(i,e*N_F+1) = rho0*u0;
+	U(i,e*N_F+2) = Et0;
+#ifdef RADSINGLEFLUID
+	U(i,e*N_F+3) = 0.0;
+#endif
+      }
+    }
+   } //end bracket for 2D case
+#endif //end if for 1D
+#ifdef TWOD
+  {
+    for(int e = 0; e < N_E; e++){
+      for(int i = 0; i < N_s; i++){
+
+	x  = XYZNodes(i,e*D+0);
+	y  = XYZNodes(i,e*D+1);
+	if (x >= -0.5 && x <= 0.5 && y >= 1.0 && y <= 2.0)
+	  {
+	rho0 = rhoL;
+	u0 = uL;
+	Et0 = EtL;
+      }
+	else
+	  {
+	rho0 = rhoR;
+	u0 = uR;
+	Et0 = EtR;
+      }
+	//printf("e=%d,i=%d, x=%f, rho=%f, u=%f, Et=%f\n",e,i,x,rho0,u0,Et0);
+	// set the initial fields
+	U(i,e*N_F+0) = rho0;
+	U(i,e*N_F+1) = rho0*u0;
+	U(i,e*N_F+2) = 0;
+	U(i,e*N_F+3) = Et0;
+#ifdef RADSINGLEFLUID
+	U(i,e*N_F+4) = 0;
+#endif
+      }
+      }
+      } //end bracket for 2D case
+#endif //end if for 2D
+}
+
+void init_dg_explodeProject_singlefluid(const int N_s, const int N_E, const int GQres, fullMatrix<scalar> &XYZ_GQ, fullMatrix<scalar> &SuperWeight, fullMatrix<scalar> &SuperdetJ, fullMatrix<scalar> &SuperPhi, scalar* h_Minv, fullMatrix<scalar> &U)
+{
+    // Big League state
+  scalar rhoL = 1;
+  scalar uL   = 0;
+  scalar vL = 0;
+  scalar pL   = 1.0;
+  scalar gammaL= 1.4;
+  scalar EtL  = 1.0/(gammaL-1.0)*pL + 0.5*rhoL*uL*uL;
+    
+  // Little state
+  scalar rhoR = 0.125;
+  scalar uR   = 0;
+  scalar vR = 0;
+  scalar pR   = 0.1;
+  scalar gammaR= 1.4;
+  scalar EtR  = 1.0/(gammaR-1.0)*pR + 0.5*rhoR*uR*uR;
+  
+  scalar rsh = constants::GLOBAL_GAMMA;
+  scalar rho0=0,T0=0,dT=0,p0=0,u0=0,v0=0,du=0,dv=0,Et0=0,r=0;  
+  scalar  x=0, xc=0, y=0;
+
+
+   for (int e = 0; e < N_E; e++)
+     {
+       printf("Called Galerkin explodeProject, e=%d\n",e);
+       //Step 1:integrate the residual for each shape function
+       fullMatrix<scalar> Residual(N_s,N_F);
+       for (int k = 0; k < N_s; k++) {
+	 for (int fc = 0; fc < N_F; fc++) {
+	   Residual(k,fc) = 0.0;
+	 }}
+      
+       for (int row = 0; row < N_s; row++)
+	 {
+	   for (int g = 0; g < GQres; g++)
+	     {
+	       scalar x_loc = XYZ_GQ(g, e*D + 0);
+	       scalar y_loc = XYZ_GQ(g, e*D + 1);
+	       //declare flow variables:
+	       scalar rho = 0;
+	       scalar u = 0;
+	       scalar v = 0;
+	       scalar p = 0;
+	       scalar Et = 0;
+	       //Set the flow variables based on location:
+	       if (x_loc >= -0.5 && x_loc <= 0.5 && y_loc >= 1.0 && y_loc <= 2.0)
+		 {
+		   rho = rhoL;
+		   u = uL;
+		   v = vL;
+		   p = pL;
+		   Et = EtL;
+		 }
+	       else
+		 {
+		    rho = rhoR;
+		    u = uR;
+		    v = vR;
+		    p = pR;
+		    Et = EtR;
+		 
+		 } 
+	       //Get the conserved variables
+	       scalar Ulocal[N_F];
+	       Ulocal[0] = rho;
+	       Ulocal[1] = rho*u;
+	       Ulocal[2] = rho*v;
+	       Ulocal[3] = p/(rsh-1.0) + 0.5*rho*(u*u + v*v);
+#ifdef RADSINGLEFLUID
+	       Ulocal[4] = 0.0;
+#endif
+	       for (int fc = 0; fc < N_F; fc++)
+		 {
+		   //   printf("x=%f, rho=%f\n", x, rhoEx);
+		   Residual(row, fc) += SuperWeight(g,0)*SuperdetJ(e,g)*Ulocal[fc]*SuperPhi(g,row);
+		 }
+	     } //End g loop
+	   
+	   //The element's initialization residual has been formed, all field variables
+	   
+	 } //Step 2:multiply residual by inverse mass matrix to get the initial DOF
+       fullMatrix<scalar> Minv_local(N_s, N_s);
+       for (int row = 0; row < N_s; row++)
+	 {
+	   //for organization of h_Minv, see the solve function in time_integration/rk_kernels.cu.
+	   for (int col = 0; col < N_s; col++)
+	     {
+	       Minv_local(row,col) = h_Minv[(e*N_s+col)*N_s+row];
+	     }
+	 } //end row loop for getting Minv
+       
+       fullMatrix<scalar> DOF(N_s, N_F);
+       DOF.gemm(Minv_local, Residual);
+       
+       //Communicate the DOF to global storage
+       for (int k = 0; k < N_s; k++)
+	 {
+	   for (int fc = 0; fc < N_F; fc++)
+	     {
+	       // printf("\t\tDOF(e=%d,k=%d,f=%d) = %f\n", e, k, fc, DOF(k,fc));
+	       U(k, e*N_F + fc) = DOF(k, fc);
+	     }
+	 } //end k loop for communication to global storage
+       
+     } //End element loop, we are done.
+} //End subroutine
+
+void init_dg_kushjet_singlefluid(const int N_s, const int N_E,const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U)
+{
+  /*
+  //set ambient atmosphere for Jushner jet problem
+  scalar gamma = constants::GLOBAL_GAMMA;
+  scalar Rg = constants::GLOBAL_RGAS;
+  scalar rho0 = 1.225;
+  scalar T0 = 300.0;
+  scalar p0 = rho0 * Rg * T0;
+  scalar Et0 = p0/(gamma-1.0) + 0.5*rho0*(0.0 + 0.0);
+   for(int e = 0; e < N_E; e++){
+     for(int i = 0; i < N_s; i++){
+       U(i,e*N_F+0) = rho0;
+       U(i,e*N_F+1) = 0;
+       U(i,e*N_F+2) = 0;
+       U(i,e*N_F+3) = Et0;
+       
+     }
+   }
+  */
+}
+//normalized vortex problem, different from HiO workshop
+void init_dg_normvtx_singlefluid(const int N_s, const int N_E,const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U)
+{
+  //Doreen vortex parameters
+  scalar rsh = 1.4; //ratio of specific heats, needs to match with CONSTANTS:gamma
+  scalar K_rsh = 1.0 / rsh; //isentropic constant
+  scalar k_vort = 2.0;
+  scalar u_Doreen = 1.0;
+  scalar v_Doreen = 0.0;
+  scalar rho_Doreen = 1.0;
+  scalar exp_const = 2.71828182845904523536;
+
+  // Loop on elements and nodes, populate initial condition
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+      scalar x  = XYZNodes(i,e*D+0);
+      scalar y  = XYZNodes(i,e*D+1);
+      scalar x_loc = x;
+      scalar y_loc = y;
+      double x_sq = x_loc*x_loc;
+      double y_sq = y_loc*y_loc;
+
+      double kxy = k_vort * (x_sq + y_sq);
+      double prod1 = (rsh-1.0)*pow(exp_const, -2.0*kxy) / (4.0*rsh*k_vort*K_rsh);
+      double diff1 = pow(rho_Doreen, rsh-1.0) - prod1;
+      double rho = pow(diff1, 1.0/(rsh-1.0));
+      double u = u_Doreen - y_loc * pow(exp_const, -kxy);
+      double v = x_loc * pow(exp_const, -kxy);
+      double p = K_rsh * pow(rho, rsh);
+      scalar Et = p/(rsh-1.0) + 0.5*rho*(u*u + v*v);
+      //printf("e=%d, i=%d, (x,y) = (%f, %f); (rho,u,v,p) = ( %f, %f, %f, %f)\n",e,i,x,y,rho,u,v,p);
+      // set the initial fields
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*u;
+      U(i,e*N_F+2) = rho*v;
+      U(i,e*N_F+3) = Et;
+    }
+  }
+}
+//shock-vortex interaction, from 2003 paper
+void init_dg_shckvtx_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U)
+{
+  //fluid properties
+  scalar rsh = constants::GLOBAL_GAMMA; //ratio of specific heats
+  scalar Rg  = 287.15; // gas constant
+  //Parameters for the problem:
+  scalar Mshock = 1.5; //mach number of the standing shock
+  scalar Mvort = 0.5; //rotational mach number of the vortex
+  scalar rad_a = 0.075; //radius of inner vortex core
+  scalar rad_b = 0.175; //radius of outer vortex core
+  scalar sos0 = 1.0/(10.0*Mshock) * (0.25 + 0.75*((rsh+1.0)*Mshock*Mshock) / ((rsh-1.0)*Mshock*Mshock + 2.0)); //pre-shock speed of sound
+  scalar rho0 = 1.0; //pre-shock density
+  scalar p0 = sos0*sos0 * rho0 / rsh; //pre-shock pressure
+  scalar T0 = p0 / (Rg * rho0); //pre-shock temperature
+  scalar chiRault = (rsh-1.0) / (Rg*rsh);
+  scalar epiX_Rault = 0.25;
+  scalar epiY_Rault = 0.5;
+  
+  // Loop on elements and nodes, populate initial condition
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+      scalar x  = XYZNodes(i,e*D+0);
+      scalar y  = XYZNodes(i,e*D+1);
+      scalar x_loc = x;
+      scalar y_loc = y;
+      //declare flow variables:
+      scalar rho = 0;
+      scalar u = 0;
+      scalar v = 0;
+      scalar p = 0;
+      //Set the flow variables based on location:
+      if (x_loc > 0.5 + pow(10,-8))
+	{
+	  //post-shock conditions
+	  scalar ruby = rsh - 1.0;
+	  scalar chip = rsh + 1.0;
+	  scalar M0sq = Mshock*Mshock;
+	  scalar M1 = pow((ruby*M0sq + 2.0) / (2.0*rsh*M0sq - ruby) , 0.5);
+	  scalar p1 = p0 * (2.0*rsh*M0sq - ruby) / (chip);
+	  scalar rho1 = rho0 * (chip*M0sq) / (ruby*M0sq + 2.0);
+	  scalar sos1 = pow(rsh*p1/rho1 , 0.5);
+	  scalar u1 = M1 * sos1;
+	  rho = rho1;
+	  u = u1;
+	  v = 0;
+	  p = p1;
+	}
+      else
+	{
+	  //pre-shock freestream conditions, plus vortex considerations
+	  scalar xsq = pow(x_loc - epiX_Rault , 2);
+	  scalar ysq = pow(y_loc - epiY_Rault , 2);
+	  scalar rad = pow(xsq + ysq , 0.5);
+	  scalar sos0 = pow(rsh*p0 / rho0, 0.5);
+	  scalar u0 = Mshock * sos0;
+	  scalar vmax = Mvort * sos0; //max azimuthal velocity of vortex
+	  //Some nasty constants for the temperature profile:
+	  scalar C3 = T0;
+	  scalar C2 = C3 / (chiRault*pow(rad_a*vmax / (rad_a*rad_a - rad_b*rad_b) , 2) )+ 2.0*rad_b*rad_b*log(rad_b);
+	  scalar asq = rad_a*rad_a;
+	  scalar bsq = rad_b*rad_b;
+	  scalar term1 = -0.5*asq;
+	  scalar term2 = pow(rad_a/vmax , 2);
+	  scalar term3 = pow(rad_a*vmax / (rad_a*rad_a - rad_b*rad_b) , 2);
+	  scalar term4 = 0.5*asq - 2.0*bsq*log(rad_a) - bsq*bsq/(2.0*asq) + C2;
+	  scalar C1 = term1 + term2*term3*term4;
+	  //Start with freestram conditions, correct if inside vortex
+	  rho = rho0;
+	  u = u0;
+	  v = 0;
+	  p = p0;
+	  if (rad <= rad_a) //vortex inner core
+	    {
+	      scalar Tv = chiRault * pow(vmax/rad_a , 2) * (C1 + 0.5*rad*rad);
+	      scalar vtheta = vmax * rad / rad_a;
+	      scalar theta = atan2(y_loc - epiY_Rault, x_loc - epiX_Rault);
+	      scalar uvort = vtheta * (-sin(theta));
+	      scalar vvort = vtheta * (cos(theta));
+	      u = u + uvort;
+	      v = v + vvort;
+	      p = p0 * pow(Tv/T0 , rsh/(rsh-1.0));
+	      rho = rho0 * pow(Tv/T0 , 1/(rsh-1.0));
+	    }
+	  else if (rad <= rad_b) //outer vortex core
+	    {
+	      
+	      scalar Tv = chiRault * pow(rad_a*vmax / (asq-bsq) , 2) * (0.5*rad*rad - 2.0*bsq*log(rad) - bsq*bsq/(2.0*rad*rad) + C2);
+	      scalar vtheta = vmax * rad_a / (asq - bsq) * (rad - bsq/rad);
+	      scalar theta = atan2(y_loc - epiY_Rault, x_loc - epiX_Rault);
+	      scalar uvort = vtheta * (-sin(theta));
+	      scalar vvort = vtheta * (cos(theta));
+	      u = u + uvort;
+	      v = v + vvort;
+	      p = p0 * pow(Tv/T0 , rsh/(rsh-1.0));
+	      rho = rho0 * pow(Tv/T0 , 1/(rsh-1.0));
+	    }
+	  else
+	    {
+	      //do nothing
+	    }
+	}
+      
+      
+      //printf("e=%d, i=%d, (x,y) = (%f, %f); (rho,u,v,p) = ( %f, %f, %f, %f)\n",e,i,x,y,rho,u,v,p);
+      // set the initial fields
+      scalar Et = p/(rsh-1.0) + 0.5*rho*(u*u + v*v);
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*u;
+      U(i,e*N_F+2) = rho*v;
+      U(i,e*N_F+3) = Et;
+    }
+  }
+}
+//shock-vortex interaction for the HiOCFD5 workshop
+void init_dg_worsvtx_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U)
+{
+  //fluid properties
+  scalar rsh = constants::GLOBAL_GAMMA; //ratio of specific heats
+  scalar Rg  = 1.0; // gas constant, demanded by workshop people
+  scalar chiRault = (rsh-1.0) / (Rg*rsh);
+  
+  //Parameters for the problem:
+  scalar Mshock = 1.5; //mach number of the standing shock
+  scalar Mvort = 0.9; //rotational mach number of the vortex
+  scalar rad_a = 0.075; //radius of inner vortex core
+  scalar rad_b = 0.175; //radius of outer vortex core
+    
+  //Upstream condition:
+  scalar rho0 = 1.0;
+  scalar u0 = Mshock * sqrt(rsh);
+  scalar v0 = 0.0;
+  scalar p0 = 1.0;
+  scalar T0 = p0/(Rg*rho0);
+
+  //Upstream vs downstream ratios:
+  scalar ruby = rsh - 1.0;
+  scalar chip = rsh + 1.0;
+  scalar RhoRatio = (2.0 + ruby*Mshock*Mshock) / (chip*Mshock*Mshock);
+  scalar pRatio = 1.0 + 2*rsh/chip*(Mshock*Mshock-1.0);
+  scalar uRatio = 1.0 / RhoRatio;
+  scalar vRatio = 1.0;
+
+  //Downstream condition:
+  scalar rho1 = rho0 / RhoRatio;
+  scalar u1   = u0   / uRatio;
+  scalar v1   = v0   / vRatio;
+  scalar p1   = p0   * pRatio;
+
+  //Vortex Location:
+  scalar epiX_Rault = 0.25;
+  scalar epiY_Rault = 0.5;
+
+  // Loop on elements and nodes, populate initial condition
+  for(int e = 0; e < N_E; e++){
+    for(int i = 0; i < N_s; i++){
+
+      scalar x  = XYZNodes(i,e*D+0);
+      scalar y  = XYZNodes(i,e*D+1);
+      scalar x_loc = x;
+      scalar y_loc = y;
+      //declare flow variables:
+      scalar rho = 0;
+      scalar u = 0;
+      scalar v = 0;
+      scalar p = 0;
+      //Set the flow variables based on location:
+      if (x_loc > 0.5 + pow(10,-8))
+	{
+	  //post-shock conditions
+	  rho = rho1;
+	  u = u1;
+	  v = v1;
+	  p = p1;
+	}
+      else
+	{
+	  //pre-shock freestream conditions, plus vortex considerations
+	  scalar xsq = pow(x_loc - epiX_Rault , 2);
+	  scalar ysq = pow(y_loc - epiY_Rault , 2);
+	  scalar rad = pow(xsq + ysq , 0.5);
+	  scalar sos0 = sqrt(rsh*p0/rho0);
+
+	  scalar vmax = Mvort * sos0; //max azimuthal velocity of vortex
+	  //Some nasty constants for the temperature profile:
+	  scalar C3 = T0;
+	  scalar C2 = C3 / (chiRault*pow(rad_a*vmax / (rad_a*rad_a - rad_b*rad_b) , 2) )+ 2.0*rad_b*rad_b*log(rad_b);
+	  scalar asq = rad_a*rad_a;
+	  scalar bsq = rad_b*rad_b;
+	  scalar term1 = -0.5*asq;
+	  scalar term2 = pow(rad_a/vmax , 2);
+	  scalar term3 = pow(rad_a*vmax / (rad_a*rad_a - rad_b*rad_b) , 2);
+	  scalar term4 = 0.5*asq - 2.0*bsq*log(rad_a) - bsq*bsq/(2.0*asq) + C2;
+	  scalar C1 = term1 + term2*term3*term4;
+	  //Start with freestram conditions, correct if inside vortex
+	  rho = rho0;
+	  u = u0;
+	  v = v0;
+	  p = p0;
+	  if (rad <= rad_a) //vortex inner core
+	    {
+	      scalar Tv = chiRault * pow(vmax/rad_a , 2) * (C1 + 0.5*rad*rad);
+	      scalar vtheta = vmax * rad / rad_a;
+	      scalar theta = atan2(y_loc - epiY_Rault, x_loc - epiX_Rault);
+	      scalar uvort = vtheta * (-sin(theta));
+	      scalar vvort = vtheta * (cos(theta));
+	      u = u + uvort;
+	      v = v + vvort;
+	      p = p0 * pow(Tv/T0 , rsh/(rsh-1.0));
+	      rho = rho0 * pow(Tv/T0 , 1/(rsh-1.0));
+	    }
+	  else if (rad <= rad_b) //outer vortex core
+	    {
+	      
+	      scalar Tv = chiRault * pow(rad_a*vmax / (asq-bsq) , 2) * (0.5*rad*rad - 2.0*bsq*log(rad) - bsq*bsq/(2.0*rad*rad) + C2);
+	      scalar vtheta = vmax * rad_a / (asq - bsq) * (rad - bsq/rad);
+	      scalar theta = atan2(y_loc - epiY_Rault, x_loc - epiX_Rault);
+	      scalar uvort = vtheta * (-sin(theta));
+	      scalar vvort = vtheta * (cos(theta));
+	      u = u + uvort;
+	      v = v + vvort;
+	      p = p0 * pow(Tv/T0 , rsh/(rsh-1.0));
+	      rho = rho0 * pow(Tv/T0 , 1/(rsh-1.0));
+	    }
+	  else
+	    {
+	      //do nothing
+	    }
+	}
+      
+      
+      //printf("e=%d, i=%d, (x,y) = (%f, %f); (rho,u,v,p) = ( %f, %f, %f, %f)\n",e,i,x,y,rho,u,v,p);
+      // set the initial fields
+      scalar Et = p/(rsh-1.0) + 0.5*rho*(u*u + v*v);
+      U(i,e*N_F+0) = rho;
+      U(i,e*N_F+1) = rho*u;
+      U(i,e*N_F+2) = rho*v;
+      U(i,e*N_F+3) = Et;
+#ifdef RADSINGLEFLUID
+      U(i,e*N_F+4) = 0.0;
+#endif
+    } //end DOF loop
+  } //end element loop
+}
+
+void init_dg_worsvtxProject_singlefluid(const int N_s, const int N_E, const int GQres, fullMatrix<scalar> &XYZ_GQ, fullMatrix<scalar> &SuperWeight, fullMatrix<scalar> &SuperdetJ, fullMatrix<scalar> &SuperPhi, scalar* h_Minv, fullMatrix<scalar> &U)
+{
+  int verbose = 0;
+  //fluid properties
+  scalar rsh = constants::GLOBAL_GAMMA; //ratio of specific heats
+  scalar Rg  = 1.0; // gas constant, demanded by workshop people
+  scalar chiRault = (rsh-1.0) / (Rg*rsh);
+  
+  //Parameters for the problem:
+  scalar Mshock = 1.5; //mach number of the standing shock
+  scalar Mvort = 0.9; //rotational mach number of the vortex
+  scalar rad_a = 0.075; //radius of inner vortex core
+  scalar rad_b = 0.175; //radius of outer vortex core
+    
+  //Upstream condition:
+  scalar rho0 = 1.0;
+  scalar u0 = Mshock * sqrt(rsh);
+  scalar v0 = 0.0;
+  scalar p0 = 1.0;
+  scalar T0 = p0/(Rg*rho0);
+
+  //Upstream vs downstream ratios:
+  scalar ruby = rsh - 1.0;
+  scalar chip = rsh + 1.0;
+  scalar RhoRatio = (2.0 + ruby*Mshock*Mshock) / (chip*Mshock*Mshock);
+  scalar pRatio = 1.0 + 2*rsh/chip*(Mshock*Mshock-1.0);
+  scalar uRatio = 1.0 / RhoRatio;
+  scalar vRatio = 1.0;
+
+  //Downstream condition:
+  scalar rho1 = rho0 / RhoRatio;
+  scalar u1   = u0   / uRatio;
+  scalar v1   = v0   / vRatio;
+  scalar p1   = p0   * pRatio;
+
+  //Vortex Location:
+  scalar epiX_Rault = 0.25;
+  scalar epiY_Rault = 0.5;
+
+   for (int e = 0; e < N_E; e++)
+     {
+       if (verbose > 0){printf("Called Galerkin worsvtxProject, e=%d\n",e);}
+       //Step 1:integrate the residual for each shape function
+       fullMatrix<scalar> Residual(N_s,N_F);
+       for (int k = 0; k < N_s; k++) {
+	 for (int fc = 0; fc < N_F; fc++) {
+	   Residual(k,fc) = 0.0;
+	 }}
+      
+       for (int row = 0; row < N_s; row++)
+	 {
+	   for (int g = 0; g < GQres; g++)
+	     {
+	       scalar x_loc = XYZ_GQ(g, e*D + 0);
+	       scalar y_loc = XYZ_GQ(g, e*D + 1);
+	       //declare flow variables:
+	       scalar rho = 0;
+	       scalar u = 0;
+	       scalar v = 0;
+	       scalar p = 0;
+	       //Set the flow variables based on location:
+	       if (x_loc > 0.5)// + pow(10,-8))
+		 {
+		   //post-shock conditions
+		   rho = rho1;
+		   u = u1;
+		   v = v1;
+		   p = p1;
+		 }
+	       else
+		 {
+		   //pre-shock freestream conditions, plus vortex considerations
+		   scalar xsq = pow(x_loc - epiX_Rault , 2);
+		   scalar ysq = pow(y_loc - epiY_Rault , 2);
+		   scalar rad = pow(xsq + ysq , 0.5);
+		   scalar sos0 = sqrt(rsh*p0/rho0);
+		  
+		   scalar vmax = Mvort * sos0; //max azimuthal velocity of vortex
+		   //Some nasty constants for the temperature profile:
+		   scalar C3 = T0;
+		   scalar C2 = C3 / (chiRault*pow(rad_a*vmax / (rad_a*rad_a - rad_b*rad_b) , 2) )+ 2.0*rad_b*rad_b*log(rad_b);
+		   scalar asq = rad_a*rad_a;
+		   scalar bsq = rad_b*rad_b;
+		   scalar term1 = -0.5*asq;
+		   scalar term2 = pow(rad_a/vmax , 2);
+		   scalar term3 = pow(rad_a*vmax / (rad_a*rad_a - rad_b*rad_b) , 2);
+		   scalar term4 = 0.5*asq - 2.0*bsq*log(rad_a) - bsq*bsq/(2.0*asq) + C2;
+		   scalar C1 = term1 + term2*term3*term4;
+		   //Start with freestram conditions, correct if inside vortex
+		   rho = rho0;
+		   u = u0;
+		   v = v0;
+		   p = p0;
+		   
+		   if (rad <= rad_a) //vortex inner core
+		     {
+		       scalar Tv = chiRault * pow(vmax/rad_a , 2) * (C1 + 0.5*rad*rad);
+		       scalar vtheta = vmax * rad / rad_a;
+		       scalar theta = atan2(y_loc - epiY_Rault, x_loc - epiX_Rault);
+		       scalar uvort = vtheta * (-sin(theta));
+		       scalar vvort = vtheta * (cos(theta));
+		       u = u + uvort;
+		       v = v + vvort;
+		       p = p0 * pow(Tv/T0 , rsh/(rsh-1.0));
+		       rho = rho0 * pow(Tv/T0 , 1/(rsh-1.0));
+		     }
+		   else if (rad <= rad_b) //outer vortex core
+		     {
+		       scalar Tv = chiRault * pow(rad_a*vmax / (asq-bsq) , 2) * (0.5*rad*rad - 2.0*bsq*log(rad) - bsq*bsq/(2.0*rad*rad) + C2);
+		       scalar vtheta = vmax * rad_a / (asq - bsq) * (rad - bsq/rad);
+		       scalar theta = atan2(y_loc - epiY_Rault, x_loc - epiX_Rault);
+		       scalar uvort = vtheta * (-sin(theta));
+		       scalar vvort = vtheta * (cos(theta));
+		       u = u + uvort;
+		       v = v + vvort;
+		       p = p0 * pow(Tv/T0 , rsh/(rsh-1.0));
+		       rho = rho0 * pow(Tv/T0 , 1/(rsh-1.0));
+		     }
+		   
+		   else
+		     {
+		       //do nothing
+		     }
+		   
+
+		 } //end else for "In shock region"
+	       //Get the conserved variables
+	       scalar Ulocal[N_F];
+	       Ulocal[0] = rho;
+	       Ulocal[1] = rho*u;
+	       Ulocal[2] = rho*v;
+	       Ulocal[3] = p/(rsh-1.0) + 0.5*rho*(u*u + v*v);
+#ifdef RADSINGLEFLUID
+	       Ulocal[4] = 0.0;
+#endif
+	       for (int fc = 0; fc < N_F; fc++)
+		 {
+		   //   printf("x=%f, rho=%f\n", x, rhoEx);
+		   Residual(row, fc) += SuperWeight(g,0)*SuperdetJ(e,g)*Ulocal[fc]*SuperPhi(g,row);
+		 }
+	     } //End g loop
+	   
+	   //The element's initialization residual has been formed, all field variables
+	   
+	 } //Step 2:multiply residual by inverse mass matrix to get the initial DOF
+       fullMatrix<scalar> Minv_local(N_s, N_s);
+       for (int row = 0; row < N_s; row++)
+	 {
+	   //for organization of h_Minv, see the solve function in time_integration/rk_kernels.cu.
+	   for (int col = 0; col < N_s; col++)
+	     {
+	       Minv_local(row,col) = h_Minv[(e*N_s+col)*N_s+row];
+	     }
+	 } //end row loop for getting Minv
+       
+       fullMatrix<scalar> DOF(N_s, N_F);
+       DOF.gemm(Minv_local, Residual);
+       
+       //Communicate the DOF to global storage
+       for (int k = 0; k < N_s; k++)
+	 {
+	   for (int fc = 0; fc < N_F; fc++)
+	     {
+	       // printf("\t\tDOF(e=%d,k=%d,f=%d) = %f\n", e, k, fc, DOF(k,fc));
+	       U(k, e*N_F + fc) = DOF(k, fc);
+	     }
+	 } //end k loop for communication to global storage
+       
+     } //End element loop, we are done.
+} //End subroutine
+
+void init_dg_sinphil_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U)
+{
+  //Just a sine wave in all fields. Building this just to test my gradient evaluations in first timestep.
+  //Dividing by 5 because I'm presently running on normvtx mesh
+  scalar DomainLength = 2.0*acos(-1.0);
+  printf("Called init_dg_sinphil, DomainLength = %f\n",DomainLength);
+  if (N_F == 1)
+    {
+       for (int e = 0; e < N_E; e++)
+	 {
+	   for (int k = 0; k < N_s; k++)
+	     {
+	       //U(k, e*N_F + 0) = 2.0+sin(2.0*M_PI/10.0*XYZNodes(k,e*D + 0)); //sin(x) 
+	       //printf("rho=%f\n", 2.0+sin(2.0*M_PI/10.0*XYZNodes(k,e*D + 0)));
+#ifdef ONED
+	       U(k, e*N_F + 0) = 2.0 + sin(2.0*M_PI/DomainLength*XYZNodes(k,e*D + 0));
+	      
+#endif
+#ifdef TWOD
+	       //Uex = 2.0 + sin(2.0*M_PI/0.1*XYZ_GQ(g,e*D + 0));
+	       U(k, e*N_F + 0) = 2.0 + sin(2.0*M_PI/DomainLength*XYZNodes(k, e*D+0))*sin(2.0*M_PI/DomainLength*XYZNodes(k, e*D+1));
+	       printf("e=%d, k=%d, x=%f, y=%f, U=%f\n", e, k, XYZNodes(k,e*D+0), XYZNodes(k, e*D+1), U(k, e*N_F + 0));
+#endif
+#ifdef THREED
+	       U(k, e*N_F + 0) = 2.0 + sin(2.0*M_PI/DomainLength*XYZNodes(k, e*D+0))*sin(2.0*M_PI/DomainLength*XYZNodes(k, e*D+1))*sin(2.0*M_PI/DomainLength*XYZNodes(k, e*D+2));
+	       //U(k, e*N_F + 0) = 2.0 + sin(2.0*M_PI/DomainLength*XYZNodes(k, e*D+0));
+#endif
+	     }
+	 }
+    }
+  else
+    {
+      for (int e = 0; e < N_E; e++)
+	{
+	  for (int k = 0; k < N_s; k++)
+	    {
+	      U(k, e*N_F + 0) = 2.0+sin(2.0*M_PI/10.0*XYZNodes(k,e*D + 0)); //sin(x)
+	      //printf("rho=%f\n", 2.0+sin(2.0*M_PI/10.0*XYZNodes(k,e*D + 0)));
+	      for (int f = 1; f < (D+1); f++)
+		{
+		  U(k, e*N_F + f) = 0.0;
+		}
+	      U(k, e*N_F + D+1) = 10.0;	      
+	    }
+	}
+    }
+  
+}
+
+//'Project' means that I initialize through a Galerkin projection
+//instead of nodal equivalence at the solution points
+void init_dg_sinphilProject_singlefluid(const int N_s, const int N_E, const int GQres, fullMatrix<scalar> &XYZ_GQ, fullMatrix<scalar> &SuperWeight, fullMatrix<scalar> &SuperdetJ, fullMatrix<scalar> &SuperPhi, scalar* h_Minv, fullMatrix<scalar> &U)
+{
+  /*
+    input N_s: DOF per element
+    input N_E: element count
+    input GQres: number of super-quadrature nodes per element
+    input XYZ_GQ: physical locations of super-resolution quadrature nodes
+    input SuperWeight: quadrature weights of super-resolution quadrature
+    input SuperDetJ: determinant of Jacobian at each super-resolution quadrature point
+    input SuperPhi: the DG solution/testing basis at super-resolution ref quadrature nodes
+    input h_Minv: the inverse mass matrix in 1D array storage format
+    output U: the initial DOF of the problem
+   */
+  //sine wave in all fields, as with sinphil. However, instead of initializing
+  //based on solution points, I'm performing the galerkin projection
+  scalar DomainLength = 1.0*2.0*acos(-1.0);
+  printf("Called Galerkin sinphil, DomainLength = %f\n", DomainLength);
+  for (int e = 0; e < N_E; e++)
+    {
+      
+      //      printf("Called Galerkin sinphil, e=%d, DomainLength = %f\n",e, DomainLength);
+      //Step 1:integrate the residual for each shape function
+      fullMatrix<scalar> Residual(N_s,N_F);
+      for (int row = 0; row < N_s; row++)
+	{
+	  for (int fc = 0; fc < N_F; fc++)
+	    {
+	      scalar sum = 0;
+	      for (int g = 0; g < GQres; g++)
+		{
+		  scalar Uex;
+#ifdef ONED
+		  Uex = 2.0 + sin(2.0*M_PI/DomainLength*XYZ_GQ(g,e*D + 0));
+#endif
+#ifdef TWOD
+		  //Uex = 2.0 + sin(2.0*M_PI/0.1*XYZ_GQ(g,e*D + 0));
+		  Uex = 2.0 + sin(2.0*M_PI/DomainLength*XYZ_GQ(g, e*D+0))*sin(2.0*M_PI/DomainLength*XYZ_GQ(g, e*D+1));
+#endif
+#ifdef THREED
+		  //Uex = XYZ_GQ(g, e*D+2);
+		  //Uex = XYZ_GQ(g, e*D+1);
+		  //Uex = e+0.0;
+		  //Uex = pow(XYZ_GQ(g, e*D+0), 3);
+		  //Uex = 2.0 + sin(2.0*M_PI/10.0*XYZ_GQ(g, e*D+0));
+		  //Uex = 2.0 + sin(2.0*M_PI/10.0*XYZ_GQ(g, e*D+1));
+		  //Uex = 2.0 + sin(2.0*M_PI/10.0*XYZ_GQ(g, e*D+2));
+		  //Uex = 2.0 + sin(2.0*M_PI/10.0*XYZ_GQ(g, e*D+0))*sin(2.0*M_PI/10.0*XYZ_GQ(g, e*D+1));
+		  Uex = 2.0 + sin(2.0*M_PI/DomainLength*XYZ_GQ(g, e*D+0))*sin(2.0*M_PI/DomainLength*XYZ_GQ(g, e*D+1))*sin(2.0*M_PI/DomainLength*XYZ_GQ(g,e*D+2));
+		  //Uex = sin(2.0*M_PI/DomainLength*XYZ_GQ(g, e*D+0));
+		  //Uex = sin(2.0*M_PI/DomainLength*XYZ_GQ(g, e*D+2));
+		  //printf("e=%d, X=(%f,%f,%f), U=%f\n", e, XYZ_GQ(g, e*D+0),XYZ_GQ(g, e*D+1),XYZ_GQ(g, e*D+2), Uex);
+#endif
+		   //	  printf("\tUex(e=%d,g=%d,f=%d) = %f\n",e,g,fc,Uex);
+		  sum += SuperWeight(g,0)*SuperdetJ(e,g)*Uex*SuperPhi(g,row);
+		}
+	      Residual(row,fc) = sum;
+	      //printf("Residual(%d,%d) = %f\n", row,fc, Residual(row,fc));
+	    }
+	}
+
+      //Step 2:multiply residual by inverse mass matrix to get the initial DOF
+      fullMatrix<scalar> Minv_local(N_s, N_s);
+      for (int row = 0; row < N_s; row++)
+	{
+	  //for organization of h_Minv, see the solve function in time_integration/rk_kernels.cu.
+	  for (int col = 0; col < N_s; col++)
+	    {
+	      Minv_local(row,col) = h_Minv[(e*N_s+col)*N_s+row];
+	    }
+	}
+      
+      fullMatrix<scalar> DOF(N_s, N_F);
+      DOF.gemm(Minv_local, Residual);
+
+      //Communicate the DOF to global storage
+      for (int k = 0; k < N_s; k++)
+	{
+	  for (int fc = 0; fc < N_F; fc++)
+	    {
+	      //   printf("\t\tDOF(e=%d,k=%d,f=%d) = %f\n", e, k, fc, DOF(k,fc));
+	      U(k, e*N_F + fc) = DOF(k, fc);
+	    }
+	}
+    }
+}
+
+void init_dg_rhobumpProject_singlefluid(const int N_s, const int N_E, const int GQres, fullMatrix<scalar> &XYZ_GQ, fullMatrix<scalar> &SuperWeight, fullMatrix<scalar> &SuperdetJ, fullMatrix<scalar> &SuperPhi, scalar* h_Minv, fullMatrix<scalar> &U)
+{
+  /*
+    input N_s: DOF per element
+    input N_E: element count
+    input GQres: number of super-quadrature nodes per element
+    input XYZ_GQ: physical locations of super-resolution quadrature nodes
+    input SuperWeight: quadrature weights of super-resolution quadrature
+    input SuperDetJ: determinant of Jacobian at each super-resolution quadrature point
+    input SuperPhi: the DG solution/testing basis at super-resolution ref quadrature nodes
+    input h_Minv: the inverse mass matrix in 1D array storage format
+    output U: the initial DOF of the problem
+   */
+  //density vally at (x,y)=(1/2,1/2), causing temperature spike
+  scalar rho_free = 1.225;
+  scalar p_free = 100;
+  for (int e = 0; e < N_E; e++)
+    {
+      printf("Called Galerkin rhobump, e=%d\n",e);
+      //Step 1:integrate the residual for each shape function
+      fullMatrix<scalar> Residual(N_s,N_F);
+      for (int k = 0; k < N_s; k++)
+	{
+	  for (int fc = 0; fc < N_F; fc++)
+	    {
+	      Residual(k,fc) = 0.0;
+	    }
+	}
+      for (int row = 0; row < N_s; row++)
+	{
+	  //density:
+	  int fc = 0;
+	  for (int g = 0; g < GQres; g++)
+	    {
+	      scalar x = XYZ_GQ(g, e*D + 0);
+#ifdef TWOD
+	      scalar y = XYZ_GQ(g, e*D + 1);
+#endif
+#ifdef THREED
+	      scalar y = XYZ_GQ(g, e*D + 1);
+	      scalar z = XYZ_GQ(g, e*D + 2);
+#endif
+	      scalar rhoEx = rho_free;
+#ifdef ONED
+	      if (x >= 0.0 && x <= 1.0)
+		{
+		  rhoEx = rho_free * (1.0 - 0.5*pow(sin(M_PI*x),3));
+		}
+#endif
+#ifdef TWOD
+	      if (x >= 0.0 && x <= 1.0 && y >= 0.0 && y <= 1.0)
+		{
+		  rhoEx = rho_free * (1.0 - 0.5*pow(sin(M_PI*x)*sin(M_PI*y),3));
+		}
+#endif
+#ifdef THREED
+	      //in future, change this to a 3D bump geometry
+	      if (x >= 0.0 && x <= 1.0 && y >= 0.0 && y <= 1.0)
+		{
+		  rhoEx = rho_free * (1.0 - 0.5*pow(sin(M_PI*x)*sin(M_PI*y),3));
+		}
+#endif
+
+	      //   printf("x=%f, rho=%f\n", x, rhoEx);
+	      Residual(row, fc) += SuperWeight(g,0)*SuperdetJ(e,g)*rhoEx*SuperPhi(g,row);
+	    }
+#ifdef ONED
+	  //momentum, x direction:
+	  fc = 1;
+	  Residual(row,fc) = 0.0;
+
+	  //Energy:
+	  fc = 2;
+	  scalar EgEx = p_free / (constants::GLOBAL_GAMMA - 1.0);
+	  for (int g = 0; g < GQres; g++)
+	    {
+	      Residual(row, fc) += SuperWeight(g,0)*SuperdetJ(e,g)*EgEx*SuperPhi(g,row);
+	    }
+#endif
+#ifdef TWOD
+	   //momentum, x direction:
+	  fc = 1;
+	  Residual(row,fc) = 0.0;
+
+	  //momentum, y direction:
+	  fc = 2;
+	  Residual(row,fc) = 0.0;
+	  
+	  //Energy:
+	  fc = 3;
+	  scalar EgEx = p_free / (constants::GLOBAL_GAMMA - 1.0);
+	  for (int g = 0; g < GQres; g++)
+	    {
+	      Residual(row, fc) += SuperWeight(g,0)*SuperdetJ(e,g)*EgEx*SuperPhi(g,row);
+	    }
+#endif
+#ifdef THREED
+	  //momentum, x direction:
+	  fc = 1;
+	  Residual(row,fc) = 0.0;
+	  
+	  //momentum, y direction:
+	  fc = 2;
+	  Residual(row,fc) = 0.0;
+
+	  //momentum, z direction:
+	  fc = 3;
+	  Residual(row, fc) = 0.0;
+
+	  //Energy
+	  fc = 4;
+	  scalar EgEx = p_free / (constants::GLOBAL_GAMMA - 1.0);
+	  for (int g = 0; g < GQres; g++)
+	    {
+	      Residual(row, fc) += SuperWeight(g,0)*SuperdetJ(e,g)*EgEx*SuperPhi(g,row);
+	    }
+#endif
+	}
+
+
+      //Step 2:multiply residual by inverse mass matrix to get the initial DOF
+      fullMatrix<scalar> Minv_local(N_s, N_s);
+      for (int row = 0; row < N_s; row++)
+	{
+	  //for organization of h_Minv, see the solve function in time_integration/rk_kernels.cu.
+	  for (int col = 0; col < N_s; col++)
+	    {
+	      Minv_local(row,col) = h_Minv[(e*N_s+col)*N_s+row];
+	    }
+	}
+      
+      fullMatrix<scalar> DOF(N_s, N_F);
+      DOF.gemm(Minv_local, Residual);
+
+      //Communicate the DOF to global storage
+      for (int k = 0; k < N_s; k++)
+	{
+	  for (int fc = 0; fc < N_F; fc++)
+	    {
+	      //	      printf("\t\tDOF(e=%d,k=%d,f=%d) = %f\n", e, k, fc, DOF(k,fc));
+	      U(k, e*N_F + fc) = DOF(k, fc);
+	    }
+	}
+    }
+}
+
+void init_dg_normvtxProject_singlefluid(const int N_s, const int N_E, const int GQres, fullMatrix<scalar> &XYZ_GQ, fullMatrix<scalar> &SuperWeight, fullMatrix<scalar> &SuperdetJ, fullMatrix<scalar> &SuperPhi, scalar* h_Minv, fullMatrix<scalar> &U)
+{
+  /*
+    input N_s: DOF per element
+    input N_E: element count
+    input GQres: number of super-quadrature nodes per element
+    input XYZ_GQ: physical locations of super-resolution quadrature nodes
+    input SuperWeight: quadrature weights of super-resolution quadrature
+    input SuperDetJ: determinant of Jacobian at each super-resolution quadrature point
+    input SuperPhi: the DG solution/testing basis at super-resolution ref quadrature nodes
+    input h_Minv: the inverse mass matrix in 1D array storage format
+    output U: the initial DOF of the problem
+   */
+  //isentropic vortex; should be transported
+  //at freestream velocity without deformation
+  //Doreen vortex parameters
+  scalar rsh = 1.4; //ratio of specific heats, needs to match with CONSTANTS:gamma
+  scalar K_rsh = 1.0 / rsh; //isentropic constant
+  scalar k_vort = 2.0;
+  scalar u_Doreen = 1.0;
+  scalar v_Doreen = 0.0;
+  scalar rho_Doreen = 1.0;
+  scalar exp_const = 2.71828182845904523536;
+
+  for (int e = 0; e < N_E; e++)
+    {
+      printf("Called Galerkin normvtxProject, e=%d\n",e);
+      //Step 1:integrate the residual for each shape function
+      fullMatrix<scalar> Residual(N_s,N_F);
+      for (int k = 0; k < N_s; k++) {
+	for (int fc = 0; fc < N_F; fc++) {
+	  Residual(k,fc) = 0.0;
+	}}
+      
+      for (int row = 0; row < N_s; row++)
+	{
+	  for (int g = 0; g < GQres; g++)
+	    {
+	      scalar x_loc = XYZ_GQ(g, e*D + 0);
+	      scalar y_loc = XYZ_GQ(g, e*D + 1);
+	      scalar x_sq = x_loc*x_loc;
+	      scalar y_sq = y_loc*y_loc;
+	      scalar kxy = k_vort * (x_sq + y_sq);
+	      scalar prod1 = (rsh-1.0)*pow(exp_const, -2.0*kxy) / (4.0*rsh*k_vort*K_rsh);
+	      scalar diff1 = pow(rho_Doreen, rsh-1.0) - prod1;
+	      scalar rho = pow(diff1, 1.0/(rsh-1.0));
+	      scalar u = u_Doreen - y_loc * pow(exp_const, -kxy);
+	      scalar v = x_loc * pow(exp_const, -kxy);
+	      scalar p = K_rsh * pow(rho, rsh);
+	      scalar Et = p/(rsh-1.0) + 0.5*rho*(u*u + v*v);
+
+	      //conserved variables I've set this approach up to work wth 2D and 3D cases
+	      scalar Ulocal[N_F];
+	      Ulocal[0] = rho;
+	      Ulocal[1] = rho*u;
+	      Ulocal[2] = rho*v;
+	      Ulocal[N_F-1] = Et;
+#ifdef THREED
+	      Ulocal[3] = 0.0;
+#endif
+	      for (int fc = 0; fc < N_F; fc++)
+		{
+		  //   printf("x=%f, rho=%f\n", x, rhoEx);
+		  Residual(row, fc) += SuperWeight(g,0)*SuperdetJ(e,g)*Ulocal[fc]*SuperPhi(g,row);
+		}
+	    }
+	}
+      //The element's initialization residual has been formed, all field variables
+
+      //Step 2:multiply residual by inverse mass matrix to get the initial DOF
+      fullMatrix<scalar> Minv_local(N_s, N_s);
+      for (int row = 0; row < N_s; row++)
+	{
+	  //for organization of h_Minv, see the solve function in time_integration/rk_kernels.cu.
+	  for (int col = 0; col < N_s; col++)
+	    {
+	      Minv_local(row,col) = h_Minv[(e*N_s+col)*N_s+row];
+	    }
+	}
+      
+      fullMatrix<scalar> DOF(N_s, N_F);
+      DOF.gemm(Minv_local, Residual);
+
+      //Communicate the DOF to global storage
+      for (int k = 0; k < N_s; k++)
+	{
+	  for (int fc = 0; fc < N_F; fc++)
+	    {
+	      // printf("\t\tDOF(e=%d,k=%d,f=%d) = %f\n", e, k, fc, DOF(k,fc));
+	      U(k, e*N_F + fc) = DOF(k, fc);
+	    }
+	}
+    }
+}
+
+//END PEJ EDIT
+
 void init_dg_shallow(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U){
 
   if (N_F!=3) printf("You are setting up the wrong problem. N_F =%i != 3.\n",N_F);
@@ -57,7 +1642,7 @@ void init_dg_tranvtx_singlefluid(const int N_s, const int N_E, const fullMatrix<
   scalar XC = 0.05; // x-center of vortex [m]
   scalar YC = 0.05; // y-center of vortex [m]
 
-  // Non-dimensional parameters
+ // Non-dimensional parameters
   scalar L_ND   = 0.1; // use characteristic radius to ND
   scalar rho_ND = rho_inf;
   scalar u_ND   = u_inf;
@@ -65,10 +1650,10 @@ void init_dg_tranvtx_singlefluid(const int N_s, const int N_E, const fullMatrix<
   printf("Non-dimensional parameters: L_ND=%f, rho_ND=%f, u_ND=%f, p_ND=%f\n",L_ND,rho_ND,u_ND,p_ND);
 
   // N-D lengths
-  XC = XC/L_ND;
-  YC = YC/L_ND;
-  R  = R/L_ND;
-  
+  XC = XC/L_ND * L_ND;
+  YC = YC/L_ND * L_ND;
+  R  = R/L_ND * L_ND;
+
   scalar rho0=0,T0=0,dT=0,p0=0,u0=0,v0=0,du=0,dv=0,Et0=0,r=0;  
   scalar xc=0, yc=0, x=0, y=0;
   for(int e = 0; e < N_E; e++){
@@ -91,12 +1676,13 @@ void init_dg_tranvtx_singlefluid(const int N_s, const int N_E, const fullMatrix<
       v0 =       dv;
       rho0 = rho_inf*pow(T0/T_inf,1.0/(gamma-1));
       p0   = rho0*Rgas*T0;
-
+      /*
       // Non-dimensionalize and energy calculation
       rho0 = rho0/rho_ND;
       u0   = u0/u_ND;
       v0   = v0/u_ND;
       p0   = p0/p_ND;
+      */
       Et0  = p0/(gamma-1) + 0.5*rho0*(u0*u0+v0*v0);       
       
       // set the initial fields

@@ -26,6 +26,7 @@ class SENSOR {
   int _N_s;
   int _N_E;
   int _N_N;
+  int _Ne_AUG; //count of flesh and ghost elements on the partition 
   scalar one_div_N_s;
   bool _sensor1; scalar _thresh1;
   bool _sensor2; scalar _thresh2;
@@ -39,7 +40,7 @@ class SENSOR {
  public:
   
   /*!\brief Constructor */
- SENSOR(int N_s, int N_E, int N_N, TIMERS &timers, MEM_COUNTER &mem_counter, const std::vector<double> &thresholds = std::vector<double>()) : _N_s(N_s), _N_E(N_E), _N_N(N_N), _timers(timers) {
+ SENSOR(int N_s, int N_E, int Ne_AUG, int N_N, TIMERS &timers, MEM_COUNTER &mem_counter, const std::vector<double> &thresholds = std::vector<double>()) : _N_s(N_s), _N_E(N_E), _Ne_AUG(Ne_AUG), _N_N(N_N), _timers(timers) {
 
     _sensor1=false; // contact sensor (based on density)
     _sensor2=false; // shock sensor
@@ -58,14 +59,19 @@ class SENSOR {
     
     one_div_N_s = 1.0/(scalar)_N_s;
 #ifdef USE_CPU
-    _sensors = new int[_N_E];                                 mem_counter.addToCPUCounter(_N_E*sizeof(int));
-    _Uavg    = new scalar[_N_E*N_F];                          mem_counter.addToCPUCounter(_N_E*N_F*sizeof(scalar));
+    //_sensors = new int[_N_E];                                 mem_counter.addToCPUCounter(_N_E*sizeof(int));
+    _sensors = new int[_Ne_AUG];                                 mem_counter.addToCPUCounter(_Ne_AUG*sizeof(int));
+    //_Uavg    = new scalar[_N_E*N_F];                          mem_counter.addToCPUCounter(_N_E*N_F*sizeof(scalar));
+    _Uavg    = new scalar[_Ne_AUG*N_F];                          mem_counter.addToCPUCounter(_Ne_AUG*N_F*sizeof(scalar));
     _ones    = new scalar[_N_s];                              mem_counter.addToCPUCounter(_N_s*sizeof(scalar));
-    for(int e=0; e<_N_E; e++){ _sensors[e] = 0;}
+    //for(int e=0; e<_N_E; e++){ _sensors[e] = 0;}
+    for(int e=0; e<_Ne_AUG; e++){ _sensors[e] = 0;}
     for(int i=0; i<_N_s; i++){ _ones[i] = 1;}
 #elif USE_GPU
-    cudaMalloc((void**) &_sensors,_N_E*sizeof(int));         mem_counter.addToGPUCounter(_N_E*sizeof(int));	   
-    cudaMalloc((void**) &_Uavg,_N_E*N_F*sizeof(scalar));     mem_counter.addToGPUCounter(_N_E*N_F*sizeof(scalar));
+    //cudaMalloc((void**) &_sensors,_N_E*sizeof(int));         mem_counter.addToGPUCounter(_N_E*sizeof(int));	   
+    cudaMalloc((void**) &_sensors,_Ne_AUG*sizeof(int));         mem_counter.addToGPUCounter(_Ne_AUG*sizeof(int));	   
+    //cudaMalloc((void**) &_Uavg,_N_E*N_F*sizeof(scalar));     mem_counter.addToGPUCounter(_N_E*N_F*sizeof(scalar));
+    cudaMalloc((void**) &_Uavg,_Ne_AUG*N_F*sizeof(scalar));     mem_counter.addToGPUCounter(_Ne_AUG*N_F*sizeof(scalar));
     cudaMalloc((void**) &_ones,_N_s*sizeof(scalar));	     mem_counter.addToGPUCounter(_N_s*sizeof(scalar));    
     cudaMemset(_sensors, 0, _N_E*sizeof(int));
 
@@ -83,6 +89,7 @@ class SENSOR {
     if(_ones)    del(_ones);
   }
 
+  int get1Sensor(int e) {/*!\brief get sensor value for element*/ return _sensors[e];};
   int* getSensors()const {/*!\brief Return sensor array*/return _sensors;};
   bool isSensor()const {/*!\brief Return true if using sensors*/return _isSensor;};
   void sensing(int* neighbors, scalar* U);

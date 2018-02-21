@@ -1,0 +1,121 @@
+\section{P\-R\-I\-N\-T\-E\-R Class Reference}
+\label{classPRINTER}\index{P\-R\-I\-N\-T\-E\-R@{P\-R\-I\-N\-T\-E\-R}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bf P\-R\-I\-N\-T\-E\-R} (int N\-\_\-s, int N\-\_\-\-E, int elem\-\_\-type, {\bf simple\-Mesh} \&m, {\bf T\-I\-M\-E\-R\-S} \&timers, {\bf M\-E\-M\-\_\-\-C\-O\-U\-N\-T\-E\-R} \&mem\-\_\-counter)
+\begin{DoxyCompactList}\small\item\em Constructor. \end{DoxyCompactList}\item 
+{\bf $\sim$\-P\-R\-I\-N\-T\-E\-R} ()
+\item 
+void {\bf set\-\_\-names} ()\label{classPRINTER_a7a892df9118b57a542dccf6ef4f34055}
+
+\begin{DoxyCompactList}\small\item\em Set the filenames and field names for the \doxyref{P\-R\-I\-N\-T\-E\-R}{p.}{classPRINTER} class. \end{DoxyCompactList}\item 
+void {\bf print} (scalar $\ast$U, {\bf L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S} \&particles, const int step, const double time)
+\item 
+void {\bf read} (const int step, double \&time, scalar $\ast$U)
+\item 
+void {\bf print\-\_\-sensor} ({\bf S\-E\-N\-S\-O\-R} \&sensor, const int step, const double time)
+\end{DoxyCompactItemize}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\index{P\-R\-I\-N\-T\-E\-R@{P\-R\-I\-N\-T\-E\-R}!P\-R\-I\-N\-T\-E\-R@{P\-R\-I\-N\-T\-E\-R}}
+\index{P\-R\-I\-N\-T\-E\-R@{P\-R\-I\-N\-T\-E\-R}!PRINTER@{P\-R\-I\-N\-T\-E\-R}}
+\subsubsection[{P\-R\-I\-N\-T\-E\-R}]{\setlength{\rightskip}{0pt plus 5cm}P\-R\-I\-N\-T\-E\-R\-::\-P\-R\-I\-N\-T\-E\-R (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{elem\-\_\-type, }
+\item[{{\bf simple\-Mesh} \&}]{m, }
+\item[{{\bf T\-I\-M\-E\-R\-S} \&}]{timers, }
+\item[{{\bf M\-E\-M\-\_\-\-C\-O\-U\-N\-T\-E\-R} \&}]{mem\-\_\-counter}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classPRINTER_a9315def4622c1ebb54854adc4c91c451}
+
+
+Constructor. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em elem\-\_\-type} & type of element to output \\
+\hline
+\mbox{\tt in}  & {\em m} & mesh we are operating on \\
+\hline
+\end{DoxyParams}
+\index{P\-R\-I\-N\-T\-E\-R@{P\-R\-I\-N\-T\-E\-R}!$\sim$\-P\-R\-I\-N\-T\-E\-R@{$\sim$\-P\-R\-I\-N\-T\-E\-R}}
+\index{$\sim$\-P\-R\-I\-N\-T\-E\-R@{$\sim$\-P\-R\-I\-N\-T\-E\-R}!PRINTER@{P\-R\-I\-N\-T\-E\-R}}
+\subsubsection[{$\sim$\-P\-R\-I\-N\-T\-E\-R}]{\setlength{\rightskip}{0pt plus 5cm}P\-R\-I\-N\-T\-E\-R\-::$\sim$\-P\-R\-I\-N\-T\-E\-R (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classPRINTER_a62e567851d83d87ec96c10760616ffa1}
+Destructor 
+
+\subsection{Member Function Documentation}
+\index{P\-R\-I\-N\-T\-E\-R@{P\-R\-I\-N\-T\-E\-R}!print@{print}}
+\index{print@{print}!PRINTER@{P\-R\-I\-N\-T\-E\-R}}
+\subsubsection[{print}]{\setlength{\rightskip}{0pt plus 5cm}void P\-R\-I\-N\-T\-E\-R\-::print (
+\begin{DoxyParamCaption}
+\item[{scalar $\ast$}]{U, }
+\item[{{\bf L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S} \&}]{particles, }
+\item[{const int}]{step, }
+\item[{const double}]{time}
+\end{DoxyParamCaption}
+)}\label{classPRINTER_aacb080804d9508f79d29a1f220414167}
+Output solution for the \doxyref{P\-R\-I\-N\-T\-E\-R}{p.}{classPRINTER} class 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em U} & solution to output \\
+\hline
+\mbox{\tt in}  & {\em particles} & lagrange particles to output \\
+\hline
+\mbox{\tt in}  & {\em step} & time step number \\
+\hline
+\mbox{\tt in}  & {\em time} & time value\\
+\hline
+\end{DoxyParams}
+\index{P\-R\-I\-N\-T\-E\-R@{P\-R\-I\-N\-T\-E\-R}!print\-\_\-sensor@{print\-\_\-sensor}}
+\index{print\-\_\-sensor@{print\-\_\-sensor}!PRINTER@{P\-R\-I\-N\-T\-E\-R}}
+\subsubsection[{print\-\_\-sensor}]{\setlength{\rightskip}{0pt plus 5cm}void P\-R\-I\-N\-T\-E\-R\-::print\-\_\-sensor (
+\begin{DoxyParamCaption}
+\item[{{\bf S\-E\-N\-S\-O\-R} \&}]{sensor, }
+\item[{const int}]{step, }
+\item[{const double}]{time}
+\end{DoxyParamCaption}
+)}\label{classPRINTER_a416d09559b8eb2b971a37acce12d5010}
+Output sensor if needed 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em sensor} & sensor to output \\
+\hline
+\mbox{\tt in}  & {\em step} & time step number \\
+\hline
+\mbox{\tt in}  & {\em time} & time value\\
+\hline
+\end{DoxyParams}
+\index{P\-R\-I\-N\-T\-E\-R@{P\-R\-I\-N\-T\-E\-R}!read@{read}}
+\index{read@{read}!PRINTER@{P\-R\-I\-N\-T\-E\-R}}
+\subsubsection[{read}]{\setlength{\rightskip}{0pt plus 5cm}void P\-R\-I\-N\-T\-E\-R\-::read (
+\begin{DoxyParamCaption}
+\item[{const int}]{step, }
+\item[{double \&}]{time, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{classPRINTER_a6b8a2bb4fa8ccbe22c5789015b9c5715}
+Read solution from output files for the \doxyref{P\-R\-I\-N\-T\-E\-R}{p.}{classPRINTER} class 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em step} & time step number \\
+\hline
+\mbox{\tt out}  & {\em time} & time of the output solution \\
+\hline
+\mbox{\tt out}  & {\em U} & solution to populate from files\\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+src/printer/{\bf printer.\-h}\item 
+src/printer/{\bf printer.\-cc}\end{DoxyCompactItemize}

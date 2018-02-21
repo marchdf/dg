@@ -32,7 +32,9 @@ void COMMUNICATOR::CommunicateGhosts(int Nfields, scalar* U){
   _timers.start_timer(22);
   
   // wait until every process gets here
+  _timers.start_timer(52);
   MPI_Barrier(MPI_COMM_WORLD);
+  _timers.stop_timer(52);
 
   _timers.start_timer(31);
   int e, dest, source, tag;
@@ -57,5 +59,73 @@ void COMMUNICATOR::CommunicateGhosts(int Nfields, scalar* U){
 
   _timers.stop_timer(22);
 }
+
+void COMMUNICATOR::CommunicateCords(scalar* XYZNodes)
+{
+  /*!
+    \brief communicate solution node coordinates across partitions
+   */
+  // wait until every process gets here
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  int e, dest, source, tag;
+  for(int k=0; k<_N_ghosts; k++){
+    
+    // Send info 
+    e    = _ghostElementSend[k*3+0]; // local index of U to send
+    dest = _ghostElementSend[k*3+1]; // destination processor
+    tag  = _ghostElementSend[k*3+2]; // global idx of element
+    //printf("Send command: k=%d/%d, e=%d, dest=%d, tag=%d\n", k, _N_ghosts, e, dest, tag);
+    MPI_Isend(&XYZNodes[e*D*_N_s], D*_N_s, MPI_SCALAR, dest, tag, MPI_COMM_WORLD, &_request[2*k+0]);
+   //MPI_Isend(&U[e*Nfields*_N_s], Nfields*_N_s, MPI_SCALAR, dest, tag, MPI_COMM_WORLD, &_request[2*k+0]);
+    
+    // Recv info
+    e      = _ghostElementRecv[k*3+0]; // local index of U to recv (back columns)
+    source = _ghostElementRecv[k*3+1]; // destination processor
+    tag    = _ghostElementRecv[k*3+2]; // global idx of element
+    //printf("Receive command: k=%d/%d, e=%d, source=%d, tag=%d\n", k, _N_ghosts, e, source, tag);
+    MPI_Irecv(&XYZNodes[e*D*_N_s], D*_N_s, MPI_SCALAR, source, tag, MPI_COMM_WORLD, &_request[2*k+1]);
+    //MPI_Irecv(&U[e*Nfields*_N_s], Nfields*_N_s, MPI_SCALAR, source, tag, MPI_COMM_WORLD, &_request[2*k+1]);
+  }  
+    // Wait for communication to end
+    MPI_Waitall(2*_N_ghosts, _request, _status);
+    
+}
+
+void COMMUNICATOR::CommunicateSensor(int* SensorTag_Aug)
+{
+  /*!
+    \brief communicate sensor output across partition psuedo-boundaries
+   */
+  // wait until every process gets here
+  _timers.start_timer(22);
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  int e, dest, source, tag;
+  for(int k=0; k<_N_ghosts; k++){
+    
+    // Send info 
+    e    = _ghostElementSend[k*3+0]; // local index of U to send
+    dest = _ghostElementSend[k*3+1]; // destination processor
+    tag  = _ghostElementSend[k*3+2]; // global idx of element
+    //printf("Send command: k=%d/%d, e=%d, dest=%d, tag=%d\n", k, _N_ghosts, e, dest, tag);
+    MPI_Isend(&SensorTag_Aug[e], 1, MPI_INT, dest, tag, MPI_COMM_WORLD, &_request[2*k+0]);
+    //MPI_Isend(&XYZNodes[e*D*_N_s], D*_N_s, MPI_SCALAR, dest, tag, MPI_COMM_WORLD, &_request[2*k+0]);
+   //MPI_Isend(&U[e*Nfields*_N_s], Nfields*_N_s, MPI_SCALAR, dest, tag, MPI_COMM_WORLD, &_request[2*k+0]);
+    
+    // Recv info
+    e      = _ghostElementRecv[k*3+0]; // local index of U to recv (back columns)
+    source = _ghostElementRecv[k*3+1]; // destination processor
+    tag    = _ghostElementRecv[k*3+2]; // global idx of element
+    //printf("Receive command: k=%d/%d, e=%d, source=%d, tag=%d\n", k, _N_ghosts, e, source, tag);
+    MPI_Irecv(&SensorTag_Aug[e], 1, MPI_INT, source, tag, MPI_COMM_WORLD, &_request[2*k+1]);
+    //    MPI_Irecv(&XYZNodes[e*D*_N_s], D*_N_s, MPI_SCALAR, source, tag, MPI_COMM_WORLD, &_request[2*k+1]);
+    //MPI_Irecv(&U[e*Nfields*_N_s], Nfields*_N_s, MPI_SCALAR, source, tag, MPI_COMM_WORLD, &_request[2*k+1]);
+  }  
+    // Wait for communication to end
+    MPI_Waitall(2*_N_ghosts, _request, _status);
+    _timers.stop_timer(22);
+}
+
 #endif
 #endif

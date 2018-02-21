@@ -1,0 +1,83 @@
+# timers for this run: time in seconds, number of calls
+# timer   0: main time
+1.2375945000000000E+01	                   1
+# timer   1: RK time
+1.1660031999999999E+01	                   1
+# timer   2: output time
+3.8999999999999994E-03	                  10
+# timer   3: solver time
+4.1047100000018821E-01	               33228
+# timer   4: new_dt time
+8.8231100000000751E-01	                8307
+# timer   5: DG time
+9.7752389999999032E+00	               33228
+# timer   6: mapToFace time
+4.5404600000002621E-01	               33228
+# timer   7: rflctiveBoundary time
+1.5110800000007338E-01	               33228
+# timer   8: collocationU time
+4.9483399999981786E-01	               33228
+# timer   9: collocationdU time
+4.3705699999997522E-01	               33228
+# timer  10: collocationUF time
+4.2135500000000853E-01	               33228
+# timer  11: evaluate_sf time
+3.9910700000017862E-01	               33228
+# timer  12: evaluate_q time
+3.8021800000000894E-01	               33228
+# timer  13: redistribute_sf time
+3.9096300000012596E-01	               33228
+# timer  14: gemm_s time
+5.1087900000001785E-01	               33228
+# timer  15: gemm_f time
+4.4518900000005618E-01	               33228
+# timer  16: redistribute_q time
+3.9660400000016777E-01	               33228
+# timer  17: gemm_q time
+4.3003699999996192E-01	               33228
+# timer  18: mapToElement time
+4.0273800000018645E-01	               33228
+# timer  19: addSFQ time
+3.7660099999998192E-01	               33228
+# timer  20: limiting time
+0.0000000000000000E+00	                   0
+# timer  21: sensors time
+0.0000000000000000E+00	                   0
+# timer  22: communication time
+0.0000000000000000E+00	                   0
+# timer  23: format_output time
+3.3900000000000000E-04	                  10
+# timer  24: write_output time
+3.2630000000000003E-03	                  10
+# timer  25: format_sensor time
+0.0000000000000000E+00	                   0
+# timer  26: write_sensor time
+0.0000000000000000E+00	                   0
+# timer  27: write_particles time
+2.2999999999999997E-05	                  10
+# timer  28: advect_particles time
+0.0000000000000000E+00	                   0
+# timer  29: comm_packaging time
+0.0000000000000000E+00	                   0
+# timer  30: comm_memcpy time
+0.0000000000000000E+00	                   0
+# timer  31: comm_sendrecv time
+0.0000000000000000E+00	                   0
+# timer  32: comm_unpackaging time
+0.0000000000000000E+00	                   0
+# timer  33: Uhat_to_UhCommonHalf
+6.8431100000030765E-01	               33228
+# timer  34: UhCommonHalf_to_UhCommon
+3.6938599999998167E-01	               33228
+# timer  35: Uhat_to_GradCommonHalf
+6.4745700000003681E-01	               33228
+# timer  36: GradCommonHalf_to_GradCommon
+4.3025799999999742E-01	               33228
+# timer  37: Uhat_to_Sigma
+3.9938200000016288E-01	               33228
+# timer  38: UhCommon_to_Sigma
+4.3735999999997610E-01	               33228
+# timer  39: adjust_sf
+3.9930200000016447E-01	               33228
+# timer  40: adjust_q
+4.0929100000017993E-01	               33228
