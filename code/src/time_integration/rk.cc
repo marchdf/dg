@@ -271,7 +271,7 @@ void RK::RK_integration(scalar CFL, scalar VNN, scalar VNNAD, int restart_step,
 	}
       */
       //Update the predictor solution, _Ustar:
-      if (_order == 1 || _order == 4)
+      if (_order != 8)
 	{ //Only need _beta[k] for the Ustar update
 	  blasCopy(N_F*N_s*N_E, _Us, 1, _Ustar, 1);           // make Ustar = Us;
 	  if(k>0){

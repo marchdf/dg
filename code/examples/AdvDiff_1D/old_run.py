@@ -42,8 +42,6 @@ def write_deck(WORKDIR, preprocessors, defs):
 	f.write('ERRR=' + preprocessors[6] + '\n') #PEJ 07/05/2017
 	f.write('VISC=' + preprocessors[7] + '\n') #PEJ 08/17/2017
 	f.write('FSOL=' + preprocessors[8] + '\n') #PEJ 08/22/2017
-	f.write('CONS=' + preprocessors[9] + '\n') #PEJ 10/01/2017
-	f.write('TGVS=' + preprocessors[10] + '\n') #PEJ 10/01/2017
         f.write('PROB=' + defs[0] + '\n')
         f.write('NFLD=' + defs[1] + '\n')
         f.write('GAMM=' + defs[2] + '\n')
@@ -55,13 +53,11 @@ def write_deck(WORKDIR, preprocessors, defs):
         f.write('#final time\n' + defs[9] + '\n')
         f.write('#Courant-Friedrichs-Lewy condition\n' + defs[10] + '\n')
         f.write('#Von Neumann condition\n' + defs[11] + '\n') #PEJ 06/01/2017
-	f.write('#sensor thresholds\n' + defs[12] + '\n') #PEJ 10/11/2017
         f.write('#order\n' + defs[5] + '\n')
-        f.write('#mesh file\nmesh.msh\nlin\n') #need to specify element type here
+        f.write('#mesh file\nmesh.msh\nlin\n')
         f.write('#limiter\n' + defs[7] + '\n')
         f.write('#initial condition\n' + defs[6] + '\n')
     return deckname
-        
 
 #=========================================================================
 
@@ -89,7 +85,6 @@ def get_make_command(deckname):
             if '#Make options' not in line:
                 makecmd = makecmd + line.rstrip('\n') + ' '
 
-
 #=========================================================================
 
 
@@ -107,7 +102,6 @@ def test_recompile(CODEDIR, recompile, makecmd):
             return False
         else:
             return True
-
 
 #=========================================================================
 
@@ -213,11 +207,9 @@ PARA = 'NO_MPI'
 PREC = 'USE_DOUBLE'
 DIMS = 'ONED'
 ERRR = 'ERROR'
-VISC = 'NOVIS'
-FSOL = 'SIMPLE'
-CONS = 'NULL'
-TGVS = 'NULL'
-preprocessors = [LIEU, ARCH, PROF, PARA, PREC, DIMS, ERRR, VISC, FSOL, CONS, TGVS]
+VISC = 'CONSTANTVIS'
+FSOL = 'ICBN'
+preprocessors = [LIEU, ARCH, PROF, PARA, PREC, DIMS, ERRR, VISC, FSOL]
 
 #=========================================================================
 #
@@ -225,7 +217,7 @@ preprocessors = [LIEU, ARCH, PROF, PARA, PREC, DIMS, ERRR, VISC, FSOL, CONS, TGV
 #
 #=========================================================================
 RUNTIME = "20:00:00"
-NP = '1'
+NP = 4
 JOBNAME = 'example'
 MESHPFX = 'sample_mesh_'
 MESHFILE = MESHPFX + '1.msh'
@@ -262,18 +254,14 @@ SUBMIT = [JOBNAME, RUNTIME, QUEUE, RESOURCES]
 #=========================================================================
 DG = './dgexec -d deck.inp'
 if PARA == 'USE_MPI':
-#    DG = 'mpirun ' + DG
-#    DG = 'mpirun -np 3 ' + DG	    	
-    DG = 'mpirun -np ' + NP + ' ' + DG
+    DG = 'mpirun ' + DG
 
 # Define the problem
-PDG="2"
-#Syntax:[[0]physics, [1]number of fields, [2]eos, [3]Riemann, [4]mass fraction, [5]p, [6]IC, [7]limiter, [8]output increment, [9]t_final, [10]CFL, [11]VNN, [12]sensor threshholds]
-# Define the problem
-defs = ['SCALARAD', '1', 'GAMNCON', 'UPW', '0', PDG,
-        'sinphilProject', 'null', '0.1', '0.5', '0.5','0.9','0.1 0.1 0.1']
-#running to one extra output increment to make sure I at least make it to t=6.25
-
+PDG="5"
+#PDGstring='PDG'
+#Syntax:[[0]physics, [1]number of fields, [2]eos, [3]Riemann, [4]mass fraction, [5]p, [6]IC, [7]limiter, [8]output increment, [9]t_final, [10]CFL, [11]VNN]
+defs = ['SCALARAD', '1', 'GAMNCON', 'CEN', '0', PDG,
+        'sinphilProject', 'null', '0.5', '30.0', '0.5','0.99']
 
 # Create directory
 WORKDIR = DATADIR + defs[6].replace(" ", "_")
@@ -314,12 +302,8 @@ except IOError, e:
     print "Unable to copy mesh file. %s" % e
     sys.exit()
 
-# Run the code on the local machine
+# Run the code
 execute_dg_code(DG)
-
-# Comment the previous line and uncomment this one to run on a cluster
-# like Stampede.
-#call('sbatch submit.batch', shell=True)
 
 # go back to base directory
 os.chdir(BASEDIR)

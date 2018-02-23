@@ -1,44 +1,44 @@
 # timers for this run: time in seconds, number of calls
 # timer   0: main time
-8.4902599999999995E-01	                   1
+1.1074000000000001E-02	                   1
 # timer   1: RK time
-8.2821599999999995E-01	                   1
+8.0400000000000003E-03	                   1
 # timer   2: output time
-1.6563999999999999E-02	                  61
+2.2110000000000003E-03	                   6
 # timer   3: solver time
-4.3218000000004378E-02	               18480
+2.9800000000000074E-04	                 300
 # timer   4: new_dt time
-6.3980000000003522E-03	                4620
+1.2699999999999978E-04	                 100
 # timer   5: DG time
-7.4061900000015968E-01	               18480
+5.5079999999999600E-03	                 300
 # timer   6: mapToFace time
-7.0920000000006169E-03	               18480
+1.1799999999999976E-04	                 300
 # timer   7: rflctiveBoundary time
-4.2310000000002363E-03	               18480
+1.1499999999999977E-04	                 300
 # timer   8: collocationU time
-5.7880000000019693E-02	               18480
+3.2600000000000126E-04	                 300
 # timer   9: collocationdU time
-5.7268000000020955E-02	               18480
-# timer  10: collocationUF time
 0.0000000000000000E+00	                   0
+# timer  10: collocationUF time
+2.1799999999999950E-04	                 300
 # timer  11: evaluate_sf time
-1.7233999999996582E-02	               18480
+1.9099999999999957E-04	                 300
 # timer  12: evaluate_q time
-4.5877000000008189E-02	               18480
+7.5600000000000157E-04	                 300
 # timer  13: redistribute_sf time
-2.3120000000000255E-02	               18480
+3.4800000000000119E-04	                 300
 # timer  14: gemm_s time
-4.3176000000004482E-02	               18480
+3.4900000000000144E-04	                 300
 # timer  15: gemm_f time
-4.1810000000002623E-02	               18480
+3.2100000000000108E-04	                 300
 # timer  16: redistribute_q time
-1.7784999999997154E-02	               18480
+2.5499999999999969E-04	                 300
 # timer  17: gemm_q time
-1.2229999999997467E-02	               18480
+2.1099999999999952E-04	                 300
 # timer  18: mapToElement time
-5.0760000000014752E-02	               18480
+7.5000000000000110E-04	                 300
 # timer  19: addSFQ time
-1.3413999999996613E-02	               18480
+2.0299999999999954E-04	                 300
 # timer  20: limiting time
 0.0000000000000000E+00	                   0
 # timer  21: sensors time
@@ -46,15 +46,15 @@
 # timer  22: communication time
 0.0000000000000000E+00	                   0
 # timer  23: format_output time
-3.6999999999999991E-05	                  61
+1.9999999999999999E-06	                   6
 # timer  24: write_output time
-1.5880999999999996E-02	                  61
+1.0850000000000000E-03	                   6
 # timer  25: format_sensor time
-0.0000000000000000E+00	                   0
+3.0000000000000001E-06	                   6
 # timer  26: write_sensor time
-0.0000000000000000E+00	                   0
+1.0180000000000000E-03	                   6
 # timer  27: write_particles time
-1.2000000000000002E-05	                  61
+9.9999999999999995E-07	                   6
 # timer  28: advect_particles time
 0.0000000000000000E+00	                   0
 # timer  29: comm_packaging time
@@ -65,23 +65,71 @@
 0.0000000000000000E+00	                   0
 # timer  32: comm_unpackaging time
 0.0000000000000000E+00	                   0
-# timer  33: Uhat_to_UhCommonHalf
-3.3221999999994721E-02	               18480
-# timer  34: UhCommonHalf_to_UhCommon
-6.1720000000004931E-03	               18480
-# timer  35: Uhat_to_GradCommonHalf
-3.2950999999994825E-02	               18480
-# timer  36: GradCommonHalf_to_GradCommon
-5.9490000000004652E-03	               18480
-# timer  37: Uhat_to_Sigma
-3.8714999999997876E-02	               18480
-# timer  38: UhCommon_to_Sigma
-3.9304999999998806E-02	               18480
-# timer  39: adjust_sf
-1.3450999999996598E-02	               18480
-# timer  40: adjust_q
-1.3340999999996685E-02	               18480
-# timer  41: Uhat_to_UicbHalf
-5.7022000000021368E-02	               18480
-# timer  42: UicbHalf_to_Uicb
-1.0638999999998630E-02	               18480
+# timer  33: VIS_CUGUF time
+0.0000000000000000E+00	                   0
+# timer  34: Unused
+0.0000000000000000E+00	                   0
+# timer  35: Unused
+0.0000000000000000E+00	                   0
+# timer  36: Unused
+0.0000000000000000E+00	                   0
+# timer  37: VIS_Uhat_to_Sigma time
+0.0000000000000000E+00	                   0
+# timer  38: VIS_UhCommon_to_Sigma time
+0.0000000000000000E+00	                   0
+# timer  39: VIS_adjust_sf time
+0.0000000000000000E+00	                   0
+# timer  40: VIS_adjust_q time
+0.0000000000000000E+00	                   0
+# timer  41: ICB_BuildSolution time
+0.0000000000000000E+00	                   0
+# timer  42: Unused
+0.0000000000000000E+00	                   0
+# timer  43: AD_Cparams time
+0.0000000000000000E+00	                   0
+# timer  44: AD_Uhat_to_GradCommonHalf time
+0.0000000000000000E+00	                   0
+# timer  45: AD_GradCommonHalf_to_GradCommon time
+0.0000000000000000E+00	                   0
+# timer  46: AD_adjust_sf time
+0.0000000000000000E+00	                   0
+# timer  47: AD_adjust_q time
+0.0000000000000000E+00	                   0
+# timer  48: AD_Uhat_to_UhCommonHalf time
+0.0000000000000000E+00	                   0
+# timer  49: AD_UhCommonHalf_to_UhCommon time
+0.0000000000000000E+00	                   0
+# timer  50: AD_Uhat_to_Sigma time
+0.0000000000000000E+00	                   0
+# timer  51: AD_UhCommon_to_Sigma time
+0.0000000000000000E+00	                   0
+# timer  52: Ghost Communication barrier time
+0.0000000000000000E+00	                   0
+# timer  53: C-parameter AllReduce
+0.0000000000000000E+00	                   0
+# timer  54: Initialization: PSIxR for diffusion
+4.1500000000000011E-04	                  33
+# timer  55: Initialization: PSIxR for advection
+4.0999999999999987E-05	                  33
+# timer  56: Initialization: SigFaceMatrices
+1.4799999999999999E-04	                   1
+# timer  57: Initialization: BuildSigMatrices and BuildAuxHatMatrices
+3.3700000000000001E-04	                   1
+# timer  58: Initialization: Copy matrix to pointer
+3.9999999999999998E-06	                   1
+# timer  59: Inside PSIxR_oneFace: dets and precords
+4.9999999999999996E-05	                  33
+# timer  60: Inside PSIxR_oneFace: Reco Cords and Psi
+2.2400000000000011E-04	                  33
+# timer  61: Inside PSIxR_oneFace: Matrix formation and solve
+1.9000000000000004E-05	                  33
+# timer  62: Inside PSIxR_biased: dets and precords
+0.0000000000000000E+00	                   0
+# timer  63: Inside PSIxR_biased: NodalEqCord
+0.0000000000000000E+00	                   0
+# timer  64: Inside PSIxR_biased: Reco Cords and Psi
+0.0000000000000000E+00	                   0
+# timer  65: Inside PSIxR_biased: Some basis stuff, rg
+0.0000000000000000E+00	                   0
+# timer  66: Inside PSIxR_biased: Matrix formation and solve
+0.0000000000000000E+00	                   0

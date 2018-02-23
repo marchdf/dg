@@ -5,7 +5,7 @@
 #SBATCH -J example         # job name
 #SBATCH -o example.o%j     # output and error file name (%j expands to jobID)
 #SBATCH -p normal
-#SBATCH -n 4
+#SBATCH -n 1
 #SBATCH -A TG-CTS130005
 #SBATCH -t 20:00:00       # run time
 #SBATCH --mail-user=marchdf@umich.edu

@@ -4060,7 +4060,7 @@ void ICB_Cords_from_Physical(int N_s, int N_N, int GQresA, int GQresFace, int N_
     for (int a = 0; a < D; a++)
       {
 	printf("%f, ",normal[a]);}
-    printf(")\n");
+    printf(")\n");}
 #ifdef TWOD
     printf("\t\t\t\t\tAdditionally, tangent = (");
     for (int a = 0; a < D; a++){
@@ -4076,7 +4076,7 @@ void ICB_Cords_from_Physical(int N_s, int N_N, int GQresA, int GQresFace, int N_
     for (int a = 0; a < D; a++){
       printf("%f, ",tan2gent[a]);}
     printf(")\n");
-  }
+
 #endif
 
   //Build the rotation matrix (for the last step of this subroutine).

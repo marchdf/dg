@@ -44,7 +44,7 @@ extern "C" void LUhat_to_UicbDirect(int M_T, int M_G, int N_s, int* BR2_Map, sca
 
 extern "C" void LCorrectUhCommonBC(int M_T, int M_G, int M_B, int* boundaryMap, scalar* UintegF, scalar* UhCommon);
 
-extern "C"void LUhat_to_GradCommonBC(int M_B, int M_G, int N_s, int N_N, int* boundaryMap, int* BR2_Map, scalar* serial_Uhat2GradBC, scalar* Uhat, int* RecoPair, int* Alt_FaceFromElem, scalar* UhCommon, scalar* serial_UhCommon2GradBC, scalar* GradCommon);
+extern "C" void LUhat_to_GradCommonBC(int M_B, int M_G, int N_s, int N_N, int* boundaryMap, int* BR2_Map, scalar* serial_Uhat2GradBC, scalar* Uhat, int* RecoPair, int* Alt_FaceFromElem, scalar* UhCommon, scalar* serial_UhCommon2GradBC, scalar* GradCommon);
 
 //A bunch of stuff for AD: it's like regular viscous routines with some extra arguments
 extern "C" void LUhat_to_UhCommonHalf_AD(int N_E, int Ne_AUG, int N_N, int M_T, int M_G, int N_s, scalar Cthresh, scalar* elemCmax, int* sensor, int* RecoPair, int* BinarySideAddress, scalar* PSIxR_elemwise, scalar* Uhat, scalar* UhCommonHalf);

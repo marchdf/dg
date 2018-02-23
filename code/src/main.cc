@@ -106,8 +106,8 @@ int main (int argc, char **argv)
 
 PHIL WAS HERE
    */
-  scalar DomainLength = 1.0*2.0*acos(-1.0); //This needs to match domain length; influences IC and also some mesh adjustments for periodic case
-  int RKchoice = 4; //order of RK time integration scheme
+  scalar DomainLength = 2.0*acos(-1); //This needs to match domain length; influences IC and also some mesh adjustments for periodic case
+  int RKchoice = 3; //order of RK time integration scheme
   int HAG = 0; //So, If HAG==1, then ues avg for interface grad regardless of PSIxR structure
   int GradMethod_Vis = 1; //0 for CGR-R, 1 for BR2, 2 for averaged-biased-recovery
   scalar Chi_Vis = 2.0; //chi parameter to control connectivity in interface gradient solve. 
@@ -3896,6 +3896,46 @@ printf("pr=%d: Succeded with h_psi, h_psi_w, h_J, h_invJac, h_JF, and h_normals\
 			   Limiter, order0, dgsolver, communicator, printer, sensor, timers, mem_counter,particles);
 	//printf("pr=%d, RK1 integraion concluded, about to break loop\n",myid);
 	break;
+      }
+      case 2:
+      {
+        CFL = CFL * 2.0 / 2.0; //RK4 vs RK1 correction 
+      VNN = VNN * 2.0 / 2.0; //RK4 vs RK1 correction                                                                                                                         
+      VNNAD = VNNAD * 2.0 / 2.0; //RK4 vs RK1 correction                                                                                                                     
+        RK rk2 = RK(2,2,DtOut,Tf, inputs.getOutputTimeArray());
+        // RK integration                                                                                                                                                    
+        printf("pr=%d: ==== Now RK 2 steps with CFL/h = %f, VNN/(h^2) = %f, target time = %e =====\n",myid, CFL/m.getDx(), VNN/(m.getDx()*m.getDx()), Tf);
+#ifdef USE_MPI
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
+        //PEJ 06/01/2017: addint CNN to the RK4 call                                                                                                                         
+        rk2.RK_integration(CFL, VNN, VNNAD, restart_step,
+                           N_E, N_s, N_G, M_T, M_s, N_ghosts, N_N,
+                           h_Minv,
+                           h_U, m.getNeighbors(),
+                           Limiter, order0, dgsolver, communicator, printer, sensor, timers, mem_counter,particles);
+        //printf("pr=%d, RK4 integraion concluded, about to break loop\n",myid);                                                                                  
+        break;
+      }
+      case 3:
+      {
+       	CFL = CFL * 2.0 / 2.0; //RK4 vs RK1 correction                                                                                                                       
+      VNN = VNN * 2.0 / 2.0; //RK4 vs RK1 correction                                                                                                                         
+      VNNAD = VNNAD * 2.0 / 2.0; //RK4 vs RK1 correction                                                                                                                     
+        RK rk3 = RK(3,3,DtOut,Tf, inputs.getOutputTimeArray());
+        // RK integration                                                                                                                                                    
+        printf("pr=%d: ==== Now RK 2 steps with CFL/h = %f, VNN/(h^2) = %f, target time = %e =====\n",myid, CFL/m.getDx(), VNN/(m.getDx()*m.getDx()), Tf);
+#ifdef USE_MPI
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
+        //PEJ 06/01/2017: addint CNN to the RK4 call                                                                                                                         
+        rk3.RK_integration(CFL, VNN, VNNAD, restart_step,
+                           N_E, N_s, N_G, M_T, M_s, N_ghosts, N_N,
+                           h_Minv,
+                           h_U, m.getNeighbors(),
+                           Limiter, order0, dgsolver, communicator, printer, sensor, timers, mem_counter,particles);
+        //printf("pr=%d, RK4 integraion concluded, about to break loop\n",myid);                                                                                             
+        break;
       }
     case 4:
       {

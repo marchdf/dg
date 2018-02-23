@@ -6,10 +6,10 @@ lc = 0.3;
 Lx = 1;
 //LyA = 20*Lx;
 //LyB = 30*Lx;
-LyB = 15;
-LyA = 15;
+LyB = 0;
+LyA = 2*3.141592653589793238;
 
-Nx = 43+1;
+Nx = 32+1;
 
 // Point definitions
 Point(1) = {-LyB,0,0,lc};

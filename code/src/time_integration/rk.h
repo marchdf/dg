@@ -60,19 +60,19 @@ class RK
     case 2:
       // This is a case for optimal RK2-TVD method as suggested by
       // Gottlieb and Shu (1998), Mathematics of Computation 
-      _beta = new_scalar[2];
-      _gamma = new_scalar[2];
-      -beta[0] = 0.0; -beta[1] = 1.0;
+      _beta = new scalar[2];
+      _gamma = new scalar[2];
+      _beta[0] = 0.0; _beta[1] = 1.0;
       _gamma[0] = 1.0/2.0; _gamma[1] = 1.0/2.0;
       break;
 
     case 3:
       // This is a case for optimal RK3-TVD method as suggested by
       // Gottlieb and Shu (1998), Mathematics of Computation
-      _beta = new_scalar[3];
-      _gamma = new_scalar[3];
-      -beta[0] = 0.0; -beta[1] = 1.0; _beta[2] = 0.5;
-      _gamma[0] = 1.0/6.0; _gamma[1] = 1.0/6.0; _gamma[3] = 2.0/3.0;
+      _beta = new scalar[3];
+      _gamma = new scalar[3];
+      _beta[0] = 0.0; _beta[1] = 1.0; _beta[2] = 0.5;
+      _gamma[0] = 1.0/6.0; _gamma[1] = 1.0/6.0; _gamma[2] = 2.0/3.0;
       break;
    
     case 4:

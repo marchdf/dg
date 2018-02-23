@@ -2533,7 +2533,7 @@ extern "C" void LCorrectUhCommonBC(int M_T, int M_G, int M_B, int* boundaryMap, 
 #endif
 }
 
-extern "C"void LUhat_to_GradCommonBC(int M_B, int M_G, int N_s, int N_N, int* boundaryMap, int* BR2_Map, scalar* serial_Uhat2GradBC, scalar* Uhat, int* RecoPair, int* Alt_FaceFromElem, scalar* UhCommon, scalar* serial_UhCommon2GradBC, scalar* GradCommon)
+extern "C" void LUhat_to_GradCommonBC(int M_B, int M_G, int N_s, int N_N, int* boundaryMap, int* BR2_Map, scalar* serial_Uhat2GradBC, scalar* Uhat, int* RecoPair, int* Alt_FaceFromElem, scalar* UhCommon, scalar* serial_UhCommon2GradBC, scalar* GradCommon)
 {
 #ifdef USE_GPU
   printf("LUhat_to_GradCommonBC not ready for gpu\n");
