@@ -1,0 +1,170 @@
+\section{src/physics/physics.h File Reference}
+\label{physics_8h}\index{src/physics/physics.\-h@{src/physics/physics.\-h}}
+
+
+Functions to lauch kernels that deal with the physics.  
+
+
+{\ttfamily \#include \char`\"{}scalar\-\_\-def.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$math.\-h$>$}\\*
+{\ttfamily \#include $<$macros.\-h$>$}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bf Levaluate\-\_\-sf} (int N\-\_\-\-G, int N\-\_\-\-E, scalar $\ast$s, scalar $\ast$f, scalar $\ast$Ug, scalar $\ast$d\-Ug, scalar $\ast$inv\-Jac)
+\item 
+void {\bf Levaluate\-\_\-q} (int M\-\_\-\-G, int M\-\_\-\-T, scalar $\ast$q, scalar $\ast$Ug\-F, scalar $\ast$normals)
+\item 
+void {\bf Lkinetic\-\_\-energy1\-D} (int N\-\_\-s, int N\-\_\-\-E, scalar $\ast$rho, scalar $\ast$rhou, scalar $\ast$K)
+\item 
+void {\bf Lkinetic\-\_\-energy2\-D} (int N\-\_\-s, int N\-\_\-\-E, scalar $\ast$rho, scalar $\ast$rhou, scalar $\ast$rhov, scalar $\ast$K)
+\item 
+void {\bf Lpressure} (int N\-\_\-s, int N\-\_\-\-E, scalar $\ast$U, scalar $\ast$p)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Functions to lauch kernels that deal with the physics. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{physics.\-h@{physics.\-h}!Levaluate\-\_\-q@{Levaluate\-\_\-q}}
+\index{Levaluate\-\_\-q@{Levaluate\-\_\-q}!physics.h@{physics.\-h}}
+\subsubsection[{Levaluate\-\_\-q}]{\setlength{\rightskip}{0pt plus 5cm}void Levaluate\-\_\-q (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{M\-\_\-\-T, }
+\item[{scalar $\ast$}]{q, }
+\item[{scalar $\ast$}]{Ug\-F, }
+\item[{scalar $\ast$}]{normals}
+\end{DoxyParamCaption}
+)}\label{physics_8h_a7d5bee9b53d0e7f827e1c89e481d0b39}
+Host C function to lauch evaluate\-\_\-q kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-\-G} & number of gaussian nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt out}  & {\em q} & interface flux array \\
+\hline
+\mbox{\tt in}  & {\em Ug\-F} & interface solution (evaluated at gaussian nodes) \\
+\hline
+\mbox{\tt in}  & {\em normals} & interface normals \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches M\-\_\-\-T/blk\-T blocks of M\-\_\-\-G x 1 x blk\-T threads. blk\-T controls the number of elements to set on each block\index{physics.\-h@{physics.\-h}!Levaluate\-\_\-sf@{Levaluate\-\_\-sf}}
+\index{Levaluate\-\_\-sf@{Levaluate\-\_\-sf}!physics.h@{physics.\-h}}
+\subsubsection[{Levaluate\-\_\-sf}]{\setlength{\rightskip}{0pt plus 5cm}void Levaluate\-\_\-sf (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-G, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{s, }
+\item[{scalar $\ast$}]{f, }
+\item[{scalar $\ast$}]{Ug, }
+\item[{scalar $\ast$}]{d\-Ug, }
+\item[{scalar $\ast$}]{inv\-Jac}
+\end{DoxyParamCaption}
+)}\label{physics_8h_aa193a472a72c07138a9edaf5cf7fcc3e}
+Host C function to lauch evaluate\-\_\-sf kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-\-G} & number of gaussian nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt out}  & {\em s} & source array \\
+\hline
+\mbox{\tt out}  & {\em f} & element flux array \\
+\hline
+\mbox{\tt in}  & {\em Ug} & solution (evaluated at gaussian nodes) \\
+\hline
+\mbox{\tt in}  & {\em d\-Ug} & derivative of solution (evaluated at gaussian nodes) \\
+\hline
+\mbox{\tt in}  & {\em inv\-Jac} & inverse Jacobian of the elements \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of N\-\_\-\-G x 1 x blk\-E threads. blk\-E controls the number of elements to set on each block\index{physics.\-h@{physics.\-h}!Lkinetic\-\_\-energy1\-D@{Lkinetic\-\_\-energy1\-D}}
+\index{Lkinetic\-\_\-energy1\-D@{Lkinetic\-\_\-energy1\-D}!physics.h@{physics.\-h}}
+\subsubsection[{Lkinetic\-\_\-energy1\-D}]{\setlength{\rightskip}{0pt plus 5cm}void Lkinetic\-\_\-energy1\-D (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{rho, }
+\item[{scalar $\ast$}]{rhou, }
+\item[{scalar $\ast$}]{K}
+\end{DoxyParamCaption}
+)}\label{physics_8h_a39e4e4a4911410fb62a30113bd594b65}
+Host C function to lauch kinetic\-\_\-energy1\-D kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em rho} & density \\
+\hline
+\mbox{\tt in}  & {\em rhou} & momentum \\
+\hline
+\mbox{\tt out}  & {\em K} & kinetic energy \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of N\-\_\-s x 1 x blk\-E threads. blk\-E controls the number of elements to set on each block\index{physics.\-h@{physics.\-h}!Lkinetic\-\_\-energy2\-D@{Lkinetic\-\_\-energy2\-D}}
+\index{Lkinetic\-\_\-energy2\-D@{Lkinetic\-\_\-energy2\-D}!physics.h@{physics.\-h}}
+\subsubsection[{Lkinetic\-\_\-energy2\-D}]{\setlength{\rightskip}{0pt plus 5cm}void Lkinetic\-\_\-energy2\-D (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{rho, }
+\item[{scalar $\ast$}]{rhou, }
+\item[{scalar $\ast$}]{rhov, }
+\item[{scalar $\ast$}]{K}
+\end{DoxyParamCaption}
+)}\label{physics_8h_a55f3cf17bc78af26af519667084376a4}
+Host C function to lauch kinetic\-\_\-energy1\-D kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em rho} & density \\
+\hline
+\mbox{\tt in}  & {\em rhou} & momentum \\
+\hline
+\mbox{\tt in}  & {\em rhov} & momentum \\
+\hline
+\mbox{\tt out}  & {\em K} & kinetic energy \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of N\-\_\-s x 1 x blk\-E threads. blk\-E controls the number of elements to set on each block\index{physics.\-h@{physics.\-h}!Lpressure@{Lpressure}}
+\index{Lpressure@{Lpressure}!physics.h@{physics.\-h}}
+\subsubsection[{Lpressure}]{\setlength{\rightskip}{0pt plus 5cm}void Lpressure (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{p}
+\end{DoxyParamCaption}
+)}\label{physics_8h_ad9f73a597ebfe58e7dd28183693bda39}
+Host C function to lauch pressure kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em U} & solution \\
+\hline
+\mbox{\tt out}  & {\em p} & pressure \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of N\-\_\-s x 1 x blk\-E threads. blk\-E controls the number of elements to set on each block

@@ -1,0 +1,1538 @@
+\section{src/limiting/limiting\-\_\-kernels.cu File Reference}
+\label{limiting__kernels_8cu}\index{src/limiting/limiting\-\_\-kernels.\-cu@{src/limiting/limiting\-\_\-kernels.\-cu}}
+
+
+Kernels used by the \doxyref{Limiting}{p.}{classLimiting} class.  
+
+
+{\ttfamily \#include \char`\"{}limiting\-\_\-kernels.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$stdio.\-h$>$}\\*
+{\ttfamily \#include \char`\"{}loopstart.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}loop.\-h\char`\"{}}\\*
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define {\bfseries L\-O\-O\-P\-\_\-\-E\-N\-D}~N\-\_\-\-Y\label{limiting__kernels_8cu_aa475ffaee4695d0cbfb87c71fc1642eb}
+
+\item 
+\#define {\bfseries M\-A\-C\-R\-O}(x)
+\item 
+\#define {\bfseries L\-O\-O\-P\-\_\-\-E\-N\-D}~N\-\_\-\-Y\label{limiting__kernels_8cu_aa475ffaee4695d0cbfb87c71fc1642eb}
+
+\item 
+\#define {\bfseries M\-A\-C\-R\-O}(x)~for(int i=0; i$<$N\-\_\-s; i++)\{Y\-C(x)[i] = U[(e$\ast$N\-\_\-\-F+fcnt)$\ast$N\-\_\-s+i];\} fcnt++;\label{limiting__kernels_8cu_a5de1a5f1c0cf262e0ff2e5f03d586abc}
+
+\item 
+\#define {\bfseries L\-O\-O\-P\-\_\-\-E\-N\-D}~N\-\_\-\-Y\label{limiting__kernels_8cu_aa475ffaee4695d0cbfb87c71fc1642eb}
+
+\item 
+\#define {\bfseries M\-A\-C\-R\-O}(x)~{\bf set2average}(N\-\_\-s,N,N\-\_\-s1\-D,slicenum,L2\-M,M2\-L,tmp,Y\-C(x),N\-U\-L\-L);\label{limiting__kernels_8cu_a5de1a5f1c0cf262e0ff2e5f03d586abc}
+
+\item 
+\#define {\bfseries L\-O\-O\-P\-\_\-\-E\-N\-D}~N\-\_\-\-Y\label{limiting__kernels_8cu_aa475ffaee4695d0cbfb87c71fc1642eb}
+
+\item 
+\#define {\bfseries M\-A\-C\-R\-O}(x)~{\bf set2average}(N\-\_\-s,N,N\-\_\-s1\-D,slicenum,L2\-M,M2\-L,tmp,Y\-C(x),N\-U\-L\-L);\label{limiting__kernels_8cu_a5de1a5f1c0cf262e0ff2e5f03d586abc}
+
+\item 
+\#define {\bfseries L\-O\-O\-P\-\_\-\-E\-N\-D}~N\-\_\-\-Y\label{limiting__kernels_8cu_aa475ffaee4695d0cbfb87c71fc1642eb}
+
+\item 
+\#define {\bfseries M\-A\-C\-R\-O}(x)
+\item 
+\#define {\bfseries L\-O\-O\-P\-\_\-\-E\-N\-D}~N\-\_\-\-Y\label{limiting__kernels_8cu_aa475ffaee4695d0cbfb87c71fc1642eb}
+
+\item 
+\#define {\bfseries M\-A\-C\-R\-O}(x)~{\bf H\-R}(N\-\_\-s,N,N\-\_\-s1\-D,slicenum,L2\-M,M2\-L,tmp,Y\-L(x),Y\-C(x),Y\-R(x),N\-U\-L\-L);\label{limiting__kernels_8cu_a5de1a5f1c0cf262e0ff2e5f03d586abc}
+
+\item 
+\#define {\bfseries L\-O\-O\-P\-\_\-\-E\-N\-D}~N\-\_\-\-Y\label{limiting__kernels_8cu_aa475ffaee4695d0cbfb87c71fc1642eb}
+
+\item 
+\#define {\bfseries M\-A\-C\-R\-O}(x)~for(int i=0; i$<$N\-\_\-s; i++)\{Unew[(e$\ast$N\-\_\-\-F+fcnt)$\ast$N\-\_\-s+i] = Y\-C(x)[i];\} fcnt++;\label{limiting__kernels_8cu_a5de1a5f1c0cf262e0ff2e5f03d586abc}
+
+\item 
+\#define {\bfseries L\-O\-O\-P\-\_\-\-E\-N\-D}~N\-\_\-\-Y\label{limiting__kernels_8cu_aa475ffaee4695d0cbfb87c71fc1642eb}
+
+\item 
+\#define {\bfseries M\-A\-C\-R\-O}(x)~Y\-L(x)=N\-U\-L\-L; Y\-C(x)=N\-U\-L\-L; Y\-R(x)=N\-U\-L\-L;\label{limiting__kernels_8cu_a5de1a5f1c0cf262e0ff2e5f03d586abc}
+
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+arch\-\_\-device void {\bf get\-Taylor\-Derivative} (int order, int N\-\_\-s, scalar $\ast$T, int mx, int my, int $\ast$Dx\-Idx, int $\ast$Dy\-Idx, scalar $\ast$dd\-T)
+\item 
+arch\-\_\-device scalar {\bf Cell\-Avg} (int N\-\_\-\-G, int ioff, scalar $\ast$weight, scalar ref\-Area, scalar $\ast$powers, int N\-\_\-s, scalar $\ast$T)
+\item 
+arch\-\_\-device int {\bfseries signum} (scalar val)\label{limiting__kernels_8cu_a4b8ecb63de1109255bb6a65c8f17d056}
+
+\item 
+arch\-\_\-device scalar {\bf minmod} (scalar a, scalar b)
+\item 
+arch\-\_\-device scalar {\bf minabs} (scalar $\ast$c, int n)
+\item 
+arch\-\_\-device scalar {\bf minmod} (scalar $\ast$c, int n)
+\item 
+arch\-\_\-device scalar {\bf minmod2} (scalar $\ast$c, int n)
+\item 
+arch\-\_\-device int {\bf lim\-\_\-factorial} (int n)
+\item 
+arch\-\_\-device void {\bf limit\-\_\-monomial} (int N, scalar $\ast$A\-L, scalar $\ast$A\-C, scalar $\ast$A\-R, scalar $\ast$Alim)
+\item 
+arch\-\_\-device int {\bf binomial\-\_\-coefficient} (int n, int k)
+\item 
+arch\-\_\-device void {\bf gemm} (int M, int N, int K, scalar $\ast$A, scalar $\ast$B, scalar $\ast$C)
+\item 
+arch\-\_\-device void {\bf gemm3} (int M, int N, int K, scalar $\ast$A, scalar $\ast$B1, scalar $\ast$C1, scalar $\ast$B2, scalar $\ast$C2, scalar $\ast$B3, scalar $\ast$C3)
+\item 
+arch\-\_\-device void {\bf gemv} (int M, int N, scalar $\ast$A, scalar $\ast$B, scalar $\ast$C)
+\item 
+arch\-\_\-device void {\bf gemv3} (int M, int N, scalar $\ast$A, scalar $\ast$B1, scalar $\ast$C1, scalar $\ast$B2, scalar $\ast$C2, scalar $\ast$B3, scalar $\ast$C3)
+\item 
+arch\-\_\-device scalar {\bf integrate\-\_\-monomial\-\_\-derivative} (int k, int n)
+\item 
+arch\-\_\-device scalar {\bf integrate\-\_\-monomial\-\_\-derivative\-\_\-bounds} (int k, int n, scalar a, scalar b)
+\item 
+arch\-\_\-device void {\bf average\-\_\-monomial} (int N, scalar $\ast$A, scalar $\ast$Alim)
+\item 
+arch\-\_\-device void {\bf set2average} (int N\-\_\-s, int N, int N\-\_\-s1\-D, int slicenum, scalar $\ast$L2\-M, scalar $\ast$M2\-L, scalar $\ast$tmp, scalar $\ast$U, scalar $\ast$U\-Mono\-Lim)
+\item 
+arch\-\_\-device void {\bf H\-R} (int N\-\_\-s, int N, int N\-\_\-s1\-D, int slicenum, scalar $\ast$L2\-M, scalar $\ast$M2\-L, scalar $\ast$tmp, scalar $\ast$U\-L, scalar $\ast$U\-C, scalar $\ast$U\-R, scalar $\ast$U\-Mono\-Lim)
+\item 
+arch\-\_\-device void {\bf pressure} (int N\-\_\-s, scalar $\ast$rho, scalar $\ast$rhou, scalar $\ast$rhov, scalar $\ast$E, scalar $\ast$gamma, scalar $\ast$beta, scalar $\ast$p)
+\item 
+arch\-\_\-device void {\bf kinetic\-\_\-energy} (int N\-\_\-s, scalar $\ast$L2\-M, scalar $\ast$rho, scalar $\ast$rhou, scalar $\ast$rhov, scalar $\ast$tmp, scalar $\ast$K)
+\item 
+arch\-\_\-device void {\bf internal\-\_\-energy} (int N\-\_\-s1\-D, int slicenum, scalar $\ast$p, scalar $\ast$g, scalar $\ast$b, scalar $\ast$rhoe)
+\item 
+arch\-\_\-device void {\bf reconstruct\-\_\-total\-\_\-energy} (int N\-\_\-s, int N\-\_\-s1\-D, int slicenum, scalar $\ast$L2\-M, scalar $\ast$M2\-L, scalar $\ast$rhoe\-Lim, scalar $\ast$K\-Lim, scalar $\ast$tmp, scalar $\ast$E)
+\item 
+arch\-\_\-global void {\bf stridedcopy} (int numblocks, int blocklen, int stride\-A, int stride\-B, int offset\-A, int offset\-B, scalar $\ast$A, scalar $\ast$B)
+\item 
+arch\-\_\-global void {\bf reconstruct\-\_\-energy} (int N\-\_\-s, int N\-\_\-\-E, int slicenum, scalar $\ast$rhoe\-Lim, scalar $\ast$K\-Lim, scalar $\ast$E\-Mono, scalar $\ast$E\-Lim)
+\item 
+arch\-\_\-global void {\bf internal\-\_\-energy\-\_\-multifluid} (int N\-\_\-s, int N\-\_\-\-E, int slicenum, scalar $\ast$p, scalar $\ast$g, scalar $\ast$rhoe)
+\item 
+arch\-\_\-global void {\bf internal\-\_\-energy\-\_\-stiffened} (int N\-\_\-s, int N\-\_\-\-E, int slicenum, scalar $\ast$p, scalar $\ast$g, scalar $\ast$b, scalar $\ast$rhoe)
+\item 
+arch\-\_\-global void {\bf hrl1\-D} (int N\-\_\-s, int N\-\_\-\-E, int Nfields, int N\-\_\-\-N, int slicenum, int $\ast$neighbors, int offxy, scalar $\ast$A, scalar $\ast$Alim)
+\item 
+arch\-\_\-global void {\bf hri1\-D} (int N\-\_\-s, int N\-\_\-\-E, int N\-\_\-\-N, int $\ast$neighbors, int N\-\_\-s1\-D, int slicenum, int offxy, scalar $\ast$Lag2\-Mono, scalar $\ast$Mono2\-Lag, int $\ast$sensors, scalar $\ast$U, scalar $\ast$Unew)
+\item 
+arch\-\_\-global void {\bf m2i1\-D} (int N\-\_\-s, int N\-\_\-\-E, int N\-\_\-\-N, int $\ast$neighbors, int N\-\_\-s1\-D, int slicenum, int offxy, scalar $\ast$Lag2\-Mono, scalar $\ast$Mono2\-Lag, int $\ast$sensors, scalar $\ast$U, scalar $\ast$Unew)
+\item 
+arch\-\_\-global void {\bf p0i} (int N\-\_\-s, int N\-\_\-\-E, int N\-\_\-\-G, scalar ref\-Area, int $\ast$sensors, scalar $\ast$phi\-\_\-w, scalar $\ast$U, scalar $\ast$Unew)
+\item 
+arch\-\_\-global void {\bf hrl2\-D} (int N\-\_\-s, int N\-\_\-\-E, int N\-\_\-\-G, int N\-\_\-\-N, int order, scalar $\ast$X\-Y\-Z\-Cen, scalar $\ast$powers\-X\-Y\-Z\-G, int $\ast$neighbors, int $\ast$Taylor\-Dx\-Idx, int $\ast$Taylor\-Dy\-Idx, scalar $\ast$weight, scalar ref\-Area, scalar $\ast$A, scalar $\ast$Alim)
+\item 
+arch\-\_\-global void {\bf Change\-Basis} (int size1, int size2, int N\-\_\-\-E, scalar $\ast$Transform, scalar $\ast$U, scalar $\ast$Unew)
+\item 
+arch\-\_\-global void {\bf Prim2\-Cons} (int N\-\_\-s, int N\-\_\-\-E, scalar $\ast$U)
+\item 
+arch\-\_\-global void {\bf Cons2\-Prim} (int N\-\_\-s, int N\-\_\-\-E, scalar $\ast$U)
+\item 
+void {\bf Lstridedcopy} (int numblocks, int blocklen, int stride\-A, int stride\-B, int offset\-A, int offset\-B, scalar $\ast$A, scalar $\ast$B)
+\item 
+void {\bf Lreconstruct\-\_\-energy} (int N\-\_\-s, int N\-\_\-\-E, int slicenum, scalar $\ast$rhoe\-Lim, scalar $\ast$K\-Lim, scalar $\ast$E\-Mono, scalar $\ast$E\-Lim)
+\item 
+void {\bf Linternal\-\_\-energy\-\_\-multifluid} (int N\-\_\-s, int N\-\_\-\-E, int slicenum, scalar $\ast$p, scalar $\ast$g, scalar $\ast$rhoe)
+\item 
+void {\bf Linternal\-\_\-energy\-\_\-stiffened} (int N\-\_\-s, int N\-\_\-\-E, int slicenum, scalar $\ast$p, scalar $\ast$g, scalar $\ast$b, scalar $\ast$rhoe)
+\item 
+void {\bf Lhrl1\-D} (int N\-\_\-s, int N\-\_\-\-E, int Nfields, int N\-\_\-\-N, int slicenum, int $\ast$neighbors, int offxy, scalar $\ast$A, scalar $\ast$Alim)
+\item 
+void {\bf Lhri1\-D} (int N\-\_\-s, int N\-\_\-\-E, int N\-\_\-\-N, int $\ast$neighbors, int N\-\_\-s1\-D, int slicenum, int offxy, scalar $\ast$Lag2\-Mono, scalar $\ast$Mono2\-Lag, int $\ast$sensor, scalar $\ast$U, scalar $\ast$Unew)
+\item 
+void {\bf Lm2i1\-D} (int N\-\_\-s, int N\-\_\-\-E, int N\-\_\-\-N, int $\ast$neighbors, int N\-\_\-s1\-D, int slicenum, int offxy, scalar $\ast$Lag2\-Mono, scalar $\ast$Mono2\-Lag, int $\ast$sensors, scalar $\ast$U, scalar $\ast$Unew)
+\item 
+void {\bf Lp0i} (int N\-\_\-s, int N\-\_\-\-E, int N\-\_\-\-G, scalar ref\-Area, int $\ast$sensors, scalar $\ast$phi\-\_\-w, scalar $\ast$U, scalar $\ast$Unew)
+\item 
+void {\bf Lhrl2\-D} (int N\-\_\-s, int N\-\_\-\-E, int N\-\_\-\-G, int N\-\_\-\-N, int order, scalar $\ast$X\-Y\-Z\-Cen, scalar $\ast$powers\-X\-Y\-Z\-G, int $\ast$neighbors, int $\ast$Taylor\-Dx\-Idx, int $\ast$Taylor\-Dy\-Idx, scalar $\ast$weight, scalar ref\-Area, scalar $\ast$A, scalar $\ast$Alim)
+\item 
+void {\bf L\-Change\-Basis} (int size1, int size2, int N\-\_\-\-E, scalar $\ast$Transform, scalar $\ast$U, scalar $\ast$Unew)
+\item 
+void {\bf L\-Prim2\-Cons} (int N\-\_\-s, int N\-\_\-\-E, scalar $\ast$U)
+\item 
+void {\bf L\-Cons2\-Prim} (int N\-\_\-s, int N\-\_\-\-E, scalar $\ast$U)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Kernels used by the \doxyref{Limiting}{p.}{classLimiting} class. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Macro Definition Documentation}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!M\-A\-C\-R\-O@{M\-A\-C\-R\-O}}
+\index{M\-A\-C\-R\-O@{M\-A\-C\-R\-O}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{M\-A\-C\-R\-O}]{\setlength{\rightskip}{0pt plus 5cm}\#define M\-A\-C\-R\-O(
+\begin{DoxyParamCaption}
+\item[{}]{x}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a5de1a5f1c0cf262e0ff2e5f03d586abc}
+{\bfseries Value\-:}
+\begin{DoxyCode}
+scalar* YL(x) = &share[cnt]; cnt+=N\_s; \(\backslash\)
+      scalar* YC(x) = &share[cnt]; cnt+=N\_s;        \(\backslash\)
+      scalar* YR(x) = &share[cnt]; cnt+=N\_s;
+\end{DoxyCode}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!M\-A\-C\-R\-O@{M\-A\-C\-R\-O}}
+\index{M\-A\-C\-R\-O@{M\-A\-C\-R\-O}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{M\-A\-C\-R\-O}]{\setlength{\rightskip}{0pt plus 5cm}\#define M\-A\-C\-R\-O(
+\begin{DoxyParamCaption}
+\item[{}]{x}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a5de1a5f1c0cf262e0ff2e5f03d586abc}
+{\bfseries Value\-:}
+\begin{DoxyCode}
+\textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i=0; i<N\_s; i++)\{YL(x)[i]  = U[(left *N\_F+fcnt)*N\_s+i];\} \(\backslash\)
+    for(\textcolor{keywordtype}{int} i=0; i<N\_s; i++)\{YR(x)[i]  = U[(right*N\_F+fcnt)*N\_s+i];\} fcnt++;
+\end{DoxyCode}
+
+
+\subsection{Function Documentation}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!average\-\_\-monomial@{average\-\_\-monomial}}
+\index{average\-\_\-monomial@{average\-\_\-monomial}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{average\-\_\-monomial}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device void average\-\_\-monomial (
+\begin{DoxyParamCaption}
+\item[{int}]{N, }
+\item[{scalar $\ast$}]{A, }
+\item[{scalar $\ast$}]{Alim}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_ac766dbf402ae6dba1b40a5c5a8825eb3}
+Given a monomial, make all the slopes 0, return the average 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N} & monomial order \\
+\hline
+\mbox{\tt in}  & {\em A} & monomial (1\-D) \\
+\hline
+\mbox{\tt out}  & {\em Alim} & monomial set to average in cell (slopes=0)\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!binomial\-\_\-coefficient@{binomial\-\_\-coefficient}}
+\index{binomial\-\_\-coefficient@{binomial\-\_\-coefficient}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{binomial\-\_\-coefficient}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device int binomial\-\_\-coefficient (
+\begin{DoxyParamCaption}
+\item[{int}]{n, }
+\item[{int}]{k}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_ac4c481ca08e0e44963f4b155f58214df}
+Binomial coefficient function 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em n} & \\
+\hline
+\mbox{\tt in}  & {\em k} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+C(n,k) 
+\end{DoxyReturn}
+\subsection{Description}\label{scalar__def_8h_Description}
+Inspired from {\tt https\-://gist.\-github.\-com/jeetsukumaran/5392166}. Does not handle super large numbers (no need really)\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!Cell\-Avg@{Cell\-Avg}}
+\index{Cell\-Avg@{Cell\-Avg}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{Cell\-Avg}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device scalar Cell\-Avg (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-G, }
+\item[{int}]{ioff, }
+\item[{scalar $\ast$}]{weight, }
+\item[{scalar}]{ref\-Area, }
+\item[{scalar $\ast$}]{powers, }
+\item[{int}]{N\-\_\-s, }
+\item[{scalar $\ast$}]{T}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a3b7ae4bf0d77b877b3793218f408ada8}
+Not used right now. Get cell avg of a polynomial of order=order in a cell \begin{DoxyReturn}{Returns}
+cell average 
+\end{DoxyReturn}
+\subsection{Description}\label{scalar__def_8h_Description}
+ioff = 0 for full polynomial ioff = 3 for remainder polynomial\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!Change\-Basis@{Change\-Basis}}
+\index{Change\-Basis@{Change\-Basis}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{Change\-Basis}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void Change\-Basis (
+\begin{DoxyParamCaption}
+\item[{int}]{size1, }
+\item[{int}]{size2, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{Transform, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{Unew}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a4bee0bf5a2cbea3e35dc861b7c02dc0e}
+Basis transformation (manual). Do not use this. Use B\-L\-A\-S 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em size1} & number of rows of tranform \\
+\hline
+\mbox{\tt in}  & {\em size2} & number of columns of tranform \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em Transform} & Basis transform matrix (per element) \\
+\hline
+\mbox{\tt in}  & {\em U} & solution to transform \\
+\hline
+\mbox{\tt out}  & {\em Unew} & transformed solution\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!Cons2\-Prim@{Cons2\-Prim}}
+\index{Cons2\-Prim@{Cons2\-Prim}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{Cons2\-Prim}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void Cons2\-Prim (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_aa3ca77a4b27145bcb1f6638d2d1b4755}
+Transform conserved variables to primitive variables 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em U} & solution to transform\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!gemm@{gemm}}
+\index{gemm@{gemm}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{gemm}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device void gemm (
+\begin{DoxyParamCaption}
+\item[{int}]{M, }
+\item[{int}]{N, }
+\item[{int}]{K, }
+\item[{scalar $\ast$}]{A, }
+\item[{scalar $\ast$}]{B, }
+\item[{scalar $\ast$}]{C}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a13ee51de8e63390db9d4cdeacab06f85}
+Matrix-\/matrix mutliplication C = A$\ast$\-B 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M} & rows of A = rows of C \\
+\hline
+\mbox{\tt in}  & {\em N} & columns of B = columns of C \\
+\hline
+\mbox{\tt in}  & {\em K} & columns of A = rows of B \\
+\hline
+\mbox{\tt in}  & {\em A} & first matrix \\
+\hline
+\mbox{\tt in}  & {\em B} & second matrix \\
+\hline
+\mbox{\tt out}  & {\em C} & C=A$\ast$\-B Assume column major order. Modeled on B\-L\-A\-S gemm.\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!gemm3@{gemm3}}
+\index{gemm3@{gemm3}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{gemm3}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device void gemm3 (
+\begin{DoxyParamCaption}
+\item[{int}]{M, }
+\item[{int}]{N, }
+\item[{int}]{K, }
+\item[{scalar $\ast$}]{A, }
+\item[{scalar $\ast$}]{B1, }
+\item[{scalar $\ast$}]{C1, }
+\item[{scalar $\ast$}]{B2, }
+\item[{scalar $\ast$}]{C2, }
+\item[{scalar $\ast$}]{B3, }
+\item[{scalar $\ast$}]{C3}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_acd47ab65df79fa19b17efac085afd87a}
+Three matrix-\/matrix mutliplications\-: C1 = A$\ast$\-B1, C2 = A$\ast$\-B2, C3 = A$\ast$\-B3 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M} & rows of A = rows of C \\
+\hline
+\mbox{\tt in}  & {\em N} & columns of B = columns of C \\
+\hline
+\mbox{\tt in}  & {\em K} & columns of A = rows of B \\
+\hline
+\mbox{\tt in}  & {\em A} & first matrix \\
+\hline
+\mbox{\tt in}  & {\em B1} & second matrix (first gemm) \\
+\hline
+\mbox{\tt in}  & {\em B2} & second matrix (second gemm) \\
+\hline
+\mbox{\tt in}  & {\em B3} & second matrix (third gemm) \\
+\hline
+\mbox{\tt out}  & {\em C1} & C=A$\ast$\-B1 \\
+\hline
+\mbox{\tt out}  & {\em C2} & C=A$\ast$\-B2 \\
+\hline
+\mbox{\tt out}  & {\em C3} & C=A$\ast$\-B3 Assume column major order. Modeled on B\-L\-A\-S gemm.\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!gemv@{gemv}}
+\index{gemv@{gemv}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{gemv}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device void gemv (
+\begin{DoxyParamCaption}
+\item[{int}]{M, }
+\item[{int}]{N, }
+\item[{scalar $\ast$}]{A, }
+\item[{scalar $\ast$}]{B, }
+\item[{scalar $\ast$}]{C}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_afea1bee3e2f8ab6dedb101df367009e9}
+Matrix-\/vector mutliplication C = A$\ast$\-B 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M} & rows of A = rows of C \\
+\hline
+\mbox{\tt in}  & {\em N} & columns of A = rows of B \\
+\hline
+\mbox{\tt in}  & {\em A} & first matrix \\
+\hline
+\mbox{\tt in}  & {\em B} & second matrix \\
+\hline
+\mbox{\tt out}  & {\em C} & C=A$\ast$\-B Assume column major order. Modeled on B\-L\-A\-S gemv.\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!gemv3@{gemv3}}
+\index{gemv3@{gemv3}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{gemv3}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device void gemv3 (
+\begin{DoxyParamCaption}
+\item[{int}]{M, }
+\item[{int}]{N, }
+\item[{scalar $\ast$}]{A, }
+\item[{scalar $\ast$}]{B1, }
+\item[{scalar $\ast$}]{C1, }
+\item[{scalar $\ast$}]{B2, }
+\item[{scalar $\ast$}]{C2, }
+\item[{scalar $\ast$}]{B3, }
+\item[{scalar $\ast$}]{C3}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a46545752cf7e2ea21dadfa32e45b9a9c}
+Three matrix-\/vector mutliplications\-: C1 = A$\ast$\-B1, C2 = A$\ast$\-B2, C3 = A$\ast$\-B3 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M} & rows of A = rows of C \\
+\hline
+\mbox{\tt in}  & {\em N} & columns of A = rows of B \\
+\hline
+\mbox{\tt in}  & {\em A} & first matrix \\
+\hline
+\mbox{\tt in}  & {\em B1} & second matrix (first gemv) \\
+\hline
+\mbox{\tt in}  & {\em B2} & second matrix (second gemv) \\
+\hline
+\mbox{\tt in}  & {\em B3} & second matrix (third gemv) \\
+\hline
+\mbox{\tt out}  & {\em C1} & C=A$\ast$\-B1 \\
+\hline
+\mbox{\tt out}  & {\em C2} & C=A$\ast$\-B2 \\
+\hline
+\mbox{\tt out}  & {\em C3} & C=A$\ast$\-B3 Assume column major order. Modeled on B\-L\-A\-S gemv.\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!get\-Taylor\-Derivative@{get\-Taylor\-Derivative}}
+\index{get\-Taylor\-Derivative@{get\-Taylor\-Derivative}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{get\-Taylor\-Derivative}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device void get\-Taylor\-Derivative (
+\begin{DoxyParamCaption}
+\item[{int}]{order, }
+\item[{int}]{N\-\_\-s, }
+\item[{scalar $\ast$}]{T, }
+\item[{int}]{mx, }
+\item[{int}]{my, }
+\item[{int $\ast$}]{Dx\-Idx, }
+\item[{int $\ast$}]{Dy\-Idx, }
+\item[{scalar $\ast$}]{dd\-T}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a92518f2ffb1a46015396610a28b28ba9}
+Not used right now\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!H\-R@{H\-R}}
+\index{H\-R@{H\-R}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{H\-R}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device void H\-R (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N, }
+\item[{int}]{N\-\_\-s1\-D, }
+\item[{int}]{slicenum, }
+\item[{scalar $\ast$}]{L2\-M, }
+\item[{scalar $\ast$}]{M2\-L, }
+\item[{scalar $\ast$}]{tmp, }
+\item[{scalar $\ast$}]{U\-L, }
+\item[{scalar $\ast$}]{U\-C, }
+\item[{scalar $\ast$}]{U\-R, }
+\item[{scalar $\ast$}]{U\-Mono\-Lim}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a3d80df4d636f90befb57ed3866618c8a}
+Limit a nodal solution U using H\-R (1\-D decomposition) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N} & 1\-D monomial order \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s1\-D} & number of nodes in 1\-D elemement \\
+\hline
+\mbox{\tt in}  & {\em slicenum} & number of slices \\
+\hline
+\mbox{\tt in}  & {\em L2\-M} & Lagrange -\/$>$ Monomial transform \\
+\hline
+\mbox{\tt in}  & {\em M2\-L} & Monomial -\/$>$ Lagrange transform \\
+\hline
+\mbox{\tt in}  & {\em tmp} & temporary array to store intermediate values \\
+\hline
+\mbox{\tt in}  & {\em U\-L} & solution on the left \\
+\hline
+\mbox{\tt out}  & {\em U\-C} & solution to be averaged \\
+\hline
+\mbox{\tt in}  & {\em U\-R} & solution on the right \\
+\hline
+\mbox{\tt out}  & {\em U\-Mono\-Lim} & (optional) array to hold limited monomial values\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!hri1\-D@{hri1\-D}}
+\index{hri1\-D@{hri1\-D}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{hri1\-D}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void hri1\-D (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int $\ast$}]{neighbors, }
+\item[{int}]{N\-\_\-s1\-D, }
+\item[{int}]{slicenum, }
+\item[{int}]{offxy, }
+\item[{scalar $\ast$}]{Lag2\-Mono, }
+\item[{scalar $\ast$}]{Mono2\-Lag, }
+\item[{int $\ast$}]{sensors, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{Unew}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a511e708002c7b40970f0903239269fc5}
+H\-R limiting function for individual elements (assumes 1\-D decomposition) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbors per element \\
+\hline
+\mbox{\tt in}  & {\em neighbors} & array containing an element's neighbors \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s1\-D} & number of nodes in a slice (1\-D element) \\
+\hline
+\mbox{\tt in}  & {\em slicenum} & number of slices (in 2\-D N\-\_\-s1\-D = slicenum) \\
+\hline
+\mbox{\tt in}  & {\em offxy} & offset if limiting in x or y \\
+\hline
+\mbox{\tt in}  & {\em sensors} & array of sensors \\
+\hline
+\mbox{\tt in}  & {\em U} & solution to limit (Lagrange form) \\
+\hline
+\mbox{\tt out}  & {\em Unew} & limited solution (only some may be limited bc of sensor) Unew was necessary because you need to wait until all the elements have been limited before updating the solution.\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!hrl1\-D@{hrl1\-D}}
+\index{hrl1\-D@{hrl1\-D}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{hrl1\-D}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void hrl1\-D (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{Nfields, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int}]{slicenum, }
+\item[{int $\ast$}]{neighbors, }
+\item[{int}]{offxy, }
+\item[{scalar $\ast$}]{A, }
+\item[{scalar $\ast$}]{Alim}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a7fd23b3c7c438e768f4ec1ea600d7e87}
+H\-R limiting function (assumes 1\-D decomposition) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em Nfields} & number of fields to operate on (eg. one field instead of N\-\_\-\-F) \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbors per element \\
+\hline
+\mbox{\tt in}  & {\em slicenum} & to decompose higher dimensional problem into 1\-D slices \\
+\hline
+\mbox{\tt in}  & {\em neighbors} & array containing an element's neighbors \\
+\hline
+\mbox{\tt in}  & {\em offxy} & offset if limiting in x or y \\
+\hline
+\mbox{\tt in}  & {\em A} & solution to limit (monomial form) \\
+\hline
+\mbox{\tt out}  & {\em Alim} & limited solution (monomial form)\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!hrl2\-D@{hrl2\-D}}
+\index{hrl2\-D@{hrl2\-D}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{hrl2\-D}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void hrl2\-D (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-G, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int}]{order, }
+\item[{scalar $\ast$}]{X\-Y\-Z\-Cen, }
+\item[{scalar $\ast$}]{powers\-X\-Y\-Z\-G, }
+\item[{int $\ast$}]{neighbors, }
+\item[{int $\ast$}]{Taylor\-Dx\-Idx, }
+\item[{int $\ast$}]{Taylor\-Dy\-Idx, }
+\item[{scalar $\ast$}]{weight, }
+\item[{scalar}]{ref\-Area, }
+\item[{scalar $\ast$}]{A, }
+\item[{scalar $\ast$}]{Alim}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_ae3af232bb566b8bb90429566b901232e}
+Not used right now. H\-R limiting function fully 2\-D (eg. for triangles) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-G} & number of gaussian nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbors per element \\
+\hline
+\mbox{\tt in}  & {\em order} & D\-G order \\
+\hline
+\mbox{\tt in}  & {\em X\-Y\-Z\-Cen} & element centroid coordinates \\
+\hline
+\mbox{\tt in}  & {\em powers\-X\-Y\-Z\-G} & powers of coordinates of gaussian nodes \\
+\hline
+\mbox{\tt in}  & {\em neighbors} & array containing an element's neighbors \\
+\hline
+\mbox{\tt in}  & {\em Taylor\-Dx\-Idx} & indices of Taylor polynomial derivatives in x \\
+\hline
+\mbox{\tt in}  & {\em Taylor\-Dy\-Idx} & indices of Taylor polynomial derivatives in y \\
+\hline
+\mbox{\tt in}  & {\em weight} & gaussian integration weights \\
+\hline
+\mbox{\tt in}  & {\em ref\-Area} & area of reference triangle \\
+\hline
+\mbox{\tt in}  & {\em A} & solution to limit (monomial form) \\
+\hline
+\mbox{\tt out}  & {\em Alim} & limited solution (monomial form)\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!integrate\-\_\-monomial\-\_\-derivative@{integrate\-\_\-monomial\-\_\-derivative}}
+\index{integrate\-\_\-monomial\-\_\-derivative@{integrate\-\_\-monomial\-\_\-derivative}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{integrate\-\_\-monomial\-\_\-derivative}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device scalar integrate\-\_\-monomial\-\_\-derivative (
+\begin{DoxyParamCaption}
+\item[{int}]{k, }
+\item[{int}]{n}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{limiting__kernels_8cu_acfc91d42c8f0af8dd56a56ed12b83de6}
+The integral of the kth derivative of nth order monomial (from -\/1 to 1) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em k} & kth derivative of the polynomial \\
+\hline
+\mbox{\tt in}  & {\em n} & monomial order \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+\$\{2\}\{(n-\/k+1)!\}\$ if n-\/k+1 is odd, 0 otherwise Calculates \$\{-\/1\}$^\wedge$1 \{$^\wedge$k\}\{ x$^\wedge$k\} \{x$^\wedge$n\}\{n!\} \{d\} x\$
+\end{DoxyReturn}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!integrate\-\_\-monomial\-\_\-derivative\-\_\-bounds@{integrate\-\_\-monomial\-\_\-derivative\-\_\-bounds}}
+\index{integrate\-\_\-monomial\-\_\-derivative\-\_\-bounds@{integrate\-\_\-monomial\-\_\-derivative\-\_\-bounds}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{integrate\-\_\-monomial\-\_\-derivative\-\_\-bounds}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device scalar integrate\-\_\-monomial\-\_\-derivative\-\_\-bounds (
+\begin{DoxyParamCaption}
+\item[{int}]{k, }
+\item[{int}]{n, }
+\item[{scalar}]{a, }
+\item[{scalar}]{b}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{limiting__kernels_8cu_aa53b9b4a6c7794f2623344b129b18f62}
+The integral of the kth derivative of nth order monomial. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em k} & kth derivative of the polynomial \\
+\hline
+\mbox{\tt in}  & {\em n} & monomial order \\
+\hline
+\mbox{\tt in}  & {\em a} & lower integral bound \\
+\hline
+\mbox{\tt in}  & {\em b} & upper integral bound \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the integral Calculates \$\{a\}$^\wedge$\{b\} \{$^\wedge$k\}\{$^\wedge$k\} \{x$^\wedge$n\}\{n!\} \{d\} x\$
+\end{DoxyReturn}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!internal\-\_\-energy@{internal\-\_\-energy}}
+\index{internal\-\_\-energy@{internal\-\_\-energy}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{internal\-\_\-energy}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device void internal\-\_\-energy (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s1\-D, }
+\item[{int}]{slicenum, }
+\item[{scalar $\ast$}]{p, }
+\item[{scalar $\ast$}]{g, }
+\item[{scalar $\ast$}]{b, }
+\item[{scalar $\ast$}]{rhoe}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_aa7cc2e4f4ba2673dd8b464dfc4e5bbd0}
+Reconstruct the internal energy in monomial form 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s1\-D} & number of nodes in 1\-D elemement \\
+\hline
+\mbox{\tt in}  & {\em slicenum} & number of slices \\
+\hline
+\mbox{\tt in}  & {\em p} & monomial pressure solution \\
+\hline
+\mbox{\tt in}  & {\em g} & monomial 1/(gamma-\/1) solution \\
+\hline
+\mbox{\tt in}  & {\em b} & monomial gamma$\ast$pinf/(gamma-\/1) solution \\
+\hline
+\mbox{\tt out}  & {\em rhoe} & monomial internal energy \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Reconstruct the monomial internal energy coefficients using the pressure, 1/gamma-\/1, and gamma$\ast$pinf/(gamma-\/1) coefficients so that the pressure remains non-\/oscillatory\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!internal\-\_\-energy\-\_\-multifluid@{internal\-\_\-energy\-\_\-multifluid}}
+\index{internal\-\_\-energy\-\_\-multifluid@{internal\-\_\-energy\-\_\-multifluid}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{internal\-\_\-energy\-\_\-multifluid}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void internal\-\_\-energy\-\_\-multifluid (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{slicenum, }
+\item[{scalar $\ast$}]{p, }
+\item[{scalar $\ast$}]{g, }
+\item[{scalar $\ast$}]{rhoe}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a3739db4e71adf05a4bc800fc586ada30}
+Reconstruct the energy monomial coefficients 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em slicenum} & to decompose higher dimensional problem into 1\-D slices \\
+\hline
+\mbox{\tt in}  & {\em p} & monomial pressure solution \\
+\hline
+\mbox{\tt in}  & {\em g} & monomial 1/(gamma-\/1) solution \\
+\hline
+\mbox{\tt out}  & {\em rhoe} & monomial internal energy \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Reconstruct the monomial internal energy coefficients using the pressure and 1/gamma-\/1 coefficients so that the pressure remains non-\/oscillatory\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!internal\-\_\-energy\-\_\-stiffened@{internal\-\_\-energy\-\_\-stiffened}}
+\index{internal\-\_\-energy\-\_\-stiffened@{internal\-\_\-energy\-\_\-stiffened}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{internal\-\_\-energy\-\_\-stiffened}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void internal\-\_\-energy\-\_\-stiffened (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{slicenum, }
+\item[{scalar $\ast$}]{p, }
+\item[{scalar $\ast$}]{g, }
+\item[{scalar $\ast$}]{b, }
+\item[{scalar $\ast$}]{rhoe}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_ad4ad14f9400d6a279f0f872f98d59654}
+Reconstruct the energy monomial coefficients 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em slicenum} & to decompose higher dimensional problem into 1\-D slices \\
+\hline
+\mbox{\tt in}  & {\em p} & monomial pressure solution \\
+\hline
+\mbox{\tt in}  & {\em g} & monomial 1/(gamma-\/1) solution \\
+\hline
+\mbox{\tt in}  & {\em b} & monomial gamma$\ast$pinf/(gamma-\/1) solution \\
+\hline
+\mbox{\tt out}  & {\em rhoe} & monomial internal energy \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Reconstruct the monomial internal energy coefficients using the pressure, 1/gamma-\/1, and gamma$\ast$pinf/(gamma-\/1) coefficients so that the pressure remains non-\/oscillatory\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!kinetic\-\_\-energy@{kinetic\-\_\-energy}}
+\index{kinetic\-\_\-energy@{kinetic\-\_\-energy}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{kinetic\-\_\-energy}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device void kinetic\-\_\-energy (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{scalar $\ast$}]{L2\-M, }
+\item[{scalar $\ast$}]{rho, }
+\item[{scalar $\ast$}]{rhou, }
+\item[{scalar $\ast$}]{rhov, }
+\item[{scalar $\ast$}]{tmp, }
+\item[{scalar $\ast$}]{K}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a465b3c0c1d5008036a258c93801914dc}
+Get the kinetic energy in monomial form 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em L2\-M} & Lagrange -\/$>$ Monomial transform \\
+\hline
+\mbox{\tt in}  & {\em rho} & density (Lagrange form) \\
+\hline
+\mbox{\tt in}  & {\em rhou} & x-\/momentum (Lagrange form) \\
+\hline
+\mbox{\tt in}  & {\em rhov} & y-\/momentum (Lagrange form) \\
+\hline
+\mbox{\tt in}  & {\em tmp} & temporary array to store intermediate values \\
+\hline
+\mbox{\tt out}  & {\em K} & kinetic energy (Monomial form)\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!L\-Change\-Basis@{L\-Change\-Basis}}
+\index{L\-Change\-Basis@{L\-Change\-Basis}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{L\-Change\-Basis}]{\setlength{\rightskip}{0pt plus 5cm}void L\-Change\-Basis (
+\begin{DoxyParamCaption}
+\item[{int}]{size1, }
+\item[{int}]{size2, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{Transform, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{Unew}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a6b106f02e42328299ba3753795519e88}
+Host C function to launch Change\-Basis kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em size1} & number of rows of tranform \\
+\hline
+\mbox{\tt in}  & {\em size2} & number of columns of tranform \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em Transform} & Basis transform matrix (per element) \\
+\hline
+\mbox{\tt in}  & {\em U} & solution to transform \\
+\hline
+\mbox{\tt out}  & {\em Unew} & transformed solution \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of size1 x N\-\_\-\-F x blk\-E threads. blk\-E controls the number of elements to set on each block\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!L\-Cons2\-Prim@{L\-Cons2\-Prim}}
+\index{L\-Cons2\-Prim@{L\-Cons2\-Prim}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{L\-Cons2\-Prim}]{\setlength{\rightskip}{0pt plus 5cm}void L\-Cons2\-Prim (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a77ed76a974ebd2f2ff900b305737f6d0}
+Host C function to launch Cons2\-Prim kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em U} & solution to transform \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of N\-\_\-s x 1 x blk\-E threads. blk\-E controls the number of elements to set on each block\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!Lhri1\-D@{Lhri1\-D}}
+\index{Lhri1\-D@{Lhri1\-D}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{Lhri1\-D}]{\setlength{\rightskip}{0pt plus 5cm}void Lhri1\-D (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int $\ast$}]{neighbors, }
+\item[{int}]{N\-\_\-s1\-D, }
+\item[{int}]{slicenum, }
+\item[{int}]{offxy, }
+\item[{scalar $\ast$}]{Lag2\-Mono, }
+\item[{scalar $\ast$}]{Mono2\-Lag, }
+\item[{int $\ast$}]{sensor, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{Unew}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a3493f6335de6dd85074f56bdae5d7798}
+H\-R limiting function for individual elements (assumes 1\-D decomposition) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbors per element \\
+\hline
+\mbox{\tt in}  & {\em neighbors} & array containing an element's neighbors \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s1\-D} & number of nodes in a slice (1\-D element) \\
+\hline
+\mbox{\tt in}  & {\em slicenum} & number of slices (in 2\-D N\-\_\-s1\-D = slicenum) \\
+\hline
+\mbox{\tt in}  & {\em offxy} & offset if limiting in x or y \\
+\hline
+\mbox{\tt in}  & {\em sensors} & array of sensors \\
+\hline
+\mbox{\tt in}  & {\em U} & solution to limit (Lagrange form) \\
+\hline
+\mbox{\tt out}  & {\em Unew} & limited solution (only some may be limited bc of sensor) \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E blocks of 1 x N\-\_\-\-F x 1 threads.\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!Lhrl1\-D@{Lhrl1\-D}}
+\index{Lhrl1\-D@{Lhrl1\-D}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{Lhrl1\-D}]{\setlength{\rightskip}{0pt plus 5cm}void Lhrl1\-D (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{Nfields, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int}]{slicenum, }
+\item[{int $\ast$}]{neighbors, }
+\item[{int}]{offxy, }
+\item[{scalar $\ast$}]{A, }
+\item[{scalar $\ast$}]{Alim}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_ab3e9e943500f40c9151ee5e5bc74063f}
+Host C function to launch hrl1\-D kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em Nfields} & number of fields to operate on (eg. one field instead of N\-\_\-\-F) \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbors per element \\
+\hline
+\mbox{\tt in}  & {\em slicenum} & to decompose higher dimensional problem into 1\-D slices \\
+\hline
+\mbox{\tt in}  & {\em neighbors} & array containing an element's neighbors \\
+\hline
+\mbox{\tt in}  & {\em offxy} & offset if limiting in x or y \\
+\hline
+\mbox{\tt in}  & {\em A} & solution to limit (monomial form) \\
+\hline
+\mbox{\tt out}  & {\em Alim} & limited solution (monomial form) \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of slicenum x Nfields x blk\-E threads. blk\-E controls the number of elements to set on each block\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!Lhrl2\-D@{Lhrl2\-D}}
+\index{Lhrl2\-D@{Lhrl2\-D}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{Lhrl2\-D}]{\setlength{\rightskip}{0pt plus 5cm}void Lhrl2\-D (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-G, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int}]{order, }
+\item[{scalar $\ast$}]{X\-Y\-Z\-Cen, }
+\item[{scalar $\ast$}]{powers\-X\-Y\-Z\-G, }
+\item[{int $\ast$}]{neighbors, }
+\item[{int $\ast$}]{Taylor\-Dx\-Idx, }
+\item[{int $\ast$}]{Taylor\-Dy\-Idx, }
+\item[{scalar $\ast$}]{weight, }
+\item[{scalar}]{ref\-Area, }
+\item[{scalar $\ast$}]{A, }
+\item[{scalar $\ast$}]{Alim}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a80230d22a8ff9be931beb8a3fb400121}
+Host C function to launch hrl2\-D kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-G} & number of gaussian nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbors per element \\
+\hline
+\mbox{\tt in}  & {\em order} & D\-G order \\
+\hline
+\mbox{\tt in}  & {\em X\-Y\-Z\-Cen} & element centroid coordinates \\
+\hline
+\mbox{\tt in}  & {\em powers\-X\-Y\-Z\-G} & powers of coordinates of gaussian nodes \\
+\hline
+\mbox{\tt in}  & {\em neighbors} & array containing an element's neighbors \\
+\hline
+\mbox{\tt in}  & {\em Taylor\-Dx\-Idx} & indices of Taylor polynomial derivatives in x \\
+\hline
+\mbox{\tt in}  & {\em Taylor\-Dy\-Idx} & indices of Taylor polynomial derivatives in y \\
+\hline
+\mbox{\tt in}  & {\em weight} & gaussian integration weights \\
+\hline
+\mbox{\tt in}  & {\em ref\-Area} & area of reference triangle \\
+\hline
+\mbox{\tt in}  & {\em A} & solution to limit (monomial form) \\
+\hline
+\mbox{\tt out}  & {\em Alim} & limited solution (monomial form) \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of 1 x N\-\_\-\-F x blk\-E threads. blk\-E controls the number of elements to set on each block\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!lim\-\_\-factorial@{lim\-\_\-factorial}}
+\index{lim\-\_\-factorial@{lim\-\_\-factorial}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{lim\-\_\-factorial}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device int lim\-\_\-factorial (
+\begin{DoxyParamCaption}
+\item[{int}]{n}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a185f5abaa2b3c3d3c5614daa9b5032cb}
+Factorial function 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em n} & get factorial of this number \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+factorial of n
+\end{DoxyReturn}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!limit\-\_\-monomial@{limit\-\_\-monomial}}
+\index{limit\-\_\-monomial@{limit\-\_\-monomial}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{limit\-\_\-monomial}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device void limit\-\_\-monomial (
+\begin{DoxyParamCaption}
+\item[{int}]{N, }
+\item[{scalar $\ast$}]{A\-L, }
+\item[{scalar $\ast$}]{A\-C, }
+\item[{scalar $\ast$}]{A\-R, }
+\item[{scalar $\ast$}]{Alim}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a70986f580b196eef16d7cb91e47b6924}
+Limit a 1\-D monomial using H\-R 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N} & monomial order \\
+\hline
+\mbox{\tt in}  & {\em A\-L} & left cell monomial \\
+\hline
+\mbox{\tt in}  & {\em A\-C} & center cell monomial \\
+\hline
+\mbox{\tt in}  & {\em A\-R} & right cell monomial \\
+\hline
+\mbox{\tt out}  & {\em Alim} & limited center cell monomial\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!Linternal\-\_\-energy\-\_\-multifluid@{Linternal\-\_\-energy\-\_\-multifluid}}
+\index{Linternal\-\_\-energy\-\_\-multifluid@{Linternal\-\_\-energy\-\_\-multifluid}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{Linternal\-\_\-energy\-\_\-multifluid}]{\setlength{\rightskip}{0pt plus 5cm}void Linternal\-\_\-energy\-\_\-multifluid (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{slicenum, }
+\item[{scalar $\ast$}]{p, }
+\item[{scalar $\ast$}]{g, }
+\item[{scalar $\ast$}]{rhoe}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_aa1c11828f99f4f21bba0be2dac08806c}
+Host C function to lauch internal\-\_\-energy\-\_\-multifluid kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em slicenum} & to decompose higher dimensional problem into 1\-D slices \\
+\hline
+\mbox{\tt in}  & {\em p} & monomial pressure solution \\
+\hline
+\mbox{\tt in}  & {\em g} & monomial 1/(gamma-\/1) solution \\
+\hline
+\mbox{\tt out}  & {\em rhoe} & monomial internal energy \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of N\-\_\-s x slicenum x blk\-E threads. blk\-E controls the number of elements to set on each block\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!Linternal\-\_\-energy\-\_\-stiffened@{Linternal\-\_\-energy\-\_\-stiffened}}
+\index{Linternal\-\_\-energy\-\_\-stiffened@{Linternal\-\_\-energy\-\_\-stiffened}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{Linternal\-\_\-energy\-\_\-stiffened}]{\setlength{\rightskip}{0pt plus 5cm}void Linternal\-\_\-energy\-\_\-stiffened (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{slicenum, }
+\item[{scalar $\ast$}]{p, }
+\item[{scalar $\ast$}]{g, }
+\item[{scalar $\ast$}]{b, }
+\item[{scalar $\ast$}]{rhoe}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_ae76289d972e1b6ff34a7d14c519719e4}
+Host C function to lauch internal\-\_\-energy\-\_\-multifluid kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em slicenum} & to decompose higher dimensional problem into 1\-D slices \\
+\hline
+\mbox{\tt in}  & {\em p} & monomial pressure solution \\
+\hline
+\mbox{\tt in}  & {\em g} & monomial 1/(gamma-\/1) solution \\
+\hline
+\mbox{\tt in}  & {\em b} & monomial gamma$\ast$pinf/(gamma-\/1) solution \\
+\hline
+\mbox{\tt out}  & {\em rhoe} & monomial internal energy \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of N\-\_\-s x slicenum x blk\-E threads. blk\-E controls the number of elements to set on each block\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!Lm2i1\-D@{Lm2i1\-D}}
+\index{Lm2i1\-D@{Lm2i1\-D}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{Lm2i1\-D}]{\setlength{\rightskip}{0pt plus 5cm}void Lm2i1\-D (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int $\ast$}]{neighbors, }
+\item[{int}]{N\-\_\-s1\-D, }
+\item[{int}]{slicenum, }
+\item[{int}]{offxy, }
+\item[{scalar $\ast$}]{Lag2\-Mono, }
+\item[{scalar $\ast$}]{Mono2\-Lag, }
+\item[{int $\ast$}]{sensors, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{Unew}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a6b223d9bad96629f35e2cf141e380863}
+Modified limiting function for individual elements (assumes 1\-D decomposition) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbors per element \\
+\hline
+\mbox{\tt in}  & {\em neighbors} & array containing an element's neighbors \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s1\-D} & number of nodes in a slice (1\-D element) \\
+\hline
+\mbox{\tt in}  & {\em slicenum} & number of slices (in 2\-D N\-\_\-s1\-D = slicenum) \\
+\hline
+\mbox{\tt in}  & {\em offxy} & offset if limiting in x or y \\
+\hline
+\mbox{\tt in}  & {\em sensors} & array of sensors \\
+\hline
+\mbox{\tt in}  & {\em U} & solution to limit (Lagrange form) \\
+\hline
+\mbox{\tt out}  & {\em Unew} & limited solution (only some may be limited bc of sensor) \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E blocks of 1 x 1 x 1 threads.\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!Lp0i@{Lp0i}}
+\index{Lp0i@{Lp0i}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{Lp0i}]{\setlength{\rightskip}{0pt plus 5cm}void Lp0i (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-G, }
+\item[{scalar}]{ref\-Area, }
+\item[{int $\ast$}]{sensors, }
+\item[{scalar $\ast$}]{phi\-\_\-w, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{Unew}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_adb292343416a95d1ccf54ce4d7a10c06}
+Modified limiting function for individual elements (assumes 1\-D decomposition) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-G} & number of integration points \\
+\hline
+\mbox{\tt in}  & {\em ref\-Area} & area of reference triangle \\
+\hline
+\mbox{\tt in}  & {\em sensors} & array of sensors \\
+\hline
+\mbox{\tt in}  & {\em phi\-\_\-w} & matrix of basis function for collocation (premultiplied by integration weights) \\
+\hline
+\mbox{\tt in}  & {\em U} & solution to limit (Lagrange form) \\
+\hline
+\mbox{\tt out}  & {\em Unew} & limited solution (only some may be limited bc of sensor) \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches numblocks/blk\-E blocks of blocklen x 1 x blk\-E threads. blk\-E controls the number of elements to set on each block\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!L\-Prim2\-Cons@{L\-Prim2\-Cons}}
+\index{L\-Prim2\-Cons@{L\-Prim2\-Cons}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{L\-Prim2\-Cons}]{\setlength{\rightskip}{0pt plus 5cm}void L\-Prim2\-Cons (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a3161a17757f26bafa2abbe340156e8e2}
+Host C function to launch Prim2\-Cons kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em U} & solution to transform \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of N\-\_\-s x 1 x blk\-E threads. blk\-E controls the number of elements to set on each block\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!Lreconstruct\-\_\-energy@{Lreconstruct\-\_\-energy}}
+\index{Lreconstruct\-\_\-energy@{Lreconstruct\-\_\-energy}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{Lreconstruct\-\_\-energy}]{\setlength{\rightskip}{0pt plus 5cm}void Lreconstruct\-\_\-energy (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{slicenum, }
+\item[{scalar $\ast$}]{rhoe\-Lim, }
+\item[{scalar $\ast$}]{K\-Lim, }
+\item[{scalar $\ast$}]{E\-Mono, }
+\item[{scalar $\ast$}]{E\-Lim}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a5dda36b7cf079ae9d2d427a370606250}
+Host C function to lauch reconstruct\-\_\-energy kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em slicenum} & to decompose higher dimensional problem into 1\-D slices \\
+\hline
+\mbox{\tt in}  & {\em rhoe\-Lim} & limited monomial internal energy \\
+\hline
+\mbox{\tt in}  & {\em K\-Lim} & limited monomial kinetic energy \\
+\hline
+\mbox{\tt in}  & {\em E\-Mono} & monomial total energy \\
+\hline
+\mbox{\tt out}  & {\em E\-Lim} & limited monomial total energy \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of slicenum x 1 x blk\-E threads. blk\-E controls the number of elements to set on each block\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!Lstridedcopy@{Lstridedcopy}}
+\index{Lstridedcopy@{Lstridedcopy}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{Lstridedcopy}]{\setlength{\rightskip}{0pt plus 5cm}void Lstridedcopy (
+\begin{DoxyParamCaption}
+\item[{int}]{numblocks, }
+\item[{int}]{blocklen, }
+\item[{int}]{stride\-A, }
+\item[{int}]{stride\-B, }
+\item[{int}]{offset\-A, }
+\item[{int}]{offset\-B, }
+\item[{scalar $\ast$}]{A, }
+\item[{scalar $\ast$}]{B}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_af08b6d825d6870856cd6e0903ffbb35d}
+Host C function to lauch stridedcopy kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em numblocks} & number of blocks to copy from A to B \\
+\hline
+\mbox{\tt in}  & {\em blocklen} & number of elements in each block \\
+\hline
+\mbox{\tt in}  & {\em stride\-A} & number of elements between start of each block in A \\
+\hline
+\mbox{\tt in}  & {\em stride\-B} & number of elements between start of each block in B \\
+\hline
+\mbox{\tt in}  & {\em offset\-A} & number of elements to skip at start of A \\
+\hline
+\mbox{\tt in}  & {\em offset\-B} & number of elements to skip at start of B \\
+\hline
+\mbox{\tt in}  & {\em A} & source array \\
+\hline
+\mbox{\tt out}  & {\em B} & destination array \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches numblocks/blk\-E blocks of blocklen x 1 x blk\-E threads. blk\-E controls the number of elements to set on each block\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!m2i1\-D@{m2i1\-D}}
+\index{m2i1\-D@{m2i1\-D}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{m2i1\-D}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void m2i1\-D (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int $\ast$}]{neighbors, }
+\item[{int}]{N\-\_\-s1\-D, }
+\item[{int}]{slicenum, }
+\item[{int}]{offxy, }
+\item[{scalar $\ast$}]{Lag2\-Mono, }
+\item[{scalar $\ast$}]{Mono2\-Lag, }
+\item[{int $\ast$}]{sensors, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{Unew}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a8ef8e65dda2bb15ed7cec0fbeb6a998a}
+Modified limiting function for individual elements (assumes 1\-D decomposition) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbors per element \\
+\hline
+\mbox{\tt in}  & {\em neighbors} & array containing an element's neighbors \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s1\-D} & number of nodes in a slice (1\-D element) \\
+\hline
+\mbox{\tt in}  & {\em slicenum} & number of slices (in 2\-D N\-\_\-s1\-D = slicenum) \\
+\hline
+\mbox{\tt in}  & {\em offxy} & offset if limiting in x or y \\
+\hline
+\mbox{\tt in}  & {\em sensors} & array of sensors \\
+\hline
+\mbox{\tt in}  & {\em U} & solution to limit (Lagrange form) \\
+\hline
+\mbox{\tt out}  & {\em Unew} & limited solution (only some may be limited bc of sensor) Unew was necessary because you need to wait until all the elements have been limited before updating the solution.\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!minabs@{minabs}}
+\index{minabs@{minabs}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{minabs}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device scalar minabs (
+\begin{DoxyParamCaption}
+\item[{scalar $\ast$}]{c, }
+\item[{int}]{n}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{limiting__kernels_8cu_a17d976266542e5fef94a9c0bbcdaf4f4}
+Minimum of the absolute value of c 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em c} & array to find minabs of \\
+\hline
+\mbox{\tt in}  & {\em n} & number of elements in c \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+minabs of c
+\end{DoxyReturn}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!minmod@{minmod}}
+\index{minmod@{minmod}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{minmod}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device scalar minmod (
+\begin{DoxyParamCaption}
+\item[{scalar}]{a, }
+\item[{scalar}]{b}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a0069af8bc38d2f4e9ec19bf9df6be4ba}
+Minmod function for 2 arguments 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em a} & first arg \\
+\hline
+\mbox{\tt in}  & {\em b} & second arg \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+minmod(a,b) 
+\end{DoxyReturn}
+\subsection{Description}\label{scalar__def_8h_Description}
+eq 2.\-19 of \char`\"{}\-Hierarchical reconstruction for discontinuous Galerkin methods...\char`\"{}\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!minmod@{minmod}}
+\index{minmod@{minmod}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{minmod}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device scalar minmod (
+\begin{DoxyParamCaption}
+\item[{scalar $\ast$}]{c, }
+\item[{int}]{n}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_aafe1b556285d628a4b92b14110991cb5}
+Generalized minmod function 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em c} & array to find minmod of \\
+\hline
+\mbox{\tt in}  & {\em n} & number of elements in c \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+minmod of c 
+\end{DoxyReturn}
+\subsection{Description}\label{scalar__def_8h_Description}
+eq 2.\-19 of \char`\"{}\-Hierarchical reconstruction for discontinuous Galerkin methods...\char`\"{}\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!minmod2@{minmod2}}
+\index{minmod2@{minmod2}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{minmod2}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device scalar minmod2 (
+\begin{DoxyParamCaption}
+\item[{scalar $\ast$}]{c, }
+\item[{int}]{n}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_aa0243447010f74e6a50a8c225ae3d616}
+Generalized minmod function (alternate) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em c} & array to find minmod of \\
+\hline
+\mbox{\tt in}  & {\em n} & number of elements in c \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+minmod of c 
+\end{DoxyReturn}
+\subsection{Description}\label{scalar__def_8h_Description}
+eq 2.\-20 of \char`\"{}\-Hierarchical reconstruction for discontinuous Galerkin methods...\char`\"{}\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!p0i@{p0i}}
+\index{p0i@{p0i}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{p0i}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void p0i (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-G, }
+\item[{scalar}]{ref\-Area, }
+\item[{int $\ast$}]{sensors, }
+\item[{scalar $\ast$}]{phi\-\_\-w, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{Unew}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a44749d58166d3b77f1ce0022b6ba4cb5}
+p=0 limiting function for individual elements (assumes 1\-D decomposition) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-G} & number of integration points \\
+\hline
+\mbox{\tt in}  & {\em ref\-Area} & area of reference element \\
+\hline
+\mbox{\tt in}  & {\em sensors} & array of sensors \\
+\hline
+\mbox{\tt in}  & {\em phi\-\_\-w} & matrix of basis function for collocation (premultiplied by integration weights) \\
+\hline
+\mbox{\tt in}  & {\em U} & solution to limit (Lagrange form) \\
+\hline
+\mbox{\tt out}  & {\em Unew} & limited solution (only some may be limited bc of sensor) Unew was necessary because you need to wait until all the elements have been limited before updating the solution.\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!pressure@{pressure}}
+\index{pressure@{pressure}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{pressure}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device void pressure (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{scalar $\ast$}]{rho, }
+\item[{scalar $\ast$}]{rhou, }
+\item[{scalar $\ast$}]{rhov, }
+\item[{scalar $\ast$}]{E, }
+\item[{scalar $\ast$}]{gamma, }
+\item[{scalar $\ast$}]{beta, }
+\item[{scalar $\ast$}]{p}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_ac7dfe81005a75c2551569cf06f784bc2}
+Get the pressure in an individual element 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes in an element \\
+\hline
+\mbox{\tt in}  & {\em rho} & density \\
+\hline
+\mbox{\tt in}  & {\em rhou} & x-\/momentum \\
+\hline
+\mbox{\tt in}  & {\em rhov} & y-\/momentum \\
+\hline
+\mbox{\tt in}  & {\em E} & total energy \\
+\hline
+\mbox{\tt in}  & {\em gamma} & 1/(gamma-\/1) \\
+\hline
+\mbox{\tt in}  & {\em beta} & pinf$\ast$gamma/(gamma-\/1) \\
+\hline
+\mbox{\tt out}  & {\em p} & pressure\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!Prim2\-Cons@{Prim2\-Cons}}
+\index{Prim2\-Cons@{Prim2\-Cons}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{Prim2\-Cons}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void Prim2\-Cons (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a7b03e104edb5d4f2a1760882b58e7607}
+Transform primitive variables to conserved variables 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em U} & solution to transform\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!reconstruct\-\_\-energy@{reconstruct\-\_\-energy}}
+\index{reconstruct\-\_\-energy@{reconstruct\-\_\-energy}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{reconstruct\-\_\-energy}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void reconstruct\-\_\-energy (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{slicenum, }
+\item[{scalar $\ast$}]{rhoe\-Lim, }
+\item[{scalar $\ast$}]{K\-Lim, }
+\item[{scalar $\ast$}]{E\-Mono, }
+\item[{scalar $\ast$}]{E\-Lim}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a0baf0fa343897a168db374263509330c}
+Reconstruct the energy monomial coefficients 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em slicenum} & to decompose higher dimensional problem into 1\-D slices \\
+\hline
+\mbox{\tt in}  & {\em rhoe\-Lim} & limited monomial internal energy \\
+\hline
+\mbox{\tt in}  & {\em K\-Lim} & limited monomial kinetic energy \\
+\hline
+\mbox{\tt in}  & {\em E\-Mono} & monomial total energy \\
+\hline
+\mbox{\tt out}  & {\em E\-Lim} & limited monomial total energy \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Reconstruct the energy monomial coefficients using the internal and kinetic energy monomial coefficients. Apply a correction to the zeroth coefficients so that the method is conservative.\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!reconstruct\-\_\-total\-\_\-energy@{reconstruct\-\_\-total\-\_\-energy}}
+\index{reconstruct\-\_\-total\-\_\-energy@{reconstruct\-\_\-total\-\_\-energy}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{reconstruct\-\_\-total\-\_\-energy}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device void reconstruct\-\_\-total\-\_\-energy (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-s1\-D, }
+\item[{int}]{slicenum, }
+\item[{scalar $\ast$}]{L2\-M, }
+\item[{scalar $\ast$}]{M2\-L, }
+\item[{scalar $\ast$}]{rhoe\-Lim, }
+\item[{scalar $\ast$}]{K\-Lim, }
+\item[{scalar $\ast$}]{tmp, }
+\item[{scalar $\ast$}]{E}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_afbe1be35043c65e0741b29492605671b}
+Reconstruct the energy lagrange polynomial for an individual element 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s1\-D} & number of nodes per slice \\
+\hline
+\mbox{\tt in}  & {\em rhoe\-Lim} & limited monomial internal energy \\
+\hline
+\mbox{\tt in}  & {\em K\-Lim} & limited monomial kinetic energy \\
+\hline
+\mbox{\tt out}  & {\em E} & limited total energy (lagrange form) \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Reconstruct the energy Lagrange coefficients using the internal and kinetic energy monomial coefficients. Apply a correction to the zeroth coefficients so that the method is conservative.\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!set2average@{set2average}}
+\index{set2average@{set2average}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{set2average}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device void set2average (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N, }
+\item[{int}]{N\-\_\-s1\-D, }
+\item[{int}]{slicenum, }
+\item[{scalar $\ast$}]{L2\-M, }
+\item[{scalar $\ast$}]{M2\-L, }
+\item[{scalar $\ast$}]{tmp, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{U\-Mono\-Lim}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_a7af2f34a5759f1b77e868ab2e5745c23}
+Set a nodal solution U to its cell average (1\-D slices) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N} & 1\-D monomial order \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s1\-D} & number of nodes in 1\-D elemement \\
+\hline
+\mbox{\tt in}  & {\em slicenum} & number of slices \\
+\hline
+\mbox{\tt in}  & {\em L2\-M} & Lagrange -\/$>$ Monomial transform \\
+\hline
+\mbox{\tt in}  & {\em M2\-L} & Monomial -\/$>$ Lagrange transform \\
+\hline
+\mbox{\tt in}  & {\em tmp} & temporary array to store intermediate values \\
+\hline
+\mbox{\tt out}  & {\em U} & solution to be averaged \\
+\hline
+\mbox{\tt out}  & {\em U\-Mono\-Lim} & (optional) array to hold limited monomial values\\
+\hline
+\end{DoxyParams}
+\index{limiting\-\_\-kernels.\-cu@{limiting\-\_\-kernels.\-cu}!stridedcopy@{stridedcopy}}
+\index{stridedcopy@{stridedcopy}!limiting_kernels.cu@{limiting\-\_\-kernels.\-cu}}
+\subsubsection[{stridedcopy}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void stridedcopy (
+\begin{DoxyParamCaption}
+\item[{int}]{numblocks, }
+\item[{int}]{blocklen, }
+\item[{int}]{stride\-A, }
+\item[{int}]{stride\-B, }
+\item[{int}]{offset\-A, }
+\item[{int}]{offset\-B, }
+\item[{scalar $\ast$}]{A, }
+\item[{scalar $\ast$}]{B}
+\end{DoxyParamCaption}
+)}\label{limiting__kernels_8cu_abde8e1c7130bbae601ca57cfd9a9d711}
+Strided copy of array A (length$>$= numblocks$\ast$stride\-A) to array B (length$>$= numblocks$\ast$stride\-B) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em numblocks} & number of blocks to copy from A to B \\
+\hline
+\mbox{\tt in}  & {\em blocklen} & number of elements in each block \\
+\hline
+\mbox{\tt in}  & {\em stride\-A} & number of elements between start of each block in A \\
+\hline
+\mbox{\tt in}  & {\em stride\-B} & number of elements between start of each block in B \\
+\hline
+\mbox{\tt in}  & {\em offset\-A} & number of elements to skip at start of A \\
+\hline
+\mbox{\tt in}  & {\em offset\-B} & number of elements to skip at start of B \\
+\hline
+\mbox{\tt in}  & {\em A} & source array \\
+\hline
+\mbox{\tt out}  & {\em B} & destination array \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Modeled on M\-P\-I\-\_\-\-Type\-\_\-\-Vector
+
+You can test with this segment of code\-: scalar$\ast$ a = new scalar[18]; scalar$\ast$ b = new scalar[6]; for(int i=0; i$<$18; i++)\{a[i] = i;printf(\char`\"{}\%i \%f\textbackslash{}n\char`\"{},i,a[i]);\} scalar$\ast$ d\-\_\-a; scalar$\ast$ d\-\_\-b; cuda\-Malloc((void$\ast$$\ast$) \&d\-\_\-a,18$\ast$sizeof(scalar)); cuda\-Malloc((void$\ast$$\ast$) \&d\-\_\-b,6$\ast$sizeof(scalar)); cuda\-Memcpy(d\-\_\-a, a, 18$\ast$sizeof(scalar), cuda\-Memcpy\-Host\-To\-Device); Lstridedcopy(2,3,9,3,0,0,d\-\_\-a,d\-\_\-b); cuda\-Memcpy(b, d\-\_\-b, 6$\ast$sizeof(scalar), cuda\-Memcpy\-Device\-To\-Host); for(int i=0; i$<$6; i++)\{printf(\char`\"{}\%i\-: \%f\textbackslash{}n\char`\"{},i,b[i]);\} delete[] a; delete[] b; exit(0);

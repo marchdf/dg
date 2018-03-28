@@ -1,0 +1,99 @@
+\section{src/gradient/\-B\-R2\-\_\-tools.cc File Reference}
+\label{BR2__tools_8cc}\index{src/gradient/\-B\-R2\-\_\-tools.\-cc@{src/gradient/\-B\-R2\-\_\-tools.\-cc}}
+{\ttfamily \#include \char`\"{}B\-R2\-\_\-tools.\-h\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bf Jump\-\_\-\-Residual} (int M\-\_\-\-T, int N\-\_\-s, int M\-\_\-\-G, int N\-\_\-\-N, int $\ast$B\-R2\-\_\-\-Map, scalar $\ast$Ug\-F, scalar $\ast$phig\-F, scalar $\ast$normals, scalar $\ast$Jac\-\_\-trace, scalar $\ast$J\-F, scalar $\ast$weight\-\_\-trace, scalar $\ast$B\-R2\-\_\-resi, int ruk)
+\item 
+void {\bf Lift\-\_\-\-Solve} (int N\-\_\-\-E, int N\-\_\-\-N, int N\-\_\-s, scalar $\ast$h\-\_\-\-Minv, scalar $\ast$B\-R2\-\_\-resi, scalar $\ast$B\-R2\-\_\-poly, int ruk)
+\item 
+void {\bf populate\-\_\-\-Cell\-Grad} (int N\-\_\-\-E, int N\-\_\-\-G, int N\-\_\-s, int N\-\_\-\-N, scalar $\ast$U, scalar $\ast$inv\-Jac, scalar $\ast$dphig, scalar $\ast$phig, scalar $\ast$br2\-\_\-poly, scalar $\ast$d\-Ug, int ruk)
+\item 
+void {\bf populate\-\_\-\-Face\-Grad} (int M\-\_\-\-T, int M\-\_\-\-G, int N\-\_\-s, int N\-\_\-\-N, int $\ast$B\-R2\-\_\-\-Map, scalar $\ast$U, scalar $\ast$inv\-\_\-\-Jac\-\_\-trace, scalar $\ast$phig\-F, scalar $\ast$dphig\-F, scalar $\ast$br2\-\_\-poly, scalar $\ast$d\-Ug\-F, int ruk)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+operations, including local lift functions and gradient calculation \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Philip E. Johnson {\tt phedjohn@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{B\-R2\-\_\-tools.\-cc@{B\-R2\-\_\-tools.\-cc}!Jump\-\_\-\-Residual@{Jump\-\_\-\-Residual}}
+\index{Jump\-\_\-\-Residual@{Jump\-\_\-\-Residual}!BR2_tools.cc@{B\-R2\-\_\-tools.\-cc}}
+\subsubsection[{Jump\-\_\-\-Residual}]{\setlength{\rightskip}{0pt plus 5cm}void Jump\-\_\-\-Residual (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int $\ast$}]{B\-R2\-\_\-\-Map, }
+\item[{scalar $\ast$}]{Ug\-F, }
+\item[{scalar $\ast$}]{phig\-F, }
+\item[{scalar $\ast$}]{normals, }
+\item[{scalar $\ast$}]{Jac\-\_\-trace, }
+\item[{scalar $\ast$}]{J\-F, }
+\item[{scalar $\ast$}]{weight\-\_\-trace, }
+\item[{scalar $\ast$}]{B\-R2\-\_\-resi, }
+\item[{int}]{ruk}
+\end{DoxyParamCaption}
+)}\label{BR2__tools_8cc_a02f638975866629da1e64b87f048ee34}
+This function is interface-\/oriented, but relays cell-\/specific information Ug\-F is solution along both sides of each interface, interface oriented phig\-F is basis trace from elements in each side of interface, interface oriented normals is outward normal from cell A to cell B, I hope. Lift\-\_\-vec is the residual of the system to solve for the local lift on every face of every cell, cell oriented\index{B\-R2\-\_\-tools.\-cc@{B\-R2\-\_\-tools.\-cc}!Lift\-\_\-\-Solve@{Lift\-\_\-\-Solve}}
+\index{Lift\-\_\-\-Solve@{Lift\-\_\-\-Solve}!BR2_tools.cc@{B\-R2\-\_\-tools.\-cc}}
+\subsubsection[{Lift\-\_\-\-Solve}]{\setlength{\rightskip}{0pt plus 5cm}void Lift\-\_\-\-Solve (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int}]{N\-\_\-s, }
+\item[{scalar $\ast$}]{h\-\_\-\-Minv, }
+\item[{scalar $\ast$}]{B\-R2\-\_\-resi, }
+\item[{scalar $\ast$}]{B\-R2\-\_\-poly, }
+\item[{int}]{ruk}
+\end{DoxyParamCaption}
+)}\label{BR2__tools_8cc_a4b50857d4d57afd5f124c7c040c0fd7b}
+N\-\_\-\-E = element count N\-\_\-\-N = faces per element N\-\_\-s = approximation order h\-\_\-\-Minv = the inverse mass matrix in single-\/column form B\-R2\-\_\-resi\-: the residual in the br2 gradient correction system This function is cell-\/oriented B\-R2\-\_\-poly is the column representation of lift weights, in physical xy coordinates the coordinate system matters greatly because br2\-\_\-poly represents a gradient
+
+N\-O\-T\-E\-: If S\-S\-A\-M is the unit mass matrix, B\-R2\-\_\-poly will be wrt reference coordinates if S\-S\-A\-M has already accounted for geometry, then B\-R2\-\_\-poly is wrt physical coordinates 01/04/2016\-: Learned today that the S\-S\-A\-M is wrt physical coordinates\index{B\-R2\-\_\-tools.\-cc@{B\-R2\-\_\-tools.\-cc}!populate\-\_\-\-Cell\-Grad@{populate\-\_\-\-Cell\-Grad}}
+\index{populate\-\_\-\-Cell\-Grad@{populate\-\_\-\-Cell\-Grad}!BR2_tools.cc@{B\-R2\-\_\-tools.\-cc}}
+\subsubsection[{populate\-\_\-\-Cell\-Grad}]{\setlength{\rightskip}{0pt plus 5cm}void populate\-\_\-\-Cell\-Grad (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-G, }
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{inv\-Jac, }
+\item[{scalar $\ast$}]{dphig, }
+\item[{scalar $\ast$}]{phig, }
+\item[{scalar $\ast$}]{br2\-\_\-poly, }
+\item[{scalar $\ast$}]{d\-Ug, }
+\item[{int}]{ruk}
+\end{DoxyParamCaption}
+)}\label{BR2__tools_8cc_ae416df9a5c85f329b1ed4ea64203aa72}
+This function is cell-\/oriented U is cell solution weights N\-\_\-s is degrees of freedom per element dphig is gradient of shape function traces wrt xi, eta phig is solution basis at quadrature nodes br2\-\_\-poly is the weights for the gradient correction, wrt coordinates determined by S\-S\-A\-M d\-Ug is the output, corrected gradient at interior quadrature points wrt xi,eta\index{B\-R2\-\_\-tools.\-cc@{B\-R2\-\_\-tools.\-cc}!populate\-\_\-\-Face\-Grad@{populate\-\_\-\-Face\-Grad}}
+\index{populate\-\_\-\-Face\-Grad@{populate\-\_\-\-Face\-Grad}!BR2_tools.cc@{B\-R2\-\_\-tools.\-cc}}
+\subsubsection[{populate\-\_\-\-Face\-Grad}]{\setlength{\rightskip}{0pt plus 5cm}void populate\-\_\-\-Face\-Grad (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int $\ast$}]{B\-R2\-\_\-\-Map, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{inv\-\_\-\-Jac\-\_\-trace, }
+\item[{scalar $\ast$}]{phig\-F, }
+\item[{scalar $\ast$}]{dphig\-F, }
+\item[{scalar $\ast$}]{br2\-\_\-poly, }
+\item[{scalar $\ast$}]{d\-Ug\-F, }
+\item[{int}]{ruk}
+\end{DoxyParamCaption}
+)}\label{BR2__tools_8cc_a74045fff9f6b3823d0635f72fad36718}
+Interface-\/\-Oriented function to populate the corrected gradient along cell interfaces. Because of two cells, there is a big jump across the array when switching from A gradient population to B gradient population N\-\_\-s is degrees of freedom per element U is solution weights, I hope phig\-F is basis traces from the cells at the interface quadrature points dphig\-F is the derivatives of phig\-F wrt xi,eta br2\-\_\-poly is the column vector of the weights of the local lift functions, wrt x,y d\-Ug\-F is the solution gradient on each side of the interface wrt xi,eta

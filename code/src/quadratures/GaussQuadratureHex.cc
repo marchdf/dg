@@ -63,6 +63,8 @@ IntPt GQH8[8] =
 
 
 IntPt *getGQHPts(int order);
+//IntPt getGQHPts(int order);
+
 int getNGQHPts(int order);
 
 IntPt * GQH[17] = {GQH1,GQH1,GQH6,GQH8,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -70,7 +72,46 @@ int GQHnPt[4] = {1,1,6,8};
 
 IntPt *getGQHPts(int order)
 { 
+  //Altered by PEJ 12/12/2017
+  //Goal is to return an array
+  //with one row per quadrature point,
+  //each row it xi,eta,zeta,weight.
+  int start = int(order/2)+1; //floor function of half the order; necessary number of quadr. points in 1D
+  //Just going to get the 1D points and use
+  //3D tensor block
+  double *pt,*wt;
+  gmshGaussLegendre1D(start,&pt,&wt);
+  IntPt GQLocal[start*start*start];
+  // IntPt* GQLocal = new IntPt[start*start*start];
+  int count = 0;
+  int index = 0;
+  GQH[index] = new IntPt[start*start*start];
+  for (int kx = 0; kx < start; kx++)
+    {
+      for (int ky = 0; ky < start; ky++)
+	{
+	  for (int kz = 0; kz < start; kz++)
+	    {
+	      GQLocal[count].pt[0] = pt[kx];
+	      GQLocal[count].pt[1] = pt[ky];
+	      GQLocal[count].pt[2] = pt[kz];
+	      GQLocal[count].weight = wt[kx]*wt[ky]*wt[kz];
+	      //    printf("count=%d, kx=%d, ky=%d, kz=%d: GQlocal={(%f,%f,%f),%f}\n",count,kx,ky,kz,GQLocal[count].pt[0], GQLocal[count].pt[1], GQLocal[count].pt[2], GQLocal[count].weight);
+	      int l = count;
+	      GQH[index][l].pt[0] = pt[kx];
+	      GQH[index][l].pt[1] = pt[ky];
+	      GQH[index][l].pt[2] = pt[kz];
+	      GQH[index][l].weight = wt[kx]*wt[ky]*wt[kz];
+	      count++;
+	    }
+	}
+    }
+  //  return GQLocal;
+  return GQH[index];
+	      
 
+  /*
+    //Original gmsh code, I think:
   if(order<2)return GQH[order];
   if(order == 2)return GQH[3]; 
   if(order == 3)return GQH[3]; 
@@ -97,15 +138,23 @@ IntPt *getGQHPts(int order)
       }
     }
   return GQH[index];
+  */
 }
 
 int getNGQHPts(int order)
 { 
+  //Altered by PEJ 12/12/2017
+  int start = int(order/2)+1; //round-up function of half the order
+  int output = start*start*start;
+  //  printf("Quadrature Rule is %d, so getNGQHPts returning %d for total quadr. points per elem.\n",order, output);
+  return output;
+  /*
   if(order == 3)return 8;
   if(order == 2)return 8;
   if(order < 2)
     return GQHnPt[order]; 
   return ((order+3)/2)*((order+3)/2)*((order+3)/2);
+  */
 }
 
 

@@ -1,0 +1,91 @@
+\section{src/physics/vis\-\_\-physics.h File Reference}
+\label{vis__physics_8h}\index{src/physics/vis\-\_\-physics.\-h@{src/physics/vis\-\_\-physics.\-h}}
+
+
+Functions to lauch kernels that deal with the viscous physics.  
+
+
+{\ttfamily \#include \char`\"{}scalar\-\_\-def.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}constants.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$math.\-h$>$}\\*
+{\ttfamily \#include $<$macros.\-h$>$}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bf Levaluate\-\_\-sf\-\_\-vis} (int N\-\_\-\-G, int N\-\_\-\-E, scalar Mu, scalar Pr, scalar K\-Temp, scalar $\ast$f, scalar $\ast$Ug, scalar $\ast$d\-Ug)
+\item 
+void {\bf Levaluate\-\_\-q\-\_\-vis} (int M\-\_\-\-G, int M\-\_\-\-T, scalar Mu, scalar Pr, scalar K\-Temp, scalar $\ast$q, scalar $\ast$Uh\-Common, scalar $\ast$grad\-Common, scalar $\ast$normals)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Functions to lauch kernels that deal with the viscous physics. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Philip E. Johnson {\tt phedjohn@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{vis\-\_\-physics.\-h@{vis\-\_\-physics.\-h}!Levaluate\-\_\-q\-\_\-vis@{Levaluate\-\_\-q\-\_\-vis}}
+\index{Levaluate\-\_\-q\-\_\-vis@{Levaluate\-\_\-q\-\_\-vis}!vis_physics.h@{vis\-\_\-physics.\-h}}
+\subsubsection[{Levaluate\-\_\-q\-\_\-vis}]{\setlength{\rightskip}{0pt plus 5cm}void Levaluate\-\_\-q\-\_\-vis (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{M\-\_\-\-T, }
+\item[{scalar}]{Mu, }
+\item[{scalar}]{Pr, }
+\item[{scalar}]{K\-Temp, }
+\item[{scalar $\ast$}]{q, }
+\item[{scalar $\ast$}]{Uh\-Common, }
+\item[{scalar $\ast$}]{grad\-Common, }
+\item[{scalar $\ast$}]{normals}
+\end{DoxyParamCaption}
+)}\label{vis__physics_8h_a2a8cfbd2042a3b00ef980ac5de41e2ba}
+Host C function to lauch evaluate\-\_\-q kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-\-G} & number of gaussian nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt out}  & {\em q} & interface flux array \\
+\hline
+\mbox{\tt in}  & {\em Ug\-F} & interface solution (evaluated at gaussian nodes) \\
+\hline
+\mbox{\tt in}  & {\em normals} & interface normals \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches M\-\_\-\-T/blk\-T blocks of M\-\_\-\-G x 1 x blk\-T threads. blk\-T controls the number of elements to set on each block\index{vis\-\_\-physics.\-h@{vis\-\_\-physics.\-h}!Levaluate\-\_\-sf\-\_\-vis@{Levaluate\-\_\-sf\-\_\-vis}}
+\index{Levaluate\-\_\-sf\-\_\-vis@{Levaluate\-\_\-sf\-\_\-vis}!vis_physics.h@{vis\-\_\-physics.\-h}}
+\subsubsection[{Levaluate\-\_\-sf\-\_\-vis}]{\setlength{\rightskip}{0pt plus 5cm}void Levaluate\-\_\-sf\-\_\-vis (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-G, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{scalar}]{Mu, }
+\item[{scalar}]{Pr, }
+\item[{scalar}]{K\-Temp, }
+\item[{scalar $\ast$}]{f, }
+\item[{scalar $\ast$}]{Ug, }
+\item[{scalar $\ast$}]{d\-Ug}
+\end{DoxyParamCaption}
+)}\label{vis__physics_8h_a4f0746e8d1b80d09a7582252560ba12e}
+Host C function to lauch evaluate\-\_\-sf\-\_\-vis kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-\-G} & number of gaussian nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of element \\
+\hline
+\mbox{\tt out}  & {\em f} & element flux array \\
+\hline
+\mbox{\tt in}  & {\em Ug} & solution (evaluated at gaussian nodes) \\
+\hline
+\mbox{\tt in}  & {\em d\-Ug} & derivative of solution (evaluated at gaussian nodes)\\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of N\-\_\-\-G x 1 x blk\-E threads. blk\-E controls the number of elements to set on each block

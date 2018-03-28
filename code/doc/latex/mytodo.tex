@@ -1,0 +1,118 @@
+\begin{DoxyParagraph}{\# Todo\-:}
+O\-U\-T\-P\-U\-T
+\begin{DoxyItemize}
+\item Add capability to output in the .txt format that gmsh can generate too
+\item hdf5? Binary format to compress data?
+\item check for N\-A\-N
+\end{DoxyItemize}
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{\# Todo\-:}
+I\-C
+\begin{DoxyItemize}
+\item Clean initial conditions
+\item Clean initialization of initial conditions... determine at compile time?
+\item Design some generic I\-Cs that can be made in the deck (maybe a L\-R state thing for now)
+\end{DoxyItemize}
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{\# Todo\-:}
+R\-I\-E\-M\-A\-N\-N S\-O\-L\-V\-E\-R\-S
+\begin{DoxyItemize}
+\item Optimize Riemann solvers. I think they are inefficient. Also, make the 1\-D closer to the 2\-D implementation
+\item Add an entropy fix for Roe ({\tt http\-://www.\-cfdbooks.\-com/cfdcodes/oned\-\_\-euler\-\_\-fluxes\-\_\-v4.\-f90})
+\item add H\-L\-L\-C
+\end{DoxyItemize}
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{\# Todo\-:}
+L\-I\-M\-I\-T\-I\-N\-G
+\begin{DoxyItemize}
+\item combine both reconstruct energy implementations
+\item It's a very ugly implementation right now...
+\item hrl1\-D could be cleaned a little to copy what we do for hri
+\item I have powers\-X\-Y\-Z\-G and V1\-D, could I combine the two to avoid ifdefs?
+\item ifdefs on dims in H\-R\-L, M\-Y\-L, M2\-L
+\item move some of these functions to .cc files?
+\item Get a 1\-D/2\-D version\-: put ifdef O\-N\-E\-D in header file so I can call the class the same thing (\doxyref{Limiting}{p.}{classLimiting}). Actually do a strucutured/unstructured file?
+\item idea to clean\-: instead of different constructors, have one main constructor and extra functions to set the parts that are different (eg. Limiter.\-set\-Neighbors(neighbors))
+\end{DoxyItemize}
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{\# Todo\-:}
+P\-A\-R\-A\-L\-L\-E\-L
+\begin{DoxyItemize}
+\item Play with buffered send, isend, send, sendrecv\-\_\-replace?
+\end{DoxyItemize}
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{\# Todo\-:}
+L\-A\-G\-R\-A\-N\-G\-E P\-A\-R\-T\-I\-C\-L\-E\-S
+\begin{DoxyItemize}
+\item make them work with M\-P\-I. Right now it doesn't work with multiple processors
+\end{DoxyItemize}
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{\# Todo\-:}
+2\-D P\-H\-Y\-S\-I\-C\-S
+\begin{DoxyItemize}
+\item passive/multifluid H\-L\-L
+\end{DoxyItemize}
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{\# Todo\-:}
+B\-A\-S\-I\-S T\-R\-A\-N\-S\-F\-O\-R\-M\-S (for H\-R)
+\begin{DoxyItemize}
+\item put in a separate class
+\end{DoxyItemize}
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{\# Todo\-:}
+B\-L\-A\-S
+\begin{DoxyItemize}
+\item Can the axpy in \doxyref{rk.\-h}{p.}{rk_8h} be changed to a blas3 level function?
+\item Can the copy in \doxyref{rk.\-h}{p.}{rk_8h} be changed/reduced?
+\item see write-\/up for the \doxyref{dg\-\_\-solver.\-h}{p.}{dg__solver_8h} ideas
+\end{DoxyItemize}
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{\# Todo\-:}
+D\-G S\-O\-L\-V\-E\-R
+\begin{DoxyItemize}
+\item change add\-S\-F\-Q to 2 blas axpy calls?
+\item getting the gradients of A\-L\-L the variables is a bit of a drag... I really only need a couple I think (gamma, u?)
+\item There might be some overlapping computation (e.\-g. gemm\-\_\-q, gemm\-\_\-sf, evaluate\-\_\-q, evaluate\-\_\-sf, redistribute\-\_\-sf, redistribute\-\_\-q,) that could be run in different streams on the G\-P\-U concurrently.
+\end{DoxyItemize}
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{\# Todo\-:}
+\doxyref{R\-K}{p.}{classRK} S\-O\-L\-V\-E\-R
+\begin{DoxyItemize}
+\item change blas copy to pointer switches
+\end{DoxyItemize}
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{\# Todo\-:}
+O\-T\-H\-E\-R
+\begin{DoxyItemize}
+\item Clean if conditions on dimensions\-: they are all over the place. Can they be reduced?
+\item Does shifts works in 1\-D? It does not!
+\item make things more object oriented to reduce the number of parameters passed around
+\item maybe make a struct for the numbers (Ns,N\-E, etc)
+\item factorial function is defined 3 times (at least)
+\item macros to wrap functions\-: eg. G\-P\-U(communicate\-Ghosts) or G\-A\-M\-M\-A\-M\-O\-D\-E\-L(...)
+\item memcpy is evil in c++, don't use it\-: it doesn't do a deep copy. replace memcpy with blascopy?
+\item solve kernel\-: make the matrix-\/matrix product more efficient?
+\item idea to speed up U\-P\-A computation\-: do it on the nodal average (computed in sensor) (instead of at each node)
+\item Add malloc wrapper for C (to replace new and merge with cudamalloc) eg\-: M\-A\-L\-L\-O\-C(...) which selects G\-P\-U or C\-P\-U version + increments a counter
+\item make if conditions into switches (apparently it's faster)
+\item make sure there are N\-O (!!) if conditions in my gpu kernels
+\item G\-R\-E\-A\-T I\-D\-E\-A\-: put functions that have two versions (C\-P\-U/\-G\-P\-U) into different namespaces then I just need to switch on \char`\"{}using namespace G\-P\-U\char`\"{} \char`\"{}using namespace C\-P\-U\char`\"{}
+\item Some data has to be shared by different classes (e.\-g. phi, J and weigth in dg\-\_\-solver and limiting), could we create a shared data class that would group these coherently
+\end{DoxyItemize}
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{\# Todo\-:}
+D\-O\-X\-Y\-G\-E\-N
+\begin{DoxyItemize}
+\item it's not documenting both versions of Communicate\-Ghosts properly.
+\item ifdefs with C\-P\-U and G\-P\-U will only go to one of those.
+\item constructors in limiting not all showing up
+\item prettify the mainpage
+\item add links to a license page and a readme page (kind of like the credits page)
+\end{DoxyItemize}
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{\# Todo\-:}
+T\-E\-S\-T\-S
+\begin{DoxyItemize}
+\item add some physics based testing (shock positions, conservation, etc) 
+\end{DoxyItemize}
+\end{DoxyParagraph}

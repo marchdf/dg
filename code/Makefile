@@ -18,6 +18,9 @@
 ## \param[in] PROF to use or not to use profiling
 ## \param[in] ERROR to output or not to output final solution error (L1, L2, Linfinity)
 ## \param[in] CONS to output or not to ouptut conservation errors
+## \param[in] TGVS whether or not to output Taylor-Green vortex statistics
+## \param[in] VISC viscosity rule
+## \param[in] FSOL reconstruction technique for Riemann solver argument; SIMPLE is the typical DG approach
 ##
 ## Parameter      | Default values (or other valid values)
 ## :------------- | :-------------
@@ -26,13 +29,16 @@
 ## PREC           | USE_DOUBLE (or USE_FLOAT)
 ## PROB           | MULTIFLUID (or SINGLEFLUID or PASSIVE)
 ## GAMM           | GAMNCON (or GAMCONS)
-## FLUX           | ROE (or HLL or LLF)
+## FLUX           | ROE (or RUS or or SLAU (singlefluid only) or UPW (scalarAD only) or CEN (scalarAD only))
 ## LIEU           | HOME (or TACC or ANL or FLUX)
 ## NFLD           | -
 ## MASS           | 0-10
 ## PROF           | OFF (or ON)
 ## ERRR           | NOERROR (or ERROR)
 ## CONS           | NOCONS (or CONS)
+## TGVS           | NULL (or TGVSTATS)
+## VISC           | NOVIS (or CONSTANTVIS, SUTHERLAND)
+## FSOL           | SIMPLE (or ICBN)
 ## @cond           
 
 # default options
@@ -49,6 +55,9 @@ MASS=0
 PROF=OFF
 ERRR=NOERROR
 CONS=NOCONS
+TGVS=NULL
+VISC=NOVIS
+FSOL=SIMPLE
 
 # configuration
 SRCDIR            := src
@@ -66,6 +75,7 @@ TARGET            := dgexec
 
 # default compilers
 NVCC              := nvcc
+#NVCC              := nvcc -arch compute_20
 CXX               := g++
 DEPFLAGS          := -M
 
@@ -97,6 +107,7 @@ CUFLAGS	          := -arch sm_13
 endif
 ifeq ($(PREC),USE_DOUBLE)
 CUFLAGS	          := -arch sm_20
+#CUFLAGS	          := -arch compute_20
 endif
 
 # default cublas linker
@@ -126,6 +137,10 @@ ifeq ($(LIEU),ANL)
 include $(MKDIR)/anl.mk
 endif
 
+ifeq ($(LIEU),CONFLUX)
+include $(MKDIR)/confluxG.mk
+endif
+
 #================================================================================
 #
 # COMMON MODIFIERS TO PREVIOUSLY DEFINED VARIABLES
@@ -135,6 +150,7 @@ endif
 # if you are using MPI, modify the cxx compiler
 ifeq ($(PARA),USE_MPI)
 CXX               := mpicxx
+#CXX               := mpicc #PEJ Edit 11/20/2017. Does not compile
 endif
 
 # Profiling with gprof
@@ -144,7 +160,7 @@ CC                := $(CC) -pg
 endif
 
 # defines
-DEFINES           := -DHAVE_BLAS -DHAVE_LAPACK -D$(ARCH) -D$(LIEU) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS) -D$(PARA) -DN_Y=$(MASS) -DN_F=$(NFLD) -D$(ERRR) -D$(CONS)
+DEFINES           := -DHAVE_BLAS -DHAVE_LAPACK -D$(ARCH) -D$(LIEU) -D$(PREC) -D$(PROB) -D$(GAMM) -D$(FLUX) -D$(DIMS) -D$(PARA) -DN_Y=$(MASS) -DN_F=$(NFLD) -D$(ERRR) -D$(CONS) -D$(TGVS) -D$(VISC) -D$(FSOL)
 ifeq ($(DIMS),ONED)
 DEFINES           := $(DEFINES) -DD=1 -DDF=1
 endif

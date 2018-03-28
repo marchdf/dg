@@ -1,0 +1,34 @@
+#Make options
+LIEU=HOME
+ARCH=USE_CPU
+PROF=OFF
+PARA=NO_MPI
+PREC=USE_DOUBLE
+DIMS=ONED
+ERRR=ERROR
+VISC=CONSTANTVIS
+PROB=SINGLEFLUID
+NFLD=3
+GAMM=GAMNCON
+FLUX=RUS
+MASS=0
+#Code options
+#time integration
+rk4
+#output time step size
+0.01
+#final time
+1.0
+#Courant-Friedrichs-Lewy condition
+0.1
+#Von Neumann condition
+0.01
+#order
+1
+#mesh file
+mesh.msh
+lin
+#limiter
+null
+#initial condition
+rhobumpProject

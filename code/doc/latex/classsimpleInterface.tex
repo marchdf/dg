@@ -1,0 +1,102 @@
+\section{simple\-Interface Class Reference}
+\label{classsimpleInterface}\index{simple\-Interface@{simple\-Interface}}
+
+
+Class that creates a simple interface.  
+
+
+
+
+{\ttfamily \#include $<$simple\-Mesh.\-h$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+int {\bf get\-Physical\-Tag} () const 
+\item 
+const {\bf simple\-Element} $\ast$ {\bf get\-Element} (int i) const 
+\item 
+int {\bf get\-Closure\-Id} (int i) const 
+\item 
+{\bf simple\-Interface} (int physical\-Tag=0)
+\end{DoxyCompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void {\bf Build\-Interfaces} ({\bf simple\-Mesh} \&mesh, std\-::vector$<$ {\bf simple\-Interface} $>$ \&interfaces, int type\-Interface, int type\-Element, int nsides)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Class that creates a simple interface. 
+
+\subsection{Constructor \& Destructor Documentation}
+\index{simple\-Interface@{simple\-Interface}!simple\-Interface@{simple\-Interface}}
+\index{simple\-Interface@{simple\-Interface}!simpleInterface@{simple\-Interface}}
+\subsubsection[{simple\-Interface}]{\setlength{\rightskip}{0pt plus 5cm}simple\-Interface\-::simple\-Interface (
+\begin{DoxyParamCaption}
+\item[{int}]{physical\-Tag = {\ttfamily 0}}
+\end{DoxyParamCaption}
+)}\label{classsimpleInterface_a9453c1a92a076e95808009320372d47f}
+Constructor for an interface. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em physical\-Tag} & the physical tag of the interface read from the mesh\\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Function Documentation}
+\index{simple\-Interface@{simple\-Interface}!Build\-Interfaces@{Build\-Interfaces}}
+\index{Build\-Interfaces@{Build\-Interfaces}!simpleInterface@{simple\-Interface}}
+\subsubsection[{Build\-Interfaces}]{\setlength{\rightskip}{0pt plus 5cm}void simple\-Interface\-::\-Build\-Interfaces (
+\begin{DoxyParamCaption}
+\item[{{\bf simple\-Mesh} \&}]{mesh, }
+\item[{std\-::vector$<$ {\bf simple\-Interface} $>$ \&}]{interfaces, }
+\item[{int}]{type\-Interface, }
+\item[{int}]{type\-Element, }
+\item[{int}]{nsides}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [static]}}\label{classsimpleInterface_a8547bdeb135ce0570ebd8a50c13946d6}
+Generate the interfaces. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em mesh} & the mesh \\
+\hline
+\mbox{\tt out}  & {\em interfaces} & the interface vector \\
+\hline
+\mbox{\tt in}  & {\em type\-Interface} & the associated key number referencing the type of interface \\
+\hline
+\mbox{\tt in}  & {\em type\-Element} & the associated key number referencing the type of element \\
+\hline
+\mbox{\tt in}  & {\em nsides} & number of sides to an element\\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+This function builds all the interfaces. For each interface, it will find both elements on the right and left. If it's on a boundary, it will use the B\-C information to find the correct neighboring element.
+
+For M\-P\-I processes, there a bunch of conditions to take care of so things might get a bit convoluted. Hang on to your hats.\index{simple\-Interface@{simple\-Interface}!get\-Closure\-Id@{get\-Closure\-Id}}
+\index{get\-Closure\-Id@{get\-Closure\-Id}!simpleInterface@{simple\-Interface}}
+\subsubsection[{get\-Closure\-Id}]{\setlength{\rightskip}{0pt plus 5cm}int simple\-Interface\-::get\-Closure\-Id (
+\begin{DoxyParamCaption}
+\item[{int}]{i}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleInterface_afcad91d43111036339e9368fcb704878}
+return the closure id of a side of the interface \index{simple\-Interface@{simple\-Interface}!get\-Element@{get\-Element}}
+\index{get\-Element@{get\-Element}!simpleInterface@{simple\-Interface}}
+\subsubsection[{get\-Element}]{\setlength{\rightskip}{0pt plus 5cm}const {\bf simple\-Element}$\ast$ simple\-Interface\-::get\-Element (
+\begin{DoxyParamCaption}
+\item[{int}]{i}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleInterface_a8683e28bc1a49b703b1dbdbdd038af23}
+return the element of a side of the interface \index{simple\-Interface@{simple\-Interface}!get\-Physical\-Tag@{get\-Physical\-Tag}}
+\index{get\-Physical\-Tag@{get\-Physical\-Tag}!simpleInterface@{simple\-Interface}}
+\subsubsection[{get\-Physical\-Tag}]{\setlength{\rightskip}{0pt plus 5cm}int simple\-Interface\-::get\-Physical\-Tag (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleInterface_aca081188c63f7ce522d99672e7b3657c}
+return physical tag of interface 
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+src/mesh/{\bf simple\-Mesh.\-h}\item 
+src/mesh/{\bf simple\-Mesh.\-cc}\end{DoxyCompactItemize}

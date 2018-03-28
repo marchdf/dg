@@ -1,0 +1,166 @@
+\section{deck Class Reference}
+\label{classdeck}\index{deck@{deck}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bf deck} ()\label{classdeck_a2ff8465ba7b13201bdf650fe461b442e}
+
+\begin{DoxyCompactList}\small\item\em Constructor defaults. \end{DoxyCompactList}\item 
+std\-::string {\bf get\-Time\-Meth} ()
+\item 
+double {\bf get\-Output\-Time\-Step} ()
+\item 
+double {\bf get\-Final\-Time} ()
+\item 
+double {\bf get\-C\-F\-L} ()
+\item 
+double {\bf get\-V\-N\-N} ()
+\item 
+int {\bf get\-Order} ()
+\item 
+std\-::string {\bf get\-Meshfile} ()
+\item 
+std\-::string {\bf get\-Elem\-Type} ()
+\item 
+std\-::string {\bf get\-Limiter} ()
+\item 
+std\-::string {\bf get\-Initial\-Condition} ()
+\item 
+const std\-::vector$<$ double $>$ \& {\bf get\-Initial\-Condition\-Inputs} () const 
+\item 
+const std\-::vector$<$ double $>$ \& {\bf get\-Thresholds} () const 
+\item 
+const std\-::vector$<$ double $>$ \& {\bf get\-Lagrange\-Particles} () const 
+\item 
+const std\-::vector$<$ double $>$ \& {\bf get\-Output\-Time\-Array} () const 
+\item 
+int {\bf get\-Restart\-Step} ()
+\item 
+void {\bf read\-Deck} (const char $\ast$file\-Name)
+\end{DoxyCompactItemize}
+
+
+\subsection{Member Function Documentation}
+\index{deck@{deck}!get\-C\-F\-L@{get\-C\-F\-L}}
+\index{get\-C\-F\-L@{get\-C\-F\-L}!deck@{deck}}
+\subsubsection[{get\-C\-F\-L}]{\setlength{\rightskip}{0pt plus 5cm}double deck\-::get\-C\-F\-L (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classdeck_aa5be63175d98768d49214fec6fd215ee}
+Return C\-F\-L number \index{deck@{deck}!get\-Elem\-Type@{get\-Elem\-Type}}
+\index{get\-Elem\-Type@{get\-Elem\-Type}!deck@{deck}}
+\subsubsection[{get\-Elem\-Type}]{\setlength{\rightskip}{0pt plus 5cm}std\-::string deck\-::get\-Elem\-Type (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classdeck_a3d203b684ee7e096f6f625d319678ba9}
+Return type of element in the mesh \index{deck@{deck}!get\-Final\-Time@{get\-Final\-Time}}
+\index{get\-Final\-Time@{get\-Final\-Time}!deck@{deck}}
+\subsubsection[{get\-Final\-Time}]{\setlength{\rightskip}{0pt plus 5cm}double deck\-::get\-Final\-Time (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classdeck_a7c9c68266348e8a3628eb819718b29af}
+Return final time \index{deck@{deck}!get\-Initial\-Condition@{get\-Initial\-Condition}}
+\index{get\-Initial\-Condition@{get\-Initial\-Condition}!deck@{deck}}
+\subsubsection[{get\-Initial\-Condition}]{\setlength{\rightskip}{0pt plus 5cm}std\-::string deck\-::get\-Initial\-Condition (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classdeck_aee955db8787a07a06dfedf16872907dc}
+Return initial condition \index{deck@{deck}!get\-Initial\-Condition\-Inputs@{get\-Initial\-Condition\-Inputs}}
+\index{get\-Initial\-Condition\-Inputs@{get\-Initial\-Condition\-Inputs}!deck@{deck}}
+\subsubsection[{get\-Initial\-Condition\-Inputs}]{\setlength{\rightskip}{0pt plus 5cm}const std\-::vector$<$double$>$\& deck\-::get\-Initial\-Condition\-Inputs (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classdeck_a63e0065005a5d3b013cee5d4b65ad938}
+Return initial condition inputs \index{deck@{deck}!get\-Lagrange\-Particles@{get\-Lagrange\-Particles}}
+\index{get\-Lagrange\-Particles@{get\-Lagrange\-Particles}!deck@{deck}}
+\subsubsection[{get\-Lagrange\-Particles}]{\setlength{\rightskip}{0pt plus 5cm}const std\-::vector$<$double$>$\& deck\-::get\-Lagrange\-Particles (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classdeck_a801cbe31b2479cef262679571d106732}
+Return Lagrange particles \index{deck@{deck}!get\-Limiter@{get\-Limiter}}
+\index{get\-Limiter@{get\-Limiter}!deck@{deck}}
+\subsubsection[{get\-Limiter}]{\setlength{\rightskip}{0pt plus 5cm}std\-::string deck\-::get\-Limiter (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classdeck_ae93b1864094f87496002e99bf006a31e}
+Return limiting method \index{deck@{deck}!get\-Meshfile@{get\-Meshfile}}
+\index{get\-Meshfile@{get\-Meshfile}!deck@{deck}}
+\subsubsection[{get\-Meshfile}]{\setlength{\rightskip}{0pt plus 5cm}std\-::string deck\-::get\-Meshfile (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classdeck_abab9e65ec8cf853bc7d5bf7147fc1102}
+Return the name of the mesh file \index{deck@{deck}!get\-Order@{get\-Order}}
+\index{get\-Order@{get\-Order}!deck@{deck}}
+\subsubsection[{get\-Order}]{\setlength{\rightskip}{0pt plus 5cm}int deck\-::get\-Order (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classdeck_a1af9a0d8f43e0975a2ba704a2f5b16e4}
+Return D\-G order \index{deck@{deck}!get\-Output\-Time\-Array@{get\-Output\-Time\-Array}}
+\index{get\-Output\-Time\-Array@{get\-Output\-Time\-Array}!deck@{deck}}
+\subsubsection[{get\-Output\-Time\-Array}]{\setlength{\rightskip}{0pt plus 5cm}const std\-::vector$<$double$>$\& deck\-::get\-Output\-Time\-Array (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classdeck_a2bfe69aff4e3c8ed52ca28baa489d471}
+Return the output time array \index{deck@{deck}!get\-Output\-Time\-Step@{get\-Output\-Time\-Step}}
+\index{get\-Output\-Time\-Step@{get\-Output\-Time\-Step}!deck@{deck}}
+\subsubsection[{get\-Output\-Time\-Step}]{\setlength{\rightskip}{0pt plus 5cm}double deck\-::get\-Output\-Time\-Step (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classdeck_a922b98db9356b14e34a1a3ba58c395ce}
+Return output time step \index{deck@{deck}!get\-Restart\-Step@{get\-Restart\-Step}}
+\index{get\-Restart\-Step@{get\-Restart\-Step}!deck@{deck}}
+\subsubsection[{get\-Restart\-Step}]{\setlength{\rightskip}{0pt plus 5cm}int deck\-::get\-Restart\-Step (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classdeck_a8ef5a776da489be5904d474bc21f4096}
+Return restart step \index{deck@{deck}!get\-Thresholds@{get\-Thresholds}}
+\index{get\-Thresholds@{get\-Thresholds}!deck@{deck}}
+\subsubsection[{get\-Thresholds}]{\setlength{\rightskip}{0pt plus 5cm}const std\-::vector$<$double$>$\& deck\-::get\-Thresholds (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classdeck_a6db814651f7f26b29f69f31ff1a75ab8}
+Return thresholds \index{deck@{deck}!get\-Time\-Meth@{get\-Time\-Meth}}
+\index{get\-Time\-Meth@{get\-Time\-Meth}!deck@{deck}}
+\subsubsection[{get\-Time\-Meth}]{\setlength{\rightskip}{0pt plus 5cm}std\-::string deck\-::get\-Time\-Meth (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classdeck_ab1da4109c64218dae40fea52e8946a69}
+Return time integration method \index{deck@{deck}!get\-V\-N\-N@{get\-V\-N\-N}}
+\index{get\-V\-N\-N@{get\-V\-N\-N}!deck@{deck}}
+\subsubsection[{get\-V\-N\-N}]{\setlength{\rightskip}{0pt plus 5cm}double deck\-::get\-V\-N\-N (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classdeck_a789c268140dcb5133e8286a0c251ed33}
+Return V\-N number \index{deck@{deck}!read\-Deck@{read\-Deck}}
+\index{read\-Deck@{read\-Deck}!deck@{deck}}
+\subsubsection[{read\-Deck}]{\setlength{\rightskip}{0pt plus 5cm}void deck\-::read\-Deck (
+\begin{DoxyParamCaption}
+\item[{const char $\ast$}]{file\-Name}
+\end{DoxyParamCaption}
+)}\label{classdeck_ab05f0e7c68a28130290a9791c710a1f1}
+Read the input deck 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em file\-Name} & deck filename\\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+src/deck/{\bf deck.\-h}\item 
+src/deck/{\bf deck.\-cc}\end{DoxyCompactItemize}

@@ -1,0 +1,127 @@
+\section{src/time\-\_\-integration/rk\-\_\-kernels.h File Reference}
+\label{rk__kernels_8h}\index{src/time\-\_\-integration/rk\-\_\-kernels.\-h@{src/time\-\_\-integration/rk\-\_\-kernels.\-h}}
+
+
+Functions to launch \doxyref{R\-K}{p.}{classRK} kernels.  
+
+
+{\ttfamily \#include \char`\"{}scalar\-\_\-def.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}macros.\-h\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bf Lsolver} (int N\-\_\-s, int N\-\_\-\-E, scalar Dt, scalar $\ast$Minv, scalar $\ast$f, scalar $\ast$D\-U)
+\item 
+void {\bf Laverage\-\_\-cell\-\_\-p0} (const int N\-\_\-s, const int N\-\_\-\-E, scalar $\ast$D\-U)
+\item 
+void {\bf Lfind\-U\-P\-A} (const int N\-\_\-s, const int N\-\_\-\-E, scalar $\ast$U, scalar $\ast$U\-P\-A)
+\item 
+void {\bf Lfind\-Mew} (const int N\-\_\-s, const int N\-\_\-\-E, scalar $\ast$U, scalar $\ast$Mew)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Functions to launch \doxyref{R\-K}{p.}{classRK} kernels. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{rk\-\_\-kernels.\-h@{rk\-\_\-kernels.\-h}!Laverage\-\_\-cell\-\_\-p0@{Laverage\-\_\-cell\-\_\-p0}}
+\index{Laverage\-\_\-cell\-\_\-p0@{Laverage\-\_\-cell\-\_\-p0}!rk_kernels.h@{rk\-\_\-kernels.\-h}}
+\subsubsection[{Laverage\-\_\-cell\-\_\-p0}]{\setlength{\rightskip}{0pt plus 5cm}void Laverage\-\_\-cell\-\_\-p0 (
+\begin{DoxyParamCaption}
+\item[{const int}]{N\-\_\-s, }
+\item[{const int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{D\-U}
+\end{DoxyParamCaption}
+)}\label{rk__kernels_8h_a5d83b54140654086a323fa0f6c313e0b}
+Host C function to lauch average\-\_\-cell\-\_\-p0 kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt out}  & {\em D\-U} & D\-U averaged in the cell \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of 1 x N\-\_\-\-F x blk\-E threads. blk\-E controls the number of elements to set on each block\index{rk\-\_\-kernels.\-h@{rk\-\_\-kernels.\-h}!Lfind\-Mew@{Lfind\-Mew}}
+\index{Lfind\-Mew@{Lfind\-Mew}!rk_kernels.h@{rk\-\_\-kernels.\-h}}
+\subsubsection[{Lfind\-Mew}]{\setlength{\rightskip}{0pt plus 5cm}void Lfind\-Mew (
+\begin{DoxyParamCaption}
+\item[{const int}]{N\-\_\-s, }
+\item[{const int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{Mew}
+\end{DoxyParamCaption}
+)}\label{rk__kernels_8h_a03bf442023a205f6de17842acfa75b99}
+Host C function to lauch find\-Mew kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em U} & solution \\
+\hline
+\mbox{\tt out}  & {\em Mew} & viscosity evaluated at all the nodes \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of N\-\_\-s x 1 x blk\-E threads. blk\-E controls the number of elements to set on each block\index{rk\-\_\-kernels.\-h@{rk\-\_\-kernels.\-h}!Lfind\-U\-P\-A@{Lfind\-U\-P\-A}}
+\index{Lfind\-U\-P\-A@{Lfind\-U\-P\-A}!rk_kernels.h@{rk\-\_\-kernels.\-h}}
+\subsubsection[{Lfind\-U\-P\-A}]{\setlength{\rightskip}{0pt plus 5cm}void Lfind\-U\-P\-A (
+\begin{DoxyParamCaption}
+\item[{const int}]{N\-\_\-s, }
+\item[{const int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{U\-P\-A}
+\end{DoxyParamCaption}
+)}\label{rk__kernels_8h_ae4d88662b6e57d12d7dec2bf2b90cfaf}
+Host C function to lauch find\-U\-P\-A kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em U} & solution \\
+\hline
+\mbox{\tt out}  & {\em U\-P\-A} & $\vert$u+a$\vert$ evaluated at all the nodes \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of N\-\_\-s x 1 x blk\-E threads. blk\-E controls the number of elements to set on each block\index{rk\-\_\-kernels.\-h@{rk\-\_\-kernels.\-h}!Lsolver@{Lsolver}}
+\index{Lsolver@{Lsolver}!rk_kernels.h@{rk\-\_\-kernels.\-h}}
+\subsubsection[{Lsolver}]{\setlength{\rightskip}{0pt plus 5cm}void Lsolver (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{scalar}]{Dt, }
+\item[{scalar $\ast$}]{Minv, }
+\item[{scalar $\ast$}]{f, }
+\item[{scalar $\ast$}]{D\-U}
+\end{DoxyParamCaption}
+)}\label{rk__kernels_8h_a6afb8159fe75cd65898ecde7f2a7319c}
+Host C function to lauch solve kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em Dt} & time step \\
+\hline
+\mbox{\tt in}  & {\em Minv} & inverse mass matrices for each element \\
+\hline
+\mbox{\tt in}  & {\em f} & f(t,\-U) \\
+\hline
+\mbox{\tt out}  & {\em D\-U} & du = dt$\ast$\-Minv$\ast$f(t,U) \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of N\-\_\-s x N\-\_\-\-F x blk\-E threads. blk\-E controls the number of elements to set on each block

@@ -67,6 +67,7 @@ class TIMERS{
   void start_timer(int k);
   void stop_timer(int k);
   void print_timers();
+  double print_single_timer(int k);
 };
 
 #endif

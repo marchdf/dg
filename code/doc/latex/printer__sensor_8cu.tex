@@ -1,0 +1,74 @@
+\section{src/printer/printer\-\_\-sensor.cu File Reference}
+\label{printer__sensor_8cu}\index{src/printer/printer\-\_\-sensor.\-cu@{src/printer/printer\-\_\-sensor.\-cu}}
+
+
+Kernel to output the sensor.  
+
+
+{\ttfamily \#include \char`\"{}printer\-\_\-kernels.\-h\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+arch\-\_\-global void {\bf format\-\_\-sensor} (int N\-\_\-s, int N\-\_\-\-E, int $\ast$sensor, scalar $\ast$output)
+\item 
+void {\bf Lformat\-\_\-sensor} (int N\-\_\-s, int N\-\_\-\-E, int $\ast$sensor, scalar $\ast$output)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Kernel to output the sensor. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{printer\-\_\-sensor.\-cu@{printer\-\_\-sensor.\-cu}!format\-\_\-sensor@{format\-\_\-sensor}}
+\index{format\-\_\-sensor@{format\-\_\-sensor}!printer_sensor.cu@{printer\-\_\-sensor.\-cu}}
+\subsubsection[{format\-\_\-sensor}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void format\-\_\-sensor (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int $\ast$}]{sensor, }
+\item[{scalar $\ast$}]{output}
+\end{DoxyParamCaption}
+)}\label{printer__sensor_8cu_a1d325e17a438687378a571fd18be569f}
+Format sensor kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em sensor} & sensor array \\
+\hline
+\mbox{\tt out}  & {\em output} & output solution array\\
+\hline
+\end{DoxyParams}
+\index{printer\-\_\-sensor.\-cu@{printer\-\_\-sensor.\-cu}!Lformat\-\_\-sensor@{Lformat\-\_\-sensor}}
+\index{Lformat\-\_\-sensor@{Lformat\-\_\-sensor}!printer_sensor.cu@{printer\-\_\-sensor.\-cu}}
+\subsubsection[{Lformat\-\_\-sensor}]{\setlength{\rightskip}{0pt plus 5cm}void Lformat\-\_\-sensor (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int $\ast$}]{sensor, }
+\item[{scalar $\ast$}]{output}
+\end{DoxyParamCaption}
+)}\label{printer__sensor_8cu_a51abb8c7b967f355d960cd133ce1ab69}
+Host C function to lauch format kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em sensor} & sensor array \\
+\hline
+\mbox{\tt out}  & {\em output} & output solution array \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of N\-\_\-s x 1 x blk\-E threads. blk\-E controls the number of elements to set on each block

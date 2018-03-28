@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Taken from https://www.tacc.utexas.edu/user-services/user-guides/stampede-user-guidef.write#running
+
+#SBATCH -J example         # job name
+#SBATCH -o example.o%j     # output and error file name (%j expands to jobID)
+#SBATCH -p normal
+#SBATCH -n 1
+#SBATCH -A TG-CTS130005
+#SBATCH -t 20:00:00       # run time
+#SBATCH --mail-user=marchdf@umich.edu
+#SBATCH --mail-type=begin  # email me when the job starts
+#SBATCH --mail-type=end    # email me when the job finishes
+
+module load cuda
+
+#  Put your job commands after this line
+./dgexec -d deck.inp

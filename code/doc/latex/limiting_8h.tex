@@ -1,0 +1,79 @@
+\section{src/limiting/limiting.h File Reference}
+\label{limiting_8h}\index{src/limiting/limiting.\-h@{src/limiting/limiting.\-h}}
+
+
+Class deals with solution limiting.  
+
+
+{\ttfamily \#include \char`\"{}misc.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}constants.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}physics.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}dg\-\_\-solver.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}limiting\-\_\-kernels.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}communicator.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}sensor.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}simple\-Mesh.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}timers.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}mem\-\_\-counter.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$cublas.\-h$>$}\\*
+{\ttfamily \#include \char`\"{}loopstart.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}loop.\-h\char`\"{}}\\*
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class {\bf Limiting}
+\end{DoxyCompactItemize}
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define {\bfseries \-\_\-\-Y}(x)~\-\_\-\-Y\label{limiting_8h_aa9abd441032a1fe465ba88358228ce9e}
+
+\item 
+\#define {\bfseries \-\_\-\-Y\-Mono}(x)~\-\_\-\-Y\-Mono\label{limiting_8h_a819d6809fc09aba4fcb79bcf97a40db0}
+
+\item 
+\#define {\bfseries \-\_\-\-Y\-Lim}(x)~\-\_\-\-Y\-Lim\label{limiting_8h_a3f3372245e0ecab1f12ec38242c60cff}
+
+\item 
+\#define {\bfseries L\-O\-O\-P\-\_\-\-E\-N\-D}~N\-\_\-\-Y\label{limiting_8h_aa475ffaee4695d0cbfb87c71fc1642eb}
+
+\item 
+\#define {\bfseries M\-A\-C\-R\-O}(x)~scalar$\ast$ \-\_\-\-Y(x), $\ast$ \-\_\-\-Y\-Mono(x), $\ast$ \-\_\-\-Y\-Lim(x);\label{limiting_8h_a5de1a5f1c0cf262e0ff2e5f03d586abc}
+
+\item 
+\#define {\bfseries L\-O\-O\-P\-\_\-\-E\-N\-D}~N\-\_\-\-Y\label{limiting_8h_aa475ffaee4695d0cbfb87c71fc1642eb}
+
+\item 
+\#define {\bfseries M\-A\-C\-R\-O}(x)~\-\_\-\-Y(x) = N\-U\-L\-L; \-\_\-\-Y\-Mono(x) = N\-U\-L\-L; \-\_\-\-Y\-Lim(x) = N\-U\-L\-L;\label{limiting_8h_a5de1a5f1c0cf262e0ff2e5f03d586abc}
+
+\item 
+\#define {\bfseries L\-O\-O\-P\-\_\-\-E\-N\-D}~N\-\_\-\-Y\label{limiting_8h_aa475ffaee4695d0cbfb87c71fc1642eb}
+
+\item 
+\#define {\bfseries M\-A\-C\-R\-O}(x)~\-\_\-\-Y(x) = new scalar[\-\_\-\-N\-\_\-s$\ast$\-\_\-\-N\-\_\-\-E]; \-\_\-\-Y\-Mono(x) = new scalar[\-\_\-\-N\-\_\-s$\ast$\-\_\-\-N\-\_\-\-E]; \-\_\-\-Y\-Lim(x) = new scalar[\-\_\-\-N\-\_\-s$\ast$\-\_\-\-N\-\_\-\-E]; mem\-\_\-counter.\-add\-To\-C\-P\-U\-Counter(3$\ast$\-\_\-\-N\-\_\-s$\ast$\-\_\-\-N\-\_\-\-E$\ast$sizeof(scalar));\label{limiting_8h_a5de1a5f1c0cf262e0ff2e5f03d586abc}
+
+\item 
+\#define {\bfseries L\-O\-O\-P\-\_\-\-E\-N\-D}~N\-\_\-\-Y\label{limiting_8h_aa475ffaee4695d0cbfb87c71fc1642eb}
+
+\item 
+\#define {\bfseries M\-A\-C\-R\-O}(x)~\-\_\-\-Y(x) = new scalar[\-\_\-\-N\-\_\-s$\ast$(\-\_\-\-N\-\_\-\-E+\-\_\-\-N\-\_\-ghosts)]; \-\_\-\-Y\-Mono(x) = new scalar[\-\_\-\-N\-\_\-s$\ast$(\-\_\-\-N\-\_\-\-E+\-\_\-\-N\-\_\-ghosts)]; \-\_\-\-Y\-Lim(x) = new scalar[\-\_\-\-N\-\_\-s$\ast$\-\_\-\-N\-\_\-\-E];  mem\-\_\-counter.\-add\-To\-C\-P\-U\-Counter(2$\ast$\-\_\-\-N\-\_\-s$\ast$(\-\_\-\-N\-\_\-\-E+\-\_\-\-N\-\_\-ghosts)$\ast$sizeof(scalar)); mem\-\_\-counter.\-add\-To\-C\-P\-U\-Counter(\-\_\-\-N\-\_\-s$\ast$\-\_\-\-N\-\_\-\-E$\ast$sizeof(scalar));\label{limiting_8h_a5de1a5f1c0cf262e0ff2e5f03d586abc}
+
+\item 
+\#define {\bfseries L\-O\-O\-P\-\_\-\-E\-N\-D}~N\-\_\-\-Y\label{limiting_8h_aa475ffaee4695d0cbfb87c71fc1642eb}
+
+\item 
+\#define {\bfseries M\-A\-C\-R\-O}(x)~if(\-\_\-\-Y(x)) del(\-\_\-\-Y(x)); del(\-\_\-\-Y\-Mono(x)); del(\-\_\-\-Y\-Lim(x));\label{limiting_8h_a5de1a5f1c0cf262e0ff2e5f03d586abc}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Class deals with solution limiting. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}

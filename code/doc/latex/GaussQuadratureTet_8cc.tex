@@ -1,0 +1,462 @@
+\section{src/quadratures/\-Gauss\-Quadrature\-Tet.cc File Reference}
+\label{GaussQuadratureTet_8cc}\index{src/quadratures/\-Gauss\-Quadrature\-Tet.\-cc@{src/quadratures/\-Gauss\-Quadrature\-Tet.\-cc}}
+
+
+Quadratures for tetrangles.  
+
+
+{\ttfamily \#include \char`\"{}Gauss.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}Gauss\-Legendre1\-D.\-h\char`\"{}}\\*
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define {\bfseries a4}~0.\-5854101966249685\label{GaussQuadratureTet_8cc_a2b8a642c7d03d9500f5ebb221499ce79}
+
+\item 
+\#define {\bfseries b4}~0.\-138196601125015\label{GaussQuadratureTet_8cc_a0ab0d6238080caa43c7e61efd7918d8c}
+
+\item 
+\#define {\bfseries a5}~0.\-500000000000000\label{GaussQuadratureTet_8cc_a811a6ac39c7ac08798fc3912b2ba860c}
+
+\item 
+\#define {\bfseries b5}~0.\-166666666666667\label{GaussQuadratureTet_8cc_a3a6038d28bd7d0645aa5fbe68cf1f3aa}
+
+\item 
+\#define {\bfseries a16}~0.\-00839563235002047\label{GaussQuadratureTet_8cc_a79ec74963df5f88120fad83d8651a721}
+
+\item 
+\#define {\bfseries b16}~0.\-0110903447722154\label{GaussQuadratureTet_8cc_a3f9c87414a982eab10add944eebfa6cf}
+
+\item 
+\#define {\bfseries c16}~0.\-7716429020672371\label{GaussQuadratureTet_8cc_a9bff965f9bd583a7f625031196585144}
+
+\item 
+\#define {\bfseries d16}~0.\-0761190326442543\label{GaussQuadratureTet_8cc_af1edd99b81fcdfdbf62effbe16e118f0}
+
+\item 
+\#define {\bfseries e16}~0.\-1197005277978019\label{GaussQuadratureTet_8cc_a0843ae2199a53f6e3dcde8afc6838284}
+
+\item 
+\#define {\bfseries f16}~0.\-0718316452676693\label{GaussQuadratureTet_8cc_aa20398cfd40e69a5e036e8ec0dc86ccf}
+
+\item 
+\#define {\bfseries g16}~0.\-4042339134672644\label{GaussQuadratureTet_8cc_a02c5d7ab10211f5e37987d2bfd212f2a}
+
+\item 
+\#define {\bfseries a17}~0.\-0314030927894235\label{GaussQuadratureTet_8cc_ac716bb8143ff9fdba3ddebb9fd138c6e}
+
+\item 
+\#define {\bfseries b17}~0.\-0111730972876738\label{GaussQuadratureTet_8cc_a162682fa6d1d5395d8a6e48093c43371}
+
+\item 
+\#define {\bfseries c17}~0.\-00754759872721232\label{GaussQuadratureTet_8cc_a7a8fbf0965307309d84d1b0d2debe06c}
+
+\item 
+\#define {\bfseries p17}~0.\-7316369079576180\label{GaussQuadratureTet_8cc_af51b2a99603f241c77c7479bbfedecd2}
+
+\item 
+\#define {\bfseries q17}~0.\-0894543640141273\label{GaussQuadratureTet_8cc_a6dfe376273d4ced15e2133b10a553904}
+
+\item 
+\#define {\bfseries e17}~0.\-1325810999384657\label{GaussQuadratureTet_8cc_ac991931a8224740eeccdd7251e8890f1}
+
+\item 
+\#define {\bfseries f17}~0.\-0245400397290300\label{GaussQuadratureTet_8cc_a0cc9eacd219d985dc5deb5588d3ed090}
+
+\item 
+\#define {\bfseries g17}~0.\-4214394310662522\label{GaussQuadratureTet_8cc_a80473185ee5597112c28f2c730288033}
+
+\item 
+\#define {\bfseries a29}~0.\-0150668817433579\label{GaussQuadratureTet_8cc_a47230c58cd2df0b8c18e339ceb5b0d80}
+
+\item 
+\#define {\bfseries b29}~0.\-00318663904649853\label{GaussQuadratureTet_8cc_a8f2a184329669e3470d5c05b6605d0a9}
+
+\item 
+\#define {\bfseries c29}~0.\-00726915640111095\label{GaussQuadratureTet_8cc_a63a84aa3369ae963acd6255283d841e0}
+
+\item 
+\#define {\bfseries d29}~0.\-00430194599366527\label{GaussQuadratureTet_8cc_a6abc086c8f895cc2450740d1b81ecb2d}
+
+\item 
+\#define {\bfseries p29}~0.\-8277192480479295\label{GaussQuadratureTet_8cc_ab9b6e55e88ea7b83be46b7d7022a2984}
+
+\item 
+\#define {\bfseries q29}~0.\-0574269173173568\label{GaussQuadratureTet_8cc_a1d89626ed04c2a9051f621e9fd244205}
+
+\item 
+\#define {\bfseries e29}~0.\-0513518841255634\label{GaussQuadratureTet_8cc_a9569bfd8330306ea649a43e20d036c0c}
+
+\item 
+\#define {\bfseries f29}~0.\-4860510285706072\label{GaussQuadratureTet_8cc_ab4683d874faaf9b36360c859d117a129}
+
+\item 
+\#define {\bfseries g29}~0.\-2312985436519147\label{GaussQuadratureTet_8cc_a6eaba55e87732ed4163ad164ac442524}
+
+\item 
+\#define {\bfseries h29}~0.\-2967538129690260\label{GaussQuadratureTet_8cc_a10d00bce57e3679db86e3259212edb3b}
+
+\item 
+\#define {\bfseries i29}~0.\-6081079894015281\label{GaussQuadratureTet_8cc_a02f4ff9f6724e6db2abd02ba45f302b2}
+
+\item 
+\#define {\bfseries j29}~0.\-0475690988147229\label{GaussQuadratureTet_8cc_a4d7a6e1f24bf705a6f63ee2e7c9b2d03}
+
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bf Int\-Pt} $\ast$ {\bfseries get\-G\-Q\-Tet\-Pts} (int order)\label{GaussQuadratureTet_8cc_aa2fbc54e6316bf5423477d2b50cbe997}
+
+\item 
+int {\bfseries get\-N\-G\-Q\-Tet\-Pts} (int order)\label{GaussQuadratureTet_8cc_a1282cd52b52f5b92299c1f8afd99f7e9}
+
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-Tet1} [1]
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-Tet2} [4]
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-Tet3} [5]
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-Tet4} [16]
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-Tet5} [17]
+\item 
+{\bf Int\-Pt} {\bfseries G\-Q\-Tet6} [29]\label{GaussQuadratureTet_8cc_ab5f60a0df40858739c66c61720ed8f9c}
+
+\item 
+{\bf Int\-Pt} $\ast$ {\bfseries G\-Q\-Tet} [7] = \{G\-Q\-Tet1,G\-Q\-Tet1,G\-Q\-Tet2,G\-Q\-Tet3,G\-Q\-Tet4,G\-Q\-Tet5,G\-Q\-Tet6\}\label{GaussQuadratureTet_8cc_a3e961388a13f12eb59d5f7bc9b3d4c33}
+
+\item 
+{\bf Int\-Pt} $\ast$ {\bfseries G\-Q\-Tet\-Degen} [17] = \{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\}\label{GaussQuadratureTet_8cc_a219ca1a955ef5ab39705d59da326c82b}
+
+\item 
+int {\bfseries G\-Q\-Tetn\-Pt} [7] = \{1,1,4,5,16,17,29\}\label{GaussQuadratureTet_8cc_a35821cd4b1687a431a2fd9a795842d9a}
+
+\item 
+{\bf Int\-Pt} {\bf tet\-P1\-Solin} [1]
+\item 
+{\bf Int\-Pt} {\bf tet\-P2\-Solin} [4]
+\item 
+{\bf Int\-Pt} {\bf tet\-P3\-Solin} [5]
+\item 
+{\bf Int\-Pt} {\bf tet\-P4\-Solin} [11]
+\item 
+{\bf Int\-Pt} {\bf tet\-P5\-Solin} [14]
+\item 
+{\bf Int\-Pt} {\bf tet\-P6\-Solin} [24]
+\item 
+{\bf Int\-Pt} {\bf tet\-P7\-Solin} [31]
+\item 
+{\bf Int\-Pt} {\bf tet\-P8\-Solin} [43]
+\item 
+{\bf Int\-Pt} {\bf tet\-P9\-Solin} [53]
+\item 
+{\bf Int\-Pt} {\bf tet\-P11\-Solin} [126]
+\item 
+{\bf Int\-Pt} {\bf tet\-P13\-Solin} [210]
+\item 
+{\bf Int\-Pt} {\bf tet\-P15\-Solin} [330]
+\item 
+{\bf Int\-Pt} {\bf tet\-P17\-Solin} [495]
+\item 
+{\bf Int\-Pt} {\bf tet\-P19\-Solin} [715]
+\item 
+{\bf Int\-Pt} {\bf tet\-P21\-Solin} [1001]
+\item 
+{\bf Int\-Pt} $\ast$ {\bfseries G\-Q\-Tet\-Solin} [22]
+\item 
+int {\bfseries G\-Q\-Tetn\-Pt\-Solin} [22]
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Quadratures for tetrangles. \begin{DoxyCopyright}{Copyright}
+Gmsh -\/ Copyright (C) 1997-\/2010 
+\end{DoxyCopyright}
+\begin{DoxyAuthor}{Authors}
+C. Geuzaine, J.-\/\-F. Remacle
+\end{DoxyAuthor}
+See the L\-I\-C\-E\-N\-S\-E.\-txt file for license information. Please report all bugs and problems to {\tt gmsh@geuz.\-org}. 
+
+\subsection{Variable Documentation}
+\index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!G\-Q\-Tet1@{G\-Q\-Tet1}}
+\index{G\-Q\-Tet1@{G\-Q\-Tet1}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{G\-Q\-Tet1}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-Tet1[1]}\label{GaussQuadratureTet_8cc_aa2ce0ee7b2f38327e1a88c6d06b5d1c2}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{.25, .25, .25\}, 0.166666666666667\}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!G\-Q\-Tet2@{G\-Q\-Tet2}}
+\index{G\-Q\-Tet2@{G\-Q\-Tet2}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{G\-Q\-Tet2}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-Tet2[4]}\label{GaussQuadratureTet_8cc_a9fd8196b6e305c2f05b00ba7eac2d2e5}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{ \{a4, b4, b4\}, 0.0416666666666667\},
+  \{ \{b4, a4, b4\}, 0.0416666666666667\},
+  \{ \{b4, b4, a4\}, 0.0416666666666667\},
+  \{ \{b4, b4, b4\}, 0.0416666666666667\}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!G\-Q\-Tet3@{G\-Q\-Tet3}}
+\index{G\-Q\-Tet3@{G\-Q\-Tet3}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{G\-Q\-Tet3}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-Tet3[5]}\label{GaussQuadratureTet_8cc_ada56e2c1a1f3ecd12803fb374879269b}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.25, 0.25, 0.25\}, -0.133333333333333\},
+  \{\{a5, b5, b5\}, 0.075\},
+  \{\{b5, a5, b5\}, 0.075\},
+  \{\{b5, b5, a5\}, 0.075\},
+  \{\{b5, b5, b5\}, 0.075\}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!G\-Q\-Tet4@{G\-Q\-Tet4}}
+\index{G\-Q\-Tet4@{G\-Q\-Tet4}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{G\-Q\-Tet4}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-Tet4[16]}\label{GaussQuadratureTet_8cc_a5b7439b2b3749cc443fa83f6e9ac5e99}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{c16, d16, d16\}, a16\},
+  \{\{d16, c16, d16\}, a16\},
+  \{\{d16, d16, c16\}, a16\},
+  \{\{d16, d16, d16\}, a16\},
+  \{\{e16, f16, g16\}, b16\},
+  \{\{f16, e16, g16\}, b16\},
+  \{\{e16, g16, g16\}, b16\},
+  \{\{f16, g16, g16\}, b16\},
+  \{\{g16, g16, e16\}, b16\},
+  \{\{g16, g16, f16\}, b16\},
+  \{\{g16, e16, f16\}, b16\},
+  \{\{g16, f16, e16\}, b16\},
+  \{\{e16, g16, f16\}, b16\},
+  \{\{f16, g16, e16\}, b16\},
+  \{\{g16, e16, g16\}, b16\},
+  \{\{g16, f16, g16\}, b16\}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!G\-Q\-Tet5@{G\-Q\-Tet5}}
+\index{G\-Q\-Tet5@{G\-Q\-Tet5}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{G\-Q\-Tet5}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} G\-Q\-Tet5[17]}\label{GaussQuadratureTet_8cc_abef498fd596d98bea36ede7150978fcf}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.25, 0.25, 0.25\}, a17\},
+  \{\{p17, q17, q17\}, b17\},
+  \{\{q17, p17, q17\}, b17\},
+  \{\{q17, q17, p17\}, b17\},
+  \{\{q17, q17, q17\}, b17\},
+  \{\{e17, f17, g17\}, c17\},
+  \{\{f17, e17, g17\}, c17\},
+  \{\{e17, g17, g17\}, c17\},
+  \{\{f17, g17, g17\}, c17\},
+  \{\{g17, g17, e17\}, c17\},
+  \{\{g17, g17, f17\}, c17\},
+  \{\{g17, e17, f17\}, c17\},
+  \{\{g17, f17, e17\}, c17\},
+  \{\{e17, g17, f17\}, c17\},
+  \{\{f17, g17, e17\}, c17\},
+  \{\{g17, e17, g17\}, c17\},
+  \{\{g17, f17, g17\}, c17\}
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!G\-Q\-Tetn\-Pt\-Solin@{G\-Q\-Tetn\-Pt\-Solin}}
+\index{G\-Q\-Tetn\-Pt\-Solin@{G\-Q\-Tetn\-Pt\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{G\-Q\-Tetn\-Pt\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}int G\-Q\-Tetn\-Pt\-Solin[22]}\label{GaussQuadratureTet_8cc_a662baff69aa48fe87ffe30d450d045ff}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  1,
+  1,
+  4,
+  5,
+  11,
+  14,
+  24,
+  31,
+  43,
+  53,
+  126,
+  126,
+  210,
+  210,
+  330,
+  330,
+  495,
+  495,
+  715,
+  715,
+  1001,
+  1001\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!G\-Q\-Tet\-Solin@{G\-Q\-Tet\-Solin}}
+\index{G\-Q\-Tet\-Solin@{G\-Q\-Tet\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{G\-Q\-Tet\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt}$\ast$ G\-Q\-Tet\-Solin[22]}\label{GaussQuadratureTet_8cc_a8d66272803749c0d498308654dd89c8e}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  tetP1Solin,
+  tetP1Solin,
+  tetP2Solin,
+  tetP3Solin,
+  tetP4Solin,
+  tetP5Solin,
+  tetP6Solin,
+  tetP7Solin,
+  tetP8Solin,
+  tetP9Solin,
+  tetP11Solin,
+  tetP11Solin,
+  tetP13Solin,
+  tetP13Solin,
+  tetP15Solin,
+  tetP15Solin,
+  tetP17Solin,
+  tetP17Solin,
+  tetP19Solin,
+  tetP19Solin,
+  tetP21Solin,
+  tetP21Solin
+\}
+\end{DoxyCode}
+\index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!tet\-P11\-Solin@{tet\-P11\-Solin}}
+\index{tet\-P11\-Solin@{tet\-P11\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{tet\-P11\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tet\-P11\-Solin[126]}\label{GaussQuadratureTet_8cc_a51d2e5260d0ef1e432a192ac4245a7c6}
+Quadrature rule for an interpolation of order 11 on the tetrahedron \index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!tet\-P13\-Solin@{tet\-P13\-Solin}}
+\index{tet\-P13\-Solin@{tet\-P13\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{tet\-P13\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tet\-P13\-Solin[210]}\label{GaussQuadratureTet_8cc_a64aed983c0af94e680e171964384ef55}
+Quadrature rule for an interpolation of order 13 on the tetrahedron \index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!tet\-P15\-Solin@{tet\-P15\-Solin}}
+\index{tet\-P15\-Solin@{tet\-P15\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{tet\-P15\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tet\-P15\-Solin[330]}\label{GaussQuadratureTet_8cc_acca5d3da2f4ddb234443df33acecb17a}
+Quadrature rule for an interpolation of order 15 on the tetrahedron \index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!tet\-P17\-Solin@{tet\-P17\-Solin}}
+\index{tet\-P17\-Solin@{tet\-P17\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{tet\-P17\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tet\-P17\-Solin[495]}\label{GaussQuadratureTet_8cc_ab69bb8e66fa3906fc5a6d861176e461d}
+Quadrature rule for an interpolation of order 17 on the tetrahedron \index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!tet\-P19\-Solin@{tet\-P19\-Solin}}
+\index{tet\-P19\-Solin@{tet\-P19\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{tet\-P19\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tet\-P19\-Solin[715]}\label{GaussQuadratureTet_8cc_abd0326569210df9830b9e585be4f47b2}
+Quadrature rule for an interpolation of order 19 on the tetrahedron \index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!tet\-P1\-Solin@{tet\-P1\-Solin}}
+\index{tet\-P1\-Solin@{tet\-P1\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{tet\-P1\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tet\-P1\-Solin[1]}\label{GaussQuadratureTet_8cc_ad13ff8bd279415feb5d1f2e59fa7be04}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.25, 0.25, 0.25\}, 0.166666666666667\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 1 on the tetrahedron \index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!tet\-P21\-Solin@{tet\-P21\-Solin}}
+\index{tet\-P21\-Solin@{tet\-P21\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{tet\-P21\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tet\-P21\-Solin[1001]}\label{GaussQuadratureTet_8cc_a2dbbec6a13c023157cbfca4b118e43bb}
+Quadrature rule for an interpolation of order 21 on the tetrahedron \index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!tet\-P2\-Solin@{tet\-P2\-Solin}}
+\index{tet\-P2\-Solin@{tet\-P2\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{tet\-P2\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tet\-P2\-Solin[4]}\label{GaussQuadratureTet_8cc_a6c916bc9418044d9a9f2778bbcde9aca}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.138196601125, 0.138196601125, 0.138196601125\}, 0.0416666666666667\},
+  \{\{0.585410196625, 0.138196601125, 0.138196601125\}, 0.0416666666666667\},
+  \{\{0.138196601125, 0.585410196625, 0.138196601125\}, 0.0416666666666667\},
+  \{\{0.138196601125, 0.138196601125, 0.585410196625\}, 0.0416666666666667\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 2 on the tetrahedron \index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!tet\-P3\-Solin@{tet\-P3\-Solin}}
+\index{tet\-P3\-Solin@{tet\-P3\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{tet\-P3\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tet\-P3\-Solin[5]}\label{GaussQuadratureTet_8cc_a18ce0e5f7e5990ecb5b616e1e3d8227b}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.250000000000, 0.250000000000, 0.250000000000\}, -0.133333333333333\},
+  \{\{0.166666666667, 0.166666666667, 0.166666666667\}, +0.075000000000000\},
+  \{\{0.166666666667, 0.166666666667, 0.500000000000\}, +0.075000000000000\},
+  \{\{0.166666666667, 0.500000000000, 0.166666666667\}, +0.075000000000000\},
+  \{\{0.500000000000, 0.166666666667, 0.166666666667\}, +0.075000000000000\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 3 on the tetrahedron \index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!tet\-P4\-Solin@{tet\-P4\-Solin}}
+\index{tet\-P4\-Solin@{tet\-P4\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{tet\-P4\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tet\-P4\-Solin[11]}\label{GaussQuadratureTet_8cc_a231745409a1489fc019bf03bec1d3903}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.2500000000000, 0.2500000000000, 0.2500000000000\}, -0.0131555555555\},
+  \{\{0.0714285714286, 0.0714285714286, 0.0714285714286\}, +0.0076222222222\},
+  \{\{0.0714285714286, 0.0714285714286, 0.7857142857140\}, +0.0076222222222\},
+  \{\{0.0714285714286, 0.7857142857140, 0.0714285714286\}, +0.0076222222222\},
+  \{\{0.7857142857140, 0.0714285714286, 0.0714285714286\}, +0.0076222222222\},
+  \{\{0.3994035761670, 0.3994035761670, 0.1005964238330\}, +0.0248888888888\},
+  \{\{0.3994035761670, 0.1005964238330, 0.3994035761670\}, +0.0248888888888\},
+  \{\{0.1005964238330, 0.3994035761670, 0.3994035761670\}, +0.0248888888888\},
+  \{\{0.3994035761670, 0.1005964238330, 0.1005964238330\}, +0.0248888888888\},
+  \{\{0.1005964238330, 0.3994035761670, 0.1005964238330\}, +0.0248888888888\},
+  \{\{0.1005964238330, 0.1005964238330, 0.3994035761670\}, +0.0248888888888\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 4 on the tetrahedron \index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!tet\-P5\-Solin@{tet\-P5\-Solin}}
+\index{tet\-P5\-Solin@{tet\-P5\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{tet\-P5\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tet\-P5\-Solin[14]}\label{GaussQuadratureTet_8cc_a0a6501abbbb4f9c96fbb9aa05861b911}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.0927352503109, 0.0927352503109, 0.0927352503109\}, 0.01224884051940\},
+  \{\{0.7217942490670, 0.0927352503109, 0.0927352503109\}, 0.01224884051940\},
+  \{\{0.0927352503109, 0.7217942490670, 0.0927352503109\}, 0.01224884051940\},
+  \{\{0.0927352503109, 0.0927352503109, 0.7217942490670\}, 0.01224884051940\},
+  \{\{0.3108859192630, 0.3108859192630, 0.3108859192630\}, 0.01878132095300\},
+  \{\{0.0673422422101, 0.3108859192630, 0.3108859192630\}, 0.01878132095300\},
+  \{\{0.3108859192630, 0.0673422422101, 0.3108859192630\}, 0.01878132095300\},
+  \{\{0.3108859192630, 0.3108859192630, 0.0673422422101\}, 0.01878132095300\},
+  \{\{0.4544962958740, 0.4544962958740, 0.0455037041256\}, 0.00709100346285\},
+  \{\{0.4544962958740, 0.0455037041256, 0.4544962958740\}, 0.00709100346285\},
+  \{\{0.0455037041256, 0.4544962958740, 0.4544962958740\}, 0.00709100346285\},
+  \{\{0.4544962958740, 0.0455037041256, 0.0455037041256\}, 0.00709100346285\},
+  \{\{0.0455037041256, 0.4544962958740, 0.0455037041256\}, 0.00709100346285\},
+  \{\{0.0455037041256, 0.0455037041256, 0.4544962958740\}, 0.00709100346285\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 5 on the tetrahedron \index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!tet\-P6\-Solin@{tet\-P6\-Solin}}
+\index{tet\-P6\-Solin@{tet\-P6\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{tet\-P6\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tet\-P6\-Solin[24]}\label{GaussQuadratureTet_8cc_ae88e8080e20ca4adca11fbebce3a9211}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{\{0.2146028712590, 0.2146028712590, 0.2146028712590\}, 0.006653791709700\},
+  \{\{0.3561913862230, 0.2146028712590, 0.2146028712590\}, 0.006653791709700\},
+  \{\{0.2146028712590, 0.3561913862230, 0.2146028712590\}, 0.006653791709700\},
+  \{\{0.2146028712590, 0.2146028712590, 0.3561913862230\}, 0.006653791709700\},
+  \{\{0.0406739585346, 0.0406739585346, 0.0406739585346\}, 0.001679535175883\},
+  \{\{0.8779781243960, 0.0406739585346, 0.0406739585346\}, 0.001679535175883\},
+  \{\{0.0406739585346, 0.8779781243960, 0.0406739585346\}, 0.001679535175883\},
+  \{\{0.0406739585346, 0.0406739585346, 0.8779781243960\}, 0.001679535175883\},
+  \{\{0.3223378901420, 0.3223378901420, 0.3223378901420\}, 0.009226196923950\},
+  \{\{0.0329863295732, 0.3223378901420, 0.3223378901420\}, 0.009226196923950\},
+  \{\{0.3223378901420, 0.0329863295732, 0.3223378901420\}, 0.009226196923950\},
+  \{\{0.3223378901420, 0.3223378901420, 0.0329863295732\}, 0.009226196923950\},
+  \{\{0.0636610018750, 0.0636610018750, 0.2696723314580\}, 0.008035714285717\},
+  \{\{0.0636610018750, 0.2696723314580, 0.0636610018750\}, 0.008035714285717\},
+  \{\{0.0636610018750, 0.0636610018750, 0.6030056647920\}, 0.008035714285717\},
+  \{\{0.0636610018750, 0.6030056647920, 0.0636610018750\}, 0.008035714285717\},
+  \{\{0.0636610018750, 0.2696723314580, 0.6030056647920\}, 0.008035714285717\},
+  \{\{0.0636610018750, 0.6030056647920, 0.2696723314580\}, 0.008035714285717\},
+  \{\{0.2696723314580, 0.0636610018750, 0.0636610018750\}, 0.008035714285717\},
+  \{\{0.2696723314580, 0.0636610018750, 0.6030056647920\}, 0.008035714285717\},
+  \{\{0.2696723314580, 0.6030056647920, 0.0636610018750\}, 0.008035714285717\},
+  \{\{0.6030056647920, 0.0636610018750, 0.2696723314580\}, 0.008035714285717\},
+  \{\{0.6030056647920, 0.0636610018750, 0.0636610018750\}, 0.008035714285717\},
+  \{\{0.6030056647920, 0.2696723314580, 0.0636610018750\}, 0.008035714285717\}
+\}
+\end{DoxyCode}
+Quadrature rule for an interpolation of order 6 on the tetrahedron \index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!tet\-P7\-Solin@{tet\-P7\-Solin}}
+\index{tet\-P7\-Solin@{tet\-P7\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{tet\-P7\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tet\-P7\-Solin[31]}\label{GaussQuadratureTet_8cc_a80e6ef66f8515a9d4f2b235daca30a08}
+Quadrature rule for an interpolation of order 7 on the tetrahedron \index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!tet\-P8\-Solin@{tet\-P8\-Solin}}
+\index{tet\-P8\-Solin@{tet\-P8\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{tet\-P8\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tet\-P8\-Solin[43]}\label{GaussQuadratureTet_8cc_a04876ca02307cb3e6737f4f7aad6d97c}
+Quadrature rule for an interpolation of order 8 on the tetrahedron \index{Gauss\-Quadrature\-Tet.\-cc@{Gauss\-Quadrature\-Tet.\-cc}!tet\-P9\-Solin@{tet\-P9\-Solin}}
+\index{tet\-P9\-Solin@{tet\-P9\-Solin}!GaussQuadratureTet.cc@{Gauss\-Quadrature\-Tet.\-cc}}
+\subsubsection[{tet\-P9\-Solin}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Int\-Pt} tet\-P9\-Solin[53]}\label{GaussQuadratureTet_8cc_ad34eab39ef2edf86f84cab43a31e883c}
+Quadrature rule for an interpolation of order 9 on the tetrahedron 

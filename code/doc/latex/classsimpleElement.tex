@@ -1,0 +1,100 @@
+\section{simple\-Element Class Reference}
+\label{classsimpleElement}\index{simple\-Element@{simple\-Element}}
+
+
+Class that creates a simple element.  
+
+
+
+
+{\ttfamily \#include $<$simple\-Mesh.\-h$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bf simple\-Element} (int id, int ptag, int partition, std\-::vector$<$ int $>$ nodes)
+\begin{DoxyCompactList}\small\item\em Constructor of a simple element. \end{DoxyCompactList}\item 
+int {\bf get\-Id} () const 
+\item 
+int {\bf get\-Physical\-Tag} () const 
+\item 
+int {\bf get\-Partition} () const 
+\item 
+int {\bf get\-Nb\-Nodes} () const 
+\item 
+int {\bf get\-Node} (int i) const 
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Class that creates a simple element. 
+
+\subsection{Constructor \& Destructor Documentation}
+\index{simple\-Element@{simple\-Element}!simple\-Element@{simple\-Element}}
+\index{simple\-Element@{simple\-Element}!simpleElement@{simple\-Element}}
+\subsubsection[{simple\-Element}]{\setlength{\rightskip}{0pt plus 5cm}simple\-Element\-::simple\-Element (
+\begin{DoxyParamCaption}
+\item[{int}]{id, }
+\item[{int}]{ptag, }
+\item[{int}]{partition, }
+\item[{std\-::vector$<$ int $>$}]{nodes}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleElement_a5b65934f53ad837aecd2414556f5ff59}
+
+
+Constructor of a simple element. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em id} & its id \\
+\hline
+\mbox{\tt in}  & {\em ptag} & its physical tag \\
+\hline
+\mbox{\tt in}  & {\em partition} & its partition \\
+\hline
+\mbox{\tt in}  & {\em nodes} & the nodes of the element \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Function Documentation}
+\index{simple\-Element@{simple\-Element}!get\-Id@{get\-Id}}
+\index{get\-Id@{get\-Id}!simpleElement@{simple\-Element}}
+\subsubsection[{get\-Id}]{\setlength{\rightskip}{0pt plus 5cm}int simple\-Element\-::get\-Id (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleElement_a72588de2aef03b32d06f4f15edcc9992}
+Return the element id \index{simple\-Element@{simple\-Element}!get\-Nb\-Nodes@{get\-Nb\-Nodes}}
+\index{get\-Nb\-Nodes@{get\-Nb\-Nodes}!simpleElement@{simple\-Element}}
+\subsubsection[{get\-Nb\-Nodes}]{\setlength{\rightskip}{0pt plus 5cm}int simple\-Element\-::get\-Nb\-Nodes (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleElement_a46e95b29f1a0d7327ed95e9dd7374beb}
+Return the number of nodes of the element \index{simple\-Element@{simple\-Element}!get\-Node@{get\-Node}}
+\index{get\-Node@{get\-Node}!simpleElement@{simple\-Element}}
+\subsubsection[{get\-Node}]{\setlength{\rightskip}{0pt plus 5cm}int simple\-Element\-::get\-Node (
+\begin{DoxyParamCaption}
+\item[{int}]{i}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleElement_ac6881b4f5c8c4238920d11cc03327cbf}
+Return nodes of an element \index{simple\-Element@{simple\-Element}!get\-Partition@{get\-Partition}}
+\index{get\-Partition@{get\-Partition}!simpleElement@{simple\-Element}}
+\subsubsection[{get\-Partition}]{\setlength{\rightskip}{0pt plus 5cm}int simple\-Element\-::get\-Partition (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleElement_a050942cfc9ee1e84da308907e3919ba6}
+Return the partition the element belongs to \index{simple\-Element@{simple\-Element}!get\-Physical\-Tag@{get\-Physical\-Tag}}
+\index{get\-Physical\-Tag@{get\-Physical\-Tag}!simpleElement@{simple\-Element}}
+\subsubsection[{get\-Physical\-Tag}]{\setlength{\rightskip}{0pt plus 5cm}int simple\-Element\-::get\-Physical\-Tag (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classsimpleElement_abdd555d83f33ccab87ecdbd573dd6bbf}
+Return the physical tag of an element 
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+src/mesh/{\bf simple\-Mesh.\-h}\end{DoxyCompactItemize}

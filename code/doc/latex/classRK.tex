@@ -1,0 +1,184 @@
+\section{R\-K Class Reference}
+\label{classRK}\index{R\-K@{R\-K}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bf R\-K} (int order, double Dt\-Out, double Tf, const std\-::vector$<$ double $>$ \&output\-\_\-time\-\_\-array=std\-::vector$<$ double $>$())
+\begin{DoxyCompactList}\small\item\em Constructor. \end{DoxyCompactList}\item 
+{\bf $\sim$\-R\-K} ()
+\item 
+void {\bf R\-K\-\_\-integration} (scalar C\-F\-L, scalar V\-N\-N, int restart\-\_\-step, int N\-\_\-\-E, int N\-\_\-s, int N\-\_\-\-G, int M\-\_\-\-T, int M\-\_\-s, int N\-\_\-ghosts, scalar $\ast$h\-\_\-\-Minv, scalar $\ast$h\-\_\-\-U, {\bf Limiting} \&Limiter, bool order0, {\bf D\-G\-\_\-\-S\-O\-L\-V\-E\-R} \&dgsolver, {\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} \&communicator, {\bf P\-R\-I\-N\-T\-E\-R} \&printer, {\bf S\-E\-N\-S\-O\-R} \&sensor, {\bf T\-I\-M\-E\-R\-S} \&timers, {\bf M\-E\-M\-\_\-\-C\-O\-U\-N\-T\-E\-R} \&mem\-\_\-counter, {\bf L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S} \&particles)
+\item 
+scalar {\bf Dt\-From\-C\-F\-L} (const int N\-\_\-s, const int N\-\_\-\-E, const scalar C\-F\-L, scalar $\ast$U, scalar $\ast$U\-P\-A)
+\item 
+scalar {\bf Dt\-From\-C\-F\-L\-\_\-and\-\_\-\-V\-N\-N} (const int N\-\_\-s, const int N\-\_\-\-E, const scalar C\-F\-L, const scalar V\-N\-N, scalar $\ast$U, scalar $\ast$U\-P\-A, scalar $\ast$Mew)
+\end{DoxyCompactItemize}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\index{R\-K@{R\-K}!R\-K@{R\-K}}
+\index{R\-K@{R\-K}!RK@{R\-K}}
+\subsubsection[{R\-K}]{\setlength{\rightskip}{0pt plus 5cm}R\-K\-::\-R\-K (
+\begin{DoxyParamCaption}
+\item[{int}]{order, }
+\item[{double}]{Dt\-Out, }
+\item[{double}]{Tf, }
+\item[{const std\-::vector$<$ double $>$ \&}]{output\-\_\-time\-\_\-array = {\ttfamily std\-:\-:vector$<$double$>$()}}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classRK_a34bc53d4bae4232ed03eeeb2924bce0b}
+
+
+Constructor. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em order} & D\-G polynomial order \\
+\hline
+\mbox{\tt in}  & {\em Dt\-Out} & output time step \\
+\hline
+\mbox{\tt in}  & {\em Tf} & final time \\
+\hline
+\end{DoxyParams}
+\index{R\-K@{R\-K}!$\sim$\-R\-K@{$\sim$\-R\-K}}
+\index{$\sim$\-R\-K@{$\sim$\-R\-K}!RK@{R\-K}}
+\subsubsection[{$\sim$\-R\-K}]{\setlength{\rightskip}{0pt plus 5cm}R\-K\-::$\sim$\-R\-K (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classRK_aa22ae85d1d2df79d9ad1cb660ef038c2}
+Destructor 
+
+\subsection{Member Function Documentation}
+\index{R\-K@{R\-K}!Dt\-From\-C\-F\-L@{Dt\-From\-C\-F\-L}}
+\index{Dt\-From\-C\-F\-L@{Dt\-From\-C\-F\-L}!RK@{R\-K}}
+\subsubsection[{Dt\-From\-C\-F\-L}]{\setlength{\rightskip}{0pt plus 5cm}scalar R\-K\-::\-Dt\-From\-C\-F\-L (
+\begin{DoxyParamCaption}
+\item[{const int}]{N\-\_\-s, }
+\item[{const int}]{N\-\_\-\-E, }
+\item[{const scalar}]{C\-F\-L, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{U\-P\-A}
+\end{DoxyParamCaption}
+)}\label{classRK_a14b96f672927422ea2b2c2b4b8c6eda0}
+Get the next time step 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em C\-F\-L} & C\-F\-L number \\
+\hline
+\mbox{\tt in}  & {\em U} & solution to integrate in time \\
+\hline
+\mbox{\tt out}  & {\em U\-P\-A} & array of $\vert$u+a$\vert$ \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+next time step
+\end{DoxyReturn}
+\index{R\-K@{R\-K}!Dt\-From\-C\-F\-L\-\_\-and\-\_\-\-V\-N\-N@{Dt\-From\-C\-F\-L\-\_\-and\-\_\-\-V\-N\-N}}
+\index{Dt\-From\-C\-F\-L\-\_\-and\-\_\-\-V\-N\-N@{Dt\-From\-C\-F\-L\-\_\-and\-\_\-\-V\-N\-N}!RK@{R\-K}}
+\subsubsection[{Dt\-From\-C\-F\-L\-\_\-and\-\_\-\-V\-N\-N}]{\setlength{\rightskip}{0pt plus 5cm}scalar R\-K\-::\-Dt\-From\-C\-F\-L\-\_\-and\-\_\-\-V\-N\-N (
+\begin{DoxyParamCaption}
+\item[{const int}]{N\-\_\-s, }
+\item[{const int}]{N\-\_\-\-E, }
+\item[{const scalar}]{C\-F\-L, }
+\item[{const scalar}]{V\-N\-N, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{U\-P\-A, }
+\item[{scalar $\ast$}]{Mew}
+\end{DoxyParamCaption}
+)}\label{classRK_aa8d7f716161b280f4033963027b8d794}
+Get the next time step 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em C\-F\-L} & C\-F\-L number \\
+\hline
+\mbox{\tt in}  & {\em V\-N\-N} & Von-\/\-Neumann number \\
+\hline
+\mbox{\tt in}  & {\em U} & solution to integrate in time \\
+\hline
+\mbox{\tt out}  & {\em U\-P\-A} & array of $\vert$u+a$\vert$ \\
+\hline
+\mbox{\tt out}  & {\em array} & of viscosity at each location \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+next time step
+\end{DoxyReturn}
+\index{R\-K@{R\-K}!R\-K\-\_\-integration@{R\-K\-\_\-integration}}
+\index{R\-K\-\_\-integration@{R\-K\-\_\-integration}!RK@{R\-K}}
+\subsubsection[{R\-K\-\_\-integration}]{\setlength{\rightskip}{0pt plus 5cm}void R\-K\-::\-R\-K\-\_\-integration (
+\begin{DoxyParamCaption}
+\item[{scalar}]{C\-F\-L, }
+\item[{scalar}]{V\-N\-N, }
+\item[{int}]{restart\-\_\-step, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-G, }
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{M\-\_\-s, }
+\item[{int}]{N\-\_\-ghosts, }
+\item[{scalar $\ast$}]{h\-\_\-\-Minv, }
+\item[{scalar $\ast$}]{h\-\_\-\-U, }
+\item[{{\bf Limiting} \&}]{Limiter, }
+\item[{bool}]{order0, }
+\item[{{\bf D\-G\-\_\-\-S\-O\-L\-V\-E\-R} \&}]{dgsolver, }
+\item[{{\bf C\-O\-M\-M\-U\-N\-I\-C\-A\-T\-O\-R} \&}]{communicator, }
+\item[{{\bf P\-R\-I\-N\-T\-E\-R} \&}]{printer, }
+\item[{{\bf S\-E\-N\-S\-O\-R} \&}]{sensor, }
+\item[{{\bf T\-I\-M\-E\-R\-S} \&}]{timers, }
+\item[{{\bf M\-E\-M\-\_\-\-C\-O\-U\-N\-T\-E\-R} \&}]{mem\-\_\-counter, }
+\item[{{\bf L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S} \&}]{particles}
+\end{DoxyParamCaption}
+)}\label{classRK_a9bf5dd807344ea65bf3bebe006f97f40}
+Main \doxyref{R\-K}{p.}{classRK} integration function 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em C\-F\-L} & C\-F\-L number \\
+\hline
+\mbox{\tt in}  & {\em restart\-\_\-step} & output step for a restart \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-G} & number of gaussian nodes per element \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-ghosts} & number of ghost elements \\
+\hline
+\mbox{\tt in}  & {\em h\-\_\-\-Minv} & host array containing the inverse mass matrices of each element \\
+\hline
+\mbox{\tt out}  & {\em h\-\_\-\-U} & solution to integrate in time \\
+\hline
+\mbox{\tt in}  & {\em Limiter} & limiter object \\
+\hline
+\mbox{\tt in}  & {\em order0} & true if D\-G p=0 \\
+\hline
+\mbox{\tt in}  & {\em dgsolver} & solver object \\
+\hline
+\mbox{\tt in}  & {\em communicator} & communicator object \\
+\hline
+\mbox{\tt in}  & {\em printer} & printer object \\
+\hline
+\mbox{\tt in}  & {\em sensor} & sensor object \\
+\hline
+\mbox{\tt in}  & {\em timers} & timers object \\
+\hline
+\mbox{\tt in}  & {\em mem\-\_\-counter} & memory counter object \\
+\hline
+\mbox{\tt in}  & {\em particles} & lagrange particles object\\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+src/time\-\_\-integration/{\bf rk.\-h}\item 
+src/time\-\_\-integration/{\bf rk.\-cc}\end{DoxyCompactItemize}

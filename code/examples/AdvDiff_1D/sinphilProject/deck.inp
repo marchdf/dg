@@ -1,0 +1,39 @@
+#Make options
+LIEU=HOME
+ARCH=USE_CPU
+PROF=OFF
+PARA=NO_MPI
+PREC=USE_DOUBLE
+DIMS=ONED
+ERRR=ERROR
+VISC=NOVIS
+FSOL=SIMPLE
+CONS=NULL
+TGVS=NULL
+PROB=SCALARAD
+NFLD=1
+GAMM=GAMNCON
+FLUX=UPW
+MASS=0
+#Code options
+#time integration
+rk4
+#output time step size
+0.1
+#final time
+0.5
+#Courant-Friedrichs-Lewy condition
+0.5
+#Von Neumann condition
+0.9
+#sensor thresholds
+0.1 0.1 0.1
+#order
+2
+#mesh file
+mesh.msh
+lin
+#limiter
+null
+#initial condition
+sinphilProject

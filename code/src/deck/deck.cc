@@ -41,6 +41,7 @@ void deck::readDeck(const char *fileName)
     else if (line=="#output time array")                {std::string tmp; char c; getline(input,tmp); std::istringstream iss(tmp); std::copy( std::istream_iterator<double>(iss), std::istream_iterator<double>(), std::back_inserter(_output_time_array) ); cnt++;}
     else if (line=="#final time")                       {input>>_tf;getline(input,line); cnt++;}
     else if (line=="#Courant-Friedrichs-Lewy condition"){input>>_cfl; getline(input,line); cnt++;}
+    else if (line=="#Von Neumann condition")            {input>>_vnn; getline(input,line); cnt++;} //PEJ 06/01/2017
     else if (line=="#order")                            {input>>_order; getline(input,line); cnt++;}
     else if (line=="#mesh file")                        {getline(input,_meshfile); cnt++; getline(input,_elemType); cnt++;}
     else if (line=="#limiter")                          {getline(input,_limiter); cnt++;}

@@ -1,0 +1,62 @@
+\section{polynomial\-Basis Class Reference}
+\label{classpolynomialBasis}\index{polynomial\-Basis@{polynomial\-Basis}}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+typedef std\-::vector\\*
+$<$ std\-::vector$<$ int $>$ $>$ {\bfseries cl\-Cont}\label{classpolynomialBasis_ab85d4fe1832aaca7f8c8c1be95fae29d}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+const std\-::vector$<$ int $>$ \& {\bfseries get\-Closure} (int id) const \label{classpolynomialBasis_a9a3f26911573cf646d512087233fa679}
+
+\item 
+int {\bfseries get\-Closure\-Id} (int i\-El, int i\-Sign=1, int i\-Rot=0) const \label{classpolynomialBasis_a82f52a56bb1d492dd9b91e125f6eafad}
+
+\item 
+void {\bfseries evaluate\-Monomials} (double u, double v, double w, double p[$\,$]) const \label{classpolynomialBasis_ac51373c1cc118935f95e952aba403ec2}
+
+\item 
+void {\bfseries f} (double u, double v, double w, double $\ast$sf) const \label{classpolynomialBasis_aecdc7848810e8e1c5e9b9b656e0d461b}
+
+\item 
+void {\bfseries f} ({\bf full\-Matrix}$<$ double $>$ \&coord, {\bf full\-Matrix}$<$ double $>$ \&sf) const \label{classpolynomialBasis_ad21f18524a09e2282bda2d73b2cbc44e}
+
+\item 
+void {\bfseries df} (double u, double v, double w, {\bf full\-Matrix}$<$ double $>$ \&sdf) const \label{classpolynomialBasis_ab36b4e631f7f6abe02733cc831882824}
+
+\item 
+void {\bfseries df} (double u, double v, double w, double grads[$\,$][3]) const \label{classpolynomialBasis_a34779f99820fbe1d53d7f20312034fda}
+
+\item 
+void {\bfseries ddf} (double u, double v, double w, double hess[$\,$][3][3]) const \label{classpolynomialBasis_a73b6829c01525d44d024d9d757a63717}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+int {\bfseries type}\label{classpolynomialBasis_a9c19d655bf6ff6681cfd7b9575344676}
+
+\item 
+cl\-Cont {\bfseries closures}\label{classpolynomialBasis_a634b377a0bbfbc7249238e6c48edebf2}
+
+\item 
+{\bf full\-Matrix}$<$ double $>$ {\bfseries points}\label{classpolynomialBasis_a1a260e8c1017140bccca105223862a64}
+
+\item 
+{\bf full\-Matrix}$<$ double $>$ {\bfseries monomials}\label{classpolynomialBasis_ae42878048da51c5cc6f830ebff260836}
+
+\item 
+{\bf full\-Matrix}$<$ double $>$ {\bfseries coefficients}\label{classpolynomialBasis_ab2edf9935062910cf6c7eb08a5a3a691}
+
+\item 
+int {\bfseries num\-Faces}\label{classpolynomialBasis_a6f59f514eac7b127ed3845cebd8a56ef}
+
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+src/polynomials/{\bf polynomial\-Basis.\-h}\end{DoxyCompactItemize}

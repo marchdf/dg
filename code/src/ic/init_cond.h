@@ -14,6 +14,30 @@
 #include "simpleMesh.h"
 #include <vector>
 
+//Begin PEJ Edit
+void init_dg_HiOWvtx_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, const fullMatrix<scalar> &XYZCen, fullMatrix<scalar> &U, const std::vector<double> &ic_inputs);
+void init_dg_HiOWvtxProject_singlefluid(const int N_s, const int N_E, const int GQres, fullMatrix<scalar> &XYZ_GQ, fullMatrix<scalar> &SuperWeight, fullMatrix<scalar> &SuperdetJ, fullMatrix<scalar> &SuperPhi, scalar* h_Minv, fullMatrix<scalar> &U);
+void init_dg_tgrvrtx_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U);
+void init_dg_tgrvrtxOLD_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U);
+void init_dg_sodphil_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U);
+void init_dg_shosher_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U);
+void init_dg_sodcomp_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U);
+void init_dg_explode_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U);
+void init_dg_kushjet_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U);
+void init_dg_normvtx_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U);
+void init_dg_shckvtx_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U);
+void init_dg_worsvtx_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U);
+void init_dg_worsvtxProject_singlefluid(const int N_s, const int N_E, const int GQres, fullMatrix<scalar> &XYZ_GQ, fullMatrix<scalar> &SuperWeight, fullMatrix<scalar> &SuperdetJ, fullMatrix<scalar> &SuperPhi, scalar* h_Minv, fullMatrix<scalar> &U);
+void init_dg_explodeProject_singlefluid(const int N_s, const int N_E, const int GQres, fullMatrix<scalar> &XYZ_GQ, fullMatrix<scalar> &SuperWeight, fullMatrix<scalar> &SuperdetJ, fullMatrix<scalar> &SuperPhi, scalar* h_Minv, fullMatrix<scalar> &U);
+void init_dg_sinphil_singlefluid(const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U);
+
+void init_dg_sinphilProject_singlefluid(const int N_s, const int N_E, const int GQres, fullMatrix<scalar> &XYZ_GQ, fullMatrix<scalar> &SuperWeight, fullMatrix<scalar> &SuperdetJ, fullMatrix<scalar> &SuperPhi, scalar* h_Minv, fullMatrix<scalar> &U);
+
+void init_dg_rhobumpProject_singlefluid(const int N_s, const int N_E, const int GQres, fullMatrix<scalar> &XYZ_GQ, fullMatrix<scalar> &SuperWeight, fullMatrix<scalar> &SuperdetJ, fullMatrix<scalar> &SuperPhi, scalar* h_Minv, fullMatrix<scalar> &U);
+
+void init_dg_normvtxProject_singlefluid(const int N_s, const int N_E, const int GQres, fullMatrix<scalar> &XYZ_GQ, fullMatrix<scalar> &SuperWeight, fullMatrix<scalar> &SuperdetJ, fullMatrix<scalar> &SuperPhi, scalar* h_Minv, fullMatrix<scalar> &U);
+//End PEJ Edit
+
 // Define the different initial condition functions
 void buildLRstates_multifluid(scalar rhoL, scalar uL, scalar EtL, scalar gammaL, scalar rhoR, scalar uR, scalar EtR, scalar gammaR, const int N_s, const int N_E, const fullMatrix<scalar> &XYZNodes, fullMatrix<scalar> &U);
 scalar rtaylor_integrate_density(scalar A, scalar B, scalar rho01, scalar rho02, scalar yint, scalar H);

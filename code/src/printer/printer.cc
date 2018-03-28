@@ -11,6 +11,9 @@
 void PRINTER::set_names(){
   _sname.push_back("sensor"); // sensor name
 #ifdef ONED
+#ifdef SCALARAD
+  _names.push_back("Rho");   _fnames.push_back("rho");
+#endif
 #ifdef PASSIVE
   _names.push_back("Rho");   _fnames.push_back("rho");
   _names.push_back("Ux");    _fnames.push_back("ux"); 
@@ -21,6 +24,11 @@ void PRINTER::set_names(){
   _names.push_back("Rho");   _fnames.push_back("rho");
   _names.push_back("Ux");    _fnames.push_back("ux"); 
   _names.push_back("P");     _fnames.push_back("p");
+#elif RADSINGLEFLUID
+  _names.push_back("Rho");   _fnames.push_back("rho");
+  _names.push_back("Ux");    _fnames.push_back("ux"); 
+  _names.push_back("P");     _fnames.push_back("p");
+  _names.push_back("C");     _fnames.push_back("c");
 #elif MULTIFLUID
   _names.push_back("Rho");   _fnames.push_back("rho");
   _names.push_back("Ux");    _fnames.push_back("ux"); 
@@ -32,8 +40,12 @@ void PRINTER::set_names(){
   _names.push_back("G");     _fnames.push_back("g");
   _names.push_back("Pinf");  _fnames.push_back("pinf");  
   _names.push_back("P");     _fnames.push_back("p");  
-#endif // problem type
+#endif // end if on physics type
+
 #elif TWOD
+#ifdef SCALARAD
+  _names.push_back("Rho");   _fnames.push_back("rho");
+#endif
 #ifdef PASSIVE
   _names.push_back("Rho");   _fnames.push_back("rho");
   _names.push_back("Ux");    _fnames.push_back("ux");
@@ -46,6 +58,13 @@ void PRINTER::set_names(){
   _names.push_back("Ux");    _fnames.push_back("ux");
   _names.push_back("Uy");    _fnames.push_back("uy"); 
   _names.push_back("P");     _fnames.push_back("p");
+#elif RADSINGLEFLUID
+  _names.push_back("Rho");   _fnames.push_back("rho");
+  _names.push_back("Ux");    _fnames.push_back("ux");
+  _names.push_back("Uy");    _fnames.push_back("uy"); 
+  _names.push_back("P");     _fnames.push_back("p");
+  _names.push_back("Cx");     _fnames.push_back("cx");
+  _names.push_back("Cy");     _fnames.push_back("cy");
 #elif MULTIFLUID
   _names.push_back("Rho");   _fnames.push_back("rho");
   _names.push_back("Ux");    _fnames.push_back("ux"); 
@@ -59,7 +78,18 @@ void PRINTER::set_names(){
   _names.push_back("G");     _fnames.push_back("g");
   _names.push_back("Pinf");  _fnames.push_back("pinf");  
   _names.push_back("P");     _fnames.push_back("p");  
-#endif // problem type
+#endif // end if on physics type
+
+#elif THREED
+#ifdef SCALARAD
+  _names.push_back("Rho");   _fnames.push_back("rho");
+#elif SINGLEFLUID
+  _names.push_back("Rho");   _fnames.push_back("rho");
+  _names.push_back("Ux");    _fnames.push_back("ux");
+  _names.push_back("Uy");    _fnames.push_back("uy");
+  _names.push_back("Uz");    _fnames.push_back("uz");
+  _names.push_back("P");     _fnames.push_back("p");
+#endif //end if on physics type
 #endif // dimensions
 
   // Mass fraction names
@@ -114,6 +144,7 @@ void PRINTER::read(const int step, double &time, scalar* U){
   */
 
   // Read the output files
+  printf("CALLED THE READ ROUTINE in printer.cc\n");
   _m.readSolution(_N_s, _N_E, _elem_type, _fnames, _names, step, time, _output);
 
   // format the output to the main solution

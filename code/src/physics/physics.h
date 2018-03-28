@@ -13,10 +13,21 @@
 
 // Generic
 extern "C" void Levaluate_sf(int N_G, int N_E, scalar* s, scalar* f, scalar* Ug, scalar* dUg, scalar* invJac);//, scalar* xyz);
+
 extern "C" void Levaluate_q(int M_G, int M_T, scalar* q, scalar* UgF, scalar* normals);//, scalar* xyzf);
 
+extern "C" void Levaluate_sf_rad(int N_G, int N_E, int order, scalar* DivMax, scalar Beta_S, scalar Mew_S, scalar* CsMax, scalar* LamMax, scalar eps_gen, scalar* ADeps, scalar Cthresh, scalar* elemCmax, int* sensor, scalar* invJac, scalar* Ug, scalar* dUg_phys, scalar* s, scalar* f);
+
+extern "C" void Levaluate_q_rad(int M_G, int M_T, scalar* q, scalar* UgF, scalar* gradCommon, scalar* DivMax, scalar Beta_S, scalar Mew_S, scalar* CsMax, scalar* LamMax, scalar eps_gen, scalar* ADepsF, scalar Cthresh, scalar* elemCmax, int* sensor, int* BR2_Map, scalar* normals);
+
+extern "C" void LGrabCparameters(int N_G, int N_E, scalar* Ug, scalar* dUg_ref, scalar* invJac, scalar* DivMax, scalar* LamMax, scalar* CsMax, scalar* elemCmax);
+
+extern "C" void LGrabCmax_Ghosts(int N_G, int N_E, int Ne_AUG, scalar* Ug, scalar* elemCmax);
+
 extern "C" void Lkinetic_energy1D(int N_s, int N_E, scalar* rho, scalar* rhou, scalar* K);
+
 extern "C" void Lkinetic_energy2D(int N_s, int N_E, scalar* rho, scalar* rhou, scalar* rhov, scalar* K);
+
 extern "C" void Lpressure(int N_s, int N_E, scalar* U, scalar* p);
 
 /* // Possibly broken: */

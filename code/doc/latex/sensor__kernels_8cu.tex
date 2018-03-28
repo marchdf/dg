@@ -1,0 +1,171 @@
+\section{src/sensors/sensor\-\_\-kernels.cu File Reference}
+\label{sensor__kernels_8cu}\index{src/sensors/sensor\-\_\-kernels.\-cu@{src/sensors/sensor\-\_\-kernels.\-cu}}
+
+
+Kernels used by the \doxyref{S\-E\-N\-S\-O\-R}{p.}{classSENSOR} class.  
+
+
+{\ttfamily \#include \char`\"{}sensor\-\_\-kernels.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$stdio.\-h$>$}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+arch\-\_\-global void {\bf calc\-\_\-sensors} (int N\-\_\-\-E, int N\-\_\-\-N, bool sensor1, scalar thresh1, bool sensor2, scalar thresh2, bool sensor3, scalar thresh3, int $\ast$neighbors, scalar $\ast$Uavg, int $\ast$sensors)
+\item 
+arch\-\_\-global void {\bf copy\-\_\-detected} (int N\-\_\-s, int N\-\_\-\-E, int $\ast$sensors, scalar $\ast$Uold, scalar $\ast$U)
+\item 
+void {\bf Lcalc\-\_\-sensors} (int N\-\_\-\-E, int N\-\_\-\-N, bool sensor1, scalar thresh1, bool sensor2, scalar thresh2, bool sensor3, scalar thresh3, int $\ast$neighbors, scalar $\ast$Uavg, int $\ast$sensors)
+\item 
+void {\bf Lcopy\-\_\-detected} (int N\-\_\-s, int N\-\_\-\-E, int $\ast$sensors, scalar $\ast$Uold, scalar $\ast$U)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Kernels used by the \doxyref{S\-E\-N\-S\-O\-R}{p.}{classSENSOR} class. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{sensor\-\_\-kernels.\-cu@{sensor\-\_\-kernels.\-cu}!calc\-\_\-sensors@{calc\-\_\-sensors}}
+\index{calc\-\_\-sensors@{calc\-\_\-sensors}!sensor_kernels.cu@{sensor\-\_\-kernels.\-cu}}
+\subsubsection[{calc\-\_\-sensors}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void calc\-\_\-sensors (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{bool}]{sensor1, }
+\item[{scalar}]{thresh1, }
+\item[{bool}]{sensor2, }
+\item[{scalar}]{thresh2, }
+\item[{bool}]{sensor3, }
+\item[{scalar}]{thresh3, }
+\item[{int $\ast$}]{neighbors, }
+\item[{scalar $\ast$}]{Uavg, }
+\item[{int $\ast$}]{sensors}
+\end{DoxyParamCaption}
+)}\label{sensor__kernels_8cu_abdfccb6ab5cfef40471ecfcb34484b75}
+Calculate the sensors kernel 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbors \\
+\hline
+\mbox{\tt in}  & {\em sensor1} & true if using first sensor \\
+\hline
+\mbox{\tt in}  & {\em thresh1} & threshold value for first sensor \\
+\hline
+\mbox{\tt in}  & {\em sensor2} & true if using second sensor \\
+\hline
+\mbox{\tt in}  & {\em thresh2} & threshold value for second sensor \\
+\hline
+\mbox{\tt in}  & {\em sensor3} & true if using third sensor \\
+\hline
+\mbox{\tt in}  & {\em thresh3} & threshold value for third sensor \\
+\hline
+\mbox{\tt in}  & {\em neighbors} & array of neighbor element indices \\
+\hline
+\mbox{\tt in}  & {\em Uavg} & average of solution in element \\
+\hline
+\mbox{\tt out}  & {\em sensors} & array to hold the sensor\\
+\hline
+\end{DoxyParams}
+\index{sensor\-\_\-kernels.\-cu@{sensor\-\_\-kernels.\-cu}!copy\-\_\-detected@{copy\-\_\-detected}}
+\index{copy\-\_\-detected@{copy\-\_\-detected}!sensor_kernels.cu@{sensor\-\_\-kernels.\-cu}}
+\subsubsection[{copy\-\_\-detected}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void copy\-\_\-detected (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int $\ast$}]{sensors, }
+\item[{scalar $\ast$}]{Uold, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{sensor__kernels_8cu_a6e9a628695ef0fb41766333e7dae98a0}
+Copy only the elements which were detected with a sensor and limited. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element. \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em sensors} & array to hold the sensor \\
+\hline
+\mbox{\tt in}  & {\em Uold} & solution containing the limited solutions \\
+\hline
+\mbox{\tt out}  & {\em U} & solution to receive the limited elements \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E blocks of N\-\_\-s x N\-\_\-\-F x 1 threads.\index{sensor\-\_\-kernels.\-cu@{sensor\-\_\-kernels.\-cu}!Lcalc\-\_\-sensors@{Lcalc\-\_\-sensors}}
+\index{Lcalc\-\_\-sensors@{Lcalc\-\_\-sensors}!sensor_kernels.cu@{sensor\-\_\-kernels.\-cu}}
+\subsubsection[{Lcalc\-\_\-sensors}]{\setlength{\rightskip}{0pt plus 5cm}void Lcalc\-\_\-sensors (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{bool}]{sensor1, }
+\item[{scalar}]{thresh1, }
+\item[{bool}]{sensor2, }
+\item[{scalar}]{thresh2, }
+\item[{bool}]{sensor3, }
+\item[{scalar}]{thresh3, }
+\item[{int $\ast$}]{neighbors, }
+\item[{scalar $\ast$}]{Uavg, }
+\item[{int $\ast$}]{sensors}
+\end{DoxyParamCaption}
+)}\label{sensor__kernels_8cu_aa803a6151cd8c8813bbfebabcbe74b91}
+Host C function to launch calc\-\_\-sensors kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbors \\
+\hline
+\mbox{\tt in}  & {\em sensor1} & true if using first sensor \\
+\hline
+\mbox{\tt in}  & {\em thresh1} & threshold value for first sensor \\
+\hline
+\mbox{\tt in}  & {\em sensor2} & true if using second sensor \\
+\hline
+\mbox{\tt in}  & {\em thresh2} & threshold value for second sensor \\
+\hline
+\mbox{\tt in}  & {\em sensor3} & true if using third sensor \\
+\hline
+\mbox{\tt in}  & {\em thresh3} & threshold value for third sensor \\
+\hline
+\mbox{\tt in}  & {\em neighbors} & array of neighbor element indices \\
+\hline
+\mbox{\tt in}  & {\em Uavg} & average of solution in element \\
+\hline
+\mbox{\tt out}  & {\em sensors} & array to hold the sensor \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of 1 x 1 x blk\-E threads. blk\-E controls the number of elements to set on each block\index{sensor\-\_\-kernels.\-cu@{sensor\-\_\-kernels.\-cu}!Lcopy\-\_\-detected@{Lcopy\-\_\-detected}}
+\index{Lcopy\-\_\-detected@{Lcopy\-\_\-detected}!sensor_kernels.cu@{sensor\-\_\-kernels.\-cu}}
+\subsubsection[{Lcopy\-\_\-detected}]{\setlength{\rightskip}{0pt plus 5cm}void Lcopy\-\_\-detected (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int $\ast$}]{sensors, }
+\item[{scalar $\ast$}]{Uold, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{sensor__kernels_8cu_a864ed7c48ce66baf636503a6f99abc63}
+Host C function to launch copy\-\_\-detected kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element. \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em sensors} & array to hold the sensor \\
+\hline
+\mbox{\tt in}  & {\em Uold} & solution containing the limited solutions \\
+\hline
+\mbox{\tt out}  & {\em U} & solution to receive the limited elements \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E blocks of N\-\_\-s x N\-\_\-\-F x 1 threads.

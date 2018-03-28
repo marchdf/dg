@@ -111,6 +111,65 @@ IntPt * GQQ[27] = {GQQ1,GQQ1,GQQ3,GQQ4,GQQ7,GQQ9,GQQ16,0,0,0,0,0,0,0,0,0,0,0,0,0
 int GQQnPt[7] = {1,1,3,4,7,9,16};
 
 IntPt *getGQQPts(int order)
+{
+  //Written by PEJ 09/03/2017
+  /*
+  if (order==1) //p0 case
+    {
+      GQQ = GQQ1;
+    }
+  else if (order==3)//p1 case
+    {
+      GQQ = GQQ4; //2x2
+    }
+  else if (order==5)//p2 case
+    {
+      GQQ = GQQ9; //3x3
+    }
+  else if (order == 7)//p3 case
+    {
+      GQQ = GQQ16; //4x4
+    }
+  else //more than 4x4 block, need general formula
+  */
+    
+  int n = (order+1)/2;
+  int index = n*n;
+  //if(!GQQ[index]) //not sure qhat this is for, but I don't think I need it
+    {
+      double *pt,*wt;
+      gmshGaussLegendre1D(n,&pt,&wt);
+      GQQ[index] = new IntPt[n*n];
+      int k = 0;
+      for(int i=0; i < n; i++) {
+	for(int j=0; j < n; j++) {
+	  GQQ[index][k].pt[0] = pt[i];
+	  GQQ[index][k].pt[1] = pt[j];
+	  GQQ[index][k].pt[2] = 0.0;
+	  GQQ[index][k++].weight = wt[i]*wt[j];
+	  //printf ("%f %f %f\n",pt[i],pt[j],wt[i]*wt[j]);
+	}
+      }
+    }
+  
+  return GQQ[index];
+}
+int getNGQQPts(int order)
+{
+  //PEJ 09/03/2017: I think the original here is a typo,
+  //so I'm adjusting it.
+  //Original:
+  //return ((order+3)/2)*((order+3)/2);
+
+  //Phil's fix:
+  return pow((order+1)/2, 2);
+}
+
+//PEJ 09/03/2017: AFter some experimention, I don't like either of
+//the routines below. They make the quad case unnecessarily complicated
+//and don't properly treat the p3 case
+/*
+IntPt *getGQQPts(int order)
 { 
   
   if(order<2)return GQQ[order];
@@ -145,9 +204,10 @@ int getNGQQPts(int order)
 
   if(order < 2)
     return GQQnPt[order]; 
+
   return ((order+3)/2)*((order+3)/2);
 }
-
+*/
 
 
 

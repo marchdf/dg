@@ -1,0 +1,108 @@
+\section{src/mixedform/mixedform.cc File Reference}
+\label{mixedform_8cc}\index{src/mixedform/mixedform.\-cc@{src/mixedform/mixedform.\-cc}}
+{\ttfamily \#include \char`\"{}mixedform.\-h\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bfseries C\-O\-P\-Y\-C\-O\-P\-Y\-\_\-get\-\_\-element\-\_\-types} (const int order, int \&msh\-\_\-qua, int \&msh\-\_\-tri, int \&msh\-\_\-lin)\label{mixedform_8cc_a25f554c64d191f60722540ae44d22af4}
+
+\item 
+void {\bfseries Surf\-For\-Sigma} ({\bf deck} inputs, int N\-\_\-s, int p, int om, int M\-\_\-\-G, int N\-\_\-\-N, int M\-\_\-s, int a, int $\ast$invmap, int $\ast$place, {\bf full\-Matrix}$<$ double $>$ points\-F, {\bf full\-Matrix}$<$ double $>$ weight\-F, scalar $\ast$J\-Face, {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ Outward\-Normal, {\bf full\-Matrix}$<$ scalar $>$ psi\-\_\-w, {\bf full\-Matrix}$<$ scalar $>$ \&Sa\-\_\-return)\label{mixedform_8cc_ab164e79cf9f6099d5998ceb0b4732b7c}
+
+\item 
+void {\bfseries Vol\-For\-Sigma} (int om, {\bf deck} inputs, int N\-\_\-\-G, int M\-\_\-\-G, int N\-\_\-s, int p, int a, scalar $\ast$inv\-Jac, scalar det\-J, {\bf full\-Matrix}$<$ scalar $>$ \&Va\-\_\-return)\label{mixedform_8cc_a38a6a6616acc60797d6248aae1de9b5a}
+
+\item 
+void {\bfseries Build\-Sig\-Matrices} ({\bf deck} inputs, int N\-\_\-\-E, int N\-\_\-s, int p, int N\-\_\-\-G, int M\-\_\-\-G, int N\-\_\-\-N, int M\-\_\-s, int $\ast$invmap, {\bf full\-Matrix}$<$ double $>$ \&points\-F, {\bf full\-Matrix}$<$ double $>$ \&weight\-F, {\bf full\-Matrix}$<$ scalar $>$ \&J\-F, {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ normals, scalar $\ast$h\-\_\-inv\-Jac, {\bf full\-Matrix}$<$ scalar $>$ \&J, int $\ast$Alt\-\_\-\-Face\-From\-Elem, int $\ast$B\-R2\-\_\-map, {\bf full\-Matrix}$<$ scalar $>$ phi, scalar $\ast$Minv\-\_\-\-Master, {\bf full\-Matrix}$<$ scalar $>$ psi\-\_\-w, scalar $\ast$serial\-\_\-\-Sig\-Surf, scalar $\ast$serial\-\_\-\-Sig\-Vol)\label{mixedform_8cc_a96849be7a101c7a4c3ab6082c51cce75}
+
+\item 
+void {\bf Sig\-Face\-Matrices} (int M\-\_\-\-T, int M\-\_\-\-G, int N\-\_\-s, int N\-\_\-\-G, int N\-\_\-\-N, int M\-\_\-s, {\bf full\-Matrix}$<$ scalar $>$ \&phi, {\bf full\-Matrix}$<$ scalar $>$ \&dphi, {\bf full\-Matrix}$<$ double $>$ \&weight, {\bf full\-Matrix}$<$ scalar $>$ \&J, {\bf full\-Matrix}$<$ scalar $>$ \&psi, {\bf full\-Matrix}$<$ scalar $>$ \&psi\-\_\-w, {\bf full\-Matrix}$<$ scalar $>$ normals, {\bf full\-Matrix}$<$ scalar $>$ \&J\-F, int $\ast$Alt\-\_\-\-Face\-From\-Elem, int $\ast$B\-R2\-\_\-\-Map, int $\ast$invmap, int $\ast$Better\-\_\-\-Inv\-Map, scalar $\ast$inv\-Jac, scalar $\ast$Minv\-\_\-global, scalar $\ast$P\-S\-Ix\-R\-\_\-\-Global, scalar $\ast$serial\-\_\-\-Sig\-Face\-\_\-from\-\_\-\-D\-O\-F)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+for dealing with 2nd order derivatives \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Philip E. Johnson {\tt phedjohn@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{mixedform.\-cc@{mixedform.\-cc}!Sig\-Face\-Matrices@{Sig\-Face\-Matrices}}
+\index{Sig\-Face\-Matrices@{Sig\-Face\-Matrices}!mixedform.cc@{mixedform.\-cc}}
+\subsubsection[{Sig\-Face\-Matrices}]{\setlength{\rightskip}{0pt plus 5cm}void Sig\-Face\-Matrices (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-G, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int}]{M\-\_\-s, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{phi, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{dphi, }
+\item[{{\bf full\-Matrix}$<$ double $>$ \&}]{weight, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{J, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{psi, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{psi\-\_\-w, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$}]{normals, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{J\-F, }
+\item[{int $\ast$}]{Alt\-\_\-\-Face\-From\-Elem, }
+\item[{int $\ast$}]{B\-R2\-\_\-\-Map, }
+\item[{int $\ast$}]{invmap, }
+\item[{int $\ast$}]{Better\-\_\-\-Inv\-Map, }
+\item[{scalar $\ast$}]{inv\-Jac, }
+\item[{scalar $\ast$}]{Minv\-\_\-global, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-\-Global, }
+\item[{scalar $\ast$}]{serial\-\_\-\-Sig\-Face\-\_\-from\-\_\-\-D\-O\-F}
+\end{DoxyParamCaption}
+)}\label{mixedform_8cc_a9e12225ffa490f477e6b79487463deab}
+Build operator to populate interface gradient from surrounding D\-G D\-O\-F 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-\-T} & total interface count \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-G} & quadrature nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & solution points per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-G} & interior quadrature nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & neighbors per element (or faces per element)' \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-s} & supported basis functions per interface, from one element \\
+\hline
+\mbox{\tt in}  & {\em phi} & D\-G basis on reference element \\
+\hline
+\mbox{\tt in}  & {\em dphi} & gradient of basis function, ref element, wrt ref coordinates \\
+\hline
+\mbox{\tt in}  & {\em weight} & quadrature weights over the reference element \\
+\hline
+\mbox{\tt in}  & {\em J} & the determinant of the Jacobian; constant per element \\
+\hline
+\mbox{\tt in}  & {\em psi} & trace of D\-G basis functions on interface \\
+\hline
+\mbox{\tt in}  & {\em psi\-\_\-w} & psi functions multiplied by appropriate face quadrature weights \\
+\hline
+\mbox{\tt in}  & {\em normals} & the outward normal from element A along each interface \\
+\hline
+\mbox{\tt in}  & {\em J\-F} & Jacobian of each interface \\
+\hline
+\mbox{\tt in}  & {\em Alt\-\_\-\-Face\-From\-Elem} & tells each element who its N\-\_\-\-N interfaces are \\
+\hline
+\mbox{\tt in}  & {\em B\-R2\-\_\-\-Map} & tells each interface who its two elements are (and something about face orientation) \\
+\hline
+\mbox{\tt in}  & {\em invmap} & Marc's inverse mapping to relate interfaces to element basis functions \\
+\hline
+\mbox{\tt in}  & {\em inv\-Jac} & entries of each element's inverse Jacobian. N\-O\-T determinant of said inverse. \\
+\hline
+\mbox{\tt in}  & {\em Minv\-\_\-global} & the inverse mass matrix of each element \\
+\hline
+\mbox{\tt in}  & {\em P\-S\-Ix\-R\-\_\-\-Global} & the recovery operator on each interface \\
+\hline
+\mbox{\tt out}  & {\em serial\-\_\-\-Sig\-Face\-\_\-from\-\_\-\-D\-O\-F} & the D\-O\-F-\/to-\/face gradient operator\\
+\hline
+\end{DoxyParams}

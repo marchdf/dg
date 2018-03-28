@@ -104,6 +104,8 @@ class COMMUNICATOR
   };
 
   void CommunicateGhosts(int Nfields, scalar* U);
+  void CommunicateCords(scalar* XYZNodes);
+  void CommunicateSensor(int* SensorTag_Aug);
 };
 
 //================================================================================
@@ -118,6 +120,8 @@ class COMMUNICATOR{
   */     
   COMMUNICATOR(int a, int b, simpleMesh &m, TIMERS &timers, MEM_COUNTER &mem_counter){};
   void CommunicateGhosts(int Nfields, scalar* U){};
+  void CommunicateCords(scalar* XYZNodes){};
+  void CommunicateSensor(int* SensorTag_Aug){};
 };
 #endif
 

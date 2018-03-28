@@ -1,0 +1,110 @@
+\section{src/polynomials/polynomials\-Jacobi.h File Reference}
+\label{polynomialsJacobi_8h}\index{src/polynomials/polynomials\-Jacobi.\-h@{src/polynomials/polynomials\-Jacobi.\-h}}
+
+
+Header for Jacobi polynomials.  
+
+
+{\ttfamily \#include \char`\"{}full\-Matrix.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}scalar\-\_\-def.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$stdlib.\-h$>$}\\*
+{\ttfamily \#include $<$math.\-h$>$}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bf Jacobi\-P} (const {\bf full\-Matrix}$<$ scalar $>$ x, const int alpha, const int beta, const int N, {\bf full\-Matrix}$<$ scalar $>$ \&P)
+\item 
+void {\bf Jacobi\-G\-Q} (const int alpha, const int beta, const int N, {\bf full\-Matrix}$<$ scalar $>$ \&x, {\bf full\-Matrix}$<$ scalar $>$ \&w)
+\item 
+void {\bf Jacobi\-G\-L} (const int alpha, const int beta, const int N, {\bf full\-Matrix}$<$ scalar $>$ \&x)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Header for Jacobi polynomials. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{polynomials\-Jacobi.\-h@{polynomials\-Jacobi.\-h}!Jacobi\-G\-L@{Jacobi\-G\-L}}
+\index{Jacobi\-G\-L@{Jacobi\-G\-L}!polynomialsJacobi.h@{polynomials\-Jacobi.\-h}}
+\subsubsection[{Jacobi\-G\-L}]{\setlength{\rightskip}{0pt plus 5cm}void Jacobi\-G\-L (
+\begin{DoxyParamCaption}
+\item[{const int}]{alpha, }
+\item[{const int}]{beta, }
+\item[{const int}]{N, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{x}
+\end{DoxyParamCaption}
+)}\label{polynomialsJacobi_8h_a11b087db1e1992211cefc2fa84ca15d1}
+Gauss Lobatto quadrature points and weights 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em alpha} & first Jacobi type \\
+\hline
+\mbox{\tt in}  & {\em beta} & second Jacobi type \\
+\hline
+\mbox{\tt in}  & {\em N} & Jacobi polynomial order \\
+\hline
+\mbox{\tt out}  & {\em x} & gauss quadrature points \\
+\hline
+\mbox{\tt out}  & {\em w} & gauss quadrature weights \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Compute the N’th order Gauss Lobatto quadrature points, x, and weights, w, associated with the Jacobi polynomial, of type (alpha,beta) $>$ -\/1 ( $<$$>$ -\/0.\-5).\index{polynomials\-Jacobi.\-h@{polynomials\-Jacobi.\-h}!Jacobi\-G\-Q@{Jacobi\-G\-Q}}
+\index{Jacobi\-G\-Q@{Jacobi\-G\-Q}!polynomialsJacobi.h@{polynomials\-Jacobi.\-h}}
+\subsubsection[{Jacobi\-G\-Q}]{\setlength{\rightskip}{0pt plus 5cm}void Jacobi\-G\-Q (
+\begin{DoxyParamCaption}
+\item[{const int}]{alpha, }
+\item[{const int}]{beta, }
+\item[{const int}]{N, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{x, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{w}
+\end{DoxyParamCaption}
+)}\label{polynomialsJacobi_8h_ad9d3d17b5d24fae2739a6548caaccdb2}
+Gauss quadrature points and weights 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em alpha} & first Jacobi type \\
+\hline
+\mbox{\tt in}  & {\em beta} & second Jacobi type \\
+\hline
+\mbox{\tt in}  & {\em N} & Jacobi polynomial order \\
+\hline
+\mbox{\tt out}  & {\em x} & gauss quadrature points \\
+\hline
+\mbox{\tt out}  & {\em w} & gauss quadrature weights \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Compute the N’th order Gauss quadrature points, x, and weights, w, associated with the Jacobi polynomial, of type (alpha,beta) $>$ -\/1 ( $<$$>$ -\/0.\-5).\index{polynomials\-Jacobi.\-h@{polynomials\-Jacobi.\-h}!Jacobi\-P@{Jacobi\-P}}
+\index{Jacobi\-P@{Jacobi\-P}!polynomialsJacobi.h@{polynomials\-Jacobi.\-h}}
+\subsubsection[{Jacobi\-P}]{\setlength{\rightskip}{0pt plus 5cm}void Jacobi\-P (
+\begin{DoxyParamCaption}
+\item[{const {\bf full\-Matrix}$<$ scalar $>$}]{x, }
+\item[{const int}]{alpha, }
+\item[{const int}]{beta, }
+\item[{const int}]{N, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{P}
+\end{DoxyParamCaption}
+)}\label{polynomialsJacobi_8h_a55f20d5642b7d248ebd32146ddfb460c}
+Evaluate Jacobi polynomials 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em x} & evaluation points \\
+\hline
+\mbox{\tt in}  & {\em alpha} & first Jacobi type \\
+\hline
+\mbox{\tt in}  & {\em beta} & second Jacobi type \\
+\hline
+\mbox{\tt in}  & {\em N} & Jacobi polynomial order \\
+\hline
+\mbox{\tt out}  & {\em P} & Jacobi polynomial \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Evaluate Jacobi polynomials of type (alpha, beta) $>$ -\/1 at points x, of order N Normalized so that they are orthornormal to each other inspired by the book\-: Nodal D\-G... p446

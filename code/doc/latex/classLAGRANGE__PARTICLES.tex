@@ -1,0 +1,64 @@
+\section{L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S Class Reference}
+\label{classLAGRANGE__PARTICLES}\index{L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S@{L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bf L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S} ({\bf T\-I\-M\-E\-R\-S} \&timers, {\bf M\-E\-M\-\_\-\-C\-O\-U\-N\-T\-E\-R} \&mem\-\_\-counter, {\bf simple\-Mesh} \&m, const {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, int nvert, int N\-\_\-\-N, int N\-\_\-\-E, int N\-\_\-s, int myid, int numprocs, const std\-::vector$<$ double $>$ \&input\-\_\-particles=std\-::vector$<$ double $>$())\label{classLAGRANGE__PARTICLES_a84a40617db2e6b6001e19e0330799623}
+
+\begin{DoxyCompactList}\small\item\em Constructor defaults. \end{DoxyCompactList}\item 
+{\bf $\sim$\-L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S} ()\label{classLAGRANGE__PARTICLES_a9533e83a44876aa91e27688d6098ee8d}
+
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
+bool {\bf have\-Particles} () const 
+\item 
+void {\bf advect\-Particles} (scalar Dt, scalar $\ast$U)
+\item 
+void {\bf print\-Particles} (scalar time, scalar $\ast$output)
+\end{DoxyCompactItemize}
+
+
+\subsection{Member Function Documentation}
+\index{L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S@{L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S}!advect\-Particles@{advect\-Particles}}
+\index{advect\-Particles@{advect\-Particles}!LAGRANGE_PARTICLES@{L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S}}
+\subsubsection[{advect\-Particles}]{\setlength{\rightskip}{0pt plus 5cm}void L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S\-::advect\-Particles (
+\begin{DoxyParamCaption}
+\item[{scalar}]{Dt, }
+\item[{scalar $\ast$}]{U}
+\end{DoxyParamCaption}
+)}\label{classLAGRANGE__PARTICLES_a71c5be1d9ad24a6361a4722e2bb1e8a5}
+Function which advects a set of particles 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em Dt} & time step over which to advect the particle \\
+\hline
+\mbox{\tt in}  & {\em U} & main solution\\
+\hline
+\end{DoxyParams}
+\index{L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S@{L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S}!have\-Particles@{have\-Particles}}
+\index{have\-Particles@{have\-Particles}!LAGRANGE_PARTICLES@{L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S}}
+\subsubsection[{have\-Particles}]{\setlength{\rightskip}{0pt plus 5cm}bool L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S\-::have\-Particles (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classLAGRANGE__PARTICLES_ad98d313b705a3ce97e03ed0e299ecd15}
+Return true if you have Lagrange particles \index{L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S@{L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S}!print\-Particles@{print\-Particles}}
+\index{print\-Particles@{print\-Particles}!LAGRANGE_PARTICLES@{L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S}}
+\subsubsection[{print\-Particles}]{\setlength{\rightskip}{0pt plus 5cm}void L\-A\-G\-R\-A\-N\-G\-E\-\_\-\-P\-A\-R\-T\-I\-C\-L\-E\-S\-::print\-Particles (
+\begin{DoxyParamCaption}
+\item[{scalar}]{time, }
+\item[{scalar $\ast$}]{output}
+\end{DoxyParamCaption}
+)}\label{classLAGRANGE__PARTICLES_a308fae894748b82541c51629b78b5e82}
+Function to output the particle positions and field values 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em time} & output time \\
+\hline
+\mbox{\tt in}  & {\em output} & formatted solution from the printer class \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+This outputs the time step, the particle position, and the average solution in the element containing the particle. A more accurate output would interpolate the solution at the particle position (instead of averaging) but that's complicated (see Lget\-\_\-velocity\-\_\-at\-\_\-position function).
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+src/particles/{\bf lagrange\-\_\-particles.\-h}\item 
+src/particles/lagrange\-\_\-particles.\-cc\end{DoxyCompactItemize}

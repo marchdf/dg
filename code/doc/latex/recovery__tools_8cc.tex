@@ -1,0 +1,315 @@
+\section{src/recovery/recovery\-\_\-tools.cc File Reference}
+\label{recovery__tools_8cc}\index{src/recovery/recovery\-\_\-tools.\-cc@{src/recovery/recovery\-\_\-tools.\-cc}}
+{\ttfamily \#include \char`\"{}recovery\-\_\-tools.\-h\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bfseries C\-O\-P\-Y\-\_\-get\-\_\-element\-\_\-types} (const int order, int \&msh\-\_\-qua, int \&msh\-\_\-tri, int \&msh\-\_\-lin)\label{recovery__tools_8cc_ab380f73205a4cfd9640a45dbe7e98ce2}
+
+\item 
+scalar {\bf Leg\-\_\-\-L2} (int index, scalar x)
+\item 
+void {\bf Recovery\-Indices\-\_\-2\-D\-Simplex} (int N\-\_\-s, int p, int N\-\_\-basis, int $\ast$sub\-Index\-\_\-relay)
+\item 
+void {\bf Psi\-At\-Points} (int N\-\_\-s, int p, int N\-\_\-basis, int N\-\_\-\-N, int Npoints, scalar $\ast$x, scalar $\ast$Psi\-Out)
+\item 
+void {\bf Periodicity\-Fix} (int N\-\_\-s, int G\-Qres\-Face, scalar $\ast$x\-Nodes\-\_\-\-A, scalar $\ast$x\-Nodes\-\_\-\-B, scalar $\ast$x\-Face, int $\ast$Flag\-Peri\-\_\-out, int $\ast$sign\-\_\-shift\-\_\-relay, scalar $\ast$Ldomain\-\_\-relay)
+\item 
+void {\bf Transform\-Physical2\-Recovery} (int N\-\_\-s, int G\-Qres\-A, int G\-Qres\-Face, scalar $\ast$x\-Nodes\-\_\-\-A, scalar $\ast$x\-Nodes\-\_\-\-B, scalar $\ast$x\-G\-Q\-\_\-\-A, scalar $\ast$x\-G\-Q\-\_\-\-B, scalar $\ast$x\-Face, scalar $\ast$r\-A\-\_\-out, scalar $\ast$r\-B\-\_\-out, scalar $\ast$r\-Face\-\_\-out)
+\item 
+void {\bf Get\-P\-S\-Ix\-R\-\_\-oneface} ({\bf deck} inputs, int N\-\_\-s, int p, int N\-\_\-basis, int M\-\_\-\-G, scalar $\ast$x\-Geo\-\_\-\-A, scalar $\ast$x\-Geo\-\_\-\-B, scalar $\ast$x\-Face, scalar $\ast$P\-S\-Ix\-R, scalar $\ast$P\-S\-Ix\-R\-\_\-\-A, scalar $\ast$P\-S\-Ix\-R\-\_\-\-B)
+\item 
+void {\bf Nodal\-Eq\-Cord} (int N\-\_\-s, int p, int M\-\_\-\-G, {\bf simple\-Mesh} \&m, scalar $\ast$x\-Geo\-\_\-\-A, scalar $\ast$x\-Geo\-\_\-\-B, scalar $\ast$x\-Face, scalar $\ast$xirg\-A, scalar $\ast$xirg\-B, scalar $\ast$Rrg\-A, scalar $\ast$Rrg\-B)
+\item 
+void {\bf Get\-P\-S\-Ix\-R\-\_\-\-Biased\-\_\-oneface} ({\bf deck} inputs, int N\-\_\-s, int p, {\bf simple\-Mesh} \&m, int N\-\_\-basis, int M\-\_\-\-G, scalar $\ast$x\-Geo\-\_\-\-A, scalar $\ast$x\-Geo\-\_\-\-B, scalar $\ast$x\-Face, scalar $\ast$P\-S\-Ix\-R\-\_\-bi\-A, scalar $\ast$P\-S\-Ix\-R\-\_\-bi\-B, scalar $\ast$P\-S\-Ix\-R\-\_\-bi\-A\-\_\-\-A, scalar $\ast$P\-S\-Ix\-R\-\_\-bi\-A\-\_\-\-B, scalar $\ast$P\-S\-Ix\-R\-\_\-bi\-B\-\_\-\-A, scalar $\ast$P\-S\-Ix\-R\-\_\-bi\-B\-\_\-\-B)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+operations, for both full and biased recovery \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Philip E. Johnson {\tt phedjohn@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{recovery\-\_\-tools.\-cc@{recovery\-\_\-tools.\-cc}!Get\-P\-S\-Ix\-R\-\_\-\-Biased\-\_\-oneface@{Get\-P\-S\-Ix\-R\-\_\-\-Biased\-\_\-oneface}}
+\index{Get\-P\-S\-Ix\-R\-\_\-\-Biased\-\_\-oneface@{Get\-P\-S\-Ix\-R\-\_\-\-Biased\-\_\-oneface}!recovery_tools.cc@{recovery\-\_\-tools.\-cc}}
+\subsubsection[{Get\-P\-S\-Ix\-R\-\_\-\-Biased\-\_\-oneface}]{\setlength{\rightskip}{0pt plus 5cm}void Get\-P\-S\-Ix\-R\-\_\-\-Biased\-\_\-oneface (
+\begin{DoxyParamCaption}
+\item[{{\bf deck}}]{inputs, }
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{p, }
+\item[{{\bf simple\-Mesh} \&}]{m, }
+\item[{int}]{N\-\_\-basis, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{scalar $\ast$}]{x\-Geo\-\_\-\-A, }
+\item[{scalar $\ast$}]{x\-Geo\-\_\-\-B, }
+\item[{scalar $\ast$}]{x\-Face, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-bi\-A, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-bi\-B, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-bi\-A\-\_\-\-A, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-bi\-A\-\_\-\-B, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-bi\-B\-\_\-\-A, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-bi\-B\-\_\-\-B}
+\end{DoxyParamCaption}
+)}\label{recovery__tools_8cc_a713e0b3e5a8940cd7bb7a8c005038a6b}
+Build the Biased Recovery operators for a given interface, non-\/boundary 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & = D\-O\-F per element \\
+\hline
+\mbox{\tt in}  & {\em p} & = polynomial order \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-basis} & = dimension of recovery basis \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-G} & = quadrature points per interface \\
+\hline
+\mbox{\tt in}  & {\em x\-Geo\-\_\-\-A} & = gmsh nodes for element A \\
+\hline
+\mbox{\tt in}  & {\em x\-Geo\-\_\-\-B} & = gmsh nodes for element B \\
+\hline
+\mbox{\tt in}  & {\em x\-Face} & = quadrature node physical locations on the interface \\
+\hline
+\mbox{\tt out}  & {\em P\-S\-Ix\-R\-\_\-bi\-A} & the interface's A-\/biased recovery operator \\
+\hline
+\mbox{\tt out}  & {\em P\-S\-Ix\-R\-\_\-bi\-B} & the interface's B-\/biased recovery operator \\
+\hline
+\mbox{\tt out}  & {\em P\-S\-Ix\-R\-\_\-bi\-A\-\_\-\-A} & the half of A-\/baised P\-S\-Ix\-R corresponding to element A \\
+\hline
+\mbox{\tt out}  & {\em P\-S\-Ix\-R\-\_\-bi\-A\-\_\-\-B} & the half of A-\/biased P\-S\-Ix\-R corresponding to element B \\
+\hline
+\mbox{\tt out}  & {\em P\-S\-Ix\-R\-\_\-bi\-B\-\_\-\-A} & the half of B-\/baised P\-S\-Ix\-R corresponding to element A \\
+\hline
+\mbox{\tt out}  & {\em P\-S\-Ix\-R\-\_\-bi\-B\-\_\-\-B} & the half of B-\/biased P\-S\-Ix\-R corresponding to element B\\
+\hline
+\end{DoxyParams}
+\index{recovery\-\_\-tools.\-cc@{recovery\-\_\-tools.\-cc}!Get\-P\-S\-Ix\-R\-\_\-oneface@{Get\-P\-S\-Ix\-R\-\_\-oneface}}
+\index{Get\-P\-S\-Ix\-R\-\_\-oneface@{Get\-P\-S\-Ix\-R\-\_\-oneface}!recovery_tools.cc@{recovery\-\_\-tools.\-cc}}
+\subsubsection[{Get\-P\-S\-Ix\-R\-\_\-oneface}]{\setlength{\rightskip}{0pt plus 5cm}void Get\-P\-S\-Ix\-R\-\_\-oneface (
+\begin{DoxyParamCaption}
+\item[{{\bf deck}}]{inputs, }
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{p, }
+\item[{int}]{N\-\_\-basis, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{scalar $\ast$}]{x\-Geo\-\_\-\-A, }
+\item[{scalar $\ast$}]{x\-Geo\-\_\-\-B, }
+\item[{scalar $\ast$}]{x\-Face, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-\-A, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-\-B}
+\end{DoxyParamCaption}
+)}\label{recovery__tools_8cc_a169b69376ec43044049d94d1fd246e9e}
+Build the Recovery operator for a given interface, non-\/boundary (or if it is a boundary, it had better be a periodic boundary) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em inputs} & stuff from the deck, I need mesh type and solution order \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & = D\-O\-F per element \\
+\hline
+\mbox{\tt in}  & {\em p} & = polynomial order \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-basis} & = dimension of recovery basis \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-G} & = quadrature points per interface \\
+\hline
+\mbox{\tt in}  & {\em x\-Geo\-\_\-\-A} & = gmsh nodes for element A \\
+\hline
+\mbox{\tt in}  & {\em x\-Geo\-\_\-\-B} & = gmsh nodes for element B \\
+\hline
+\mbox{\tt in}  & {\em x\-Face} & = quadrature node physical locations on the interface \\
+\hline
+\mbox{\tt out}  & {\em P\-S\-Ix\-R} & the interface's discrete recovery operator \\
+\hline
+\mbox{\tt out}  & {\em P\-S\-Ux\-R\-\_\-\-A} & the half of P\-S\-Ix\-R corresponding to element A \\
+\hline
+\mbox{\tt out}  & {\em P\-S\-Ix\-R\-\_\-\-B} & the half of P\-S\-Ix\-R corresponding to element B\\
+\hline
+\end{DoxyParams}
+\index{recovery\-\_\-tools.\-cc@{recovery\-\_\-tools.\-cc}!Leg\-\_\-\-L2@{Leg\-\_\-\-L2}}
+\index{Leg\-\_\-\-L2@{Leg\-\_\-\-L2}!recovery_tools.cc@{recovery\-\_\-tools.\-cc}}
+\subsubsection[{Leg\-\_\-\-L2}]{\setlength{\rightskip}{0pt plus 5cm}scalar Leg\-\_\-\-L2 (
+\begin{DoxyParamCaption}
+\item[{int}]{index, }
+\item[{scalar}]{x}
+\end{DoxyParamCaption}
+)}\label{recovery__tools_8cc_afa36f21f1da989688e3e5eb905ec51c7}
+get 1\-D Legendre polynomial of a given index on bi-\/unit domain 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em index} & degree of Legendre polynomial \\
+\hline
+\mbox{\tt in}  & {\em x} & location on bi-\/unit domain\\
+\hline
+\end{DoxyParams}
+\index{recovery\-\_\-tools.\-cc@{recovery\-\_\-tools.\-cc}!Nodal\-Eq\-Cord@{Nodal\-Eq\-Cord}}
+\index{Nodal\-Eq\-Cord@{Nodal\-Eq\-Cord}!recovery_tools.cc@{recovery\-\_\-tools.\-cc}}
+\subsubsection[{Nodal\-Eq\-Cord}]{\setlength{\rightskip}{0pt plus 5cm}void Nodal\-Eq\-Cord (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{p, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{{\bf simple\-Mesh} \&}]{m, }
+\item[{scalar $\ast$}]{x\-Geo\-\_\-\-A, }
+\item[{scalar $\ast$}]{x\-Geo\-\_\-\-B, }
+\item[{scalar $\ast$}]{x\-Face, }
+\item[{scalar $\ast$}]{xirg\-A, }
+\item[{scalar $\ast$}]{xirg\-B, }
+\item[{scalar $\ast$}]{Rrg\-A, }
+\item[{scalar $\ast$}]{Rrg\-B}
+\end{DoxyParamCaption}
+)}\label{recovery__tools_8cc_a858df95ec29e602fa78b6054a4452ecc}
+Get the coordinates of the non-\/dominant nodal equivalence points for the I\-C\-B-\/\-N method and possibly some H\-A\-G/\-C\-G\-R schemes that make use of biased recovery 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & solution points per element \\
+\hline
+\mbox{\tt in}  & {\em p} & solution polynomial order \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-G} & quadrature points per interface \\
+\hline
+\mbox{\tt in}  & {\em m} & the mesh. Needed for reference coordinates of nodes \\
+\hline
+\mbox{\tt in}  & {\em x\-Geo\-\_\-\-A} & solution point locations, el A \\
+\hline
+\mbox{\tt in}  & {\em x\-Geo\-\_\-\-B} & solution point locations, el B \\
+\hline
+\mbox{\tt in}  & {\em x\-Face} & quadrature point locations on the interface \\
+\hline
+\mbox{\tt out}  & {\em xirg\-A} & reference coordinates, equivalence nodes, el A \\
+\hline
+\mbox{\tt out}  & {\em xirg\-A} & reference coordinates, equivalence nodes, el B \\
+\hline
+\mbox{\tt out}  & {\em Rrg\-A} & recovery coordinates, equivalence nodes, el A \\
+\hline
+\mbox{\tt out}  & {\em Rrg\-B} & recovery coordinates, equivalence nodes, el B\\
+\hline
+\end{DoxyParams}
+\index{recovery\-\_\-tools.\-cc@{recovery\-\_\-tools.\-cc}!Periodicity\-Fix@{Periodicity\-Fix}}
+\index{Periodicity\-Fix@{Periodicity\-Fix}!recovery_tools.cc@{recovery\-\_\-tools.\-cc}}
+\subsubsection[{Periodicity\-Fix}]{\setlength{\rightskip}{0pt plus 5cm}void Periodicity\-Fix (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{G\-Qres\-Face, }
+\item[{scalar $\ast$}]{x\-Nodes\-\_\-\-A, }
+\item[{scalar $\ast$}]{x\-Nodes\-\_\-\-B, }
+\item[{scalar $\ast$}]{x\-Face, }
+\item[{int $\ast$}]{Flag\-Peri\-\_\-out, }
+\item[{int $\ast$}]{sign\-\_\-shift\-\_\-relay, }
+\item[{scalar $\ast$}]{Ldomain\-\_\-relay}
+\end{DoxyParamCaption}
+)}\label{recovery__tools_8cc_a3d0525fdfa4ba8c03443bda31fd18768}
+Physical coordinate adjustment for recovery over periodic boundary interfaces 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & solution points per element \\
+\hline
+\mbox{\tt in}  & {\em G\-Qres\-Face} & quadrature points per interface, same as M\-\_\-\-G \\
+\hline
+\mbox{\tt in}  & {\em x\-Nodes\-\_\-\-A} & the physical solution point locations in element A \\
+\hline
+\mbox{\tt in}  & {\em x\-Nodes\-\_\-\-B} & the physical solution point locations in element B \\
+\hline
+\mbox{\tt in}  & {\em x\-Face} & quadrature node phyiscal locations on shared interface \\
+\hline
+\mbox{\tt out}  & {\em Flag\-Peri\-\_\-out} & tells the interface what direction it is periodic in, if any \\
+\hline
+\mbox{\tt out}  & {\em sign\-\_\-shift\-\_\-relay} & sign of the directional correction to link the interfaces \\
+\hline
+\mbox{\tt out}  & {\em Ldomain\-\_\-relay} & distance of periodicity correction\\
+\hline
+\end{DoxyParams}
+\index{recovery\-\_\-tools.\-cc@{recovery\-\_\-tools.\-cc}!Psi\-At\-Points@{Psi\-At\-Points}}
+\index{Psi\-At\-Points@{Psi\-At\-Points}!recovery_tools.cc@{recovery\-\_\-tools.\-cc}}
+\subsubsection[{Psi\-At\-Points}]{\setlength{\rightskip}{0pt plus 5cm}void Psi\-At\-Points (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{p, }
+\item[{int}]{N\-\_\-basis, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int}]{Npoints, }
+\item[{scalar $\ast$}]{x, }
+\item[{scalar $\ast$}]{Psi\-Out}
+\end{DoxyParamCaption}
+)}\label{recovery__tools_8cc_ace5bec1b97e43453b02a8fd56f75aa60}
+Get the recovery/icb basis functions at a discrete set of points 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & solution points per element \\
+\hline
+\mbox{\tt in}  & {\em p} & Solution polynomial order per element; p=N\-\_\-s-\/1 in 1\-D \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-basis} & the dimension of the recovery/icb basis (2$\ast$\-N\-\_\-s for recovery, less for icb) \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & sides per element \\
+\hline
+\mbox{\tt in}  & {\em Npoints} & the count of points at which the recovery basis must be populated \\
+\hline
+\mbox{\tt in}  & {\em x} & recovery coordinates at which to populate the recovery basis \\
+\hline
+\mbox{\tt out}  & {\em Psi\-Out} & the recovery basis, all modes at all points\\
+\hline
+\end{DoxyParams}
+\index{recovery\-\_\-tools.\-cc@{recovery\-\_\-tools.\-cc}!Recovery\-Indices\-\_\-2\-D\-Simplex@{Recovery\-Indices\-\_\-2\-D\-Simplex}}
+\index{Recovery\-Indices\-\_\-2\-D\-Simplex@{Recovery\-Indices\-\_\-2\-D\-Simplex}!recovery_tools.cc@{recovery\-\_\-tools.\-cc}}
+\subsubsection[{Recovery\-Indices\-\_\-2\-D\-Simplex}]{\setlength{\rightskip}{0pt plus 5cm}void Recovery\-Indices\-\_\-2\-D\-Simplex (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{p, }
+\item[{int}]{N\-\_\-basis, }
+\item[{int $\ast$}]{sub\-Index\-\_\-relay}
+\end{DoxyParamCaption}
+)}\label{recovery__tools_8cc_ac9b27ac7b7dfb455f424eef4f59e3d85}
+index the recovery/icb basis for 2\-D triangular(simplex) elements 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & solution points per element \\
+\hline
+\mbox{\tt in}  & {\em p} & solution polynomial order per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-basis} & dimension of the recovery/icb basis \\
+\hline
+\mbox{\tt out}  & {\em sub\-Index\-\_\-relay} & the set of pr/ps tensor product indices for recovery/icb basis\\
+\hline
+\end{DoxyParams}
+\index{recovery\-\_\-tools.\-cc@{recovery\-\_\-tools.\-cc}!Transform\-Physical2\-Recovery@{Transform\-Physical2\-Recovery}}
+\index{Transform\-Physical2\-Recovery@{Transform\-Physical2\-Recovery}!recovery_tools.cc@{recovery\-\_\-tools.\-cc}}
+\subsubsection[{Transform\-Physical2\-Recovery}]{\setlength{\rightskip}{0pt plus 5cm}void Transform\-Physical2\-Recovery (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{G\-Qres\-A, }
+\item[{int}]{G\-Qres\-Face, }
+\item[{scalar $\ast$}]{x\-Nodes\-\_\-\-A, }
+\item[{scalar $\ast$}]{x\-Nodes\-\_\-\-B, }
+\item[{scalar $\ast$}]{x\-G\-Q\-\_\-\-A, }
+\item[{scalar $\ast$}]{x\-G\-Q\-\_\-\-B, }
+\item[{scalar $\ast$}]{x\-Face, }
+\item[{scalar $\ast$}]{r\-A\-\_\-out, }
+\item[{scalar $\ast$}]{r\-B\-\_\-out, }
+\item[{scalar $\ast$}]{r\-Face\-\_\-out}
+\end{DoxyParamCaption}
+)}\label{recovery__tools_8cc_a9df3628b67c58ecdab3d13a501fd16d4}
+Get the recovery coordinates (r,s) from the physical coordinates (x,y) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & = solution points per element, assumed same in A,B \\
+\hline
+\mbox{\tt in}  & {\em G\-Qres\-A} & = count of quadrature points in element A (assumed same in element B) \\
+\hline
+\mbox{\tt in}  & {\em G\-Qres\-Face} & = count of quadrature points on the interface, same as M\-\_\-\-G \\
+\hline
+\mbox{\tt in}  & {\em x\-Nodes\-\_\-\-A} & = gmsh nodes of element A \\
+\hline
+\mbox{\tt in}  & {\em x\-Nodes\-\_\-\-B} & = gmsh nodes of element B \\
+\hline
+\mbox{\tt in}  & {\em x\-G\-Q\-\_\-\-A} & = physical quadrature node locations element A \\
+\hline
+\mbox{\tt in}  & {\em x\-G\-Q\-\_\-\-B} & = physoica; quadratre node locations element B \\
+\hline
+\mbox{\tt in}  & {\em x\-Face} & = physoca; quadrature node locations on the interface \\
+\hline
+\mbox{\tt out}  & {\em r\-A\-\_\-out} & = recovery coordinates quadrature nodes element A \\
+\hline
+\mbox{\tt out}  & {\em r\-B\-\_\-out} & = recovery coordinates quadrature nodes element B \\
+\hline
+\mbox{\tt out}  & {\em r\-Face\-\_\-out} & = recovery coordinates quadrature nodes on face\\
+\hline
+\end{DoxyParams}

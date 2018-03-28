@@ -1,0 +1,198 @@
+\section{src/dg/dg\-\_\-functions.cc File Reference}
+\label{dg__functions_8cc}\index{src/dg/dg\-\_\-functions.\-cc@{src/dg/dg\-\_\-functions.\-cc}}
+
+
+Functions definitions for the D\-G method.  
+
+
+{\ttfamily \#include \char`\"{}dg\-\_\-functions.\-h\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bf dg\-\_\-jac\-\_\-elements\-\_\-fast} (const int N\-\_\-\-G, const int N\-\_\-\-E, {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&dphi, {\bf full\-Matrix}$<$ scalar $>$ \&J)
+\item 
+void {\bf dg\-\_\-jacobians\-\_\-elements} (const int N\-\_\-\-G, const int N\-\_\-\-E, {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, {\bf full\-Matrix}$<$ scalar $>$ \&dphi, {\bf full\-Matrix}$<$ scalar $>$ \&Jac, {\bf full\-Matrix}$<$ scalar $>$ \&inv\-Jac, {\bf full\-Matrix}$<$ scalar $>$ \&J, {\bf full\-Matrix}$<$ scalar $>$ \&inv\-J)
+\item 
+void {\bf dg\-\_\-jacobians\-\_\-face} (const int M\-\_\-\-T, {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes\-F, {\bf full\-Matrix}$<$ scalar $>$ \&dpsi, {\bf full\-Matrix}$<$ scalar $>$ \&Jac\-F, {\bf full\-Matrix}$<$ scalar $>$ \&J\-F, {\bf full\-Matrix}$<$ scalar $>$ \&inv\-J\-F)
+\item 
+void {\bf dg\-\_\-inverse\-\_\-mass\-\_\-matrix} (const int order, const int elem\-\_\-type, const std\-::string get\-Elem\-Type, const int N\-\_\-s, const int N\-\_\-\-E, {\bf full\-Matrix}$<$ scalar $>$ \&X\-Y\-Z\-Nodes, scalar $\ast$Minv)
+\item 
+void {\bf dg\-\_\-mappings} (const int myid, const int M\-\_\-s, const int M\-\_\-\-T, const int N\-\_\-s, const int N\-\_\-\-E, const int N\-\_\-\-N, const std\-::vector$<$ {\bf simple\-Interface} $>$ \&interfaces, const std\-::map$<$ int, int $>$ \&Element\-Map, const std\-::map$<$ int, int $>$ \&ghost\-Element\-Map, const std\-::vector$<$ std\-::vector$<$ int $>$ $>$ \&closures, int $\ast$map, int $\ast$invmap, int $\ast$Alt\-\_\-\-Face\-From\-Elem\-\_\-serial)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Functions definitions for the D\-G method. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{dg\-\_\-functions.\-cc@{dg\-\_\-functions.\-cc}!dg\-\_\-inverse\-\_\-mass\-\_\-matrix@{dg\-\_\-inverse\-\_\-mass\-\_\-matrix}}
+\index{dg\-\_\-inverse\-\_\-mass\-\_\-matrix@{dg\-\_\-inverse\-\_\-mass\-\_\-matrix}!dg_functions.cc@{dg\-\_\-functions.\-cc}}
+\subsubsection[{dg\-\_\-inverse\-\_\-mass\-\_\-matrix}]{\setlength{\rightskip}{0pt plus 5cm}void dg\-\_\-inverse\-\_\-mass\-\_\-matrix (
+\begin{DoxyParamCaption}
+\item[{const int}]{order, }
+\item[{const int}]{elem\-\_\-type, }
+\item[{const std\-::string}]{get\-Elem\-Type, }
+\item[{const int}]{N\-\_\-s, }
+\item[{const int}]{N\-\_\-\-E, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{X\-Y\-Z\-Nodes, }
+\item[{scalar $\ast$}]{Minv}
+\end{DoxyParamCaption}
+)}\label{dg__functions_8cc_a49e6cb8bc20ad82ac7debd7b7f973c61}
+Get the inverse mass matrix for each element 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em order} & D\-G order \\
+\hline
+\mbox{\tt in}  & {\em elem\-\_\-type} & type of element (numerical value) \\
+\hline
+\mbox{\tt in}  & {\em get\-Elem\-Type} & type of element (string) \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em X\-Y\-Z\-Nodes} & coordinates of element nodes \\
+\hline
+\mbox{\tt out}  & {\em Minv} & inverse mass matrix for each element\\
+\hline
+\end{DoxyParams}
+\index{dg\-\_\-functions.\-cc@{dg\-\_\-functions.\-cc}!dg\-\_\-jac\-\_\-elements\-\_\-fast@{dg\-\_\-jac\-\_\-elements\-\_\-fast}}
+\index{dg\-\_\-jac\-\_\-elements\-\_\-fast@{dg\-\_\-jac\-\_\-elements\-\_\-fast}!dg_functions.cc@{dg\-\_\-functions.\-cc}}
+\subsubsection[{dg\-\_\-jac\-\_\-elements\-\_\-fast}]{\setlength{\rightskip}{0pt plus 5cm}void dg\-\_\-jac\-\_\-elements\-\_\-fast (
+\begin{DoxyParamCaption}
+\item[{const int}]{N\-\_\-\-G, }
+\item[{const int}]{N\-\_\-\-E, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{X\-Y\-Z\-Nodes, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{dphi, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{J}
+\end{DoxyParamCaption}
+)}\label{dg__functions_8cc_a0b1662a79aa6eecb9ca59ec94fe99f5f}
+Get the Jacobian of the elements (only, which is why it's \char`\"{}fast\char`\"{}) 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-\-G} & number of gaussian nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em X\-Y\-Z\-Nodes} & coordinates of element nodes \\
+\hline
+\mbox{\tt in}  & {\em dphi} & derivative of the polynomial basis \\
+\hline
+\mbox{\tt out}  & {\em J} & Jacobian of each element\\
+\hline
+\end{DoxyParams}
+\index{dg\-\_\-functions.\-cc@{dg\-\_\-functions.\-cc}!dg\-\_\-jacobians\-\_\-elements@{dg\-\_\-jacobians\-\_\-elements}}
+\index{dg\-\_\-jacobians\-\_\-elements@{dg\-\_\-jacobians\-\_\-elements}!dg_functions.cc@{dg\-\_\-functions.\-cc}}
+\subsubsection[{dg\-\_\-jacobians\-\_\-elements}]{\setlength{\rightskip}{0pt plus 5cm}void dg\-\_\-jacobians\-\_\-elements (
+\begin{DoxyParamCaption}
+\item[{const int}]{N\-\_\-\-G, }
+\item[{const int}]{N\-\_\-\-E, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{X\-Y\-Z\-Nodes, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{dphi, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{Jac, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{inv\-Jac, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{J, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{inv\-J}
+\end{DoxyParamCaption}
+)}\label{dg__functions_8cc_aff8caa15e6794f62b1f756f7d681ca01}
+Get the Jacobian and inverse Jacobian of the elements 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-\-G} & number of gaussian nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em X\-Y\-Z\-Nodes} & coordinates of element nodes \\
+\hline
+\mbox{\tt in}  & {\em dphi} & derivative of the polynomial basis \\
+\hline
+\mbox{\tt out}  & {\em Jac} & Jacobian of each element \\
+\hline
+\mbox{\tt out}  & {\em inv\-Jac} & inverse Jacobian of each element \\
+\hline
+\mbox{\tt out}  & {\em J} & Jacobian of each element \\
+\hline
+\mbox{\tt out}  & {\em inv\-J} & inverse Jacobian of each element\\
+\hline
+\end{DoxyParams}
+\index{dg\-\_\-functions.\-cc@{dg\-\_\-functions.\-cc}!dg\-\_\-jacobians\-\_\-face@{dg\-\_\-jacobians\-\_\-face}}
+\index{dg\-\_\-jacobians\-\_\-face@{dg\-\_\-jacobians\-\_\-face}!dg_functions.cc@{dg\-\_\-functions.\-cc}}
+\subsubsection[{dg\-\_\-jacobians\-\_\-face}]{\setlength{\rightskip}{0pt plus 5cm}void dg\-\_\-jacobians\-\_\-face (
+\begin{DoxyParamCaption}
+\item[{const int}]{M\-\_\-\-T, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{X\-Y\-Z\-Nodes\-F, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{dpsi, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{Jac\-F, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{J\-F, }
+\item[{{\bf full\-Matrix}$<$ scalar $>$ \&}]{inv\-J\-F}
+\end{DoxyParamCaption}
+)}\label{dg__functions_8cc_ad1ce82303af703f51364855ca1093e03}
+Get the Jacobian and inverse Jacobian of the interfaces 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em X\-Y\-Z\-Nodes\-F} & coordinates of element nodes \\
+\hline
+\mbox{\tt in}  & {\em dpsi} & derivative of the interface polynomial basis \\
+\hline
+\mbox{\tt out}  & {\em Jac\-F} & Jacobian of each interface \\
+\hline
+\mbox{\tt out}  & {\em J\-F} & Jacobian of each interface \\
+\hline
+\mbox{\tt out}  & {\em inv\-J\-F} & inverse Jacobian of each interface\\
+\hline
+\end{DoxyParams}
+\index{dg\-\_\-functions.\-cc@{dg\-\_\-functions.\-cc}!dg\-\_\-mappings@{dg\-\_\-mappings}}
+\index{dg\-\_\-mappings@{dg\-\_\-mappings}!dg_functions.cc@{dg\-\_\-functions.\-cc}}
+\subsubsection[{dg\-\_\-mappings}]{\setlength{\rightskip}{0pt plus 5cm}void dg\-\_\-mappings (
+\begin{DoxyParamCaption}
+\item[{const int}]{myid, }
+\item[{const int}]{M\-\_\-s, }
+\item[{const int}]{M\-\_\-\-T, }
+\item[{const int}]{N\-\_\-s, }
+\item[{const int}]{N\-\_\-\-E, }
+\item[{const int}]{N\-\_\-\-N, }
+\item[{const std\-::vector$<$ {\bf simple\-Interface} $>$ \&}]{interfaces, }
+\item[{const std\-::map$<$ int, int $>$ \&}]{Element\-Map, }
+\item[{const std\-::map$<$ int, int $>$ \&}]{ghost\-Element\-Map, }
+\item[{const std\-::vector$<$ std\-::vector$<$ int $>$ $>$ \&}]{closures, }
+\item[{int $\ast$}]{map, }
+\item[{int $\ast$}]{invmap, }
+\item[{int $\ast$}]{Alt\-\_\-\-Face\-From\-Elem\-\_\-serial}
+\end{DoxyParamCaption}
+)}\label{dg__functions_8cc_a8269d4a18d39f05426a1d0efdd7f87db}
+Map interfaces and elements to each other 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em myid} & my processor I\-D (eg. M\-P\-I) \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbors per element \\
+\hline
+\mbox{\tt in}  & {\em interfaces} & vector of all the interfaces \\
+\hline
+\mbox{\tt in}  & {\em Element\-Map} & map of element I\-D to element index \\
+\hline
+\mbox{\tt in}  & {\em ghost\-Element\-Map} & map of element I\-D to element index for elements in other partitions \\
+\hline
+\mbox{\tt in}  & {\em closures} & closures \\
+\hline
+\mbox{\tt out}  & {\em map} & map from elements to interfaces \\
+\hline
+\mbox{\tt out}  & {\em invmap} & map from interfaces to elements \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+Map the element matrix to the interfaces matrix and vice-\/versa. This is a modified version of what I had previously. I think it works better and is more efficient.

@@ -1,0 +1,499 @@
+\section{src/dg/kernels\-\_\-phil.cu File Reference}
+\label{kernels__phil_8cu}\index{src/dg/kernels\-\_\-phil.\-cu@{src/dg/kernels\-\_\-phil.\-cu}}
+
+
+Kernels to be used for D\-G operations, specifically for mixed-\/form approach.  
+
+
+{\ttfamily \#include \char`\"{}kernels.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}kernels\-\_\-phil.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$stdio.\-h$>$}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\-\_\-\-\_\-global\-\_\-\-\_\- void {\bfseries print\-\_\-kernel} ()\label{kernels__phil_8cu_a9ab1b1059e3163f56a3f953160382ec7}
+
+\item 
+\-\_\-\-\_\-device\-\_\-\-\_\- double {\bf A\-T\-O\-M\-I\-C\-A\-D\-D} (double $\ast$address, double val)
+\item 
+\-\_\-\-\_\-global\-\_\-\-\_\- void {\bf Uhat\-\_\-to\-\_\-\-Uh\-Common\-Half\-\_\-\-G\-P\-U} (int N\-\_\-\-E, int N\-\_\-\-N, int M\-\_\-\-T, int M\-\_\-\-G, int N\-\_\-s, int $\ast$Reco\-Pair, int $\ast$Binary\-Side\-Address, scalar $\ast$P\-S\-Ix\-R\-\_\-elemwise, scalar $\ast$Uhat, scalar $\ast$Uh\-Common\-Half)
+\item 
+\-\_\-\-\_\-global\-\_\-\-\_\- void {\bf Uh\-Common\-Half\-\_\-to\-\_\-\-Uh\-Common\-\_\-\-G\-P\-U} (int M\-\_\-\-T, int M\-\_\-\-G, scalar $\ast$Uh\-Common\-Half, scalar $\ast$Uh\-Common)
+\item 
+\-\_\-\-\_\-global\-\_\-\-\_\- void {\bfseries Uhat\-\_\-to\-\_\-\-Grad\-Common\-Half\-\_\-\-G\-P\-U} (int N\-\_\-\-E, int N\-\_\-\-N, int M\-\_\-\-T, int M\-\_\-\-G, int N\-\_\-s, int $\ast$Reco\-Pair, int $\ast$Binary\-Side\-Address, scalar $\ast$Sig\-Face\-\_\-from\-\_\-\-Uhat\-\_\-elemwise, scalar $\ast$Uhat, scalar $\ast$grad\-Common\-Half)\label{kernels__phil_8cu_ad09bc959bb502e0146b127c8f18ed6fb}
+
+\item 
+\-\_\-\-\_\-global\-\_\-\-\_\- void {\bfseries Grad\-Common\-Half\-\_\-to\-\_\-\-Grad\-Common\-\_\-\-G\-P\-U} (int M\-\_\-\-T, int M\-\_\-\-G, scalar $\ast$Grad\-Common\-Half, scalar $\ast$Grad\-Common)\label{kernels__phil_8cu_a775060d9e862f4bb98ac46d3453f264a}
+
+\item 
+arch\-\_\-global void {\bf Uhat\-\_\-to\-\_\-\-Uh\-Common\-\_\-v2} (int N\-\_\-\-E, int N\-\_\-\-N, int M\-\_\-\-T, int M\-\_\-\-G, int N\-\_\-s, int $\ast$Reco\-Pair, int $\ast$Alt\-\_\-\-Face\-From\-Elem, scalar $\ast$P\-S\-Ix\-R\-\_\-elemwise, scalar $\ast$Uhat, scalar $\ast$Uh\-Common)
+\item 
+arch\-\_\-global void {\bf Uhat\-\_\-to\-\_\-\-Uh\-Common\-Half} (int N\-\_\-\-E, int N\-\_\-\-N, int M\-\_\-\-T, int M\-\_\-\-G, int N\-\_\-s, int $\ast$Reco\-Pair, int $\ast$Binary\-Side\-Address, scalar $\ast$P\-S\-Ix\-R\-\_\-elemwise, scalar $\ast$Uhat, scalar $\ast$Uh\-Common\-Half)
+\item 
+arch\-\_\-global void {\bf Uh\-Common\-Half\-\_\-to\-\_\-\-Uh\-Common} (int M\-\_\-\-T, int M\-\_\-\-G, scalar $\ast$Uh\-Common\-Half, scalar $\ast$Uh\-Common)
+\item 
+arch\-\_\-global void {\bfseries Uhat\-\_\-to\-\_\-\-Grad\-Common\-Half} (int N\-\_\-\-E, int N\-\_\-\-N, int M\-\_\-\-T, int M\-\_\-\-G, int N\-\_\-s, int $\ast$Reco\-Pair, int $\ast$Binary\-Side\-Address, scalar $\ast$Sig\-Face\-\_\-from\-\_\-\-Uhat\-\_\-elemwise, scalar $\ast$Uhat, scalar $\ast$grad\-Common\-Half)\label{kernels__phil_8cu_a2f944b16834f4f91f862df7dd8ef5c59}
+
+\item 
+arch\-\_\-global void {\bfseries Grad\-Common\-Half\-\_\-to\-\_\-\-Grad\-Common} (int M\-\_\-\-T, int M\-\_\-\-G, scalar $\ast$Grad\-Common\-Half, scalar $\ast$Grad\-Common)\label{kernels__phil_8cu_a0debc6e18c2389b970d51094880e5727}
+
+\item 
+arch\-\_\-global void {\bf Uhat\-\_\-to\-\_\-\-Grad\-Common\-\_\-v2} (int N\-\_\-\-E, int N\-\_\-\-N, int M\-\_\-\-T, int M\-\_\-\-G, int N\-\_\-s, int $\ast$Reco\-Pair, scalar $\ast$Sig\-Face\-\_\-from\-\_\-\-Uhat\-\_\-elemwise, scalar $\ast$Uhat, scalar $\ast$grad\-Common)
+\item 
+arch\-\_\-global void {\bf Uhat\-\_\-to\-\_\-\-Uh\-Common} (int M\-\_\-\-T, int M\-\_\-\-G, int N\-\_\-s, int $\ast$B\-R2\-\_\-\-Map, scalar $\ast$P\-S\-Ix\-R\-\_\-\-Global, scalar $\ast$Uhat, scalar $\ast$Uh\-Common)
+\item 
+arch\-\_\-global void {\bf Uhat\-\_\-to\-\_\-\-C\-U\-G\-U\-F} (int M\-\_\-\-T, int M\-\_\-\-G, int N\-\_\-s, int $\ast$B\-R2\-\_\-\-Map, scalar $\ast$P\-S\-Ix\-R\-\_\-\-Global, scalar $\ast$serial\-\_\-\-Sig\-Face\-\_\-from\-\_\-\-D\-O\-F, scalar $\ast$Uhat, scalar $\ast$Uh\-Common, scalar $\ast$grad\-Common)
+\item 
+arch\-\_\-global void {\bf Uhat\-\_\-to\-\_\-\-Sigma} (int N\-\_\-\-E, int N\-\_\-\-G, int N\-\_\-s, scalar $\ast$serial\-\_\-\-M\-Sig\-Vol, scalar $\ast$Uhat, scalar $\ast$grad\-U\-\_\-el)
+\item 
+arch\-\_\-global void {\bf Uh\-Common\-\_\-to\-\_\-\-Sigma} (int N\-\_\-\-E, int N\-\_\-\-G, int N\-\_\-\-N, int M\-\_\-\-G, scalar $\ast$serial\-\_\-\-M\-Sig\-Surf, int $\ast$Alt\-\_\-\-Face\-From\-Elem, scalar $\ast$Uh\-Common, scalar $\ast$grad\-U\-\_\-el)
+\item 
+void {\bfseries L\-Uhat\-\_\-to\-\_\-\-Uh\-Common\-Half} (int N\-\_\-\-E, int N\-\_\-\-N, int M\-\_\-\-T, int M\-\_\-\-G, int N\-\_\-s, int $\ast$Reco\-Pair, int $\ast$Binary\-Side\-Address, scalar $\ast$P\-S\-Ix\-R\-\_\-elemwise, scalar $\ast$Uhat, scalar $\ast$Uh\-Common\-Half)\label{kernels__phil_8cu_a07bc4a4a7ba4646d79801770d1d134dd}
+
+\item 
+void {\bfseries L\-Uh\-Common\-Half\-\_\-to\-\_\-\-Uh\-Common} (int M\-\_\-\-T, int M\-\_\-\-G, scalar $\ast$Uh\-Common\-Half, scalar $\ast$Uh\-Common)\label{kernels__phil_8cu_aa1a8c1f13da2938d74bd048b669b4185}
+
+\item 
+void {\bf L\-Uhat\-\_\-to\-\_\-\-Uh\-Common\-\_\-v2} (int N\-\_\-\-E, int N\-\_\-\-N, int M\-\_\-\-T, int M\-\_\-\-G, int N\-\_\-s, int $\ast$Reco\-Pair, int $\ast$Alt\-\_\-\-Face\-From\-Elem, scalar $\ast$P\-S\-Ix\-R\-\_\-elemwise, scalar $\ast$Uhat, scalar $\ast$Uh\-Common)
+\item 
+void {\bf L\-Uhat\-\_\-to\-\_\-\-Grad\-Common\-\_\-v2} (int N\-\_\-\-E, int N\-\_\-\-N, int M\-\_\-\-T, int M\-\_\-\-G, int N\-\_\-s, int $\ast$Reco\-Pair, scalar $\ast$Sig\-Face\-\_\-from\-\_\-\-Uhat\-\_\-elemwise, scalar $\ast$Uhat, scalar $\ast$grad\-Common)
+\item 
+void {\bfseries L\-Uhat\-\_\-to\-\_\-\-Grad\-Common\-Half} (int N\-\_\-\-E, int N\-\_\-\-N, int M\-\_\-\-T, int M\-\_\-\-G, int N\-\_\-s, int $\ast$Reco\-Pair, int $\ast$Binary\-Side\-Address, scalar $\ast$Sig\-Face\-\_\-from\-\_\-\-Uhat\-\_\-elemwise, scalar $\ast$Uhat, scalar $\ast$grad\-Common\-Half)\label{kernels__phil_8cu_adf9981d9b195371edc280b611c4e1776}
+
+\item 
+void {\bfseries L\-Grad\-Common\-Half\-\_\-to\-\_\-\-Grad\-Common} (int M\-\_\-\-T, int M\-\_\-\-G, scalar $\ast$Grad\-Common\-Half, scalar $\ast$Grad\-Common)\label{kernels__phil_8cu_aa927889d75f51b7ba59ea44475c7a244}
+
+\item 
+void {\bf L\-Uhat\-\_\-to\-\_\-\-Uh\-Common} (int M\-\_\-\-T, int M\-\_\-\-G, int N\-\_\-s, int $\ast$B\-R2\-\_\-\-Map, scalar $\ast$P\-S\-Ix\-R\-\_\-\-Global, scalar $\ast$Uhat, scalar $\ast$Uh\-Common)
+\item 
+void {\bfseries L\-Uhat\-\_\-to\-\_\-\-Sigma} (int N\-\_\-\-E, int N\-\_\-\-G, int N\-\_\-s, scalar $\ast$serial\-\_\-\-M\-Sig\-Vol, scalar $\ast$Uhat, scalar $\ast$grad\-U\-\_\-el)\label{kernels__phil_8cu_a61970ad2a89a81b97877b77341569082}
+
+\item 
+void {\bfseries L\-Uh\-Common\-\_\-to\-\_\-\-Sigma} (int N\-\_\-\-E, int N\-\_\-\-G, int N\-\_\-\-N, int M\-\_\-\-G, scalar $\ast$serial\-\_\-\-M\-Sig\-Surf, int $\ast$Alt\-\_\-\-Face\-From\-Elem, scalar $\ast$Uh\-Common, scalar $\ast$grad\-U\-\_\-el)\label{kernels__phil_8cu_af700e16a3bc2a086de1ec01aa66f0059}
+
+\item 
+void {\bf L\-Uhat\-\_\-to\-\_\-\-C\-U\-G\-U\-F} (int M\-\_\-\-T, int M\-\_\-\-G, int N\-\_\-s, int $\ast$B\-R2\-\_\-\-Map, scalar $\ast$P\-S\-Ix\-R\-\_\-\-Global, scalar $\ast$serial\-\_\-\-Sig\-Face\-\_\-from\-\_\-\-D\-O\-F, scalar $\ast$Uhat, scalar $\ast$Uh\-Common, scalar $\ast$grad\-Common)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Kernels to be used for D\-G operations, specifically for mixed-\/form approach. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{kernels\-\_\-phil.\-cu@{kernels\-\_\-phil.\-cu}!A\-T\-O\-M\-I\-C\-A\-D\-D@{A\-T\-O\-M\-I\-C\-A\-D\-D}}
+\index{A\-T\-O\-M\-I\-C\-A\-D\-D@{A\-T\-O\-M\-I\-C\-A\-D\-D}!kernels_phil.cu@{kernels\-\_\-phil.\-cu}}
+\subsubsection[{A\-T\-O\-M\-I\-C\-A\-D\-D}]{\setlength{\rightskip}{0pt plus 5cm}\-\_\-\-\_\-device\-\_\-\-\_\- double A\-T\-O\-M\-I\-C\-A\-D\-D (
+\begin{DoxyParamCaption}
+\item[{double $\ast$}]{address, }
+\item[{double}]{val}
+\end{DoxyParamCaption}
+)}\label{kernels__phil_8cu_a1bd7c4d2fd6b057a49b6794a1b938d66}
+Atomic addition definition for a G\-P\-U. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt out}  & {\em address} & address of value to add to \\
+\hline
+\mbox{\tt in}  & {\em val} & value to be added to address value\\
+\hline
+\end{DoxyParams}
+\index{kernels\-\_\-phil.\-cu@{kernels\-\_\-phil.\-cu}!L\-Uhat\-\_\-to\-\_\-\-C\-U\-G\-U\-F@{L\-Uhat\-\_\-to\-\_\-\-C\-U\-G\-U\-F}}
+\index{L\-Uhat\-\_\-to\-\_\-\-C\-U\-G\-U\-F@{L\-Uhat\-\_\-to\-\_\-\-C\-U\-G\-U\-F}!kernels_phil.cu@{kernels\-\_\-phil.\-cu}}
+\subsubsection[{L\-Uhat\-\_\-to\-\_\-\-C\-U\-G\-U\-F}]{\setlength{\rightskip}{0pt plus 5cm}void L\-Uhat\-\_\-to\-\_\-\-C\-U\-G\-U\-F (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{N\-\_\-s, }
+\item[{int $\ast$}]{B\-R2\-\_\-\-Map, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-\-Global, }
+\item[{scalar $\ast$}]{serial\-\_\-\-Sig\-Face\-\_\-from\-\_\-\-D\-O\-F, }
+\item[{scalar $\ast$}]{Uhat, }
+\item[{scalar $\ast$}]{Uh\-Common, }
+\item[{scalar $\ast$}]{grad\-Common}
+\end{DoxyParamCaption}
+)}\label{kernels__phil_8cu_a8b169752e46fc2f78e934c74cb2be414}
+Host C function to launch Uhat\-\_\-to\-\_\-\-Uh\-Common kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-\-F} & number of field variables \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & solution nodes per element \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-G} & number of gaussian nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt in}  & {\em B\-R2\-\_\-\-Map} & tells each interface who the neighboring elements are \\
+\hline
+\mbox{\tt out}  & {\em Uh\-Common} & common solution value on interfaces \\
+\hline
+\mbox{\tt in}  & {\em P\-S\-Ix\-R\-\_\-\-Global} & is the recovery operator \\
+\hline
+\mbox{\tt in}  & {\em serial\-\_\-\-Sig\-Face\-\_\-from\-\_\-\-D\-O\-F} & gets interface gradient from D\-O\-F \\
+\hline
+\mbox{\tt in}  & {\em Uhat} & is global D\-G D\-O\-F storage \\
+\hline
+\mbox{\tt out}  & {\em grad\-Common} & is the interface gradient \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches M\-\_\-\-T/blk\-T blocks of M\-\_\-\-G x N\-\_\-\-F x blk\-T threads. blk\-T controls the number of interfaces to set on each block\index{kernels\-\_\-phil.\-cu@{kernels\-\_\-phil.\-cu}!L\-Uhat\-\_\-to\-\_\-\-Grad\-Common\-\_\-v2@{L\-Uhat\-\_\-to\-\_\-\-Grad\-Common\-\_\-v2}}
+\index{L\-Uhat\-\_\-to\-\_\-\-Grad\-Common\-\_\-v2@{L\-Uhat\-\_\-to\-\_\-\-Grad\-Common\-\_\-v2}!kernels_phil.cu@{kernels\-\_\-phil.\-cu}}
+\subsubsection[{L\-Uhat\-\_\-to\-\_\-\-Grad\-Common\-\_\-v2}]{\setlength{\rightskip}{0pt plus 5cm}void L\-Uhat\-\_\-to\-\_\-\-Grad\-Common\-\_\-v2 (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{N\-\_\-s, }
+\item[{int $\ast$}]{Reco\-Pair, }
+\item[{scalar $\ast$}]{Sig\-Face\-\_\-from\-\_\-\-Uhat\-\_\-elemwise, }
+\item[{scalar $\ast$}]{Uhat, }
+\item[{scalar $\ast$}]{grad\-Common}
+\end{DoxyParamCaption}
+)}\label{kernels__phil_8cu_a68eee298d5e0508aacf3600db2a86332}
+Host C function to launch Uhat\-\_\-to\-\_\-grad\-Common\-\_\-v2 kernel. In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of (D+\-N\-\_\-\-N) x M\-\_\-\-G x blk\-E threads. blk\-E controls the number of interfaces to set on each block\index{kernels\-\_\-phil.\-cu@{kernels\-\_\-phil.\-cu}!L\-Uhat\-\_\-to\-\_\-\-Uh\-Common@{L\-Uhat\-\_\-to\-\_\-\-Uh\-Common}}
+\index{L\-Uhat\-\_\-to\-\_\-\-Uh\-Common@{L\-Uhat\-\_\-to\-\_\-\-Uh\-Common}!kernels_phil.cu@{kernels\-\_\-phil.\-cu}}
+\subsubsection[{L\-Uhat\-\_\-to\-\_\-\-Uh\-Common}]{\setlength{\rightskip}{0pt plus 5cm}void L\-Uhat\-\_\-to\-\_\-\-Uh\-Common (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{N\-\_\-s, }
+\item[{int $\ast$}]{B\-R2\-\_\-\-Map, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-\-Global, }
+\item[{scalar $\ast$}]{Uhat, }
+\item[{scalar $\ast$}]{Uh\-Common}
+\end{DoxyParamCaption}
+)}\label{kernels__phil_8cu_ab5f8851dee0848639fbf9a7c4208f5f2}
+Host C function to launch Uhat\-\_\-to\-\_\-\-Uh\-Common kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-\-F} & number of field variables \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & solution nodes per element \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-G} & number of gaussian nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt in}  & {\em B\-R2\-\_\-\-Map} & tells each interface who the neighboring elements are \\
+\hline
+\mbox{\tt out}  & {\em Uh\-Common} & common solution value on interfaces \\
+\hline
+\mbox{\tt in}  & {\em P\-S\-Ix\-R\-\_\-\-Global} & is the recovery operator \\
+\hline
+\mbox{\tt in}  & {\em Uhat} & is global D\-G D\-O\-F storage \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches M\-\_\-\-T/blk\-T blocks of M\-\_\-\-G x N\-\_\-\-F x blk\-T threads. blk\-T controls the number of interfaces to set on each block\index{kernels\-\_\-phil.\-cu@{kernels\-\_\-phil.\-cu}!L\-Uhat\-\_\-to\-\_\-\-Uh\-Common\-\_\-v2@{L\-Uhat\-\_\-to\-\_\-\-Uh\-Common\-\_\-v2}}
+\index{L\-Uhat\-\_\-to\-\_\-\-Uh\-Common\-\_\-v2@{L\-Uhat\-\_\-to\-\_\-\-Uh\-Common\-\_\-v2}!kernels_phil.cu@{kernels\-\_\-phil.\-cu}}
+\subsubsection[{L\-Uhat\-\_\-to\-\_\-\-Uh\-Common\-\_\-v2}]{\setlength{\rightskip}{0pt plus 5cm}void L\-Uhat\-\_\-to\-\_\-\-Uh\-Common\-\_\-v2 (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{N\-\_\-s, }
+\item[{int $\ast$}]{Reco\-Pair, }
+\item[{int $\ast$}]{Alt\-\_\-\-Face\-From\-Elem, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-elemwise, }
+\item[{scalar $\ast$}]{Uhat, }
+\item[{scalar $\ast$}]{Uh\-Common}
+\end{DoxyParamCaption}
+)}\label{kernels__phil_8cu_a22cc6571f74be1bc3dd0bd29c1609f5d}
+Host C function to launch Uhat\-\_\-to\-\_\-\-Uh\-Common\-\_\-v2 kernel. In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of (D+\-N\-\_\-\-N) x M\-\_\-\-G x blk\-E threads. blk\-E controls the number of interfaces to set on each block\index{kernels\-\_\-phil.\-cu@{kernels\-\_\-phil.\-cu}!Uhat\-\_\-to\-\_\-\-C\-U\-G\-U\-F@{Uhat\-\_\-to\-\_\-\-C\-U\-G\-U\-F}}
+\index{Uhat\-\_\-to\-\_\-\-C\-U\-G\-U\-F@{Uhat\-\_\-to\-\_\-\-C\-U\-G\-U\-F}!kernels_phil.cu@{kernels\-\_\-phil.\-cu}}
+\subsubsection[{Uhat\-\_\-to\-\_\-\-C\-U\-G\-U\-F}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void Uhat\-\_\-to\-\_\-\-C\-U\-G\-U\-F (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{N\-\_\-s, }
+\item[{int $\ast$}]{B\-R2\-\_\-\-Map, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-\-Global, }
+\item[{scalar $\ast$}]{serial\-\_\-\-Sig\-Face\-\_\-from\-\_\-\-D\-O\-F, }
+\item[{scalar $\ast$}]{Uhat, }
+\item[{scalar $\ast$}]{Uh\-Common, }
+\item[{scalar $\ast$}]{grad\-Common}
+\end{DoxyParamCaption}
+)}\label{kernels__phil_8cu_ab98f275c85eed3e33b4dd3b11d11b1d5}
+Map solution to the faces 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em P\-S\-Ix\-R\-\_\-\-Global} & the recovery operator for each interface \\
+\hline
+\mbox{\tt in}  & {\em Uhat} & element solution \\
+\hline
+\mbox{\tt out}  & {\em Uh\-Common} & interface solution, specifically at quadrature points\\
+\hline
+\end{DoxyParams}
+Take into account the geometry by multiplying with Jacobians 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-\-G} & number of gaussian nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt out}  & {\em q\-J} & q multiplied by Jacobian \\
+\hline
+\mbox{\tt in}  & {\em q} & interface flux array \\
+\hline
+\mbox{\tt in}  & {\em J\-F} & Jacobian of the faces\\
+\hline
+\end{DoxyParams}
+\index{kernels\-\_\-phil.\-cu@{kernels\-\_\-phil.\-cu}!Uhat\-\_\-to\-\_\-\-Grad\-Common\-\_\-v2@{Uhat\-\_\-to\-\_\-\-Grad\-Common\-\_\-v2}}
+\index{Uhat\-\_\-to\-\_\-\-Grad\-Common\-\_\-v2@{Uhat\-\_\-to\-\_\-\-Grad\-Common\-\_\-v2}!kernels_phil.cu@{kernels\-\_\-phil.\-cu}}
+\subsubsection[{Uhat\-\_\-to\-\_\-\-Grad\-Common\-\_\-v2}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void Uhat\-\_\-to\-\_\-\-Grad\-Common\-\_\-v2 (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{N\-\_\-s, }
+\item[{int $\ast$}]{Reco\-Pair, }
+\item[{scalar $\ast$}]{Sig\-Face\-\_\-from\-\_\-\-Uhat\-\_\-elemwise, }
+\item[{scalar $\ast$}]{Uhat, }
+\item[{scalar $\ast$}]{grad\-Common}
+\end{DoxyParamCaption}
+)}\label{kernels__phil_8cu_ae97fc163278080752e434472c4d71a97}
+Send each element's common gradient contribution to the interface and store complete Uh\-Common.  element-\/wise storage of the P\-S\-Ix\-R operator 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em P\-S\-Ix\-R\-\_\-\-Global} & the recovery operator for each interface \\
+\hline
+\mbox{\tt in}  & {\em Uhat} & element solution \\
+\hline
+\mbox{\tt out}  & {\em Uh\-Common} & interface solution, specifically at quadrature points\\
+\hline
+\end{DoxyParams}
+\index{kernels\-\_\-phil.\-cu@{kernels\-\_\-phil.\-cu}!Uhat\-\_\-to\-\_\-\-Sigma@{Uhat\-\_\-to\-\_\-\-Sigma}}
+\index{Uhat\-\_\-to\-\_\-\-Sigma@{Uhat\-\_\-to\-\_\-\-Sigma}!kernels_phil.cu@{kernels\-\_\-phil.\-cu}}
+\subsubsection[{Uhat\-\_\-to\-\_\-\-Sigma}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void Uhat\-\_\-to\-\_\-\-Sigma (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-G, }
+\item[{int}]{N\-\_\-s, }
+\item[{scalar $\ast$}]{serial\-\_\-\-M\-Sig\-Vol, }
+\item[{scalar $\ast$}]{Uhat, }
+\item[{scalar $\ast$}]{grad\-U\-\_\-el}
+\end{DoxyParamCaption}
+)}\label{kernels__phil_8cu_ac6a2eb4a1f095d0067eac7c1b30af1a5}
+Added 05/27/2017 by P\-E\-J. Partially populates auxiliary variable from element D\-O\-F 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-G} & quadrature nodes per element \\
+\hline
+\mbox{\tt in}  & {\em serial\-\_\-\-M\-Sig\-Vol} & matrix that grabs auxiliary variabl contribution from D\-O\-F \\
+\hline
+\mbox{\tt in}  & {\em Uhat} & D\-G D\-O\-F \\
+\hline
+\mbox{\tt out}  & {\em grad\-U\-\_\-el} & auxiliary variable over element interiors. Not yet completely populated\\
+\hline
+\end{DoxyParams}
+\index{kernels\-\_\-phil.\-cu@{kernels\-\_\-phil.\-cu}!Uhat\-\_\-to\-\_\-\-Uh\-Common@{Uhat\-\_\-to\-\_\-\-Uh\-Common}}
+\index{Uhat\-\_\-to\-\_\-\-Uh\-Common@{Uhat\-\_\-to\-\_\-\-Uh\-Common}!kernels_phil.cu@{kernels\-\_\-phil.\-cu}}
+\subsubsection[{Uhat\-\_\-to\-\_\-\-Uh\-Common}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void Uhat\-\_\-to\-\_\-\-Uh\-Common (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{N\-\_\-s, }
+\item[{int $\ast$}]{B\-R2\-\_\-\-Map, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-\-Global, }
+\item[{scalar $\ast$}]{Uhat, }
+\item[{scalar $\ast$}]{Uh\-Common}
+\end{DoxyParamCaption}
+)}\label{kernels__phil_8cu_af3aaee5f9802d94897730a195312a530}
+Map solution to the faces 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em P\-S\-Ix\-R\-\_\-\-Global} & the recovery operator for each interface \\
+\hline
+\mbox{\tt in}  & {\em Uhat} & element solution \\
+\hline
+\mbox{\tt out}  & {\em Uh\-Common} & interface solution, specifically at quadrature points\\
+\hline
+\end{DoxyParams}
+\index{kernels\-\_\-phil.\-cu@{kernels\-\_\-phil.\-cu}!Uhat\-\_\-to\-\_\-\-Uh\-Common\-\_\-v2@{Uhat\-\_\-to\-\_\-\-Uh\-Common\-\_\-v2}}
+\index{Uhat\-\_\-to\-\_\-\-Uh\-Common\-\_\-v2@{Uhat\-\_\-to\-\_\-\-Uh\-Common\-\_\-v2}!kernels_phil.cu@{kernels\-\_\-phil.\-cu}}
+\subsubsection[{Uhat\-\_\-to\-\_\-\-Uh\-Common\-\_\-v2}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void Uhat\-\_\-to\-\_\-\-Uh\-Common\-\_\-v2 (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{N\-\_\-s, }
+\item[{int $\ast$}]{Reco\-Pair, }
+\item[{int $\ast$}]{Alt\-\_\-\-Face\-From\-Elem, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-elemwise, }
+\item[{scalar $\ast$}]{Uhat, }
+\item[{scalar $\ast$}]{Uh\-Common}
+\end{DoxyParamCaption}
+)}\label{kernels__phil_8cu_abbc23e1ea40cc2febb63bb3708356eac}
+Send each element's Uh\-Common contribution to the interface and store complete Uh\-Common.  element-\/wise storage of the P\-S\-Ix\-R operator 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em P\-S\-Ix\-R\-\_\-\-Global} & the recovery operator for each interface \\
+\hline
+\mbox{\tt in}  & {\em Uhat} & element solution \\
+\hline
+\mbox{\tt out}  & {\em Uh\-Common} & interface solution, specifically at quadrature points\\
+\hline
+\end{DoxyParams}
+\index{kernels\-\_\-phil.\-cu@{kernels\-\_\-phil.\-cu}!Uhat\-\_\-to\-\_\-\-Uh\-Common\-Half@{Uhat\-\_\-to\-\_\-\-Uh\-Common\-Half}}
+\index{Uhat\-\_\-to\-\_\-\-Uh\-Common\-Half@{Uhat\-\_\-to\-\_\-\-Uh\-Common\-Half}!kernels_phil.cu@{kernels\-\_\-phil.\-cu}}
+\subsubsection[{Uhat\-\_\-to\-\_\-\-Uh\-Common\-Half}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void Uhat\-\_\-to\-\_\-\-Uh\-Common\-Half (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{N\-\_\-s, }
+\item[{int $\ast$}]{Reco\-Pair, }
+\item[{int $\ast$}]{Binary\-Side\-Address, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-elemwise, }
+\item[{scalar $\ast$}]{Uhat, }
+\item[{scalar $\ast$}]{Uh\-Common\-Half}
+\end{DoxyParamCaption}
+)}\label{kernels__phil_8cu_a5da386e86b27b2d01375a1bafa8c1a57}
+Send each element's Uh\-Common contribution to the interface. Another routine must add the contributions  element-\/wise storage of the P\-S\-Ix\-R operator 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em P\-S\-Ix\-R\-\_\-\-Global} & the recovery operator for each interface \\
+\hline
+\mbox{\tt in}  & {\em Uhat} & element solution \\
+\hline
+\mbox{\tt out}  & {\em Uh\-Common} & interface solution, specifically at quadrature points\\
+\hline
+\end{DoxyParams}
+\index{kernels\-\_\-phil.\-cu@{kernels\-\_\-phil.\-cu}!Uhat\-\_\-to\-\_\-\-Uh\-Common\-Half\-\_\-\-G\-P\-U@{Uhat\-\_\-to\-\_\-\-Uh\-Common\-Half\-\_\-\-G\-P\-U}}
+\index{Uhat\-\_\-to\-\_\-\-Uh\-Common\-Half\-\_\-\-G\-P\-U@{Uhat\-\_\-to\-\_\-\-Uh\-Common\-Half\-\_\-\-G\-P\-U}!kernels_phil.cu@{kernels\-\_\-phil.\-cu}}
+\subsubsection[{Uhat\-\_\-to\-\_\-\-Uh\-Common\-Half\-\_\-\-G\-P\-U}]{\setlength{\rightskip}{0pt plus 5cm}\-\_\-\-\_\-global\-\_\-\-\_\- void Uhat\-\_\-to\-\_\-\-Uh\-Common\-Half\-\_\-\-G\-P\-U (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{N\-\_\-s, }
+\item[{int $\ast$}]{Reco\-Pair, }
+\item[{int $\ast$}]{Binary\-Side\-Address, }
+\item[{scalar $\ast$}]{P\-S\-Ix\-R\-\_\-elemwise, }
+\item[{scalar $\ast$}]{Uhat, }
+\item[{scalar $\ast$}]{Uh\-Common\-Half}
+\end{DoxyParamCaption}
+)}\label{kernels__phil_8cu_aecb95664f97846dd52ae516104cac829}
+Send each element's Uh\-Common contribution to the interface. Another routine must add the contributions.  is the pure G\-P\-U version because I want to get better at compiling  element-\/wise storage of the P\-S\-Ix\-R operator 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em P\-S\-Ix\-R\-\_\-\-Global} & the recovery operator for each interface \\
+\hline
+\mbox{\tt in}  & {\em Uhat} & element solution \\
+\hline
+\mbox{\tt out}  & {\em Uh\-Common} & interface solution, specifically at quadrature points\\
+\hline
+\end{DoxyParams}
+\index{kernels\-\_\-phil.\-cu@{kernels\-\_\-phil.\-cu}!Uh\-Common\-\_\-to\-\_\-\-Sigma@{Uh\-Common\-\_\-to\-\_\-\-Sigma}}
+\index{Uh\-Common\-\_\-to\-\_\-\-Sigma@{Uh\-Common\-\_\-to\-\_\-\-Sigma}!kernels_phil.cu@{kernels\-\_\-phil.\-cu}}
+\subsubsection[{Uh\-Common\-\_\-to\-\_\-\-Sigma}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void Uh\-Common\-\_\-to\-\_\-\-Sigma (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{N\-\_\-\-G, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{scalar $\ast$}]{serial\-\_\-\-M\-Sig\-Surf, }
+\item[{int $\ast$}]{Alt\-\_\-\-Face\-From\-Elem, }
+\item[{scalar $\ast$}]{Uh\-Common, }
+\item[{scalar $\ast$}]{grad\-U\-\_\-el}
+\end{DoxyParamCaption}
+)}\label{kernels__phil_8cu_aa81ee0dde76499a1f880c19f358032e3}
+Added 05/27/2017 by P\-E\-J. Partially populates auxiliary variable from Uh\-Common on surrounding faces 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-\-N} & faces per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-G} & quadrature nodes per element \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-G} & quadrature nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em serial\-\_\-\-M\-Sig\-Surf} & matrix that grabs auxiliary variabl contribution from Uh\-Common on interfaces \\
+\hline
+\mbox{\tt in}  & {\em Uh\-Common} & common value distribution on interfaces \\
+\hline
+\mbox{\tt in}  & {\em grad\-U\-\_\-el} & auxiliary variable over element interiors. Not yet completely populated \\
+\hline
+\mbox{\tt out}  & {\em grad\-U\-\_\-el} & auxiliary variable over element interiors. Fully populated\\
+\hline
+\end{DoxyParams}
+\index{kernels\-\_\-phil.\-cu@{kernels\-\_\-phil.\-cu}!Uh\-Common\-Half\-\_\-to\-\_\-\-Uh\-Common@{Uh\-Common\-Half\-\_\-to\-\_\-\-Uh\-Common}}
+\index{Uh\-Common\-Half\-\_\-to\-\_\-\-Uh\-Common@{Uh\-Common\-Half\-\_\-to\-\_\-\-Uh\-Common}!kernels_phil.cu@{kernels\-\_\-phil.\-cu}}
+\subsubsection[{Uh\-Common\-Half\-\_\-to\-\_\-\-Uh\-Common}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void Uh\-Common\-Half\-\_\-to\-\_\-\-Uh\-Common (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{scalar $\ast$}]{Uh\-Common\-Half, }
+\item[{scalar $\ast$}]{Uh\-Common}
+\end{DoxyParamCaption}
+)}\label{kernels__phil_8cu_a4fd2593d4761329356b5032bd565c6dc}
+combine the Uh\-Common\-Half contributions from each side of each interface to get Uh\-Common on the face  element-\/wise storage of the P\-S\-Ix\-R operator 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt out}  & {\em Uh\-Common} & interface solution, specifically at quadrature points\\
+\hline
+\end{DoxyParams}
+\index{kernels\-\_\-phil.\-cu@{kernels\-\_\-phil.\-cu}!Uh\-Common\-Half\-\_\-to\-\_\-\-Uh\-Common\-\_\-\-G\-P\-U@{Uh\-Common\-Half\-\_\-to\-\_\-\-Uh\-Common\-\_\-\-G\-P\-U}}
+\index{Uh\-Common\-Half\-\_\-to\-\_\-\-Uh\-Common\-\_\-\-G\-P\-U@{Uh\-Common\-Half\-\_\-to\-\_\-\-Uh\-Common\-\_\-\-G\-P\-U}!kernels_phil.cu@{kernels\-\_\-phil.\-cu}}
+\subsubsection[{Uh\-Common\-Half\-\_\-to\-\_\-\-Uh\-Common\-\_\-\-G\-P\-U}]{\setlength{\rightskip}{0pt plus 5cm}\-\_\-\-\_\-global\-\_\-\-\_\- void Uh\-Common\-Half\-\_\-to\-\_\-\-Uh\-Common\-\_\-\-G\-P\-U (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{M\-\_\-\-G, }
+\item[{scalar $\ast$}]{Uh\-Common\-Half, }
+\item[{scalar $\ast$}]{Uh\-Common}
+\end{DoxyParamCaption}
+)}\label{kernels__phil_8cu_a02bee9582eb520f4baa662e7f49cb909}
+combine the Uh\-Common\-Half contributions from each side of each interface to get Uh\-Common on the face
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt out}  & {\em Uh\-Common} & interface solution, specifically at quadrature points\\
+\hline
+\end{DoxyParams}

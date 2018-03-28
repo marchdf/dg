@@ -1,0 +1,352 @@
+\section{src/dg/kernels.cu File Reference}
+\label{kernels_8cu}\index{src/dg/kernels.\-cu@{src/dg/kernels.\-cu}}
+
+
+Kernels to be used for D\-G operations.  
+
+
+{\ttfamily \#include \char`\"{}kernels.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$cstdlib$>$}\\*
+{\ttfamily \#include $<$stdio.\-h$>$}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\-\_\-\-\_\-device\-\_\-\-\_\- double {\bf atomic\-Add} (double $\ast$address, double val)
+\item 
+arch\-\_\-global void {\bf map\-To\-Face} (int M\-\_\-s, int M\-\_\-\-T, int N\-\_\-s, int $\ast$map, scalar $\ast$U, scalar $\ast$U\-F)
+\item 
+arch\-\_\-global void {\bf map\-To\-Element} (int N\-\_\-s, int N\-\_\-\-E, int M\-\_\-s, int N\-\_\-\-N, int $\ast$invmap, scalar $\ast$Q, scalar $\ast$Qtcj)
+\item 
+arch\-\_\-global void {\bf redistribute\-\_\-sf} (int N\-\_\-\-G, int N\-\_\-\-E, scalar $\ast$s\-J, scalar $\ast$f\-J, scalar $\ast$s, scalar $\ast$f, scalar $\ast$J, scalar $\ast$inv\-Jac)
+\item 
+arch\-\_\-global void {\bf redistribute\-\_\-q} (int M\-\_\-\-G, int M\-\_\-\-T, scalar $\ast$q\-J, scalar $\ast$q, scalar $\ast$J\-F)
+\item 
+arch\-\_\-global void {\bf add\-S\-F\-Q} (int N\-\_\-s, int N\-\_\-\-E, scalar $\ast$A, scalar $\ast$S, scalar $\ast$F, scalar $\ast$Q)
+\item 
+void {\bf Lmap\-To\-Face} (int M\-\_\-s, int M\-\_\-\-T, int N\-\_\-s, int $\ast$map, scalar $\ast$U, scalar $\ast$U\-F)
+\item 
+void {\bf Lmap\-To\-Element} (int N\-\_\-s, int N\-\_\-\-E, int M\-\_\-s, int N\-\_\-\-N, int $\ast$invmap, scalar $\ast$Q, scalar $\ast$q)
+\item 
+void {\bf Lredistribute\-\_\-sf} (int N\-\_\-\-G, int N\-\_\-\-E, scalar $\ast$s\-J, scalar $\ast$f\-J, scalar $\ast$s, scalar $\ast$f, scalar $\ast$J, scalar $\ast$inv\-Jac)
+\item 
+void {\bf Lredistribute\-\_\-q} (int M\-\_\-\-G, int M\-\_\-\-T, scalar $\ast$q\-J, scalar $\ast$q, scalar $\ast$J\-F)
+\item 
+void {\bf Ladd\-S\-F\-Q} (int N\-\_\-s, int N\-\_\-\-E, scalar $\ast$A, scalar $\ast$S, scalar $\ast$F, scalar $\ast$Q)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Kernels to be used for D\-G operations. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\index{kernels.\-cu@{kernels.\-cu}!add\-S\-F\-Q@{add\-S\-F\-Q}}
+\index{add\-S\-F\-Q@{add\-S\-F\-Q}!kernels.cu@{kernels.\-cu}}
+\subsubsection[{add\-S\-F\-Q}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void add\-S\-F\-Q (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{A, }
+\item[{scalar $\ast$}]{S, }
+\item[{scalar $\ast$}]{F, }
+\item[{scalar $\ast$}]{Q}
+\end{DoxyParamCaption}
+)}\label{kernels_8cu_a437c19eb2c83a29b4769a47ecc088069}
+Add source, element flux, and interface flux together 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt out}  & {\em A} & A=S+\-F+\-Q \\
+\hline
+\mbox{\tt in}  & {\em S} & source array \\
+\hline
+\mbox{\tt in}  & {\em F} & element flux array \\
+\hline
+\mbox{\tt in}  & {\em Q} & interface flux\\
+\hline
+\end{DoxyParams}
+\index{kernels.\-cu@{kernels.\-cu}!atomic\-Add@{atomic\-Add}}
+\index{atomic\-Add@{atomic\-Add}!kernels.cu@{kernels.\-cu}}
+\subsubsection[{atomic\-Add}]{\setlength{\rightskip}{0pt plus 5cm}\-\_\-\-\_\-device\-\_\-\-\_\- double atomic\-Add (
+\begin{DoxyParamCaption}
+\item[{double $\ast$}]{address, }
+\item[{double}]{val}
+\end{DoxyParamCaption}
+)}\label{kernels_8cu_a084dc028111fed94acc256aeb2720679}
+Atomic addition definition for a G\-P\-U. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt out}  & {\em address} & address of value to add to \\
+\hline
+\mbox{\tt in}  & {\em val} & value to be added to address value\\
+\hline
+\end{DoxyParams}
+\index{kernels.\-cu@{kernels.\-cu}!Ladd\-S\-F\-Q@{Ladd\-S\-F\-Q}}
+\index{Ladd\-S\-F\-Q@{Ladd\-S\-F\-Q}!kernels.cu@{kernels.\-cu}}
+\subsubsection[{Ladd\-S\-F\-Q}]{\setlength{\rightskip}{0pt plus 5cm}void Ladd\-S\-F\-Q (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{A, }
+\item[{scalar $\ast$}]{S, }
+\item[{scalar $\ast$}]{F, }
+\item[{scalar $\ast$}]{Q}
+\end{DoxyParamCaption}
+)}\label{kernels_8cu_ad974ff78ff0e45c97245008a12070261}
+Host C function to launch add\-S\-F\-Q kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt out}  & {\em A} & A=S+\-F+\-Q \\
+\hline
+\mbox{\tt in}  & {\em S} & source array \\
+\hline
+\mbox{\tt in}  & {\em F} & element flux array \\
+\hline
+\mbox{\tt in}  & {\em Q} & interface flux \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of N\-\_\-s x N\-\_\-\-F x blk\-E threads. blk\-E controls the number of elements to set on each block\index{kernels.\-cu@{kernels.\-cu}!Lmap\-To\-Element@{Lmap\-To\-Element}}
+\index{Lmap\-To\-Element@{Lmap\-To\-Element}!kernels.cu@{kernels.\-cu}}
+\subsubsection[{Lmap\-To\-Element}]{\setlength{\rightskip}{0pt plus 5cm}void Lmap\-To\-Element (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{M\-\_\-s, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int $\ast$}]{invmap, }
+\item[{scalar $\ast$}]{Q, }
+\item[{scalar $\ast$}]{q}
+\end{DoxyParamCaption}
+)}\label{kernels_8cu_a90bfeb1ae8d03f7decec598375fb5be4}
+Host C function to launch map\-To\-Element kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbors per element \\
+\hline
+\mbox{\tt in}  & {\em invmap} & map from face index to element index \\
+\hline
+\mbox{\tt in}  & {\em Q} & interface flux \\
+\hline
+\mbox{\tt out}  & {\em q} & interface flux for the elements \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of max(\-N\-\_\-s,\-M\-\_\-s$\ast$\-N\-\_\-\-N) x N\-\_\-\-F x blk\-E threads. blk\-E controls the number of elements to set on each block\index{kernels.\-cu@{kernels.\-cu}!Lmap\-To\-Face@{Lmap\-To\-Face}}
+\index{Lmap\-To\-Face@{Lmap\-To\-Face}!kernels.cu@{kernels.\-cu}}
+\subsubsection[{Lmap\-To\-Face}]{\setlength{\rightskip}{0pt plus 5cm}void Lmap\-To\-Face (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-s, }
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{N\-\_\-s, }
+\item[{int $\ast$}]{map, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{U\-F}
+\end{DoxyParamCaption}
+)}\label{kernels_8cu_a8787e26d7496d9352074c1f58a4d2833}
+Host C function to launch map\-To\-Face kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em map} & map from element index to face index \\
+\hline
+\mbox{\tt in}  & {\em U} & element solution \\
+\hline
+\mbox{\tt out}  & {\em U\-F} & interface solution \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches M\-\_\-\-T/blk\-T blocks of M\-\_\-s x N\-\_\-\-F x blk\-T threads. blk\-T controls the number of interfaces to set on each block\index{kernels.\-cu@{kernels.\-cu}!Lredistribute\-\_\-q@{Lredistribute\-\_\-q}}
+\index{Lredistribute\-\_\-q@{Lredistribute\-\_\-q}!kernels.cu@{kernels.\-cu}}
+\subsubsection[{Lredistribute\-\_\-q}]{\setlength{\rightskip}{0pt plus 5cm}void Lredistribute\-\_\-q (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{M\-\_\-\-T, }
+\item[{scalar $\ast$}]{q\-J, }
+\item[{scalar $\ast$}]{q, }
+\item[{scalar $\ast$}]{J\-F}
+\end{DoxyParamCaption}
+)}\label{kernels_8cu_aff14e7ca7661de56b30139060356e55b}
+Host C function to launch redistribute\-\_\-q kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-\-G} & number of gaussian nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt out}  & {\em q\-J} & q multiplied by Jacobian \\
+\hline
+\mbox{\tt in}  & {\em q} & interface flux array \\
+\hline
+\mbox{\tt in}  & {\em J\-F} & Jacobian of the faces \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches M\-\_\-\-T/blk\-T blocks of M\-\_\-\-G x N\-\_\-\-F x blk\-T threads. blk\-T controls the number of interfaces to set on each block\index{kernels.\-cu@{kernels.\-cu}!Lredistribute\-\_\-sf@{Lredistribute\-\_\-sf}}
+\index{Lredistribute\-\_\-sf@{Lredistribute\-\_\-sf}!kernels.cu@{kernels.\-cu}}
+\subsubsection[{Lredistribute\-\_\-sf}]{\setlength{\rightskip}{0pt plus 5cm}void Lredistribute\-\_\-sf (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-G, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{s\-J, }
+\item[{scalar $\ast$}]{f\-J, }
+\item[{scalar $\ast$}]{s, }
+\item[{scalar $\ast$}]{f, }
+\item[{scalar $\ast$}]{J, }
+\item[{scalar $\ast$}]{inv\-Jac}
+\end{DoxyParamCaption}
+)}\label{kernels_8cu_a32ad8888334afea460e7523dc1d5129d}
+Host C function to launch redistribute\-\_\-sf kernel. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-\-G} & number of gaussian nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt out}  & {\em s\-J} & s multiplied by Jacobian \\
+\hline
+\mbox{\tt out}  & {\em f\-J} & f multiplied by Jacobian \\
+\hline
+\mbox{\tt in}  & {\em s} & source array \\
+\hline
+\mbox{\tt in}  & {\em f} & flux array \\
+\hline
+\mbox{\tt in}  & {\em J} & Jacobian \\
+\hline
+\mbox{\tt in}  & {\em inv\-Jac} & inverse Jacobian (for the fluxes) \\
+\hline
+\end{DoxyParams}
+\subsection{Description}\label{scalar__def_8h_Description}
+In G\-P\-U mode, launches N\-\_\-\-E/blk\-E blocks of N\-\_\-\-G x N\-\_\-\-F x blk\-E threads. blk\-E controls the number of elements to set on each block\index{kernels.\-cu@{kernels.\-cu}!map\-To\-Element@{map\-To\-Element}}
+\index{map\-To\-Element@{map\-To\-Element}!kernels.cu@{kernels.\-cu}}
+\subsubsection[{map\-To\-Element}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void map\-To\-Element (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-s, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{int}]{M\-\_\-s, }
+\item[{int}]{N\-\_\-\-N, }
+\item[{int $\ast$}]{invmap, }
+\item[{scalar $\ast$}]{Q, }
+\item[{scalar $\ast$}]{Qtcj}
+\end{DoxyParamCaption}
+)}\label{kernels_8cu_ae7f37c94182281f6bf0e54d1703b3d05}
+Map solution from faces to elements 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-N} & number of neighbors per element \\
+\hline
+\mbox{\tt in}  & {\em invmap} & map from face index to element index \\
+\hline
+\mbox{\tt in}  & {\em Q} & interface flux \\
+\hline
+\mbox{\tt out}  & {\em Qtcj} & interface flux for the elements\\
+\hline
+\end{DoxyParams}
+\index{kernels.\-cu@{kernels.\-cu}!map\-To\-Face@{map\-To\-Face}}
+\index{map\-To\-Face@{map\-To\-Face}!kernels.cu@{kernels.\-cu}}
+\subsubsection[{map\-To\-Face}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void map\-To\-Face (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-s, }
+\item[{int}]{M\-\_\-\-T, }
+\item[{int}]{N\-\_\-s, }
+\item[{int $\ast$}]{map, }
+\item[{scalar $\ast$}]{U, }
+\item[{scalar $\ast$}]{U\-F}
+\end{DoxyParamCaption}
+)}\label{kernels_8cu_a999bb06844127184757fac7691963a8a}
+Map solution to the faces 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-s} & number of nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-s} & number of nodes per element \\
+\hline
+\mbox{\tt in}  & {\em map} & map from element index to face index \\
+\hline
+\mbox{\tt in}  & {\em U} & element solution \\
+\hline
+\mbox{\tt out}  & {\em U\-F} & interface solution\\
+\hline
+\end{DoxyParams}
+\index{kernels.\-cu@{kernels.\-cu}!redistribute\-\_\-q@{redistribute\-\_\-q}}
+\index{redistribute\-\_\-q@{redistribute\-\_\-q}!kernels.cu@{kernels.\-cu}}
+\subsubsection[{redistribute\-\_\-q}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void redistribute\-\_\-q (
+\begin{DoxyParamCaption}
+\item[{int}]{M\-\_\-\-G, }
+\item[{int}]{M\-\_\-\-T, }
+\item[{scalar $\ast$}]{q\-J, }
+\item[{scalar $\ast$}]{q, }
+\item[{scalar $\ast$}]{J\-F}
+\end{DoxyParamCaption}
+)}\label{kernels_8cu_aeb5940634238e3dad79001ad4309a731}
+Take into account the geometry by multiplying with Jacobians 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em M\-\_\-\-G} & number of gaussian nodes per interface \\
+\hline
+\mbox{\tt in}  & {\em M\-\_\-\-T} & number of interfaces \\
+\hline
+\mbox{\tt out}  & {\em q\-J} & q multiplied by Jacobian \\
+\hline
+\mbox{\tt in}  & {\em q} & interface flux array \\
+\hline
+\mbox{\tt in}  & {\em J\-F} & Jacobian of the faces\\
+\hline
+\end{DoxyParams}
+\index{kernels.\-cu@{kernels.\-cu}!redistribute\-\_\-sf@{redistribute\-\_\-sf}}
+\index{redistribute\-\_\-sf@{redistribute\-\_\-sf}!kernels.cu@{kernels.\-cu}}
+\subsubsection[{redistribute\-\_\-sf}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-global void redistribute\-\_\-sf (
+\begin{DoxyParamCaption}
+\item[{int}]{N\-\_\-\-G, }
+\item[{int}]{N\-\_\-\-E, }
+\item[{scalar $\ast$}]{s\-J, }
+\item[{scalar $\ast$}]{f\-J, }
+\item[{scalar $\ast$}]{s, }
+\item[{scalar $\ast$}]{f, }
+\item[{scalar $\ast$}]{J, }
+\item[{scalar $\ast$}]{inv\-Jac}
+\end{DoxyParamCaption}
+)}\label{kernels_8cu_a4b627d0ab9e9de25f56b8f76418d5ccd}
+Take into account the geometry by multiplying with Jacobians 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em N\-\_\-\-G} & number of gaussian nodes per element \\
+\hline
+\mbox{\tt in}  & {\em N\-\_\-\-E} & number of elements \\
+\hline
+\mbox{\tt out}  & {\em s\-J} & s multiplied by Jacobian \\
+\hline
+\mbox{\tt out}  & {\em f\-J} & f multiplied by Jacobian \\
+\hline
+\mbox{\tt in}  & {\em s} & source array \\
+\hline
+\mbox{\tt in}  & {\em f} & flux array \\
+\hline
+\mbox{\tt in}  & {\em J} & Jacobian \\
+\hline
+\mbox{\tt in}  & {\em inv\-Jac} & inverse Jacobian (for the fluxes)\\
+\hline
+\end{DoxyParams}

@@ -1,0 +1,85 @@
+\section{src/face\-\_\-fluxes/basic\-\_\-fluxes.h File Reference}
+\label{basic__fluxes_8h}\index{src/face\-\_\-fluxes/basic\-\_\-fluxes.\-h@{src/face\-\_\-fluxes/basic\-\_\-fluxes.\-h}}
+
+
+Functions to calculate simple flux products.  
+
+
+{\ttfamily \#include \char`\"{}scalar\-\_\-def.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$math.\-h$>$}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+arch\-\_\-device scalar {\bf flux\-\_\-ab} (scalar rho, scalar u)
+\item 
+arch\-\_\-device scalar {\bf flux\-\_\-apb} (scalar a, scalar b)
+\item 
+arch\-\_\-device scalar {\bf flux\-\_\-ab2pc} (scalar rho, scalar u, scalar p)
+\item 
+arch\-\_\-device scalar {\bf flux\-\_\-abc} (scalar rho, scalar u, scalar a)
+\item 
+arch\-\_\-device scalar {\bf fhll} (scalar U\-L, scalar S\-L, scalar F\-L, scalar U\-R, scalar S\-R, scalar F\-R)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Functions to calculate simple flux products. \begin{DoxyCopyright}{Copyright}
+Copyright (C) 2012-\/2015, Regents of the University of Michigan 
+\end{DoxyCopyright}
+\begin{DoxyParagraph}{License\-:}
+This project is released under the G\-N\-U Public License. See L\-I\-C\-E\-N\-S\-E. 
+\end{DoxyParagraph}
+\begin{DoxyAuthor}{Author}
+Marc T. Henry de Frahan {\tt marchdf@umich.\-edu}, Computational Flow Physics Laboratory, University of Michigan
+\end{DoxyAuthor}
+\subsection{Description}\label{scalar__def_8h_Description}
+Simple flux products often used 
+
+\subsection{Function Documentation}
+\index{basic\-\_\-fluxes.\-h@{basic\-\_\-fluxes.\-h}!fhll@{fhll}}
+\index{fhll@{fhll}!basic_fluxes.h@{basic\-\_\-fluxes.\-h}}
+\subsubsection[{fhll}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device scalar fhll (
+\begin{DoxyParamCaption}
+\item[{scalar}]{U\-L, }
+\item[{scalar}]{S\-L, }
+\item[{scalar}]{F\-L, }
+\item[{scalar}]{U\-R, }
+\item[{scalar}]{S\-R, }
+\item[{scalar}]{F\-R}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{basic__fluxes_8h_a818e674c1305a2a8681a375e8496d9b0}
+Return H\-L\-L flux\-: (S\-R$\ast$\-F\-L-\/\-S\-L$\ast$\-F\-R+\-S\-L$\ast$\-S\-R$\ast$(U\-R-\/\-U\-L))/fabs(S\-R-\/\-S\-L) \index{basic\-\_\-fluxes.\-h@{basic\-\_\-fluxes.\-h}!flux\-\_\-ab@{flux\-\_\-ab}}
+\index{flux\-\_\-ab@{flux\-\_\-ab}!basic_fluxes.h@{basic\-\_\-fluxes.\-h}}
+\subsubsection[{flux\-\_\-ab}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device scalar flux\-\_\-ab (
+\begin{DoxyParamCaption}
+\item[{scalar}]{rho, }
+\item[{scalar}]{u}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{basic__fluxes_8h_a5ad0b032207bed62aa356cdf9b08583c}
+Return rho$\ast$u \index{basic\-\_\-fluxes.\-h@{basic\-\_\-fluxes.\-h}!flux\-\_\-ab2pc@{flux\-\_\-ab2pc}}
+\index{flux\-\_\-ab2pc@{flux\-\_\-ab2pc}!basic_fluxes.h@{basic\-\_\-fluxes.\-h}}
+\subsubsection[{flux\-\_\-ab2pc}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device scalar flux\-\_\-ab2pc (
+\begin{DoxyParamCaption}
+\item[{scalar}]{rho, }
+\item[{scalar}]{u, }
+\item[{scalar}]{p}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{basic__fluxes_8h_ada090bfc2a3fd1746f363d5b5c22fa84}
+Return rho$\ast$u$\ast$u+p \index{basic\-\_\-fluxes.\-h@{basic\-\_\-fluxes.\-h}!flux\-\_\-abc@{flux\-\_\-abc}}
+\index{flux\-\_\-abc@{flux\-\_\-abc}!basic_fluxes.h@{basic\-\_\-fluxes.\-h}}
+\subsubsection[{flux\-\_\-abc}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device scalar flux\-\_\-abc (
+\begin{DoxyParamCaption}
+\item[{scalar}]{rho, }
+\item[{scalar}]{u, }
+\item[{scalar}]{a}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{basic__fluxes_8h_a0a2dd73932b41f6d047135b957aac5c4}
+Return rho$\ast$u$\ast$a \index{basic\-\_\-fluxes.\-h@{basic\-\_\-fluxes.\-h}!flux\-\_\-apb@{flux\-\_\-apb}}
+\index{flux\-\_\-apb@{flux\-\_\-apb}!basic_fluxes.h@{basic\-\_\-fluxes.\-h}}
+\subsubsection[{flux\-\_\-apb}]{\setlength{\rightskip}{0pt plus 5cm}arch\-\_\-device scalar flux\-\_\-apb (
+\begin{DoxyParamCaption}
+\item[{scalar}]{a, }
+\item[{scalar}]{b}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{basic__fluxes_8h_a62d79981599753b0f6440e40cc72a620}
+Return a+b 
